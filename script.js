@@ -91,11 +91,17 @@ async function init() {
     let categoriesArray;
     let dirTitle;
     if (data.categories && Array.isArray(data.categories)) {
+      // Standard format with categories array
       categoriesArray = data.categories;
       dirTitle = data.title || decodeURIComponent(src);
     } else if (Array.isArray(data)) {
+      // Top-level array of category objects
       categoriesArray = data;
       dirTitle = params.get('title') ? decodeURIComponent(params.get('title')) : decodeURIComponent(src);
+    } else if (data.category && Array.isArray(data.episodes)) {
+      // Single category object
+      categoriesArray = [data];
+      dirTitle = data.title || decodeURIComponent(src);
     } else {
       throw new Error("Invalid JSON format");
     }
