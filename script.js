@@ -86,16 +86,28 @@ async function init() {
 
   try {
     const res = await fetch(src);
-    const json = await res.json();
-    videoList = json.categories;
+    const data = await res.json();
+    // Determine categories array and directory title
+    let categoriesArray;
+    let dirTitle;
+    if (data.categories && Array.isArray(data.categories)) {
+      categoriesArray = data.categories;
+      dirTitle = data.title || decodeURIComponent(src);
+    } else if (Array.isArray(data)) {
+      categoriesArray = data;
+      dirTitle = params.get('title') ? decodeURIComponent(params.get('title')) : decodeURIComponent(src);
+    } else {
+      throw new Error("Invalid JSON format");
+    }
+    videoList = categoriesArray;
     errorMessage.style.display = 'none';
     urlInputContainer.style.display = 'none';
-    directoryTitle.textContent = json.title || decodeURIComponent(src);
+    directoryTitle.textContent = dirTitle;
     directoryTitle.style.display = 'block';
     selectorScreen.style.display = 'flex';
     renderEpisodeList();
   } catch (err) {
-    episodeList.textContent = "Failed to load episode list.";
+    episodeList.textContent = "Failed to load episode list: " + err.message;
     console.error(err);
   }
 }
