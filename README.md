@@ -2,6 +2,12 @@
 
 A simple, modern web-based video player that loads episode lists from a remote JSON directory.
 
+## Main Host 
+
+To access RSP Media Manager without locally hosting, please use the public host provided below.
+
+https://randomsideprojects.github.io/Media-Manager/?source=
+
 ## Features
 
 - Category-based episode selection
