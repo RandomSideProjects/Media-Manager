@@ -87,10 +87,10 @@ async function init() {
   try {
     const res = await fetch(src);
     const json = await res.json();
-    videoList = json;
+    videoList = json.categories;
     errorMessage.style.display = 'none';
     urlInputContainer.style.display = 'none';
-    directoryTitle.textContent = decodeURIComponent(src);
+    directoryTitle.textContent = json.title || decodeURIComponent(src);
     directoryTitle.style.display = 'block';
     selectorScreen.style.display = 'flex';
     renderEpisodeList();
