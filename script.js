@@ -71,50 +71,50 @@ video.addEventListener("ended", () => {
 
 async function init() {
   const params = new URLSearchParams(window.location.search);
-  const src = params.get('source');
-  if (!src) {
+  const rawSrc = params.get('source');
+  if (!rawSrc) {
     urlInputContainer.style.display = 'flex';
     goBtn.addEventListener('click', () => {
-      const userURL = encodeURIComponent(urlInput.value.trim());
+      const userURL = urlInput.value.trim();
       if (userURL) {
+        const encoded = encodeURIComponent(userURL);
         const currentURL = window.location.origin + window.location.pathname;
-        window.location.href = `${currentURL}?source=${userURL}`;
+        window.location.href = `${currentURL}?source=${encoded}`;
       }
     });
     return;
   }
-
+  // Decode in case it's percent-encoded
+  const srcUrl = decodeURIComponent(rawSrc);
   try {
-    const res = await fetch(src);
+    const res = await fetch(srcUrl);
     const data = await res.json();
-    // Determine categories array and directory title
-    let categoriesArray;
-    let dirTitle;
-    if (data.categories && Array.isArray(data.categories)) {
-      // Standard format with categories array
+    // Normalize into an array of categories and a title
+    let categoriesArray = [];
+    let dirTitle = '';
+    if (data.title && Array.isArray(data.categories)) {
       categoriesArray = data.categories;
-      dirTitle = data.title || decodeURIComponent(src);
+      dirTitle = data.title;
     } else if (Array.isArray(data)) {
-      // Top-level array of category objects
       categoriesArray = data;
-      dirTitle = params.get('title') ? decodeURIComponent(params.get('title')) : decodeURIComponent(src);
+      dirTitle = '';
     } else if (data.category && Array.isArray(data.episodes)) {
-      // Single category object
       categoriesArray = [data];
-      dirTitle = data.title || decodeURIComponent(src);
+      dirTitle = data.title || data.category;
     } else {
       throw new Error("Invalid JSON format");
     }
     videoList = categoriesArray;
     errorMessage.style.display = 'none';
     urlInputContainer.style.display = 'none';
-    directoryTitle.textContent = dirTitle;
+    // Use provided title or fallback to decoded URL
+    directoryTitle.textContent = dirTitle || srcUrl;
     directoryTitle.style.display = 'block';
     selectorScreen.style.display = 'flex';
     renderEpisodeList();
   } catch (err) {
     episodeList.textContent = "Failed to load episode list: " + err.message;
-    console.error(err);
+    console.error("Episode List Error:", err, srcUrl);
   }
 }
 
