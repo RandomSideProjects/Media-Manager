@@ -84,38 +84,26 @@ async function init() {
     });
     return;
   }
-  // Decode in case it's percent-encoded
   const srcUrl = decodeURIComponent(rawSrc);
   try {
-    const res = await fetch(srcUrl);
-    const data = await res.json();
-    // Normalize into an array of categories and a title
-    let categoriesArray = [];
-    let dirTitle = '';
-    if (data.title && Array.isArray(data.categories)) {
-      categoriesArray = data.categories;
-      dirTitle = data.title;
-    } else if (Array.isArray(data)) {
-      categoriesArray = data;
-      dirTitle = '';
-    } else if (data.category && Array.isArray(data.episodes)) {
-      categoriesArray = [data];
-      dirTitle = data.title || data.category;
-    } else {
-      throw new Error("Invalid JSON format");
+    const response = await fetch(srcUrl);
+    const json = await response.json();
+    const { title, categories } = json;
+    if (!Array.isArray(categories)) {
+      throw new Error("Unexpected JSON structure: 'categories' must be an array");
     }
-    videoList = categoriesArray;
+    videoList = categories;
     errorMessage.style.display = 'none';
     urlInputContainer.style.display = 'none';
-    // Use provided title or fallback to decoded URL
-    directoryTitle.textContent = dirTitle || srcUrl;
+    directoryTitle.textContent = title;
     directoryTitle.style.display = 'block';
     selectorScreen.style.display = 'flex';
     renderEpisodeList();
   } catch (err) {
     episodeList.textContent = "Failed to load episode list: " + err.message;
-    console.error("Episode List Error:", err, srcUrl);
+    console.error("Episode List Error:", err);
   }
 }
 
+// Initialize the player
 init();
