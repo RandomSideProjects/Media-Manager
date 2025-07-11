@@ -13,6 +13,7 @@ const urlInput = document.getElementById("urlInput");
 const goBtn = document.getElementById("goBtn");
 const errorMessage = document.getElementById("errorMessage");
 const directoryTitle = document.getElementById("directoryTitle");
+const backBtn = document.getElementById("backBtn");
 
 function renderEpisodeList() {
   episodeList.innerHTML = '';
@@ -34,6 +35,7 @@ function renderEpisodeList() {
         currentIndex = index;
         selectorScreen.style.display = "none";
         playerScreen.style.display = "block";
+        backBtn.style.display = "inline-block";
         loadVideo(currentIndex);
       });
       episodeList.appendChild(button);
@@ -44,6 +46,11 @@ function renderEpisodeList() {
 function loadVideo(index) {
   const item = flatList[index];
   video.src = item.src;
+  // Resume playback if previously saved
+  const savedTime = localStorage.getItem(video.src);
+  if (savedTime) {
+    video.currentTime = parseFloat(savedTime);
+  }
   title.textContent = item.title;
   nextBtn.style.display = "none";
   video.load();
@@ -54,6 +61,8 @@ video.addEventListener("timeupdate", () => {
   if (video.currentTime / video.duration > 0.9 && currentIndex < flatList.length - 1) {
     nextBtn.style.display = "inline-block";
   }
+  // Save current playback time
+  localStorage.setItem(video.src, video.currentTime);
 });
 
 nextBtn.addEventListener("click", () => {
@@ -64,6 +73,8 @@ nextBtn.addEventListener("click", () => {
 });
 
 video.addEventListener("ended", () => {
+  // Remove saved time when finished
+  localStorage.removeItem(video.src);
   if (currentIndex < flatList.length - 1) {
     nextBtn.click();
   }
@@ -107,3 +118,9 @@ async function init() {
 
 // Initialize the player
 init();
+
+backBtn.addEventListener("click", () => {
+  playerScreen.style.display = "none";
+  selectorScreen.style.display = "flex";
+  backBtn.style.display = "none";
+});
