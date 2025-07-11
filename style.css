@@ -1,0 +1,98 @@
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: #0e0e0e;
+  color: #f1f1f1;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+}
+.container {
+  width: 90%;
+  max-width: 900px;
+  padding: 2em;
+  background: #1a1a1a;
+  border-radius: 16px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
+  text-align: center;
+}
+video {
+  width: 100%;
+  border-radius: 12px;
+  margin-bottom: 1em;
+}
+button, input[type="text"] {
+  padding: 0.6em 1.2em;
+  font-size: 1rem;
+  border-radius: 8px;
+  border: none;
+  margin: 0.5em;
+}
+button {
+  background: #007bff;
+  color: white;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+button:hover {
+  background: #0056b3;
+}
+#nextBtn {
+  display: none;
+  margin-top: 1em;
+}
+#selectorScreen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1em;
+}
+.category-title {
+  font-size: 1.2em;
+  font-weight: bold;
+  margin-top: 1em;
+}
+.episode-button {
+  width: 100%;
+  max-width: 500px;
+  padding: 1em;
+  background: #222;
+  border-radius: 12px;
+  border: 2px solid transparent;
+  transition: all 0.3s;
+  cursor: pointer;
+  text-align: left;
+}
+.episode-button:hover {
+  border-color: #007bff;
+  background-color: #2a2a2a;
+}
+#urlInputContainer {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+}
+#urlInput {
+  width: 100%;
+  max-width: 600px;
+}
+#errorMessage {
+  color: #ff4444;
+  font-weight: bold;
+  margin-bottom: 1em;
+}
+#directoryTitle {
+  color: white;
+  font-weight: bold;
+  font-size: 1.5em;
+  margin-bottom: 1em;
+  display: none;
+}
+header {
+  font-size: 0.9em;
+  color: #aaa;
+  margin-top: 1em;
+}

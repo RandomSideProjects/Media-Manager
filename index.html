@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Video Player</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>RSP Media Manager</header>
+  <div class="container">
+    <div id="urlInputContainer">
+      <div id="errorMessage">Unfortunately, there was no directory given. Please try again or enter directory below.</div>
+      <input type="text" id="urlInput" placeholder="https://example.com/list.json">
+      <button id="goBtn">Go</button>
+    </div>
+    <div id="directoryTitle"></div>
+    <div id="selectorScreen" style="display: none;">
+      <h2>Select an Episode</h2>
+      <div id="episodeList"></div>
+    </div>
+    <div id="playerScreen" style="display: none;">
+      <h2 id="videoTitle">Loading...</h2>
+      <video id="videoPlayer" controls></video>
+      <button id="nextBtn">Next Episode</button>
+    </div>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>
