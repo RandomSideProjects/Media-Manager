@@ -88,7 +88,7 @@ async function init() {
   if (rawSrc &&
       !/^https?:\/\//i.test(rawSrc) &&
       !/^[A-Za-z0-9]+$/.test(rawSrc) &&
-      !/^[\w\-\./]+\.json$/i.test(rawSrc)) {
+      !rawSrc.toLowerCase().includes('.json')) {
     errorMessage.textContent = 'Invalid source. Please enter a URL, code, or local .json file name.';
     errorMessage.style.display = 'block';
     return;
@@ -106,15 +106,14 @@ async function init() {
     });
     return;
   }
-  // Construct the full source URL (handles URLs, codes, and local JSON paths)
-  const decodedRaw = decodeURIComponent(rawSrc);
+  // Construct the full source URL:
   let srcUrl = '';
-  if (/^https?:\/\//i.test(decodedRaw) || /^[\w\-\./]+\.json$/i.test(decodedRaw)) {
-    // Full URL or local JSON file
-    srcUrl = decodedRaw;
+  if (/^https?:\/\//i.test(rawSrc)) {
+    // Full URL provided
+    srcUrl = decodeURIComponent(rawSrc);
   } else {
     // Only directory code provided
-    srcUrl = `https://files.catbox.moe/${decodedRaw}.json`;
+    srcUrl = `https://files.catbox.moe/${rawSrc}.json`;
   }
   try {
     const response = await fetch(srcUrl);
