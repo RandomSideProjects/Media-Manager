@@ -84,12 +84,12 @@ async function init() {
   const params = new URLSearchParams(window.location.search);
   const rawSrc = params.get('source');
 
-  // Validate source: allow full URLs, alphanumeric codes, or local JSON paths
+  // Validate source: allow full URLs, alphanumeric codes, or any string ending in .json
   if (rawSrc &&
       !/^https?:\/\//i.test(rawSrc) &&
       !/^[A-Za-z0-9]+$/.test(rawSrc) &&
-      !rawSrc.toLowerCase().includes('.json')) {
-    errorMessage.textContent = 'Invalid source. Please enter a URL, code, or local .json file name.';
+      !/\.json$/i.test(rawSrc)) {
+    errorMessage.textContent = 'Invalid source. Please enter a URL, code, or built-in source file path.';
     errorMessage.style.display = 'block';
     return;
   }
