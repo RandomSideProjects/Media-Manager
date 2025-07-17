@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Directory Creator</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #121212;
+      color: #f1f1f1;
+      padding: 2em;
+      margin: 0;
+    }
+    .container {
+      width: 90%;
+      max-width: 650px;
+      margin: 2em auto;
+      background: #1a1a1a;
+      padding: 2.5em;
+      border-radius: 16px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 1em;
+      color: #f1f1f1;
+    }
+    .field-group {
+      margin-bottom: 1em;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25em;
+      width: 100%;
+    }
+    input[type="text"] {
+      width: calc(100% - 0.8em);
+      padding: 0.6em;
+      margin-top: 0.2em;
+      border: 1px solid #444;
+      border-radius: 4px;
+      background: #2a2a2a;
+      color: #f1f1f1;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    input[type="text"]:focus {
+      outline: none;
+      border-color: #007bff;
+      box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.3);
+    }
+    input[type="file"] {
+      display: inline-block;
+      margin: 0;
+      background: #2a2a2a;
+      color: #f1f1f1;
+      border: 1px solid #444;
+      border-radius: 4px;
+    }
+    button {
+      padding: 0.6em 1.2em;
+      margin: 0.5em 0.2em;
+      border: none;
+      background: #007bff;
+      color: #fff;
+      border-radius: 6px;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      transition: background 0.2s, transform 0.1s;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    button:active {
+      transform: scale(0.98);
+    }
+    .category {
+      background: #2a2a2a;
+      color: #f1f1f1;
+      padding: 1em;
+      margin-bottom: 1em;
+      border: 1px solid #333;
+      border-radius: 6px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+    }
+    .episodes {
+      margin-top: 0.5em;
+      padding-left: 1em;
+      border-left: 3px solid #007bff;
+    }
+    .episode {
+      border: 1px solid #333;
+      padding: 0.5em;
+      margin-bottom: 0.5em;
+      border-radius: 4px;
+      background: #2a2a2a;
+      box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
+    }
+    .ep-error {
+      color: #ff4444;
+      font-weight: bold;
+      margin-top: 0.2em;
+    }
+    .input-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5em;
+      margin-bottom: 0.5em;
+    }
+    pre {
+      background: #272822;
+      color: #f8f8f2;
+      padding: 1em;
+      overflow: auto;
+      border-radius: 6px;
+    }
+    #output {
+      font-size: 2em;
+      font-family: Arial, sans-serif !important;
+    }
+    #confirmModal {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.8);
+      display: none;
+      align-items: center; justify-content: center;
+    }
+    #confirmModal .modal-content {
+      background: #1a1a1a;
+      color: #f1f1f1;
+      padding: 1em;
+      border-radius: 8px;
+      text-align: center;
+    }
+    #confirmModal button {
+      margin: 0.5em;
+    }
+    .tabs {
+      display: flex;
+      margin-bottom: 1em;
+      border-bottom: 1px solid #444;
+      background: #1f1f1f;
+      border-radius: 8px 8px 0 0;
+      overflow: hidden;
+    }
+    .tab-button {
+      background: transparent;
+      color: #f1f1f1;
+      border: none;
+      padding: 0.75em 1.5em;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      font-size: 1em;
+      transition: background 0.2s;
+    }
+    .tab-button:hover {
+      background: #2a2a2a;
+    }
+    .tab-button.active {
+      background: #007bff;
+      color: #fff;
+      border-bottom-color: #007bff;
+    }
+    #outputContainer {
+      display:flex; 
+      align-items:center; 
+      gap:0.5em;
+      width: 100%;
+      background: #1f1f1f;
+      padding: 1em;
+      border-radius: 6px;
+      margin-top: 1em;
+      justify-content: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="tabs">
+      <button id="homeTabBtn" class="tab-button">Home</button>
+      <button id="createTabBtn" class="tab-button active">Create</button>
+      <button id="editTabBtn" class="tab-button">Edit</button>
+    </div>
+    <h1>Directory Creator</h1>
+    <div class="field-group" id="loadUrlContainer">
+      <label for="loadUrl">Load Directory URL:</label><br/>
+      <input type="text" id="loadUrl" placeholder="Enter JSON URL"/>
+      <button id="loadBtn" type="button">Load</button>
+    </div>
+    <div class="field-group">
+      <label for="dirTitle">Directory Title:</label><br/>
+      <input type="text" id="dirTitle" placeholder="Series Title"/>
+    </div>
+    <div id="categories"></div>
+    <button id="addCategory">Add Category</button>
+    <button id="generate">Create Code</button>
+    <div id="outputContainer" style="display:flex; align-items:center; gap:0.5em;">
+      <pre id="output"><a id="outputLink" href="#" target="_blank"></a></pre>
+    </div>
+  </div>
+
+  <script>
+    async function uploadToCatbox(file) {
+      const form = new FormData();
+      form.append('reqtype', 'fileupload');
+      form.append('fileToUpload', file);
+      const res = await fetch('https://catbox.moe/user/api.php', {
+        method: 'POST',
+        body: form
+      });
+      if (!res.ok) throw new Error('Upload error');
+      return await res.text();
+    }
+
+    const categoriesEl = document.getElementById('categories');
+    const addCategoryBtn = document.getElementById('addCategory');
+    const generateBtn = document.getElementById('generate');
+    const outputEl = document.getElementById('output');
+    const loadUrlInput = document.getElementById('loadUrl');
+    const loadBtn = document.getElementById('loadBtn');
+    const createTabBtn = document.getElementById('createTabBtn');
+    const editTabBtn = document.getElementById('editTabBtn');
+    const loadUrlContainer = document.getElementById('loadUrlContainer');
+    const homeTabBtn = document.getElementById('homeTabBtn');
+    // Start in Create mode
+    loadUrlContainer.style.display = 'none';
+
+    let isFullUrl = false;
+    let directoryCode = '';
+    const outputLink = document.getElementById('outputLink');
+
+
+    // Auto-upload current configuration
+    async function autoUpload() {
+      const titleVal = document.getElementById('dirTitle').value.trim();
+      const cats = [];
+      document.querySelectorAll('.category').forEach(cat => {
+        const catTitle = cat.querySelector('label input').value.trim();
+        const eps = [];
+        cat.querySelectorAll('.episode').forEach(epDiv => {
+          const inputs = epDiv.querySelectorAll('input[type="text"]');
+          const t = inputs[0].value.trim();
+          const s = inputs[1].value.trim();
+          if (t && s) eps.push({ title: t, src: s });
+        });
+        if (catTitle) cats.push({ category: catTitle, episodes: eps });
+      });
+      const result = { title: titleVal, categories: cats };
+      const jsonString = JSON.stringify(result, null, 2);
+      try {
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        const file = new File([blob], 'directory.json', { type: 'application/json' });
+        const url = await uploadToCatbox(file);
+        directoryCode = url.replace(/^https:\/\/files\.catbox\.moe\//, '').replace(/\.json$/, '');
+        updateOutput();
+      } catch (err) {
+        outputEl.textContent = 'Failed to auto-upload: ' + err.message;
+      }
+    }
+    // Auto-upload when data changes, every 500ms
+    let lastPayload = null;
+    setInterval(async () => {
+      const titleVal = document.getElementById('dirTitle').value.trim();
+      const cats = [];
+      document.querySelectorAll('.category').forEach(cat => {
+        const catTitle = cat.querySelector('label input').value.trim();
+        const eps = [];
+        cat.querySelectorAll('.episode').forEach(epDiv => {
+          const inputs = epDiv.querySelectorAll('input[type="text"]');
+          const t = inputs[0].value.trim();
+          const s = inputs[1].value.trim();
+          if (t && s) eps.push({ title: t, src: s });
+        });
+        if (catTitle) cats.push({ category: catTitle, episodes: eps });
+      });
+      const payload = JSON.stringify({ title: titleVal, categories: cats });
+      if (payload !== lastPayload) {
+        lastPayload = payload;
+        try {
+          await autoUpload();
+        } catch (err) {
+          console.error('Auto-upload error:', err);
+        }
+      }
+    }, 500);
+
+    // Add a new category block
+    function addCategory(data) {
+      // Determine category index
+      const categoryIndex = categoriesEl.children.length + 1;
+
+      const categoryDiv = document.createElement('div');
+      categoryDiv.className = 'category';
+
+      categoryDiv.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        confirmModal.style.display = 'flex';
+        pendingRemoval = { type: 'category', elem: categoryDiv };
+      });
+
+      const titleLabel = document.createElement('label');
+      titleLabel.textContent = 'Category Title:';
+      const titleInput = document.createElement('input');
+      titleInput.type = 'text';
+      titleInput.placeholder = `Season ${categoryIndex}`;
+      if (data && data.category) {
+        titleInput.value = data.category;
+      } else {
+        titleInput.value = `Season ${categoryIndex}`;
+      }
+      titleLabel.appendChild(document.createElement('br'));
+      titleLabel.appendChild(titleInput);
+
+      const episodesDiv = document.createElement('div');
+      episodesDiv.className = 'episodes';
+
+      const addEpBtn = document.createElement('button');
+      addEpBtn.type = 'button';
+      addEpBtn.textContent = 'Add Episode';
+      addEpBtn.addEventListener('click', () => addEpisode(episodesDiv));
+
+      categoryDiv.appendChild(titleLabel);
+      categoryDiv.appendChild(episodesDiv);
+      categoryDiv.appendChild(addEpBtn);
+
+      categoriesEl.appendChild(categoryDiv);
+
+      // autoUpload now handled by polling loop
+
+      if (data && data.episodes) {
+        data.episodes.forEach(ep => addEpisode(episodesDiv, ep));
+      }
+    }
+
+    // Add a new episode block within a category
+    function addEpisode(container, data) {
+      // Determine episode index within this category
+      const episodeIndex = container.querySelectorAll('.episode').length + 1;
+
+      const epDiv = document.createElement('div');
+      epDiv.className = 'episode';
+
+      epDiv.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        epDiv.remove();
+        // autoUpload now handled by polling loop
+      });
+
+      const epTitle = document.createElement('input');
+      epTitle.type = 'text';
+      epTitle.placeholder = 'Episode Title';
+      if (data && data.title) {
+        epTitle.value = data.title;
+      } else {
+        epTitle.value = `Episode ${episodeIndex}`;
+      }
+
+      const epSrc = document.createElement('input');
+      epSrc.type = 'text';
+      epSrc.placeholder = 'MP4 or WebM URL';
+      if (data && data.src) epSrc.value = data.src;
+
+      const epFile = document.createElement('input');
+      epFile.type = 'file';
+      epFile.accept = '.mp4, .webm';
+
+      const epError = document.createElement('div');
+      epError.className = 'ep-error';
+
+      epFile.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        // Clear previous messages
+        epError.textContent = '';
+        if (file.size > 200 * 1024 * 1024) {
+          epError.innerHTML = '<span style="color:#f1f1f1">Our built-in uploader only supports 200 MB. Please try again with a smaller size.</span>';
+          return;
+        }
+        // Primary upload
+        epSrc.value = '';
+        epError.innerHTML = '<span style="color:blue">Uploading...</span>';
+        try {
+          const url = await uploadToCatbox(file);
+          epSrc.value = url;
+          epError.textContent = '';
+          // autoUpload now handled by polling loop
+        } catch {
+          epError.innerHTML = '<span style="color:red">Upload failed</span>';
+          epSrc.value = '';
+        }
+      });
+
+      epDiv.appendChild(epTitle);
+
+      // URL or File upload group
+      const inputGroup = document.createElement('div');
+      inputGroup.className = 'input-group';
+      inputGroup.appendChild(epSrc);
+      const orSpan = document.createElement('span');
+      orSpan.textContent = 'or';
+      inputGroup.appendChild(orSpan);
+      inputGroup.appendChild(epFile);
+      epDiv.appendChild(inputGroup);
+
+      epDiv.appendChild(epError);
+      container.appendChild(epDiv);
+
+      // autoUpload now handled by polling loop
+    }
+
+    async function loadDirectory() {
+      const url = loadUrlInput.value.trim();
+      if (!url) return;
+      try {
+        const res = await fetch(url);
+        const json = await res.json();
+        // Clear existing
+        document.getElementById('dirTitle').value = json.title || '';
+        categoriesEl.innerHTML = '';
+        json.categories.forEach(cat => addCategory(cat));
+      } catch (err) {
+        outputEl.textContent = 'Failed to load: ' + err.message;
+      }
+    }
+    loadBtn.addEventListener('click', loadDirectory);
+
+    // Button handlers
+    addCategoryBtn.addEventListener('click', () => addCategory());
+    generateBtn.addEventListener('click', async () => {
+      const title = document.getElementById('dirTitle').value.trim();
+      const categories = [];
+      document.querySelectorAll('.category').forEach(cat => {
+        const catTitle = cat.querySelector('input[type="text"]').value.trim();
+        const episodes = [];
+        cat.querySelectorAll('.episode').forEach(epDiv => {
+          const inputs = epDiv.querySelectorAll('input[type="text"]');
+          const t = inputs[0].value.trim();
+          const s = inputs[1].value.trim();
+          if (t && s) episodes.push({ title: t, src: s });
+        });
+        if (catTitle) categories.push({ category: catTitle, episodes });
+      });
+      const result = { title, categories };
+      const jsonString = JSON.stringify(result, null, 2);
+      try {
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        const file = new File([blob], 'directory.json', { type: 'application/json' });
+        const url = await uploadToCatbox(file);
+        directoryCode = url.replace(/^https:\/\/files\.catbox\.moe\//, '').replace(/\.json$/, '');
+        updateOutput();
+      } catch (err) {
+        outputEl.textContent = 'Failed to upload JSON: ' + err.message;
+      }
+    });
+
+    function updateOutput() {
+      if (!directoryCode) return;
+      if (isFullUrl) {
+        const full = `https://files.catbox.moe/${directoryCode}.json`;
+        outputLink.textContent = full;
+        outputLink.href = full;
+      } else {
+        outputLink.textContent = directoryCode;
+        outputLink.href = `./?source=${directoryCode}`;
+      }
+    }
+
+    const outputContainer = document.getElementById('outputContainer');
+    outputContainer.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      isFullUrl = !isFullUrl;
+      updateOutput();
+    });
+
+    createTabBtn.addEventListener('click', () => {
+      createTabBtn.classList.add('active');
+      editTabBtn.classList.remove('active');
+      loadUrlContainer.style.display = 'none';
+      // Clear all inputs and output
+      document.getElementById('dirTitle').value = '';
+      categoriesEl.innerHTML = '';
+      directoryCode = '';
+      updateOutput();
+    });
+    editTabBtn.addEventListener('click', () => {
+      editTabBtn.classList.add('active');
+      createTabBtn.classList.remove('active');
+      loadUrlContainer.style.display = 'flex';
+      document.getElementById('dirTitle').value = '';
+      categoriesEl.innerHTML = '';
+      directoryCode = '';
+      updateOutput();
+    });
+    homeTabBtn.addEventListener('click', () => {
+      window.location.href = './index.html';
+    });
+
+    // Auto-upload now handled by polling loop; no need for input event listeners
+
+    const confirmModal = document.getElementById('confirmModal');
+    const confirmYes = document.getElementById('confirmYes');
+    const confirmNo = document.getElementById('confirmNo');
+    let pendingRemoval = null;
+    confirmYes.addEventListener('click', () => {
+      if (pendingRemoval && pendingRemoval.type === 'category') {
+        pendingRemoval.elem.remove();
+        // autoUpload now handled by polling loop
+      }
+      confirmModal.style.display = 'none';
+      pendingRemoval = null;
+    });
+    confirmNo.addEventListener('click', () => {
+      confirmModal.style.display = 'none';
+      pendingRemoval = null;
+    });
+  </script>
+  <div id="confirmModal">
+    <div class="modal-content">
+      <p>Are you sure you want to delete this category?</p>
+      <button id="confirmYes">Yes</button>
+      <button id="confirmNo">Cancel</button>
+    </div>
+  </div>
+</body>
+</html>

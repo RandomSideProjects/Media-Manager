@@ -83,6 +83,14 @@ video.addEventListener("ended", () => {
 async function init() {
   const params = new URLSearchParams(window.location.search);
   const rawSrc = params.get('source');
+
+  // Validate source: must be full URL or alphanumeric code
+  if (rawSrc && !/^https?:\/\//i.test(rawSrc) && !/^[A-Za-z0-9]+$/.test(rawSrc)) {
+    errorMessage.textContent = 'Invalid source. Please enter a full URL or a valid directory code.';
+    errorMessage.style.display = 'block';
+    return;
+  }
+
   if (!rawSrc) {
     urlInputContainer.style.display = 'flex';
     goBtn.addEventListener('click', () => {
@@ -95,7 +103,15 @@ async function init() {
     });
     return;
   }
-  const srcUrl = decodeURIComponent(rawSrc);
+  // Construct the full source URL:
+  let srcUrl = '';
+  if (/^https?:\/\//i.test(rawSrc)) {
+    // Full URL provided
+    srcUrl = decodeURIComponent(rawSrc);
+  } else {
+    // Only directory code provided
+    srcUrl = `https://files.catbox.moe/${rawSrc}.json`;
+  }
   try {
     const response = await fetch(srcUrl);
     const json = await response.json();

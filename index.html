@@ -7,6 +7,66 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <nav class="tabs">
+    <button onclick="location.href='./'" class="tab-button">Home</button>
+    <div class="dropdown">
+      <button class="tab-button dropbtn">Sources</button>
+      <div class="dropdown-content">
+        <button onclick="location.href='creator.html'" class="tab-button dropdown-item">Modify or Create</button>
+        <button onclick="location.href='public_sources.html'" class="tab-button dropdown-item">Public sources</button>
+      </div>
+    </div>
+  </nav>
+  <style>
+    .tabs {
+      display: flex;
+      gap: 0.5em;
+      margin-bottom: 1em;
+    }
+    .tab-button {
+      padding: 0.6em 1.2em;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      transition: background 0.2s, transform 0.1s;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .tab-button:hover {
+      background: #0056b3;
+    }
+    .tab-button:active {
+      transform: scale(0.98);
+    }
+    .dropdown {
+      position: relative;
+    }
+    .dropdown-content {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      flex-direction: column;
+      background: #1a1a1a;
+      padding: 0.5em;
+      border-radius: 6px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    }
+    .dropdown-item {
+      width: 100%;
+      text-align: left;
+      margin-bottom: 0.5em;
+    }
+    .dropdown-item:last-child {
+      margin-bottom: 0;
+    }
+    .dropdown:hover .dropdown-content {
+      display: flex;
+    }
+  </style>
   <header>RSP Media Manager</header>
   <div class="container">
     <div id="urlInputContainer">
@@ -23,7 +83,7 @@
       <button id="backBtn" style="display:none; margin-bottom: 1em;">≡</button>
       <h2 id="videoTitle">Loading...</h2>
       <video id="videoPlayer" controls></video>
-      <button id="nextBtn">Next Episode</button>
+      <button id="nextBtn">Next Item</button>
     </div>
   </div>
   <script src="script.js"></script>
