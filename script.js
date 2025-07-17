@@ -84,16 +84,6 @@ async function init() {
   const params = new URLSearchParams(window.location.search);
   const rawSrc = params.get('source');
 
-  // Validate source: allow full URLs, alphanumeric codes, or any string ending in .json
-  if (rawSrc &&
-      !/^https?:\/\//i.test(rawSrc) &&
-      !/^[A-Za-z0-9]+$/.test(rawSrc) &&
-      !/\.json$/i.test(rawSrc)) {
-    errorMessage.textContent = 'Invalid source. Please enter a URL, code, or built-in source file path.';
-    errorMessage.style.display = 'block';
-    return;
-  }
-
   if (!rawSrc) {
     urlInputContainer.style.display = 'flex';
     goBtn.addEventListener('click', () => {
@@ -106,14 +96,21 @@ async function init() {
     });
     return;
   }
+  // Validate source: must be full URL or alphanumeric code
+  if (rawSrc && !/^https?:\/\//i.test(rawSrc) && !/^[A-Za-z0-9]+$/.test(rawSrc) && !rawSrc.includes('.json')) {
+    errorMessage.textContent = 'Invalid source. Please enter a full URL or a valid directory code.';
+    errorMessage.style.display = 'block';
+    return;
+  }
   // Construct the full source URL:
   let srcUrl = '';
-  if (/^https?:\/\//i.test(rawSrc)) {
-    // Full URL provided
-    srcUrl = decodeURIComponent(rawSrc);
+  const decodedRaw = decodeURIComponent(rawSrc);
+  if (/^https?:\/\//i.test(decodedRaw) || decodedRaw.toLowerCase().includes('.json')) {
+    // Full URL, local JSON path, or code with .json
+    srcUrl = decodedRaw;
   } else {
     // Only directory code provided
-    srcUrl = `https://files.catbox.moe/${rawSrc}.json`;
+    srcUrl = `https://files.catbox.moe/${decodedRaw}.json`;
   }
   try {
     const response = await fetch(srcUrl);
