@@ -24,6 +24,8 @@ https://randomsideprojects.github.io/Media-Manager/?source=
 
 ## Creating a Source JSON
 
+Update - July 17 : we now have a too for this, please use Creator.html or navigate to the menu on the main page and select
+
 A “source” is a JSON file describing your episodes. It must follow this structure:
 
 ```json
