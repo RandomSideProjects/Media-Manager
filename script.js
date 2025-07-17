@@ -96,21 +96,35 @@ async function init() {
     });
     return;
   }
-  // Validate source: must be full URL or alphanumeric code
-  if (rawSrc && !/^https?:\/\//i.test(rawSrc) && !/^[A-Za-z0-9]+$/.test(rawSrc) && !rawSrc.includes('.json')) {
-    errorMessage.textContent = 'Invalid source. Please enter a full URL or a valid directory code.';
+  // Validate source: allow full URLs, 6-char alphanumeric codes, or any string containing .json
+  if (
+    !/^https?:\/\//i.test(rawSrc) &&
+    !/^[A-Za-z0-9]{6}$/.test(rawSrc) &&
+    !/\.json/i.test(rawSrc)
+  ) {
+    errorMessage.textContent = 'Invalid source. Please enter a URL, a 6-character code, or a .json filename.';
     errorMessage.style.display = 'block';
     return;
   }
   // Construct the full source URL:
   let srcUrl = '';
   const decodedRaw = decodeURIComponent(rawSrc);
-  if (/^https?:\/\//i.test(decodedRaw) || decodedRaw.toLowerCase().includes('.json')) {
-    // Full URL, local JSON path, or code with .json
+  if (/^https?:\/\//i.test(decodedRaw)) {
+    // Full URL provided
     srcUrl = decodedRaw;
-  } else {
-    // Only directory code provided
+  } else if (/\.json/i.test(decodedRaw)) {
+    // Local JSON file path
+    if (decodedRaw.startsWith('./') || decodedRaw.startsWith('/')) {
+      srcUrl = decodedRaw;
+    } else {
+      srcUrl = `./${decodedRaw}`;
+    }
+  } else if (/^[A-Za-z0-9]{6}$/.test(decodedRaw)) {
+    // Exactly 6-character Catbox code
     srcUrl = `https://files.catbox.moe/${decodedRaw}.json`;
+  } else {
+    // Fallback – treat as direct path
+    srcUrl = decodedRaw;
   }
   try {
     const response = await fetch(srcUrl);
