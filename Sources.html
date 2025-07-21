@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Public Sources</title>
+  <style>
+    body {
+      background: #121212;
+      color: #f1f1f1;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      width: 90%;
+      max-width: 900px;
+      margin: 2em auto;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.5em;
+      justify-content: center;
+    }
+    .source-card {
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 12px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+      width: 260px;
+      padding: 1em;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5em;
+      position: relative;
+    }
+    .source-card h3 {
+      margin: 0;
+    }
+    .source-card p {
+      margin: 0.25em 0;
+    }
+    .pill-button {
+      margin-top: auto;
+      padding: 0.5em 1em;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 999px;
+      cursor: pointer;
+      text-transform: uppercase;
+      font-family: inherit;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .pill-button:hover { background: #0056b3; }
+  </style>
+</head>
+<body>
+  <div class="container" id="sourcesContainer">
+    <!-- Cards will be injected here -->
+  </div>
+  <script>
+  async function loadSources() {
+    const container = document.getElementById('sourcesContainer');
+    container.innerHTML = ''; // clear existing cards
+    try {
+      // Fetch list of JSON files via GitHub API
+      const apiUrl = 'https://api.github.com/repos/randomsideprojects/Media-Manager/contents/Directorys';
+      const list = await fetch(apiUrl).then(res => {
+        if (!res.ok) throw new Error('GitHub API error ' + res.status);
+        return res.json();
+      });
+      // Filter for JSON files excluding exampledir.json
+      const jsonFiles = list.filter(item =>
+        item.type === 'file' &&
+        item.name.toLowerCase().endsWith('.json') &&
+        item.name.toLowerCase() !== 'exampledir.json'
+      );
+      for (const file of jsonFiles) {
+        try {
+          // Load the file contents
+          const json = await fetch(file.download_url).then(r => r.json());
+          const title = json.title || file.name;
+          const categories = Array.isArray(json.categories) ? json.categories : [];
+          const seasons = categories.length;
+          let episodes = 0;
+          categories.forEach(cat => {
+            if (Array.isArray(cat.episodes)) episodes += cat.episodes.length;
+          });
+          // Build card
+          const card = document.createElement('div');
+          card.className = 'source-card';
+          const h3 = document.createElement('h3');
+          h3.textContent = title;
+          const p1 = document.createElement('p');
+          p1.innerHTML = `<strong>${seasons}</strong> ${seasons === 1 ? 'Season' : 'Seasons'}`;
+          const p2 = document.createElement('p');
+          p2.innerHTML = `<strong>${episodes}</strong> ${episodes === 1 ? 'Episode' : 'Episodes'}`;
+          const btn = document.createElement('button');
+          btn.className = 'pill-button';
+          btn.textContent = 'Open';
+          btn.onclick = () => {
+            window.location.href = `index.html?source=Directorys/${encodeURIComponent(file.name)}`;
+          };
+          card.append(h3, p1, p2, btn);
+          card.addEventListener('contextmenu', e => {
+            e.preventDefault();
+            if (p1.textContent.includes('Season')) {
+              p1.innerHTML = `<strong>${seasons}</strong> ${seasons === 1 ? 'Category' : 'Categories'}`;
+              p2.innerHTML = `<strong>${episodes}</strong> ${episodes === 1 ? 'Item' : 'Items'}`;
+            } else {
+              p1.innerHTML = `<strong>${seasons}</strong> ${seasons === 1 ? 'Season' : 'Seasons'}`;
+              p2.innerHTML = `<strong>${episodes}</strong> ${episodes === 1 ? 'Episode' : 'Episodes'}`;
+            }
+          });
+          container.appendChild(card);
+        } catch (err) {
+          console.warn('Failed to load/parse', file.name, err);
+        }
+      }
+    } catch (error) {
+      container.innerHTML = '<p style="color:#f1f1f1;">Failed to load sources from GitHub API.</p>';
+      console.error('Error loading sources:', error);
+    }
+  }
+  // Initialize
+  loadSources();
+</script>
+</body>
+</html>
