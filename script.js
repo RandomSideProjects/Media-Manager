@@ -253,7 +253,7 @@ async function downloadSourceFolder() {
         const urlParts = new URL(episode.src, window.location.href);
         const fileName = decodeURIComponent(urlParts.pathname.split('/').pop());
         catFolder.file(fileName, blob);
-        catObj.episodes.push({ title: episode.title, src: `${titleText}/${catName}/${fileName}` });
+        catObj.episodes.push({ title: episode.title, src: `Directorys/${titleText}/${catName}/${fileName}` });
       } catch (err) {
         console.error('Error fetching episode for ZIP:', episode.src, err);
       }
