@@ -67,6 +67,15 @@
       display: flex;
     }
   </style>
+  <style>
+    /* Download button hover effect */
+    #downloadBtn:hover {
+      background: #0056b3;
+    }
+    #downloadBtn:active {
+      transform: scale(0.98);
+    }
+  </style>
   <header>RSP Media Manager</header>
   <div class="container">
     <div id="urlInputContainer">
@@ -78,6 +87,7 @@
     <div id="selectorScreen" style="display: none;">
       <h2>Select an Episode</h2>
       <div id="episodeList"></div>
+      <button id="downloadBtn" style="padding:0.6em 1.2em; background:#007bff; color:#fff; border:none; border-radius:6px; cursor:pointer; text-transform:uppercase; letter-spacing:0.5px; margin-top:1em;">⤓ Download Source</button>
     </div>
     <div id="playerScreen" style="display: none;">
       <button id="backBtn" style="display:none; margin-bottom: 1em;">≡</button>
@@ -86,6 +96,7 @@
       <button id="nextBtn">Next Item</button>
     </div>
   </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.0/jszip.min.js"></script>
   <script src="script.js"></script>
 </body>
 </html>

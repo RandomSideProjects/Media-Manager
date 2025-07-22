@@ -149,8 +149,143 @@ async function init() {
 // Initialize the player
 init();
 
+
 backBtn.addEventListener("click", () => {
   playerScreen.style.display = "none";
   selectorScreen.style.display = "flex";
   backBtn.style.display = "none";
 });
+
+// Requires JSZip included in index.html via a <script> tag
+async function downloadSourceFolder() {
+  // Create overlay and progress UI
+  const overlay = document.createElement('div');
+  Object.assign(overlay.style, {
+    position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+    background: 'rgba(0,0,0,0.7)', color: '#fff',
+    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+    zIndex: 9999, fontFamily: 'Segoe UI, sans-serif', textAlign: 'center'
+  });
+  const fileLabel = document.createElement('div');
+  fileLabel.style.marginBottom = '0.5em';
+  overlay.appendChild(fileLabel);
+  const fileProgressBar = document.createElement('progress');
+  fileProgressBar.max = 100; fileProgressBar.value = 0;
+  fileProgressBar.style.width = '80%'; fileProgressBar.style.marginBottom = '0.5em';
+  overlay.appendChild(fileProgressBar);
+  const episodesLeftLabel = document.createElement('div');
+  overlay.appendChild(episodesLeftLabel);
+  document.body.appendChild(overlay);
+
+  const fileStats = document.createElement('div');
+  fileStats.style.marginBottom = '0.5em';
+  overlay.insertBefore(fileStats, fileProgressBar);
+  const totalStats = document.createElement('div');
+  totalStats.style.marginTop = '0.5em';
+  overlay.appendChild(totalStats);
+
+  // Ensure JSZip is available
+  if (typeof JSZip === 'undefined') {
+    console.error('JSZip library not loaded.');
+    return;
+  }
+  const zip = new JSZip();
+  const titleText = directoryTitle.textContent.trim() || 'directory';
+  // Create a top-level folder named after the source title
+  const rootFolder = zip.folder(titleText);
+  // Add instruction file inside the source folder
+  rootFolder.file(
+    'PUT FOLDER IN DIRECTORYS FOLDER.txt',
+    'https://github.com/RandomSideProjects/Media-Manager/ is the origin of this web app.'
+  );
+  // Build JSON structure and add video files
+  const manifest = { title: titleText, categories: [] };
+  const totalEpisodes = videoList.reduce((sum, cat) => sum + cat.episodes.length, 0);
+  let processedCount = 0;
+  const startTotalTime = Date.now();
+  for (let ci = 0; ci < videoList.length; ci++) {
+    const category = videoList[ci];
+    const catName = category.category || 'Category';
+    const catFolder = rootFolder.folder(catName);
+    const catObj = { category: catName, episodes: [] };
+    for (let ei = 0; ei < category.episodes.length; ei++) {
+      const episode = category.episodes[ei];
+      try {
+        // Update per-file labels
+        fileLabel.textContent = `S${ci+1}E${ei+1}`;
+        episodesLeftLabel.textContent = `${totalEpisodes - processedCount - 1} Items remaining`;
+        // Download via XHR for progress
+        const blob = await new Promise((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          const startFileTime = Date.now();
+          xhr.open('GET', episode.src);
+          xhr.responseType = 'blob';
+          xhr.addEventListener('progress', e => {
+            if (e.lengthComputable) {
+              const loaded = e.loaded;
+              const total = e.total;
+              fileProgressBar.value = (loaded / total) * 100;
+              // Per-file stats
+              const now = Date.now();
+              const elapsedFileMs = now - startFileTime;
+              const fileSpeed = loaded / (elapsedFileMs / 1000);
+              const speedDisplay = (fileSpeed / (1024 * 1024)).toFixed(2) + ' MB/s';
+              const timeLeftFileSec = (total - loaded) / fileSpeed;
+              const etaFile = new Date(timeLeftFileSec * 1000).toISOString().substr(14, 5);
+              fileStats.textContent = `${speedDisplay} | ${etaFile} left`;
+              // Overall stats
+              const elapsedTotalMs = now - startTotalTime;
+              const completedFraction = processedCount + loaded / total;
+              const avgSecPerEp = elapsedTotalMs / 1000 / completedFraction;
+              const remainCount = totalEpisodes - completedFraction;
+              const etaTotalSec = avgSecPerEp * remainCount;
+              const etaTotalDisplay = new Date(etaTotalSec * 1000).toISOString().substr(14, 5);
+              totalStats.textContent = `ETA: ${etaTotalDisplay}`;
+            }
+          });
+          xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) resolve(xhr.response);
+            else reject(new Error('Failed to download file: ' + xhr.status));
+          };
+          xhr.onerror = () => reject(new Error('Network error'));
+          xhr.send();
+        });
+        const urlParts = new URL(episode.src, window.location.href);
+        const fileName = decodeURIComponent(urlParts.pathname.split('/').pop());
+        catFolder.file(fileName, blob);
+        catObj.episodes.push({ title: episode.title, src: `${titleText}/${catName}/${fileName}` });
+      } catch (err) {
+        console.error('Error fetching episode for ZIP:', episode.src, err);
+      }
+      processedCount++;
+    }
+    rootFolder.file('index.json', ''); // ensure folder exists
+    manifest.categories.push(catObj);
+  }
+  // Add the manifest JSON (index.json) at the root of the source folder
+  rootFolder.file('index.json', JSON.stringify(manifest, null, 2));
+  // Generate and download the ZIP
+  const content = await zip.generateAsync({ type: 'blob' }, metadata => {
+    // optional: update a progress bar here via metadata.percent
+    console.log(`ZIP progress: ${metadata.percent.toFixed(2)}%`);
+  });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(content);
+  a.download = `${titleText}.zip`;
+  document.body.appendChild(a);
+  a.click();
+  // Remove overlay
+  overlay.remove();
+  document.body.removeChild(a);
+}
+
+// Wire up the download button
+const downloadBtn = document.getElementById('downloadBtn');
+if (downloadBtn) {
+  downloadBtn.addEventListener('click', () => {
+    const proceed = window.confirm(
+      'Zipping all videos into a single archive may take a long time and use significant memory. Proceed?'
+    );
+    if (proceed) downloadSourceFolder();
+  });
+}
