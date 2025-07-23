@@ -1,0 +1,58 @@
+{
+  "title": "My Tiny Senpai",
+  "categories": [
+    {
+      "category": "Season 1",
+      "episodes": [
+        {
+          "title": "Episode 1",
+          "src": "https://files.catbox.moe/4y3odx.mp4"
+        },
+        {
+          "title": "Episode 2",
+          "src": "https://files.catbox.moe/un3ne9.mp4"
+        },
+        {
+          "title": "Episode 3",
+          "src": "https://files.catbox.moe/fn0cga.mp4"
+        },
+        {
+          "title": "Episode 4",
+          "src": "https://files.catbox.moe/g5qwl2.mp4"
+        },
+        {
+          "title": "Episode 5",
+          "src": "https://files.catbox.moe/mrqg28.mp4"
+        },
+        {
+          "title": "Episode 6",
+          "src": "https://files.catbox.moe/azm0vf.mp4"
+        },
+        {
+          "title": "Episode 7",
+          "src": "https://files.catbox.moe/pp4k20.mp4"
+        },
+        {
+          "title": "Episode 8",
+          "src": "https://files.catbox.moe/uqtq7p.mp4"
+        },
+        {
+          "title": "Episode 9",
+          "src": "https://files.catbox.moe/zbdcg6.mp4"
+        },
+        {
+          "title": "Episode 10",
+          "src": "https://files.catbox.moe/8kpylv.mp4"
+        },
+        {
+          "title": "Episode 11",
+          "src": "https://files.catbox.moe/3mxpi9.mp4"
+        },
+        {
+          "title": "Episode 12",
+          "src": "https://files.catbox.moe/40cma9.mp4"
+        }
+      ]
+    }
+  ]
+}
