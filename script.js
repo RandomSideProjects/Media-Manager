@@ -289,3 +289,19 @@ if (downloadBtn) {
     if (proceed) downloadSourceFolder();
   });
 }
+
+// Theme toggle setup
+(function() {
+  const toggleBtn = document.getElementById('themeToggle');
+  const bodyEl = document.body;
+  // Load stored theme or default to dark
+  const stored = localStorage.getItem('theme') || 'dark';
+  bodyEl.classList.toggle('light-mode', stored === 'light');
+  toggleBtn.textContent = stored === 'light' ? '☀' : '☾';
+  // Toggle on click
+  toggleBtn.addEventListener('click', () => {
+    const isLight = bodyEl.classList.toggle('light-mode');
+    toggleBtn.textContent = isLight ? '☀' : '☾';
+    localStorage.setItem('theme', isLight ? 'light' : 'dark');
+  });
+})();
