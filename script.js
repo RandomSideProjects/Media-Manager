@@ -3,6 +3,20 @@ let flatList = [];
 let currentIndex = 0;
 
 const video = document.getElementById("videoPlayer");
+const spinner = document.getElementById("loadingSpinner");
+// Show spinner when loading/buffering, hide when playing
+video.addEventListener("loadstart", () => { spinner.style.display = "block"; });
+video.addEventListener("waiting", () => { spinner.style.display = "block"; });
+video.addEventListener("canplay", () => { spinner.style.display = "none"; });
+video.addEventListener("playing", () => { spinner.style.display = "none"; });
+// Listen for popout time updates
+window.addEventListener('message', (e) => {
+  if (e.data && e.data.type === 'popoutTime') {
+    try {
+      video.currentTime = e.data.currentTime;
+    } catch {}
+  }
+});
 const title = document.getElementById("videoTitle");
 const nextBtn = document.getElementById("nextBtn");
 const selectorScreen = document.getElementById("selectorScreen");
@@ -14,6 +28,66 @@ const goBtn = document.getElementById("goBtn");
 const errorMessage = document.getElementById("errorMessage");
 const directoryTitle = document.getElementById("directoryTitle");
 const backBtn = document.getElementById("backBtn");
+const theaterBtn = document.getElementById("theaterBtn");
+theaterBtn.addEventListener("click", () => {
+  // Pause the main player before popping out
+  video.pause();
+  const src = video.src;
+  const currentTime = video.currentTime || 0;
+  const pop = window.open('', '_blank', 'width=800,height=450');
+  pop.document.write(`
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <title>Pop-out Player</title>
+      <style>
+        body { margin: 0; background: black; }
+        video { width: 100%; height: 100vh; }
+        #popSpinner {
+          display: none;
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          border: 4px solid rgba(255,255,255,0.3);
+          border-top: 4px solid #007bff;
+          border-radius: 50%;
+          width: 40px;
+          height: 40px;
+          animation: spin 1s linear infinite;
+          z-index: 1000;
+        }
+        @keyframes spin {
+          to { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+      </style>
+    </head>
+    <body>
+      <div id="popSpinner" class="spinner"></div>
+      <video id="popVideo" src="${src}" controls autoplay></video>
+      <script>
+        const v = document.getElementById('popVideo');
+        const popSpinner = document.getElementById('popSpinner');
+        // Show spinner when loading/buffering
+        v.addEventListener('loadstart', () => { popSpinner.style.display = 'block'; });
+        v.addEventListener('waiting', () => { popSpinner.style.display = 'block'; });
+        v.addEventListener('canplay', () => { popSpinner.style.display = 'none'; });
+        v.addEventListener('playing', () => { popSpinner.style.display = 'none'; });
+        // Start hidden; show until canplay
+        popSpinner.style.display = 'block';
+        v.currentTime = ${currentTime};
+        window.addEventListener('beforeunload', () => {
+          window.opener.postMessage(
+            { type: 'popoutTime', currentTime: v.currentTime },
+            '*'
+          );
+        });
+      <\/script>
+    </body>
+    </html>
+  `);
+});
 const folderInput = document.getElementById("folderInput");
 folderInput.addEventListener("change", handleFolderUpload);
 
@@ -38,6 +112,7 @@ function renderEpisodeList() {
         selectorScreen.style.display = "none";
         playerScreen.style.display = "block";
         backBtn.style.display = "inline-block";
+        theaterBtn.style.display = "inline-block";
         loadVideo(currentIndex);
       });
       episodeList.appendChild(button);
@@ -197,9 +272,13 @@ async function handleFolderUpload(event) {
 
 
 backBtn.addEventListener("click", () => {
+  // Pause playback when returning to menu
+  video.pause();
   playerScreen.style.display = "none";
   selectorScreen.style.display = "flex";
   backBtn.style.display = "none";
+  theaterBtn.style.display = "none";
+  document.body.classList.remove("theater-mode");
 });
 
 // Requires JSZip included in index.html via a <script> tag
