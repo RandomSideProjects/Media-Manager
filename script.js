@@ -14,6 +14,8 @@ const goBtn = document.getElementById("goBtn");
 const errorMessage = document.getElementById("errorMessage");
 const directoryTitle = document.getElementById("directoryTitle");
 const backBtn = document.getElementById("backBtn");
+const folderInput = document.getElementById("folderInput");
+folderInput.addEventListener("change", handleFolderUpload);
 
 function renderEpisodeList() {
   episodeList.innerHTML = '';
@@ -83,6 +85,10 @@ video.addEventListener("ended", () => {
 async function init() {
   const params = new URLSearchParams(window.location.search);
   const rawSrc = params.get('source');
+  if (folderInput.files.length > 0) {
+    // Folder was selected, ignore URL init
+    return;
+  }
 
   if (!rawSrc) {
     urlInputContainer.style.display = 'flex';
@@ -148,6 +154,46 @@ async function init() {
 
 // Initialize the player
 init();
+
+async function handleFolderUpload(event) {
+  const files = Array.from(event.target.files);
+  const errorMessage = document.getElementById("errorMessage");
+  // Find index.json
+  const indexFile = files.find(f => f.name.toLowerCase() === "index.json");
+  if (!indexFile) {
+    errorMessage.textContent = "Selected folder must contain index.json";
+    errorMessage.style.display = "block";
+    return;
+  }
+  // Load and parse JSON
+  let json;
+  try {
+    const text = await indexFile.text();
+    json = JSON.parse(text);
+  } catch (e) {
+    errorMessage.textContent = "Failed to read or parse index.json";
+    errorMessage.style.display = "block";
+    return;
+  }
+  const { title: dirTitle, categories: cats } = json;
+  // Build videoList from files
+  videoList = cats.map(cat => ({
+    category: cat.category,
+    episodes: cat.episodes.map(ep => {
+      const fileName = ep.src.split("/").pop();
+      const fileObj = files.find(f => f.name === fileName);
+      const srcUrl = fileObj ? URL.createObjectURL(fileObj) : "";
+      return { title: ep.title, src: srcUrl };
+    })
+  }));
+  // Initialize UI
+  directoryTitle.textContent = dirTitle;
+  directoryTitle.style.display = "block";
+  errorMessage.style.display = "none";
+  urlInputContainer.style.display = "none";
+  selectorScreen.style.display = "flex";
+  renderEpisodeList();
+}
 
 
 backBtn.addEventListener("click", () => {
