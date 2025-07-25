@@ -182,3 +182,14 @@ header {
     transform: translate(-50%, -50%) rotate(360deg);
   }
 }
+/* Resume message styling */
+#resumeMessage {
+  color: #6ec1e4;
+  font-weight: bold;
+  margin-bottom: 0.5em;
+}
+#resumeMessage a {
+  color: #6ec1e4;
+  text-decoration: underline;
+  cursor: pointer;
+}

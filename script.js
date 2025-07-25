@@ -108,6 +108,8 @@ function renderEpisodeList() {
       button.className = "episode-button";
       button.textContent = episode.title;
       button.addEventListener("click", () => {
+        // Remember last watched episode index
+        localStorage.setItem('SavedItem', index);
         currentIndex = index;
         selectorScreen.style.display = "none";
         playerScreen.style.display = "block";
@@ -123,6 +125,11 @@ function renderEpisodeList() {
 function loadVideo(index) {
   const item = flatList[index];
   video.src = item.src;
+  // Store duration once metadata loads
+  video.addEventListener('loadedmetadata', function onMeta() {
+    localStorage.setItem(video.src + ':duration', video.duration);
+    video.removeEventListener('loadedmetadata', onMeta);
+  });
   // Resume playback if previously saved
   const savedTime = localStorage.getItem(video.src);
   if (savedTime) {
@@ -221,6 +228,7 @@ async function init() {
     directoryTitle.style.display = 'block';
     selectorScreen.style.display = 'flex';
     renderEpisodeList();
+    showResumeMessage();
   } catch (err) {
     episodeList.textContent = "Failed to load episode list: " + err.message;
     console.error("Episode List Error:", err);
@@ -268,6 +276,7 @@ async function handleFolderUpload(event) {
   urlInputContainer.style.display = "none";
   selectorScreen.style.display = "flex";
   renderEpisodeList();
+  showResumeMessage();
 }
 
 
@@ -430,3 +439,42 @@ if (downloadBtn) {
     localStorage.setItem('theme', isLight ? 'light' : 'dark');
   });
 })();
+
+
+function showResumeMessage() {
+  const resumeEl = document.getElementById('resumeMessage');
+  const savedIdx = parseInt(localStorage.getItem('SavedItem'), 10);
+  if (isNaN(savedIdx) || savedIdx < 0 || savedIdx >= flatList.length) {
+    resumeEl.style.display = 'none';
+    return;
+  }
+  // Retrieve time and duration for that episode
+  const ep = flatList[savedIdx];
+  const savedTime = parseFloat(localStorage.getItem(ep.src)) || 0;
+  const duration = parseFloat(localStorage.getItem(ep.src + ':duration')) || 0;
+  const fraction = duration > 0 ? savedTime / duration : 0;
+  const epNum = savedIdx + 1;
+  const nextNum = epNum + 1;
+  let message = '';
+  if (fraction >= 0.9 && nextNum <= flatList.length) {
+    message = `Next up, <a id="resumeLink">Episode ${nextNum}</a>`;
+  } else {
+    message = `You left off on <a id="resumeLink">Episode ${epNum}</a>`;
+  }
+  resumeEl.style.display = 'block';
+  resumeEl.innerHTML = message;
+  // Link click handler
+  const link = document.getElementById('resumeLink');
+  if (link) {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const targetIdx = (fraction >= 0.9 && nextNum <= flatList.length) ? savedIdx + 1 : savedIdx;
+      currentIndex = targetIdx;
+      selectorScreen.style.display = 'none';
+      playerScreen.style.display = 'block';
+      backBtn.style.display = 'inline-block';
+      theaterBtn.style.display = 'inline-block';
+      loadVideo(targetIdx);
+    });
+  }
+}
