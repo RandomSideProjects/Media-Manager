@@ -99,7 +99,7 @@
           btn.className = 'pill-button';
           btn.textContent = 'Open';
           btn.onclick = () => {
-            window.location.href = `index.html?source=Directorys/${encodeURIComponent(file.name)}`;
+            window.location.href = `../index.html?source=Directorys/${encodeURIComponent(file.name)}`;
           };
           card.append(h3, p1, p2, btn);
           card.addEventListener('contextmenu', e => {
