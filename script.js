@@ -1,4 +1,5 @@
 let videoList = [];
+let sourceKey = '';
 let flatList = [];
 let currentIndex = 0;
 
@@ -108,8 +109,10 @@ function renderEpisodeList() {
       button.className = "episode-button";
       button.textContent = episode.title;
       button.addEventListener("click", () => {
-        // Remember last watched episode index
-        localStorage.setItem('SavedItem', index);
+        // Remember which episode was last opened
+        localStorage.setItem('lastEpSrc', episode.src);
+        // Save index per source
+        localStorage.setItem(`${sourceKey}:SavedItem`, index);
         currentIndex = index;
         selectorScreen.style.display = "none";
         playerScreen.style.display = "block";
@@ -214,6 +217,8 @@ async function init() {
     // Fallback – treat as direct path
     srcUrl = decodedRaw;
   }
+  // Use decodedRaw (or srcUrl) as unique source identifier
+  sourceKey = decodedRaw;
   try {
     const response = await fetch(srcUrl);
     const json = await response.json();
@@ -443,18 +448,28 @@ if (downloadBtn) {
 
 function showResumeMessage() {
   const resumeEl = document.getElementById('resumeMessage');
-  const savedIdx = parseInt(localStorage.getItem('SavedItem'), 10);
-  if (isNaN(savedIdx) || savedIdx < 0 || savedIdx >= flatList.length) {
+  const lastSrc = localStorage.getItem('lastEpSrc');
+  if (!lastSrc) {
     resumeEl.style.display = 'none';
     return;
   }
-  // Retrieve time and duration for that episode
-  const ep = flatList[savedIdx];
-  const savedTime = parseFloat(localStorage.getItem(ep.src)) || 0;
-  const duration = parseFloat(localStorage.getItem(ep.src + ':duration')) || 0;
-  const fraction = duration > 0 ? savedTime / duration : 0;
-  const epNum = savedIdx + 1;
+  const savedTime = parseFloat(localStorage.getItem(lastSrc));
+  const duration = parseFloat(localStorage.getItem(lastSrc + ':duration'));
+  if (isNaN(savedTime) || isNaN(duration)) {
+    resumeEl.style.display = 'none';
+    return;
+  }
+  // Retrieve index per source
+  const savedIdx = parseInt(localStorage.getItem(`${sourceKey}:SavedItem`), 10);
+  // Find episode index
+  const idx = flatList.findIndex(ep => ep.src === lastSrc);
+  if (idx < 0) {
+    resumeEl.style.display = 'none';
+    return;
+  }
+  const epNum = idx + 1;
   const nextNum = epNum + 1;
+  const fraction = savedTime / duration;
   let message = '';
   if (fraction >= 0.9 && nextNum <= flatList.length) {
     message = `Next up, <a id="resumeLink">Episode ${nextNum}</a>`;
@@ -463,12 +478,11 @@ function showResumeMessage() {
   }
   resumeEl.style.display = 'block';
   resumeEl.innerHTML = message;
-  // Link click handler
   const link = document.getElementById('resumeLink');
   if (link) {
     link.addEventListener('click', (e) => {
       e.preventDefault();
-      const targetIdx = (fraction >= 0.9 && nextNum <= flatList.length) ? savedIdx + 1 : savedIdx;
+      const targetIdx = (fraction >= 0.9 && nextNum <= flatList.length) ? idx + 1 : idx;
       currentIndex = targetIdx;
       selectorScreen.style.display = 'none';
       playerScreen.style.display = 'block';
