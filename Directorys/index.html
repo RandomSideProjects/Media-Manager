@@ -61,15 +61,13 @@
   <script>
   async function loadSources() {
     const container = document.getElementById('sourcesContainer');
-    container.innerHTML = ''; // clear existing cards
+    container.innerHTML = '';
     try {
-      // Fetch list of JSON files via GitHub API
       const apiUrl = 'https://api.github.com/repos/randomsideprojects/Media-Manager/contents/Directorys';
       const list = await fetch(apiUrl).then(res => {
         if (!res.ok) throw new Error('GitHub API error ' + res.status);
         return res.json();
       });
-      // Filter for JSON files excluding exampledir.json
       const jsonFiles = list.filter(item =>
         item.type === 'file' &&
         item.name.toLowerCase().endsWith('.json') &&
@@ -77,7 +75,6 @@
       );
       for (const file of jsonFiles) {
         try {
-          // Load the file contents
           const json = await fetch(file.download_url).then(r => r.json());
           const title = json.title || file.name;
           const categories = Array.isArray(json.categories) ? json.categories : [];
@@ -86,7 +83,6 @@
           categories.forEach(cat => {
             if (Array.isArray(cat.episodes)) episodes += cat.episodes.length;
           });
-          // Build card
           const card = document.createElement('div');
           card.className = 'source-card';
           const h3 = document.createElement('h3');
@@ -122,7 +118,6 @@
       console.error('Error loading sources:', error);
     }
   }
-  // Initialize
   loadSources();
 </script>
 </body>

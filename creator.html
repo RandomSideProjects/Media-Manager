@@ -198,6 +198,10 @@
     <div id="categories"></div>
     <button id="addCategory">Add Category</button>
     <button id="generate">Create Code</button>
+    <div class="field-group" style="display:flex; align-items:center; gap:0.5em; margin-top:1em;">
+      <label id="folderSelectBtn" for="folderInput" class="tab-button" style="margin:0;">Select Folder</label>
+      <input type="file" id="folderInput" webkitdirectory multiple style="display:none;">
+    </div>
     <div id="outputContainer" style="display:flex; align-items:center; gap:0.5em;">
       <pre id="output"><a id="outputLink" href="#" target="_blank"></a></pre>
     </div>
@@ -224,7 +228,6 @@
       return await res.text();
     }
 
-    // Upload with progress callback using XMLHttpRequest
     function uploadToCatboxWithProgress(file, onProgress) {
       return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
@@ -260,6 +263,76 @@
     const editTabBtn = document.getElementById('editTabBtn');
     const loadUrlContainer = document.getElementById('loadUrlContainer');
     const homeTabBtn = document.getElementById('homeTabBtn');
+    const folderInput = document.getElementById('folderInput');
+    // Import a single folder as the next season
+    folderInput.addEventListener('change', async (e) => {
+      const files = Array.from(e.target.files);
+      if (!files.length) return;
+      // Reset input to allow re-selection
+      folderInput.value = '';
+      // Determine next season number
+      const seasonNum = categoriesEl.children.length + 1;
+      // Create category block
+      addCategory({ category: `Season ${seasonNum}`, episodes: [] });
+      const catDiv = categoriesEl.lastElementChild;
+      const episodesDiv = catDiv.querySelector('.episodes');
+      // Prepare files with episode numbers (fallback to folder order if no E# found)
+      const filesInSeason = files.map((file, idx) => {
+        const name = file.webkitRelativePath.split('/').pop();
+        const m = name.match(/E0?(\d{1,2})/i);
+        // Use matched number or fallback to original order (idx+1)
+        const epNum = m ? parseInt(m[1], 10) : idx + 1;
+        return { file, epNum };
+      }).sort((a, b) => a.epNum - b.epNum);
+      // Upload all episodes concurrently with retry indicators
+      const uploadTasks = [];
+      const maxAttempts = 5;
+      filesInSeason.forEach(({ file, epNum }) => {
+        // Add episode UI stub
+        addEpisode(episodesDiv, { title: `Episode ${epNum}`, src: '' });
+        const epDiv = episodesDiv.lastElementChild;
+        const inputs = epDiv.querySelectorAll('input[type="text"]');
+        const epSrcInput = inputs[1];
+        const epError = epDiv.querySelector('.ep-error');
+        epError.textContent = '';
+        // Info label
+        const infoMsg = document.createElement('span');
+        infoMsg.style.color = 'blue';
+        infoMsg.textContent = 'Uploading';
+        epError.appendChild(infoMsg);
+        // Attempt counter
+        const attemptLabel = document.createElement('span');
+        attemptLabel.style.color = '#6ec1e4';
+        attemptLabel.style.marginLeft = '0.5em';
+        epError.appendChild(attemptLabel);
+        // Progress bar
+        const progress = document.createElement('progress');
+        progress.max = 100; progress.value = 0;
+        progress.style.marginLeft = '0.5em';
+        epError.appendChild(progress);
+        // Upload with retries
+        const task = (async () => {
+          for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+            progress.value = 0;
+            attemptLabel.textContent = attempt > 1 ? `${attempt} of ${maxAttempts}` : '';
+            try {
+              const url = await uploadToCatboxWithProgress(file, pct => {
+                progress.value = pct;
+              });
+              epSrcInput.value = url;
+              epError.textContent = '';
+              return;
+            } catch {
+              if (attempt === maxAttempts) {
+                epError.innerHTML = '<span style="color:red">Upload failed</span>';
+              }
+            }
+          }
+        })();
+        uploadTasks.push(task);
+      });
+      await Promise.all(uploadTasks);
+    });
     // Start in Create mode
     loadUrlContainer.style.display = 'none';
 

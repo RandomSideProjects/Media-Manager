@@ -5,12 +5,10 @@ let currentIndex = 0;
 
 const video = document.getElementById("videoPlayer");
 const spinner = document.getElementById("loadingSpinner");
-// Show spinner when loading/buffering, hide when playing
 video.addEventListener("loadstart", () => { spinner.style.display = "block"; });
 video.addEventListener("waiting", () => { spinner.style.display = "block"; });
 video.addEventListener("canplay", () => { spinner.style.display = "none"; });
 video.addEventListener("playing", () => { spinner.style.display = "none"; });
-// Listen for popout time updates
 window.addEventListener('message', (e) => {
   if (e.data && e.data.type === 'popoutTime') {
     try {
@@ -31,7 +29,6 @@ const directoryTitle = document.getElementById("directoryTitle");
 const backBtn = document.getElementById("backBtn");
 const theaterBtn = document.getElementById("theaterBtn");
 theaterBtn.addEventListener("click", () => {
-  // Pause the main player before popping out
   video.pause();
   const src = video.src;
   const currentTime = video.currentTime || 0;
@@ -70,12 +67,10 @@ theaterBtn.addEventListener("click", () => {
       <script>
         const v = document.getElementById('popVideo');
         const popSpinner = document.getElementById('popSpinner');
-        // Show spinner when loading/buffering
         v.addEventListener('loadstart', () => { popSpinner.style.display = 'block'; });
         v.addEventListener('waiting', () => { popSpinner.style.display = 'block'; });
         v.addEventListener('canplay', () => { popSpinner.style.display = 'none'; });
         v.addEventListener('playing', () => { popSpinner.style.display = 'none'; });
-        // Start hidden; show until canplay
         popSpinner.style.display = 'block';
         v.currentTime = ${currentTime};
         window.addEventListener('beforeunload', () => {
@@ -128,12 +123,10 @@ function renderEpisodeList() {
 function loadVideo(index) {
   const item = flatList[index];
   video.src = item.src;
-  // Store duration once metadata loads
   video.addEventListener('loadedmetadata', function onMeta() {
     localStorage.setItem(video.src + ':duration', video.duration);
     video.removeEventListener('loadedmetadata', onMeta);
   });
-  // Resume playback if previously saved
   const savedTime = localStorage.getItem(video.src);
   if (savedTime) {
     video.currentTime = parseFloat(savedTime);
@@ -148,7 +141,6 @@ video.addEventListener("timeupdate", () => {
   if (video.currentTime / video.duration > 0.9 && currentIndex < flatList.length - 1) {
     nextBtn.style.display = "inline-block";
   }
-  // Save current playback time
   localStorage.setItem(video.src, video.currentTime);
 });
 
@@ -160,7 +152,6 @@ nextBtn.addEventListener("click", () => {
 });
 
 video.addEventListener("ended", () => {
-  // Remove saved time when finished
   localStorage.removeItem(video.src);
   if (currentIndex < flatList.length - 1) {
     nextBtn.click();
@@ -246,14 +237,12 @@ init();
 async function handleFolderUpload(event) {
   const files = Array.from(event.target.files);
   const errorMessage = document.getElementById("errorMessage");
-  // Find index.json
   const indexFile = files.find(f => f.name.toLowerCase() === "index.json");
   if (!indexFile) {
     errorMessage.textContent = "Selected folder must contain index.json";
     errorMessage.style.display = "block";
     return;
   }
-  // Load and parse JSON
   let json;
   try {
     const text = await indexFile.text();
@@ -264,7 +253,6 @@ async function handleFolderUpload(event) {
     return;
   }
   const { title: dirTitle, categories: cats } = json;
-  // Build videoList from files
   videoList = cats.map(cat => ({
     category: cat.category,
     episodes: cat.episodes.map(ep => {
@@ -274,7 +262,6 @@ async function handleFolderUpload(event) {
       return { title: ep.title, src: srcUrl };
     })
   }));
-  // Initialize UI
   directoryTitle.textContent = dirTitle;
   directoryTitle.style.display = "block";
   errorMessage.style.display = "none";
@@ -286,7 +273,6 @@ async function handleFolderUpload(event) {
 
 
 backBtn.addEventListener("click", () => {
-  // Pause playback when returning to menu
   video.pause();
   playerScreen.style.display = "none";
   selectorScreen.style.display = "flex";
@@ -295,9 +281,7 @@ backBtn.addEventListener("click", () => {
   document.body.classList.remove("theater-mode");
 });
 
-// Requires JSZip included in index.html via a <script> tag
 async function downloadSourceFolder() {
-  // Create overlay and progress UI
   const overlay = document.createElement('div');
   Object.assign(overlay.style, {
     position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
@@ -305,120 +289,196 @@ async function downloadSourceFolder() {
     display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
     zIndex: 9999, fontFamily: 'Segoe UI, sans-serif', textAlign: 'center'
   });
-  const fileLabel = document.createElement('div');
-  fileLabel.style.marginBottom = '0.5em';
-  overlay.appendChild(fileLabel);
-  const fileProgressBar = document.createElement('progress');
-  fileProgressBar.max = 100; fileProgressBar.value = 0;
-  fileProgressBar.style.width = '80%'; fileProgressBar.style.marginBottom = '0.5em';
-  overlay.appendChild(fileProgressBar);
-  const episodesLeftLabel = document.createElement('div');
-  overlay.appendChild(episodesLeftLabel);
   document.body.appendChild(overlay);
 
-  const fileStats = document.createElement('div');
-  fileStats.style.marginBottom = '0.5em';
-  overlay.insertBefore(fileStats, fileProgressBar);
-  const totalStats = document.createElement('div');
-  totalStats.style.marginTop = '0.5em';
-  overlay.appendChild(totalStats);
+  let cancelRequested = false;
+  const xhrs = [];
 
-  // Ensure JSZip is available
-  if (typeof JSZip === 'undefined') {
-    console.error('JSZip library not loaded.');
-    return;
-  }
+  const rowsContainer = document.createElement('div');
+  rowsContainer.style.width = '80%';
+  overlay.appendChild(rowsContainer);
+
   const zip = new JSZip();
   const titleText = directoryTitle.textContent.trim() || 'directory';
-  // Create a top-level folder named after the source title
   const rootFolder = zip.folder(titleText);
-  // Add instruction file inside the source folder
   rootFolder.file(
-    'PUT FOLDER IN DIRECTORYS FOLDER.txt',
+    'PUT THIS FOLDER IN YOUR /DIRECTORYS/ FOLDER.txt',
     'https://github.com/RandomSideProjects/Media-Manager/ is the origin of this web app.'
   );
-  // Build JSON structure and add video files
+
   const manifest = { title: titleText, categories: [] };
-  const totalEpisodes = videoList.reduce((sum, cat) => sum + cat.episodes.length, 0);
-  let processedCount = 0;
-  const startTotalTime = Date.now();
-  for (let ci = 0; ci < videoList.length; ci++) {
-    const category = videoList[ci];
-    const catName = category.category || 'Category';
-    const catFolder = rootFolder.folder(catName);
-    const catObj = { category: catName, episodes: [] };
-    for (let ei = 0; ei < category.episodes.length; ei++) {
-      const episode = category.episodes[ei];
+  const catFolders = [];
+  const catObjs = [];
+
+  videoList.forEach(cat => {
+    const catFolder = rootFolder.folder(cat.category);
+    catFolders.push(catFolder);
+    const catObj = { category: cat.category, episodes: [] };
+    catObjs.push(catObj);
+    manifest.categories.push(catObj);
+  });
+
+  const tasks = [];
+  videoList.forEach((cat, ci) =>
+    cat.episodes.forEach((episode, ei) => tasks.push({ ci, ei, episode }))
+  );
+
+  const progressBars = [];
+  // --- 1. Insert initialization of loadedBytes, totalBytes, and after ETA label, speedLabel and dataLeftLabels ---
+  // We'll initialize loadedBytes and totalBytes for progress tracking.
+  const loadedBytes = Array(tasks.length).fill(0);
+  const totalBytes = Array(tasks.length).fill(0);
+
+  // Insert ETA label and speed label after rowsContainer
+  // We'll add the labels after rowsContainer is appended, but before rows are built.
+  // So, build the rows first, then insert the labels.
+  // But per instruction, after ETA label insertion, add speedLabel and dataLeftLabels array.
+
+  // We'll build the rows, then create ETA label and speed label.
+  const dataLeftLabels = [];
+  tasks.forEach(({ ci, ei }, idx) => {
+    const row = document.createElement('div');
+    Object.assign(row.style, { display: 'flex', alignItems: 'center', margin: '0.5em 0' });
+    const label = document.createElement('span');
+    label.textContent = `S${ci+1}E${ei+1}`;
+    label.style.width = '4em';
+    const progress = document.createElement('progress');
+    progress.max = 100;
+    progress.value = 0;
+    progress.style.flex = '1';
+    row.append(label, progress);
+    // --- 2. Create and store data-left labels when building rows ---
+    const dataLeft = document.createElement('span');
+    dataLeft.style.marginLeft = '0.5em';
+    dataLeft.style.color = '#6ec1e4';
+    dataLeft.textContent = '';
+    row.appendChild(dataLeft);
+    dataLeftLabels[idx] = dataLeft;
+    rowsContainer.appendChild(row);
+    progressBars[idx] = progress;
+  });
+
+  // ETA label
+  const etaLabel = document.createElement('div');
+  etaLabel.style.margin = '0.5em';
+  etaLabel.style.color = '#6ec1e4';
+  overlay.insertBefore(etaLabel, rowsContainer);
+  // --- 1. After ETA label, add speed label and dataLeftLabels array ---
+  const speedLabel = document.createElement('div');
+  speedLabel.style.margin = '0.5em';
+  speedLabel.style.color = '#6ec1e4';
+  overlay.insertBefore(speedLabel, etaLabel);
+
+  const cancelBtn = document.createElement('button');
+  cancelBtn.textContent = 'Cancel';
+  cancelBtn.className = 'pill-button';
+  cancelBtn.style.marginTop = '1em';
+  overlay.appendChild(cancelBtn);
+  cancelBtn.addEventListener('click', () => {
+    cancelRequested = true;
+    xhrs.forEach(x => x.abort());
+    overlay.remove();
+  });
+
+  const concurrency = 25;
+  let pointer = 0;
+  // For ETA calculation
+  let lastTime = Date.now();
+  let lastLoaded = 0;
+  let avgSpeed = 0;
+  const workers = Array.from({ length: concurrency }, async () => {
+    while (!cancelRequested && pointer < tasks.length) {
+      const idx = pointer++;
+      const { ci, ei, episode } = tasks[idx];
       try {
-        // Update per-file labels
-        fileLabel.textContent = `S${ci+1}E${ei+1}`;
-        episodesLeftLabel.textContent = `${totalEpisodes - processedCount - 1} Items remaining`;
-        // Download via XHR for progress
         const blob = await new Promise((resolve, reject) => {
           const xhr = new XMLHttpRequest();
-          const startFileTime = Date.now();
+          xhrs.push(xhr);
+          xhr.addEventListener('loadend', () => {
+            const i = xhrs.indexOf(xhr);
+            if (i >= 0) xhrs.splice(i, 1);
+          });
           xhr.open('GET', episode.src);
           xhr.responseType = 'blob';
           xhr.addEventListener('progress', e => {
             if (e.lengthComputable) {
-              const loaded = e.loaded;
-              const total = e.total;
-              fileProgressBar.value = (loaded / total) * 100;
-              // Per-file stats
+              progressBars[idx].value = (e.loaded / e.total) * 100;
+              loadedBytes[idx] = e.loaded;
+              totalBytes[idx] = e.total;
+              // --- 3. Update speed label and per-file data-left in the progress handler ---
+              // Calculate total loaded and speed
+              const totalLoaded = loadedBytes.reduce((a, b) => a + b, 0);
+              const totalTotal = totalBytes.reduce((a, b) => a + b, 0);
               const now = Date.now();
-              const elapsedFileMs = now - startFileTime;
-              const fileSpeed = loaded / (elapsedFileMs / 1000);
-              const speedDisplay = (fileSpeed / (1024 * 1024)).toFixed(2) + ' MB/s';
-              const timeLeftFileSec = (total - loaded) / fileSpeed;
-              const etaFile = new Date(timeLeftFileSec * 1000).toISOString().substr(14, 5);
-              fileStats.textContent = `${speedDisplay} | ${etaFile} left`;
-              // Overall stats
-              const elapsedTotalMs = now - startTotalTime;
-              const completedFraction = processedCount + loaded / total;
-              const avgSecPerEp = elapsedTotalMs / 1000 / completedFraction;
-              const remainCount = totalEpisodes - completedFraction;
-              const etaTotalSec = avgSecPerEp * remainCount;
-              const etaTotalDisplay = new Date(etaTotalSec * 1000).toISOString().substr(14, 5);
-              totalStats.textContent = `ETA: ${etaTotalDisplay}`;
+              const dt = (now - lastTime) / 1000;
+              const dLoaded = totalLoaded - lastLoaded;
+              let speed = 0;
+              if (dt > 0) {
+                speed = dLoaded / dt;
+                // smooth speed
+                avgSpeed = avgSpeed * 0.8 + speed * 0.2;
+                lastTime = now;
+                lastLoaded = totalLoaded;
+              }
+              // ETA
+              const remaining = totalTotal - totalLoaded;
+              let eta = '';
+              if (avgSpeed > 0 && remaining > 0) {
+                const seconds = remaining / avgSpeed;
+                const min = Math.floor(seconds / 60);
+                const sec = Math.round(seconds % 60);
+                eta = `ETA: ${min}m ${sec}s`;
+              }
+              etaLabel.textContent = eta;
+              // Update current download speed
+              const speedMBps = (speed / (1024 * 1024)).toFixed(2);
+              speedLabel.textContent = `Speed: ${speedMBps} MB/s`;
+              // Update remaining data for this file
+              const remainingBytes = totalBytes[idx] - loadedBytes[idx];
+              const remainingMB = (remainingBytes / (1024 * 1024)).toFixed(2);
+              dataLeftLabels[idx].textContent = `${remainingMB} MB left`;
             }
           });
-          xhr.onload = () => {
-            if (xhr.status >= 200 && xhr.status < 300) resolve(xhr.response);
-            else reject(new Error('Failed to download file: ' + xhr.status));
-          };
+          xhr.onload = () => xhr.status >= 200 && xhr.status < 300
+            ? resolve(xhr.response)
+            : reject(new Error('Download failed: ' + xhr.status));
           xhr.onerror = () => reject(new Error('Network error'));
           xhr.send();
         });
         const urlParts = new URL(episode.src, window.location.href);
-        const fileName = decodeURIComponent(urlParts.pathname.split('/').pop());
-        catFolder.file(fileName, blob);
-        catObj.episodes.push({ title: episode.title, src: `Directorys/${titleText}/${catName}/${fileName}` });
+        const origName = decodeURIComponent(urlParts.pathname.split('/').pop());
+        const ext = origName.includes('.') ? origName.slice(origName.lastIndexOf('.')) : '';
+        const pad = String(ei + 1).padStart(2, '0');
+        const fileName = `E${pad}${ext}`;
+        catFolders[ci].file(fileName, blob);
+        catObjs[ci].episodes.push({
+          title: episode.title,
+          src: `Directorys/${titleText}/${videoList[ci].category}/${fileName}`
+        });
       } catch (err) {
-        console.error('Error fetching episode for ZIP:', episode.src, err);
+        console.error('Error downloading', episode.src, err);
       }
-      processedCount++;
     }
-    rootFolder.file('index.json', ''); // ensure folder exists
-    manifest.categories.push(catObj);
-  }
-  // Add the manifest JSON (index.json) at the root of the source folder
-  rootFolder.file('index.json', JSON.stringify(manifest, null, 2));
-  // Generate and download the ZIP
-  const content = await zip.generateAsync({ type: 'blob' }, metadata => {
-    // optional: update a progress bar here via metadata.percent
-    console.log(`ZIP progress: ${metadata.percent.toFixed(2)}%`);
   });
+
+  await Promise.all(workers);
+
+  if (cancelRequested) {
+    return;
+  }
+
+  rootFolder.file('index.json', JSON.stringify(manifest, null, 2));
+
+  const content = await zip.generateAsync({ type: 'blob' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(content);
   a.download = `${titleText}.zip`;
   document.body.appendChild(a);
   a.click();
-  // Remove overlay
+  a.remove();
   overlay.remove();
-  document.body.removeChild(a);
 }
 
-// Wire up the download button
 const downloadBtn = document.getElementById('downloadBtn');
 if (downloadBtn) {
   downloadBtn.addEventListener('click', () => {
@@ -429,15 +489,12 @@ if (downloadBtn) {
   });
 }
 
-// Theme toggle setup
-(function() {
+ (function() {
   const toggleBtn = document.getElementById('themeToggle');
   const bodyEl = document.body;
-  // Load stored theme or default to dark
   const stored = localStorage.getItem('theme') || 'dark';
   bodyEl.classList.toggle('light-mode', stored === 'light');
   toggleBtn.textContent = stored === 'light' ? '☀' : '☾';
-  // Toggle on click
   toggleBtn.addEventListener('click', () => {
     const isLight = bodyEl.classList.toggle('light-mode');
     toggleBtn.textContent = isLight ? '☀' : '☾';
