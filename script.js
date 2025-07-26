@@ -225,6 +225,19 @@ async function init() {
     selectorScreen.style.display = 'flex';
     renderEpisodeList();
     showResumeMessage();
+    // Auto-select episode if ?item= index is provided
+    const itemParam = params.get('item') || params.get('?item');
+    if (itemParam !== null) {
+      const itemIndex = parseInt(itemParam, 10) - 1;
+      if (!isNaN(itemIndex) && itemIndex >= 0 && itemIndex < flatList.length) {
+        currentIndex = itemIndex;
+        selectorScreen.style.display = 'none';
+        playerScreen.style.display = 'block';
+        backBtn.style.display = 'inline-block';
+        theaterBtn.style.display = 'inline-block';
+        loadVideo(currentIndex);
+      }
+    }
   } catch (err) {
     episodeList.textContent = "Failed to load episode list: " + err.message;
     console.error("Episode List Error:", err);
