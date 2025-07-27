@@ -58,26 +58,26 @@
   <div class="container" id="sourcesContainer">
     <!-- Cards will be injected here -->
   </div>
-  <script>
+<script>
   async function loadSources() {
     const container = document.getElementById('sourcesContainer');
     container.innerHTML = '';
     try {
-      const apiUrl = 'https://api.github.com/repos/randomsideprojects/Media-Manager/contents/Directorys';
-      const list = await fetch(apiUrl).then(res => {
-        if (!res.ok) throw new Error('GitHub API error ' + res.status);
+      const manifest = await fetch('./SourceList.json').then(res => {
+        if (!res.ok) throw new Error('Failed to load SourceList.json');
         return res.json();
       });
-      const jsonFiles = list.filter(item =>
-        item.type === 'file' &&
-        item.name.toLowerCase().endsWith('.json') &&
-        item.name.toLowerCase() !== 'exampledir.json'
-      );
-      for (const file of jsonFiles) {
+      for (const [fileName, filePath] of Object.entries(manifest)) {
+        if (typeof filePath !== 'string') continue;
+        const lower = fileName.toLowerCase();
+        if (!lower.endsWith('.json') || lower === 'exampledir.json') continue;
         try {
-          const json = await fetch(file.download_url).then(r => r.json());
-          const title = json.title || file.name;
-          const categories = Array.isArray(json.categories) ? json.categories : [];
+          const data = await fetch(filePath).then(r => {
+            if (!r.ok) throw new Error('Failed to fetch ' + filePath);
+            return r.json();
+          });
+          const title = data.title || fileName;
+          const categories = Array.isArray(data.categories) ? data.categories : [];
           const seasons = categories.length;
           let episodes = 0;
           categories.forEach(cat => {
@@ -95,7 +95,8 @@
           btn.className = 'pill-button';
           btn.textContent = 'Open';
           btn.onclick = () => {
-            window.location.href = `../index.html?source=Directorys/${encodeURIComponent(file.name)}`;
+            const srcPath = filePath.startsWith('./') ? filePath.slice(2) : filePath;
+            window.location.href = `../index.html?source=Directorys/${encodeURIComponent(srcPath)}`;
           };
           card.append(h3, p1, p2, btn);
           card.addEventListener('contextmenu', e => {
@@ -110,12 +111,12 @@
           });
           container.appendChild(card);
         } catch (err) {
-          console.warn('Failed to load/parse', file.name, err);
+          console.warn('Failed to load/parse', fileName, err);
         }
       }
     } catch (error) {
-      container.innerHTML = '<p style="color:#f1f1f1;">Failed to load sources from GitHub API.</p>';
-      console.error('Error loading sources:', error);
+      container.innerHTML = '<p style="color:#f1f1f1;">Failed to load SourceList.json.</p>';
+      console.error(error);
     }
   }
   loadSources();
