@@ -2,12 +2,12 @@ name: Source index Maintainer (DO NOT TOUCH)
 
 on:
   push:
-    branches:
-      - main  # Or replace with your branch
+    paths:
+      - 'Directorys/Files/**'
   workflow_dispatch:
 
 permissions:
-  contents: write  # 🔑 REQUIRED for committing back to the repo
+  contents: write
 
 jobs:
   build-index:
@@ -16,23 +16,33 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v3
 
-      - name: Generate Directorys index
+      - name: Generate Directorys/SourceList.json
         shell: bash
         run: |
-          #!/usr/bin/env bash
           set -euo pipefail
-          DIR="Directorys"
-          INDEX_FILE="$DIR/index.json"
+          FILE_DIR="Directorys/Files"
+          INDEX_FILE="Directorys/SourceList.json"
 
-          if [[ ! -d "$DIR" ]]; then
-            echo "Directory '$DIR' does not exist; nothing to index."
+          if [[ ! -d "$FILE_DIR" ]]; then
+            echo "Directory '$FILE_DIR' does not exist; nothing to index."
             exit 0
           fi
 
-          node -e "const fs=require('fs');const path=require('path');const dir='Directorys';const exclude=['index.json','index.html'];const items=fs.readdirSync(dir).filter(f=>!exclude.includes(f));const obj={Sources:[]};for(const it of items){obj[it]=\`./\${it}\`;}fs.writeFileSync(path.join(dir,'index.json'),JSON.stringify(obj,null,2));"
+          node -e "
+            const fs = require('fs');
+            const path = require('path');
+            const dir = '$FILE_DIR';
+            const exclude = ['index.json', 'index.html'];
+            const items = fs.readdirSync(dir).filter(f => !exclude.includes(f));
+            const obj = { Sources: [] };
+            for (const it of items) {
+              obj[it] = './Files/' + it;
+            }
+            fs.writeFileSync('$INDEX_FILE', JSON.stringify(obj, null, 2));
+          "
 
       - name: Commit and push changes
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: 'chore: update Directorys/index.json'
-          file_pattern: 'Directorys/index.json'
+          commit_message: 'chore: update Directorys/SourceList.json'
+          file_pattern: 'Directorys/SourceList.json'
