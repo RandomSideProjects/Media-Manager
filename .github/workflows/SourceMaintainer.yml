@@ -36,7 +36,7 @@ jobs:
             const items = fs.readdirSync(dir).filter(f => !exclude.includes(f));
             const obj = { Sources: [] };
             for (const it of items) {
-              obj[it] = './Files/' + it;
+              obj[it] = '../Directorys/Files/' + it;
             }
             fs.writeFileSync('$INDEX_FILE', JSON.stringify(obj, null, 2));
           "
