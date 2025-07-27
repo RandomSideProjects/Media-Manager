@@ -6,13 +6,10 @@ name: Generate directory index
 # to reflect the current contents, excluding `index.json` and `index.html`.
 
 on:
-  # Rebuild the index whenever something inside the Directorys folder changes.
   push:
-    paths:
-      - 'Directorys/**'
-  # Allow manual runs from the GitHub Actions UI.
+    branches:
+      - main  # Replace with your branch name if different
   workflow_dispatch:
-
 jobs:
   build-index:
     runs-on: ubuntu-latest
