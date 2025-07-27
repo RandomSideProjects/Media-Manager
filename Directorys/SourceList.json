@@ -1,11 +1,11 @@
 {
   "Sources": [],
-  "100Kanojo.json": "./Files/100Kanojo.json",
-  "ApothDiaries.json": "./Files/ApothDiaries.json",
-  "BunnyGirlSenpai.json": "./Files/BunnyGirlSenpai.json",
-  "ExampleDir.json": "./Files/ExampleDir.json",
-  "Kanokari.json": "./Files/Kanokari.json",
-  "Mdud.json": "./Files/Mdud.json",
-  "Roshidere.json": "./Files/Roshidere.json",
-  "TinySenpai.json": "./Files/TinySenpai.json"
+  "100Kanojo.json": "../Directorys/Files/100Kanojo.json",
+  "ApothDiaries.json": "../Directorys/Files/ApothDiaries.json",
+  "BunnyGirlSenpai.json": "../Directorys/Files/BunnyGirlSenpai.json",
+  "ExampleDir.json": "../Directorys/Files/ExampleDir.json",
+  "Kanokari.json": "../Directorys/Files/Kanokari.json",
+  "Mdud.json": "../Directorys/Files/Mdud.json",
+  "Roshidere.json": "../Directorys/Files/Roshidere.json",
+  "TinySenpai.json": "../Directorys/Files/TinySenpai.json"
 }
