@@ -63,19 +63,33 @@
     const container = document.getElementById('sourcesContainer');
     container.innerHTML = '';
     try {
-      const manifest = await fetch('./SourceList.json').then(res => {
-        if (!res.ok) throw new Error('Failed to load SourceList.json');
-        return res.json();
-      });
+      const manifestUrl = new URL('SourceList.json', window.location.href).href;
+      let manifest;
+      try {
+        const response = await fetch(manifestUrl);
+        const text = await response.text();
+        manifest = JSON.parse(text);
+        console.log('Loaded SourceList.json:', manifestUrl);
+      } catch (err) {
+        throw new Error('Could not fetch or parse SourceList.json: ' + err.message);
+      }
       for (const [fileName, filePath] of Object.entries(manifest)) {
         if (typeof filePath !== 'string') continue;
         const lower = fileName.toLowerCase();
         if (!lower.endsWith('.json') || lower === 'exampledir.json') continue;
         try {
-          const data = await fetch(filePath).then(r => {
-            if (!r.ok) throw new Error('Failed to fetch ' + filePath);
-            return r.json();
-          });
+          const sourceJsonUrl = new URL(filePath, window.location.href).href;
+          console.log(`Fetching source JSON "${fileName}" from`, sourceJsonUrl);
+          let data;
+          try {
+            const resp = await fetch(sourceJsonUrl);
+            const text = await resp.text();
+            data = JSON.parse(text);
+            console.log(`Successfully loaded source "${fileName}"`);
+          } catch (err) {
+            console.warn('Could not fetch or parse ' + sourceJsonUrl + ':', err);
+            continue;
+          }
           const title = data.title || fileName;
           const categories = Array.isArray(data.categories) ? data.categories : [];
           const seasons = categories.length;
