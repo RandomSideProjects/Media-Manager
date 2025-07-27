@@ -1,15 +1,14 @@
-name: Generate directory index
-
-# This workflow maintains a simple JSON index of the files located in the
-# top-level `Directorys/` folder. Each time files inside `Directorys/` are
-# added, removed, or renamed, the workflow rebuilds `Directorys/index.json`
-# to reflect the current contents, excluding `index.json` and `index.html`.
+name: Source index Maintainer (DO NOT TOUCH)
 
 on:
   push:
     branches:
-      - main  # Replace with your branch name if different
+      - main  # Or replace with your branch
   workflow_dispatch:
+
+permissions:
+  contents: write  # 🔑 REQUIRED for committing back to the repo
+
 jobs:
   build-index:
     runs-on: ubuntu-latest
@@ -25,13 +24,11 @@ jobs:
           DIR="Directorys"
           INDEX_FILE="$DIR/index.json"
 
-          # Ensure the target directory exists. If it doesn't, abort gracefully.
           if [[ ! -d "$DIR" ]]; then
             echo "Directory '$DIR' does not exist; nothing to index."
             exit 0
           fi
 
-          # Use Node.js to generate the JSON file excluding index.html and index.json
           node -e "const fs=require('fs');const path=require('path');const dir='Directorys';const exclude=['index.json','index.html'];const items=fs.readdirSync(dir).filter(f=>!exclude.includes(f));const obj={Sources:[]};for(const it of items){obj[it]=\`./\${it}\`;}fs.writeFileSync(path.join(dir,'index.json'),JSON.stringify(obj,null,2));"
 
       - name: Commit and push changes
