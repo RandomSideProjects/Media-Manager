@@ -204,6 +204,10 @@
     </div>
     <div id="outputContainer" style="display:flex; align-items:center; gap:0.5em;">
       <pre id="output"><a id="outputLink" href="#" target="_blank"></a></pre>
+      <button id="downloadJsonBtn"
+              style="display:none; padding:0.6em; background:#007bff; color:#fff; border:none; border-radius:50%; overflow:hidden; cursor:pointer; width:2.5em; height:2.5em; margin-left:0.5em;">
+        <img src="Assets/DownloadArrow.png" alt="Download" style="width:20px; height:auto; display:block; margin:auto;">
+      </button>
     </div>
   </div>
 
@@ -584,6 +588,13 @@
         outputLink.textContent = directoryCode;
         outputLink.href = `https://randomsideprojects.github.io/Media-Manager/index.html?source=${directoryCode}`;
       }
+      // Toggle download button visibility
+      const downloadBtn = document.getElementById('downloadJsonBtn');
+      if (isFullUrl) {
+        downloadBtn.style.display = 'inline-block';
+      } else {
+        downloadBtn.style.display = 'none';
+      }
     }
 
     const outputContainer = document.getElementById('outputContainer');
@@ -633,6 +644,24 @@
     confirmNo.addEventListener('click', () => {
       confirmModal.style.display = 'none';
       pendingRemoval = null;
+    });
+    // Download the JSON when the download button is clicked
+    document.getElementById('downloadJsonBtn').addEventListener('click', async () => {
+      const url = document.getElementById('outputLink').href;
+      try {
+        const response = await fetch(url);
+        const blob = await response.blob();
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        // Filename from directoryCode or fallback
+        const code = directoryCode || 'directory';
+        a.download = code + '.json';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      } catch (err) {
+        console.error('Download failed:', err);
+      }
     });
   </script>
 </body>

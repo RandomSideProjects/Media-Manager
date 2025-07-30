@@ -1,7 +1,10 @@
+
+
 let videoList = [];
 let sourceKey = '';
 let flatList = [];
 let currentIndex = 0;
+
 
 const video = document.getElementById("videoPlayer");
 const spinner = document.getElementById("loadingSpinner");
@@ -578,3 +581,178 @@ function showResumeMessage() {
     });
   }
 }
+// Clip functionality
+const clipBtn = document.getElementById('clipBtn');
+const clipOverlay = document.getElementById('clipOverlay');
+const clipMessage = document.getElementById('clipMessage');
+const clipDoneBtn = document.getElementById('clipDoneBtn');
+
+// Upload clip to Catbox with progress callback
+async function uploadClipToCatboxWithProgress(blob, onProgress) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', 'https://catbox.moe/user/api.php');
+    const form = new FormData();
+    form.append('reqtype', 'fileupload');
+    form.append('fileToUpload', blob, 'clip.webm');
+    xhr.upload.onprogress = e => {
+      if (e.lengthComputable && typeof onProgress === 'function') {
+        onProgress(e.loaded / e.total * 100);
+      }
+    };
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve(xhr.responseText);
+      } else {
+        reject(new Error('Upload failed: ' + xhr.status));
+      }
+    };
+    xhr.onerror = () => reject(new Error('Network error'));
+    xhr.send(form);
+  });
+}
+
+if (clipBtn) {
+clipBtn.addEventListener('click', async () => {
+  video.pause();
+  const z = parseFloat(prompt('Enter total clip length in seconds:', '20'));
+  if (isNaN(z) || z <= 0) return;
+  const x = video.currentTime;
+  const half = z / 2;
+  const start = Math.max(0, x - half);
+  const end = Math.min(video.duration, x + half);
+  const duration = video.duration;
+
+  const overlay = document.getElementById('clipProgressOverlay');
+  const msg = document.getElementById('clipProgressMessage');
+  const bar = document.getElementById('clipProgressBar');
+  overlay.style.display = 'flex';
+  msg.textContent = 'Fetching file info...';
+  bar.value = 0;
+
+  // 1) HEAD request to get total file size
+  let totalBytes;
+  try {
+    totalBytes = await new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('HEAD', video.src);
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          const len = parseInt(xhr.getResponseHeader('Content-Length') || '0', 10);
+          resolve(len);
+        } else {
+          reject(new Error('HEAD failed: ' + xhr.status));
+        }
+      };
+      xhr.onerror = () => reject(new Error('Network error during HEAD'));
+      xhr.send();
+    });
+  } catch (err) {
+    overlay.style.display = 'none';
+    alert('Could not fetch file info: ' + err.message);
+    return;
+  }
+
+  // 2) Calculate byte offsets
+  const sliceStart = Math.floor((start / duration) * totalBytes);
+  const sliceEnd = Math.min(totalBytes - 1, Math.floor((end / duration) * totalBytes));
+
+  // 3) GET range slice
+  msg.textContent = 'Downloading clip segment...';
+  bar.value = 0;
+  let clipBlob;
+  try {
+    clipBlob = await new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('GET', video.src);
+      xhr.responseType = 'blob';
+      xhr.setRequestHeader('Range', `bytes=${sliceStart}-${sliceEnd}`);
+      xhr.onprogress = e => {
+        if (e.lengthComputable) {
+          bar.value = (e.loaded / e.total) * 100;
+        }
+      };
+      xhr.onload = () => {
+        // Expect 206 Partial Content or 200 OK
+        if ((xhr.status >= 200 && xhr.status < 300)) {
+          resolve(xhr.response);
+        } else {
+          reject(new Error('Range request failed: ' + xhr.status));
+        }
+      };
+      xhr.onerror = () => reject(new Error('Network error during GET range'));
+      xhr.send();
+    });
+  } catch (err) {
+    overlay.style.display = 'none';
+    alert('Failed to download clip segment: ' + err.message);
+    return;
+  }
+
+  // Skip repackaging; use raw slice as MP4 upload
+  let uploadBlob = clipBlob;
+  bar.value = 100;
+
+  // 4) Upload the clip segment
+  msg.textContent = 'Uploading clip...';
+  bar.value = 0;
+  try {
+    const url = await uploadClipToCatboxWithProgress(uploadBlob, pct => {
+      bar.value = pct;
+    });
+    await navigator.clipboard.writeText(url);
+    overlay.style.display = 'none';
+    clipMessage.textContent = `Your Clip has been uploaded, here is the link:\n${url}`;
+    clipOverlay.style.display = 'flex';
+  } catch (err) {
+    overlay.style.display = 'none';
+    // Fallback: download locally
+    const dlUrl = URL.createObjectURL(uploadBlob);
+    const a = document.createElement('a');
+    a.href = dlUrl;
+    a.download = `clip.${uploadBlob.type.split('/')[1] || 'mp4'}`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(dlUrl);
+  }
+});
+}
+
+if (clipDoneBtn && clipOverlay) {
+clipDoneBtn.addEventListener('click', () => {
+  clipOverlay.style.display = 'none';
+});
+}
+
+// Settings menu and clipping toggle
+const settingsBtn = document.getElementById('settingsBtn');
+const settingsMenu = document.getElementById('settingsMenu');
+const clipToggle = document.getElementById('clipToggle');
+
+// Initialize toggle state from localStorage (default: off)
+const clippingEnabled = localStorage.getItem('clippingEnabled') === 'true';
+clipToggle.checked = clippingEnabled;
+// Show or hide the Clip button accordingly
+if (clipBtn) clipBtn.style.display = clippingEnabled ? 'inline-block' : 'none';
+
+// Toggle menu visibility when clicking the Settings button
+settingsBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  settingsMenu.style.display = settingsMenu.style.display === 'block' ? 'none' : 'block';
+});
+
+// Hide menu when clicking outside
+document.addEventListener('click', () => {
+  settingsMenu.style.display = 'none';
+});
+settingsMenu.addEventListener('click', (e) => {
+  e.stopPropagation();
+});
+
+// Update clippingEnabled on toggle change
+clipToggle.addEventListener('change', () => {
+  const enabled = clipToggle.checked;
+  localStorage.setItem('clippingEnabled', enabled);
+  if (clipBtn) clipBtn.style.display = enabled ? 'inline-block' : 'none';
+});
