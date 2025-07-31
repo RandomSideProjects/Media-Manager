@@ -345,7 +345,9 @@ async function downloadSourceFolder() {
   videoList.forEach(cat => {
     const catFolder = rootFolder.folder(cat.category);
     catFolders.push(catFolder);
-    const catObj = { category: cat.category, episodes: [] };
+    // Pre-create episodes array to preserve original order
+    const episodesPlaceholders = cat.episodes.map(ep => ({ title: ep.title, src: '' }));
+    const catObj = { category: cat.category, episodes: episodesPlaceholders };
     catObjs.push(catObj);
     manifest.categories.push(catObj);
   });
@@ -483,10 +485,8 @@ async function downloadSourceFolder() {
         const pad = String(ei + 1).padStart(2, '0');
         const fileName = `E${pad}${ext}`;
         catFolders[ci].file(fileName, blob);
-        catObjs[ci].episodes.push({
-          title: episode.title,
-          src: `Directorys/${titleText}/${videoList[ci].category}/${fileName}`
-        });
+        // Assign the local path to the pre-allocated episode slot
+        catObjs[ci].episodes[ei].src = `Directorys/${titleText}/${videoList[ci].category}/${fileName}`;
       } catch (err) {
         console.error('Error downloading', episode.src, err);
       }
