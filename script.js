@@ -587,6 +587,52 @@ const clipOverlay = document.getElementById('clipOverlay');
 const clipMessage = document.getElementById('clipMessage');
 const clipDoneBtn = document.getElementById('clipDoneBtn');
 
+// Helper to display clip result (success or error), guarding against clipMessage being null
+function displayClipResult(html, isError = false) {
+  if (clipMessage) {
+    clipMessage.innerHTML = html;
+    if (clipOverlay) {
+      clipOverlay.style.display = 'flex';
+    }
+  } else {
+    // Fallback standalone overlay
+    const tmp = document.createElement('div');
+    Object.assign(tmp.style, {
+      position: 'fixed',
+      inset: '0',
+      background: 'rgba(0,0,0,0.85)',
+      color: '#fff',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '1em',
+      zIndex: 10000,
+      fontFamily: 'system-ui,-apple-system,BlinkMacSystemFont,sans-serif',
+      textAlign: 'center',
+    });
+    const box = document.createElement('div');
+    Object.assign(box.style, {
+      background: isError ? 'rgba(80,0,0,0.95)' : 'rgba(20,20,20,0.95)',
+      padding: '1em 1.25em',
+      borderRadius: '12px',
+      maxWidth: '540px',
+      boxShadow: '0 20px 40px -10px rgba(0,0,0,0.6)',
+    });
+    box.innerHTML = html;
+    const done = document.createElement('button');
+    done.textContent = 'Done';
+    Object.assign(done.style, {
+      marginTop: '1em',
+      padding: '0.5em 1em',
+      cursor: 'pointer',
+    });
+    done.addEventListener('click', () => tmp.remove());
+    box.appendChild(done);
+    tmp.appendChild(box);
+    document.body.appendChild(tmp);
+  }
+}
+
 // Upload clip to Catbox with progress callback
 async function uploadClipToCatboxWithProgress(blob, onProgress) {
   return new Promise((resolve, reject) => {
@@ -613,110 +659,218 @@ async function uploadClipToCatboxWithProgress(blob, onProgress) {
 }
 
 if (clipBtn) {
-clipBtn.addEventListener('click', async () => {
-  video.pause();
-  const z = parseFloat(prompt('Enter total clip length in seconds:', '20'));
-  if (isNaN(z) || z <= 0) return;
-  const x = video.currentTime;
-  const half = z / 2;
-  const start = Math.max(0, x - half);
-  const end = Math.min(video.duration, x + half);
-  const duration = video.duration;
+  clipBtn.addEventListener('click', async () => {
+    const x = video.currentTime;
+    const y = parseFloat(prompt('Enter half-length in seconds:', '10'));
+    if (isNaN(y) || y <= 0) return;
+    const start = Math.max(0, x - y);
+    const end = Math.min(video.duration, x + y);
 
-  const overlay = document.getElementById('clipProgressOverlay');
-  const msg = document.getElementById('clipProgressMessage');
-  const bar = document.getElementById('clipProgressBar');
-  overlay.style.display = 'flex';
-  msg.textContent = 'Fetching file info...';
-  bar.value = 0;
+    const overlay = document.getElementById('clipProgressOverlay');
+    const msg = document.getElementById('clipProgressMessage');
+    const bar = document.getElementById('clipProgressBar');
 
-  // 1) HEAD request to get total file size
-  let totalBytes;
-  try {
-    totalBytes = await new Promise((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-      xhr.open('HEAD', video.src);
-      xhr.onload = () => {
-        if (xhr.status >= 200 && xhr.status < 300) {
-          const len = parseInt(xhr.getResponseHeader('Content-Length') || '0', 10);
-          resolve(len);
+    overlay.style.display = 'flex';
+    msg.textContent = 'Preparing clip...';
+    bar.value = 0;
+
+    let hiddenVideo = document.createElement('video');
+    hiddenVideo.muted = true;
+    hiddenVideo.preload = 'auto';
+    hiddenVideo.crossOrigin = 'anonymous';
+    // Ensure hiddenVideo is attached to DOM for stable capture
+    hiddenVideo.style.position = 'absolute';
+    hiddenVideo.style.left = '-9999px';
+    hiddenVideo.style.width = '1px';
+    hiddenVideo.style.height = '1px';
+    hiddenVideo.style.opacity = '0';
+    hiddenVideo.setAttribute('playsinline', '');
+    document.body.appendChild(hiddenVideo);
+
+    try {
+      hiddenVideo.src = video.src;
+
+      await new Promise(r => {
+        function onMeta() {
+          hiddenVideo.removeEventListener('loadedmetadata', onMeta);
+          r();
+        }
+        hiddenVideo.addEventListener('loadedmetadata', onMeta);
+      });
+
+      await new Promise(r => {
+        function onSeeked() {
+          hiddenVideo.removeEventListener('seeked', onSeeked);
+          r();
+        }
+        hiddenVideo.addEventListener('seeked', onSeeked);
+        hiddenVideo.currentTime = start;
+      });
+
+      // Start playback and wait for it to actually start
+      hiddenVideo.play();
+      await new Promise(resolve => {
+        function onPlaying() {
+          hiddenVideo.removeEventListener('playing', onPlaying);
+          resolve();
+        }
+        hiddenVideo.addEventListener('playing', onPlaying);
+      });
+      // small buffer to stabilize
+      await new Promise(r => setTimeout(r, 100));
+
+      // Build recording stream (prefer captureStream)
+      let stream;
+      let canvas;
+      let canvasDrawLoop;
+      if (typeof hiddenVideo.captureStream === 'function') {
+        stream = hiddenVideo.captureStream();
+
+        // If no audio in captureStream, supplement it
+        if (stream.getAudioTracks().length === 0) {
+          try {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            await audioCtx.resume().catch(() => {});
+            const sourceNode = audioCtx.createMediaElementSource(hiddenVideo);
+            const dest = audioCtx.createMediaStreamDestination();
+            sourceNode.connect(dest);
+            // Merge video and supplemented audio
+            stream = new MediaStream([
+              ...stream.getVideoTracks(),
+              ...dest.stream.getAudioTracks(),
+            ]);
+          } catch (err) {
+            console.warn('Supplementing audio failed, proceeding with original stream.', err);
+          }
+        }
+      } else {
+        canvas = document.createElement('canvas');
+        canvas.width = hiddenVideo.videoWidth || 640;
+        canvas.height = hiddenVideo.videoHeight || 360;
+        const ctx = canvas.getContext('2d');
+        canvasDrawLoop = () => {
+          ctx.drawImage(hiddenVideo, 0, 0, canvas.width, canvas.height);
+          if (recorder && recorder.state === 'recording') {
+            requestAnimationFrame(canvasDrawLoop);
+          }
+        };
+        const canvasStream = canvas.captureStream(30);
+        let audioStream = null;
+        try {
+          const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+          await audioCtx.resume().catch(() => {});
+          const sourceNode = audioCtx.createMediaElementSource(hiddenVideo);
+          const dest = audioCtx.createMediaStreamDestination();
+          sourceNode.connect(dest);
+          sourceNode.connect(audioCtx.destination);
+          audioStream = dest.stream;
+        } catch (e) {
+          console.warn('Audio capture fallback failed, proceeding without audio.', e);
+        }
+        if (audioStream) {
+          stream = new MediaStream([
+            ...canvasStream.getVideoTracks(),
+            ...audioStream.getAudioTracks(),
+          ]);
         } else {
-          reject(new Error('HEAD failed: ' + xhr.status));
+          stream = canvasStream;
         }
-      };
-      xhr.onerror = () => reject(new Error('Network error during HEAD'));
-      xhr.send();
-    });
-  } catch (err) {
-    overlay.style.display = 'none';
-    alert('Could not fetch file info: ' + err.message);
-    return;
-  }
+      }
 
-  // 2) Calculate byte offsets
-  const sliceStart = Math.floor((start / duration) * totalBytes);
-  const sliceEnd = Math.min(totalBytes - 1, Math.floor((end / duration) * totalBytes));
-
-  // 3) GET range slice
-  msg.textContent = 'Downloading clip segment...';
-  bar.value = 0;
-  let clipBlob;
-  try {
-    clipBlob = await new Promise((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-      xhr.open('GET', video.src);
-      xhr.responseType = 'blob';
-      xhr.setRequestHeader('Range', `bytes=${sliceStart}-${sliceEnd}`);
-      xhr.onprogress = e => {
-        if (e.lengthComputable) {
-          bar.value = (e.loaded / e.total) * 100;
+      let mimeType = 'video/webm;codecs=vp9,opus';
+      if (!MediaRecorder.isTypeSupported(mimeType)) {
+        mimeType = 'video/webm;codecs=vp8,opus';
+        if (!MediaRecorder.isTypeSupported(mimeType)) {
+          mimeType = 'video/webm';
         }
+      }
+
+      let recorder;
+      const recordedChunks = [];
+      try {
+        recorder = new MediaRecorder(stream, { mimeType });
+      } catch {
+        recorder = new MediaRecorder(stream);
+      }
+      recorder.ondataavailable = e => {
+        if (e.data && e.data.size > 0) recordedChunks.push(e.data);
       };
-      xhr.onload = () => {
-        // Expect 206 Partial Content or 200 OK
-        if ((xhr.status >= 200 && xhr.status < 300)) {
-          resolve(xhr.response);
-        } else {
-          reject(new Error('Range request failed: ' + xhr.status));
+
+      const durationMs = (end - start) * 1000;
+      const recordStart = Date.now();
+      const progressInterval = setInterval(() => {
+        const elapsed = Date.now() - recordStart;
+        bar.value = Math.min(100, (elapsed / durationMs) * 100);
+      }, 100);
+
+      // Debug log before starting recording
+      console.log('Recording stream tracks:', stream.getVideoTracks().length, 'video /', stream.getAudioTracks().length, 'audio');
+      recorder.start();
+      if (typeof canvasDrawLoop === 'function') canvasDrawLoop();
+
+      await new Promise(resolve => {
+        function checkTime() {
+          if (hiddenVideo.currentTime >= end) {
+            hiddenVideo.pause();
+            resolve();
+          } else {
+            requestAnimationFrame(checkTime);
+          }
         }
-      };
-      xhr.onerror = () => reject(new Error('Network error during GET range'));
-      xhr.send();
-    });
-  } catch (err) {
-    overlay.style.display = 'none';
-    alert('Failed to download clip segment: ' + err.message);
-    return;
-  }
+        checkTime();
+      });
 
-  // Skip repackaging; use raw slice as MP4 upload
-  let uploadBlob = clipBlob;
-  bar.value = 100;
+      recorder.stop();
+      clearInterval(progressInterval);
+      bar.value = 100;
+      msg.textContent = 'Processing clip...';
 
-  // 4) Upload the clip segment
-  msg.textContent = 'Uploading clip...';
-  bar.value = 0;
-  try {
-    const url = await uploadClipToCatboxWithProgress(uploadBlob, pct => {
-      bar.value = pct;
-    });
-    await navigator.clipboard.writeText(url);
-    overlay.style.display = 'none';
-    clipMessage.textContent = `Your Clip has been uploaded, here is the link:\n${url}`;
-    clipOverlay.style.display = 'flex';
-  } catch (err) {
-    overlay.style.display = 'none';
-    // Fallback: download locally
-    const dlUrl = URL.createObjectURL(uploadBlob);
-    const a = document.createElement('a');
-    a.href = dlUrl;
-    a.download = `clip.${uploadBlob.type.split('/')[1] || 'mp4'}`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(dlUrl);
-  }
-});
+      await new Promise(r => {
+        recorder.onstop = () => r();
+      });
+
+      const clipBlob = new Blob(recordedChunks, {
+        type: recorder.mimeType || 'video/webm',
+      });
+
+      msg.textContent = 'Uploading clip...';
+      bar.value = 0;
+      try {
+        const url = await uploadClipToCatboxWithProgress(clipBlob, pct => {
+          bar.value = pct;
+        });
+
+        let clipboardMsg = 'Link copied to clipboard.';
+        try {
+          await navigator.clipboard.writeText(url);
+        } catch (e) {
+          console.warn('Clipboard write failed:', e);
+          clipboardMsg = 'Could not copy to clipboard. Please copy manually.';
+        }
+
+        overlay.style.display = 'none';
+        displayClipResult(`
+          <h2 style="margin:0 0 0.5em; font-size:1.3em;">Your clip has been made!</h2>
+          <p style="margin:0 0 .75em;">You can access it at this link:</p>
+          <div style="word-break: break-all; margin-bottom:0.5em;">
+            <a href="${url}" target="_blank" style="color:#5ab8ff; text-decoration:none; font-weight:600;">${url}</a>
+          </div>
+          <div style="font-size:0.85em; color:#c0c0c0;">${clipboardMsg}</div>
+        `);
+      } catch (err) {
+        overlay.style.display = 'none';
+        displayClipResult(`
+          <h2 style="margin:0 0 0.5em; font-size:1.3em;">Clip upload failed</h2>
+          <p style="margin:0;">${err.message}</p>
+        `, true);
+      }
+    } finally {
+      // Clean up hiddenVideo from DOM
+      if (hiddenVideo && hiddenVideo.parentElement) {
+        hiddenVideo.remove();
+      }
+    }
+  });
 }
 
 if (clipDoneBtn && clipOverlay) {

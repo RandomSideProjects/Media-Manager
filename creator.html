@@ -197,17 +197,12 @@
     </div>
     <div id="categories"></div>
     <button id="addCategory">Add Category</button>
-    <button id="generate">Create Code</button>
     <div class="field-group" style="display:flex; align-items:center; gap:0.5em; margin-top:1em;">
       <label id="folderSelectBtn" for="folderInput" class="tab-button" style="margin:0;">Select Folder</label>
       <input type="file" id="folderInput" webkitdirectory multiple style="display:none;">
     </div>
     <div id="outputContainer" style="display:flex; align-items:center; gap:0.5em;">
       <pre id="output"><a id="outputLink" href="#" target="_blank"></a></pre>
-      <button id="downloadJsonBtn"
-              style="display:none; padding:0.6em; background:#007bff; color:#fff; border:none; border-radius:50%; overflow:hidden; cursor:pointer; width:2.5em; height:2.5em; margin-left:0.5em;">
-        <img src="Assets/DownloadArrow.png" alt="Download" style="width:20px; height:auto; display:block; margin:auto;">
-      </button>
     </div>
   </div>
 
@@ -259,7 +254,6 @@
 
     const categoriesEl = document.getElementById('categories');
     const addCategoryBtn = document.getElementById('addCategory');
-    const generateBtn = document.getElementById('generate');
     const outputEl = document.getElementById('output');
     const loadUrlInput = document.getElementById('loadUrl');
     const loadBtn = document.getElementById('loadBtn');
@@ -268,10 +262,12 @@
     const loadUrlContainer = document.getElementById('loadUrlContainer');
     const homeTabBtn = document.getElementById('homeTabBtn');
     const folderInput = document.getElementById('folderInput');
+    let isFolderUploading = false;
     // Import a single folder as the next season
     folderInput.addEventListener('change', async (e) => {
       const files = Array.from(e.target.files);
       if (!files.length) return;
+      isFolderUploading = true;
       // Reset input to allow re-selection
       folderInput.value = '';
       // Determine next season number
@@ -288,6 +284,28 @@
         const epNum = m ? parseInt(m[1], 10) : idx + 1;
         return { file, epNum };
       }).sort((a, b) => a.epNum - b.epNum);
+      // Create overlay UI
+      const folderOverlay = document.createElement('div');
+      folderOverlay.id = 'folderUploadOverlay';
+      folderOverlay.style.position = 'fixed';
+      folderOverlay.style.inset = '0';
+      folderOverlay.style.background = 'rgba(0,0,0,0.85)';
+      folderOverlay.style.display = 'flex';
+      folderOverlay.style.alignItems = 'center';
+      folderOverlay.style.justifyContent = 'center';
+      folderOverlay.style.zIndex = '10000';
+      folderOverlay.innerHTML = `
+        <div style="background:#1a1a1a; padding:1em; border-radius:8px; width:90%; max-width:700px; color:#f1f1f1; font-family:inherit;">
+          <h2 style="margin-top:0; font-size:1.4em;">Uploading Folder</h2>
+          <div id="folderUploadList" style="display:grid; gap:8px; max-height:50vh; overflow:auto;"></div>
+          <div style="margin-top:0.75em; display:flex; justify-content:space-between; align-items:center;">
+            <div id="folderUploadSummary" style="font-size:0.9em;">0 / 0 completed</div>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(folderOverlay);
+      const folderUploadList = folderOverlay.querySelector('#folderUploadList');
+      const folderUploadSummary = folderOverlay.querySelector('#folderUploadSummary');
       // Upload all episodes concurrently with retry indicators
       const uploadTasks = [];
       const maxAttempts = 5;
@@ -299,43 +317,75 @@
         const epSrcInput = inputs[1];
         const epError = epDiv.querySelector('.ep-error');
         epError.textContent = '';
-        // Info label
-        const infoMsg = document.createElement('span');
-        infoMsg.style.color = 'blue';
-        infoMsg.textContent = 'Uploading';
-        epError.appendChild(infoMsg);
-        // Attempt counter
-        const attemptLabel = document.createElement('span');
-        attemptLabel.style.color = '#6ec1e4';
-        attemptLabel.style.marginLeft = '0.5em';
-        epError.appendChild(attemptLabel);
-        // Progress bar
-        const progress = document.createElement('progress');
-        progress.max = 100; progress.value = 0;
-        progress.style.marginLeft = '0.5em';
-        epError.appendChild(progress);
+        // Overlay progress row
+        const row = document.createElement('div');
+        row.style.display = 'flex';
+        row.style.alignItems = 'center';
+        row.style.gap = '0.75em';
+        row.style.padding = '6px 8px';
+        row.style.background = '#222';
+        row.style.borderRadius = '6px';
+        row.style.fontSize = '0.9em';
+        const label = document.createElement('div');
+        label.textContent = `Episode ${epNum}`;
+        label.style.flex = '1';
+        const status = document.createElement('div');
+        status.textContent = 'Queued';
+        status.style.minWidth = '90px';
+        const progressWrapper = document.createElement('div');
+        progressWrapper.style.flex = '2';
+        const prog = document.createElement('progress');
+        prog.max = 100;
+        prog.value = 0;
+        prog.style.width = '100%';
+        progressWrapper.appendChild(prog);
+        row.appendChild(label);
+        row.appendChild(progressWrapper);
+        row.appendChild(status);
+        folderUploadList.appendChild(row);
         // Upload with retries
         const task = (async () => {
           for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-            progress.value = 0;
-            attemptLabel.textContent = attempt > 1 ? `${attempt} of ${maxAttempts}` : '';
+            status.textContent = attempt > 1 ? `Retry ${attempt} of ${maxAttempts}` : 'Uploading';
+            prog.value = 0;
             try {
               const url = await uploadToCatboxWithProgress(file, pct => {
-                progress.value = pct;
+                prog.value = pct;
               });
               epSrcInput.value = url;
               epError.textContent = '';
+              status.textContent = 'Done';
+              status.style.color = '#6ec1e4';
+              prog.value = 100;
               return;
             } catch {
               if (attempt === maxAttempts) {
+                status.textContent = 'Failed';
+                status.style.color = '#ff4444';
                 epError.innerHTML = '<span style="color:red">Upload failed</span>';
               }
             }
           }
         })();
         uploadTasks.push(task);
+        // Update summary after task finishes
+        task.finally(() => {
+          const total = filesInSeason.length;
+          const completed = Array.from(folderUploadList.children).filter(r => {
+            const st = r.querySelector('div:nth-child(3)').textContent;
+            return st === 'Done';
+          }).length;
+          folderUploadSummary.textContent = `${completed} / ${total} completed`;
+        });
       });
-      await Promise.all(uploadTasks);
+      try {
+        await Promise.all(uploadTasks);
+      } finally {
+        isFolderUploading = false;
+        if (folderOverlay) {
+          folderOverlay.remove();
+        }
+      }
     });
     // Start in Create mode
     loadUrlContainer.style.display = 'none';
@@ -366,7 +416,7 @@
         const blob = new Blob([jsonString], { type: 'application/json' });
         const file = new File([blob], 'directory.json', { type: 'application/json' });
         const url = await uploadToCatbox(file);
-        directoryCode = url.replace(/^https:\/\/files\.catbox\.moe\//, '').replace(/\.json$/, '');
+        directoryCode = url.replace(/^https:\/\/files\.catbox\.moe\//, '').replace(/\.json$/, '').trim();
         updateOutput();
       } catch (err) {
         outputEl.textContent = 'Failed to auto-upload: ' + err.message;
@@ -375,6 +425,7 @@
     // Auto-upload when data changes, every 500ms
     let lastPayload = null;
     setInterval(async () => {
+      if (isFolderUploading) return;
       const titleVal = document.getElementById('dirTitle').value.trim();
       const cats = [];
       document.querySelectorAll('.category').forEach(cat => {
@@ -551,35 +602,13 @@
 
     // Button handlers
     addCategoryBtn.addEventListener('click', () => addCategory());
-    generateBtn.addEventListener('click', async () => {
-      const title = document.getElementById('dirTitle').value.trim();
-      const categories = [];
-      document.querySelectorAll('.category').forEach(cat => {
-        const catTitle = cat.querySelector('input[type="text"]').value.trim();
-        const episodes = [];
-        cat.querySelectorAll('.episode').forEach(epDiv => {
-          const inputs = epDiv.querySelectorAll('input[type="text"]');
-          const t = inputs[0].value.trim();
-          const s = inputs[1].value.trim();
-          if (t && s) episodes.push({ title: t, src: s });
-        });
-        if (catTitle) categories.push({ category: catTitle, episodes });
-      });
-      const result = { title, categories };
-      const jsonString = JSON.stringify(result, null, 2);
-      try {
-        const blob = new Blob([jsonString], { type: 'application/json' });
-        const file = new File([blob], 'directory.json', { type: 'application/json' });
-        const url = await uploadToCatbox(file);
-        directoryCode = url.replace(/^https:\/\/files\.catbox\.moe\//, '').replace(/\.json$/, '');
-        updateOutput();
-      } catch (err) {
-        outputEl.textContent = 'Failed to upload JSON: ' + err.message;
-      }
-    });
 
     function updateOutput() {
-      if (!directoryCode) return;
+      if (!directoryCode) {
+        outputLink.textContent = '';
+        outputLink.href = '#';
+        return;
+      }
       if (isFullUrl) {
         const full = `https://files.catbox.moe/${directoryCode}.json`;
         outputLink.textContent = full;
@@ -587,13 +616,6 @@
       } else {
         outputLink.textContent = directoryCode;
         outputLink.href = `https://randomsideprojects.github.io/Media-Manager/index.html?source=${directoryCode}`;
-      }
-      // Toggle download button visibility
-      const downloadBtn = document.getElementById('downloadJsonBtn');
-      if (isFullUrl) {
-        downloadBtn.style.display = 'inline-block';
-      } else {
-        downloadBtn.style.display = 'none';
       }
     }
 
@@ -645,22 +667,38 @@
       confirmModal.style.display = 'none';
       pendingRemoval = null;
     });
-    // Download the JSON when the download button is clicked
-    document.getElementById('downloadJsonBtn').addEventListener('click', async () => {
-      const url = document.getElementById('outputLink').href;
-      try {
-        const response = await fetch(url);
-        const blob = await response.blob();
+
+
+    // Local JSON download on A/Z keypress
+    function buildLocalDirectoryJSON() {
+      const title = document.getElementById('dirTitle').value.trim();
+      const categories = [];
+      document.querySelectorAll('.category').forEach(cat => {
+        const catTitle = cat.querySelector('input[type="text"]').value.trim();
+        const episodes = [];
+        cat.querySelectorAll('.episode').forEach(epDiv => {
+          const inputs = epDiv.querySelectorAll('input[type="text"]');
+          const t = inputs[0].value.trim();
+          const s = inputs[1].value.trim();
+          if (t && s) episodes.push({ title: t, src: s });
+        });
+        if (catTitle) categories.push({ category: catTitle, episodes });
+      });
+      return { title, categories };
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (['a', 'z'].includes(e.key.toLowerCase())) {
+        if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
+        const result = buildLocalDirectoryJSON();
+        const jsonString = JSON.stringify(result, null, 2);
+        const blob = new Blob([jsonString], { type: 'application/json' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        // Filename from directoryCode or fallback
-        const code = directoryCode || 'directory';
-        a.download = code + '.json';
+        a.download = `${result.title || 'directory'}.json`;
         document.body.appendChild(a);
         a.click();
         a.remove();
-      } catch (err) {
-        console.error('Download failed:', err);
       }
     });
   </script>
