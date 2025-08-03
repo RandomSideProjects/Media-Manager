@@ -661,6 +661,7 @@ async function uploadClipToCatboxWithProgress(blob, onProgress) {
 if (clipBtn) {
   clipBtn.addEventListener('click', async () => {
     const x = video.currentTime;
+    video.pause();
     const y = parseFloat(prompt('Enter half-length in seconds:', '10'));
     if (isNaN(y) || y <= 0) return;
     const start = Math.max(0, x - y);
@@ -675,7 +676,7 @@ if (clipBtn) {
     bar.value = 0;
 
     let hiddenVideo = document.createElement('video');
-    hiddenVideo.muted = true;
+    hiddenVideo.muted = false;
     hiddenVideo.preload = 'auto';
     hiddenVideo.crossOrigin = 'anonymous';
     // Ensure hiddenVideo is attached to DOM for stable capture
@@ -839,15 +840,7 @@ if (clipBtn) {
         const url = await uploadClipToCatboxWithProgress(clipBlob, pct => {
           bar.value = pct;
         });
-
-        let clipboardMsg = 'Link copied to clipboard.';
-        try {
-          await navigator.clipboard.writeText(url);
-        } catch (e) {
-          console.warn('Clipboard write failed:', e);
-          clipboardMsg = 'Could not copy to clipboard. Please copy manually.';
-        }
-
+        await navigator.clipboard.writeText(url);
         overlay.style.display = 'none';
         displayClipResult(`
           <h2 style="margin:0 0 0.5em; font-size:1.3em;">Your clip has been made!</h2>
@@ -855,13 +848,20 @@ if (clipBtn) {
           <div style="word-break: break-all; margin-bottom:0.5em;">
             <a href="${url}" target="_blank" style="color:#5ab8ff; text-decoration:none; font-weight:600;">${url}</a>
           </div>
-          <div style="font-size:0.85em; color:#c0c0c0;">${clipboardMsg}</div>
+          <div style="font-size:0.85em; color:#c0c0c0;">Link copied to clipboard.</div>
         `);
       } catch (err) {
         overlay.style.display = 'none';
+        // create fallback download URL for the clip
+        const localUrl = URL.createObjectURL(clipBlob);
         displayClipResult(`
           <h2 style="margin:0 0 0.5em; font-size:1.3em;">Clip upload failed</h2>
           <p style="margin:0;">${err.message}</p>
+          <small>
+            Would you like to <span style="color:#5ab8ff;">
+              <a href="${localUrl}" download="clip.webm" style="color:inherit; text-decoration:none;">download</a>
+            </span> the clip instead?
+          </small>
         `, true);
       }
     } finally {
