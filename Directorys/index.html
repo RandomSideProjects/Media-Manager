@@ -52,6 +52,22 @@
       transition: background 0.2s, transform 0.1s;
     }
     .pill-button:hover { background: #0056b3; }
+
+    #serverStatusBox {
+      position: fixed;
+      top: 1rem;
+      left: 1rem;
+      background: #1a1a1a;
+      color: #f1f1f1;
+      border: 1px solid #333;
+      border-radius: 10px;
+      padding: 0.6em 0.9em;
+      font-size: 0.9rem;
+      line-height: 1.2;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+      z-index: 9999;
+      white-space: pre-line;
+    }
   </style>
 </head>
 <body>
@@ -59,6 +75,56 @@
     <!-- Cards will be injected here -->
   </div>
 <script>
+  const STATUS_URL = 'https://files.catbox.moe/i9px4k.png';
+
+  function showHostFailure(container, codeText) {
+    container.innerHTML = `
+      <div style="
+        padding: 3em 1.5em;
+        text-align: center;
+        font-weight: 800;
+        color: #ffffff;
+        font-size: 1.6rem;
+        white-space: pre-line;
+      ">
+        Unfortunately, our public source host is currently unavailable.
+        \nPlease try again.
+        \n<code style="background:#000; display:inline-block; padding:0.6em 0.8em; border-radius:8px; margin-top:0.9em; color:#fff;">HTTP Code : ${codeText}</code>
+      </div>
+    `;
+  }
+
+  async function checkHostAndLoad() {
+    const container = document.getElementById('sourcesContainer');
+    // Create status box (hidden until success)
+    let statusBox = document.getElementById('serverStatusBox');
+    if (!statusBox) {
+      statusBox = document.createElement('div');
+      statusBox.id = 'serverStatusBox';
+      statusBox.style.display = 'none';
+      document.body.appendChild(statusBox);
+    }
+
+    let resp;
+    try {
+      resp = await fetch(STATUS_URL, { cache: 'no-store' });
+    } catch (err) {
+      showHostFailure(container, err && err.message ? err.message : 'Network error');
+      return;
+    }
+
+    if (!resp || !resp.ok) {
+      const codeText = resp ? `${resp.status} ${resp.statusText || ''}`.trim() : 'Unknown error';
+      showHostFailure(container, codeText);
+      return;
+    }
+
+    // Success path: show status code box and continue to load sources
+    statusBox.textContent = `Server status code\n${resp.status}`;
+    statusBox.style.display = 'block';
+    await loadSources();
+  }
+
   async function loadSources() {
     const container = document.getElementById('sourcesContainer');
     container.innerHTML = '';
@@ -133,7 +199,7 @@
       console.error(error);
     }
   }
-  loadSources();
+  checkHostAndLoad();
 </script>
 </body>
 </html>
