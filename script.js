@@ -586,6 +586,48 @@ const clipBtn = document.getElementById('clipBtn');
 const clipOverlay = document.getElementById('clipOverlay');
 const clipMessage = document.getElementById('clipMessage');
 const clipDoneBtn = document.getElementById('clipDoneBtn');
+const clipDownloadBtn = document.getElementById('clipDownloadBtn');
+const clipButtonsRow = document.getElementById('clipButtonsRow');
+let lastClipBlob = null;
+let lastPreviewObjectURL = null;
+
+// Helper to ensure the Download button exists and is wired up
+function ensureClipDownloadButton() {
+  let btn = document.getElementById('clipDownloadBtn');
+  if (!btn) {
+    const done = document.getElementById('clipDoneBtn');
+    if (done && done.parentElement) {
+      btn = document.createElement('button');
+      btn.id = 'clipDownloadBtn';
+      btn.textContent = 'Download';
+      Object.assign(btn.style, {
+        padding: '0.6em 1.2em',
+        background: getComputedStyle(done).backgroundColor || 'var(--button-bg)',
+        color: getComputedStyle(done).color || 'var(--button-text)',
+        border: 'none',
+        borderRadius: '6px',
+        cursor: 'pointer',
+        textTransform: 'uppercase',
+        letterSpacing: '0.5px'
+      });
+      done.parentElement.appendChild(btn);
+    }
+  }
+  if (btn) {
+    btn.style.display = 'inline-block';
+    btn.onclick = () => {
+      if (!lastClipBlob) return;
+      const url = URL.createObjectURL(lastClipBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'clip.webm';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    };
+  }
+}
 
 // Helper to display clip result (success or error), guarding against clipMessage being null
 function displayClipResult(html, isError = false) {
@@ -648,7 +690,7 @@ async function uploadClipToCatboxWithProgress(blob, onProgress) {
     };
     xhr.onload = () => {
       if (xhr.status >= 200 && xhr.status < 300) {
-        resolve(xhr.responseText);
+        resolve((xhr.responseText || '').trim());
       } else {
         reject(new Error('Upload failed: ' + xhr.status));
       }
@@ -833,6 +875,7 @@ if (clipBtn) {
       const clipBlob = new Blob(recordedChunks, {
         type: recorder.mimeType || 'video/webm',
       });
+      lastClipBlob = clipBlob;
 
       msg.textContent = 'Uploading clip...';
       bar.value = 0;
@@ -840,7 +883,23 @@ if (clipBtn) {
         const url = await uploadClipToCatboxWithProgress(clipBlob, pct => {
           bar.value = pct;
         });
-        await navigator.clipboard.writeText(url);
+        // Preview support block
+        const clipPreviewEnabled = localStorage.getItem('clipPreviewEnabled') === 'true';
+        let previewHTML = '';
+        if (clipPreviewEnabled) {
+          try {
+            if (lastPreviewObjectURL) {
+              URL.revokeObjectURL(lastPreviewObjectURL);
+            }
+            lastPreviewObjectURL = URL.createObjectURL(clipBlob);
+            previewHTML = `
+              <div style="margin-top:0.75em">
+                <video src="${lastPreviewObjectURL}" controls style="width:100%; max-height:50vh; border-radius:8px; outline:none"></video>
+              </div>`;
+          } catch {}
+        }
+        let clipboardMsg = 'Link copied to clipboard.';
+        try { await navigator.clipboard.writeText(url); } catch (e) { console.warn('Clipboard write failed:', e); clipboardMsg = 'Could not copy to clipboard. Please copy manually.'; }
         overlay.style.display = 'none';
         displayClipResult(`
           <h2 style="margin:0 0 0.5em; font-size:1.3em;">Your clip has been made!</h2>
@@ -848,11 +907,55 @@ if (clipBtn) {
           <div style="word-break: break-all; margin-bottom:0.5em;">
             <a href="${url}" target="_blank" style="color:#5ab8ff; text-decoration:none; font-weight:600;">${url}</a>
           </div>
-          <div style="font-size:0.85em; color:#c0c0c0;">Link copied to clipboard.</div>
+          <div style="font-size:0.85em; color:#c0c0c0; margin-bottom:0.75em;">${clipboardMsg}</div>
+          ${previewHTML}
+          <div style="display:flex; gap:0.5em; justify-content:center; margin-top:0.75em;">
+            <button id="clipBoxDownload" style="padding:0.6em 1.2em; background:var(--button-bg); color:var(--button-text); border:none; border-radius:6px; cursor:pointer; text-transform:uppercase; letter-spacing:0.5px;">Download</button>
+            <button id="clipBoxDone" style="padding:0.6em 1.2em; background:var(--button-bg); color:var(--button-text); border:none; border-radius:6px; cursor:pointer; text-transform:uppercase; letter-spacing:0.5px;">Done</button>
+          </div>
         `);
+        if (clipButtonsRow) clipButtonsRow.style.display = 'none';
+        const boxDownload = document.getElementById('clipBoxDownload');
+        const boxDone = document.getElementById('clipBoxDone');
+        if (boxDownload) {
+          boxDownload.addEventListener('click', () => {
+            if (!lastClipBlob) return;
+            const dlUrl = URL.createObjectURL(lastClipBlob);
+            const a = document.createElement('a');
+            a.href = dlUrl;
+            a.download = 'clip.webm';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(() => URL.revokeObjectURL(dlUrl), 1000);
+          });
+        }
+        if (boxDone) {
+          boxDone.addEventListener('click', () => {
+            if (lastPreviewObjectURL) { try { URL.revokeObjectURL(lastPreviewObjectURL); } catch {} lastPreviewObjectURL = null; }
+            if (clipOverlay) clipOverlay.style.display = 'none';
+            if (clipButtonsRow) clipButtonsRow.style.display = 'flex';
+          });
+        }
+        ensureClipDownloadButton();
       } catch (err) {
         overlay.style.display = 'none';
+        lastClipBlob = clipBlob;
         // create fallback download URL for the clip
+        const clipPreviewEnabled = localStorage.getItem('clipPreviewEnabled') === 'true';
+        let previewHTML = '';
+        if (clipPreviewEnabled) {
+          try {
+            if (lastPreviewObjectURL) {
+              URL.revokeObjectURL(lastPreviewObjectURL);
+            }
+            lastPreviewObjectURL = URL.createObjectURL(clipBlob);
+            previewHTML = `
+              <div style="margin-top:0.75em">
+                <video src="${lastPreviewObjectURL}" controls style="width:100%; max-height:50vh; border-radius:8px; outline:none"></video>
+              </div>`;
+          } catch {}
+        }
         const localUrl = URL.createObjectURL(clipBlob);
         displayClipResult(`
           <h2 style="margin:0 0 0.5em; font-size:1.3em;">Clip upload failed</h2>
@@ -862,7 +965,9 @@ if (clipBtn) {
               <a href="${localUrl}" download="clip.webm" style="color:inherit; text-decoration:none;">download</a>
             </span> the clip instead?
           </small>
+          ${previewHTML}
         `, true);
+        ensureClipDownloadButton();
       }
     } finally {
       // Clean up hiddenVideo from DOM
@@ -874,15 +979,58 @@ if (clipBtn) {
 }
 
 if (clipDoneBtn && clipOverlay) {
-clipDoneBtn.addEventListener('click', () => {
-  clipOverlay.style.display = 'none';
-});
+  clipDoneBtn.addEventListener('click', () => {
+    // Clean up preview object URL if present
+    if (lastPreviewObjectURL) {
+      try { URL.revokeObjectURL(lastPreviewObjectURL); } catch {}
+      lastPreviewObjectURL = null;
+    }
+    clipOverlay.style.display = 'none';
+    if (clipButtonsRow) clipButtonsRow.style.display = 'flex';
+  });
 }
 
-// Settings menu and clipping toggle
+if (clipDownloadBtn) {
+  clipDownloadBtn.addEventListener('click', () => {
+    if (!lastClipBlob) return;
+    const url = URL.createObjectURL(lastClipBlob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'clip.webm';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  });
+}
+ensureClipDownloadButton();
+
+// Settings modal and clipping toggle
 const settingsBtn = document.getElementById('settingsBtn');
-const settingsMenu = document.getElementById('settingsMenu');
+const settingsOverlay = document.getElementById('settingsOverlay');
+const settingsPanel = document.getElementById('settingsPanel');
+const settingsCloseBtn = document.getElementById('settingsCloseBtn');
 const clipToggle = document.getElementById('clipToggle');
+const clipPreviewToggle = document.getElementById('clipPreviewToggle');
+
+settingsBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  if (settingsOverlay) settingsOverlay.style.display = 'flex';
+});
+
+if (settingsCloseBtn) {
+  settingsCloseBtn.addEventListener('click', () => {
+    if (settingsOverlay) settingsOverlay.style.display = 'none';
+  });
+}
+
+if (settingsOverlay) {
+  settingsOverlay.addEventListener('click', (e) => {
+    if (e.target === settingsOverlay) {
+      settingsOverlay.style.display = 'none';
+    }
+  });
+}
 
 // Initialize toggle state from localStorage (default: off)
 const clippingEnabled = localStorage.getItem('clippingEnabled') === 'true';
@@ -890,19 +1038,16 @@ clipToggle.checked = clippingEnabled;
 // Show or hide the Clip button accordingly
 if (clipBtn) clipBtn.style.display = clippingEnabled ? 'inline-block' : 'none';
 
-// Toggle menu visibility when clicking the Settings button
-settingsBtn.addEventListener('click', (e) => {
-  e.stopPropagation();
-  settingsMenu.style.display = settingsMenu.style.display === 'block' ? 'none' : 'block';
-});
+// Initialize clip preview toggle from localStorage
+const clipPreviewEnabledStored = localStorage.getItem('clipPreviewEnabled') === 'true';
+if (clipPreviewToggle) clipPreviewToggle.checked = clipPreviewEnabledStored;
 
-// Hide menu when clicking outside
-document.addEventListener('click', () => {
-  settingsMenu.style.display = 'none';
-});
-settingsMenu.addEventListener('click', (e) => {
-  e.stopPropagation();
-});
+// Persist clip preview setting
+if (clipPreviewToggle) {
+  clipPreviewToggle.addEventListener('change', () => {
+    localStorage.setItem('clipPreviewEnabled', clipPreviewToggle.checked);
+  });
+}
 
 // Update clippingEnabled on toggle change
 clipToggle.addEventListener('change', () => {

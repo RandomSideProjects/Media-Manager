@@ -12,11 +12,21 @@
     ⚙
   </button>
   <nav class="tabs">
-  <div id="settingsMenu" style="display:none; position:fixed; top:3.75rem; right:4.5rem; background:var(--container-bg); color:var(--text); border:1px solid #444; padding:0.5em 1em; border-radius:8px; z-index:10000;">
-    <label style="display:flex; align-items:center; gap:0.5em; font-size:0.9em;">
-      <input type="checkbox" id="clipToggle">
-      Enable clipping
-    </label>
+  <div id="settingsOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); align-items:center; justify-content:center; z-index:10000;">
+    <div id="settingsPanel" style="background:var(--container-bg); color:var(--text); border:1px solid #444; padding:1rem 1.25rem; border-radius:12px; min-width:300px; max-width:90%; box-shadow:0 20px 40px -10px rgba(0,0,0,0.6);">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.75rem;">
+        <h3 style="margin:0;">Settings</h3>
+        <button id="settingsCloseBtn" style="background:var(--button-bg); color:var(--button-text); border:none; border-radius:6px; padding:0.3em 0.6em; cursor:pointer;">Close</button>
+      </div>
+      <div class="setting-row" style="display:flex; align-items:center; gap:0.5em; margin-bottom:0.5rem;">
+        <input type="checkbox" id="clipToggle">
+        <label for="clipToggle">Enable clipping</label>
+      </div>
+      <div class="setting-row" style="display:flex; align-items:center; gap:0.5em;">
+        <input type="checkbox" id="clipPreviewToggle">
+        <label for="clipPreviewToggle">Clip preview</label>
+      </div>
+    </div>
   </div>
     <button onclick="location.href='./'" class="tab-button">Home</button>
     <div class="dropdown">
@@ -134,7 +144,10 @@
   <div id="clipOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); align-items:center; justify-content:center; z-index:10001; text-align:center;">
     <div id="clipOverlayContent" style="padding:1em; background:var(--container-bg); border-radius:8px; max-width:90%; margin:auto;">
       <p id="clipMessage" style="margin-bottom:1em; word-break:break-all; color:var(--text);"></p>
-      <button id="clipDoneBtn" style="padding:0.6em 1.2em; background:var(--button-bg); color:var(--button-text); border:none; border-radius:6px; cursor:pointer; text-transform:uppercase; letter-spacing:0.5px;">Done</button>
+      <div id="clipButtonsRow" style="display:flex; gap:0.5em; justify-content:center;">
+        <button id="clipDoneBtn" style="padding:0.6em 1.2em; background:var(--button-bg); color:var(--button-text); border:none; border-radius:6px; cursor:pointer; text-transform:uppercase; letter-spacing:0.5px;">Done</button>
+        <button id="clipDownloadBtn" style="padding:0.6em 1.2em; background:var(--button-bg); color:var(--button-text); border:none; border-radius:6px; cursor:pointer; text-transform:uppercase; letter-spacing:0.5px;">Download</button>
+      </div>
     </div>
   </div>
   <!-- Clip progress overlay -->
@@ -144,7 +157,6 @@
       <progress id="clipProgressBar" max="100" value="0" style="width:100%;"></progress>
     </div>
   </div>
-</a>
   <a href="https://github.com/RandomSideProjects" target="_blank" id="githubLink" style="
     position: fixed;
     bottom: 1rem;
