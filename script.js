@@ -1,5 +1,4 @@
-
-
+// script.js
 let videoList = [];
 let sourceKey = '';
 let flatList = [];

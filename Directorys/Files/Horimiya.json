@@ -1,0 +1,63 @@
+{
+  "title": "Horimiya",
+  "Image": "https://files.catbox.moe/edoey1.jpg",
+  "categories": [
+    {
+      "category": "Season 1",
+      "episodes": [
+        {
+          "title": "Episode 1",
+          "src": "https://files.catbox.moe/2ljrwx.mp4"
+        },
+        {
+          "title": "Episode 2",
+          "src": "https://files.catbox.moe/prkqqv.mp4"
+        },
+        {
+          "title": "Episode 3",
+          "src": "https://files.catbox.moe/1b9l6o.mp4"
+        },
+        {
+          "title": "Episode 4",
+          "src": "https://files.catbox.moe/rm6exq.mp4"
+        },
+        {
+          "title": "Episode 5",
+          "src": "https://files.catbox.moe/bh86to.mp4"
+        },
+        {
+          "title": "Episode 6",
+          "src": "https://files.catbox.moe/dmlqke.mp4"
+        },
+        {
+          "title": "Episode 7",
+          "src": "https://files.catbox.moe/forcjg.mp4"
+        },
+        {
+          "title": "Episode 8",
+          "src": "https://files.catbox.moe/u3qrn6.mp4"
+        },
+        {
+          "title": "Episode 9",
+          "src": "https://files.catbox.moe/ad0m47.mp4"
+        },
+        {
+          "title": "Episode 10",
+          "src": "https://files.catbox.moe/5lub6e.mp4"
+        },
+        {
+          "title": "Episode 11",
+          "src": "https://files.catbox.moe/mu3t37.mp4"
+        },
+        {
+          "title": "Episode 12",
+          "src": "https://files.catbox.moe/6d18a3.mp4"
+        },
+        {
+          "title": "Episode 13",
+          "src": "https://files.catbox.moe/36tbou.mp4"
+        }
+      ]
+    }
+  ]
+}
