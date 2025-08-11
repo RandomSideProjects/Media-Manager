@@ -5,6 +5,35 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Directory Creator</title>
   <style>
+    .poster-wrapper {
+      position: relative;
+      display: none; /* shown after an image is selected */
+      max-height: 80px;
+    }
+    #posterPreview {
+      display: block;
+      max-height: 80px;
+      border-radius: 6px;
+      border: 1px solid #333;
+    }
+    .poster-change-btn {
+      display: inline-block;
+      margin-top: 6px;
+      padding: 0.3em 0.7em;
+      background: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      white-space: nowrap;
+    }
+    .poster-label-stack {
+      display: flex;
+      flex-direction: column;
+      min-width: 110px;
+    }
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: #121212;
@@ -194,6 +223,20 @@
     <div class="field-group">
       <label for="dirTitle">Directory Title:</label><br/>
       <input type="text" id="dirTitle" placeholder="Series Title"/>
+      <div class="input-group" id="posterGroup" style="align-items:flex-start; gap:0.75em; margin-top:0.5em;">
+        <div class="poster-label-stack">
+          <label for="posterInput">Poster image:</label>
+          <button id="posterChangeBtn" type="button" class="poster-change-btn" style="display:none;">Change Poster?</button>
+        </div>
+        <input type="file" id="posterInput" accept="image/*">
+        <div id="posterWrapper" class="poster-wrapper" style="display:none;">
+          <img id="posterPreview" alt="Poster preview" />
+        </div>
+      </div>
+      <div id="posterStatus" style="font-size:0.9em; color:#9ecbff; display:none; margin-top:0.25em;">
+        Uploading image…
+        <progress id="posterProgress" max="100" value="0" style="vertical-align:middle; width:160px; margin-left:0.5em;"></progress>
+      </div>
     </div>
     <div id="categories"></div>
     <button id="addCategory">Add Category</button>
@@ -253,6 +296,58 @@
     }
 
     const categoriesEl = document.getElementById('categories');
+    const posterInput = document.getElementById('posterInput');
+    const posterPreview = document.getElementById('posterPreview');
+    const posterStatus = document.getElementById('posterStatus');
+    const posterProgress = document.getElementById('posterProgress');
+    let posterImageUrl = '';
+    const posterWrapper = document.getElementById('posterWrapper');
+    const posterChangeBtn = document.getElementById('posterChangeBtn');
+    if (posterInput) {
+      posterInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        // Quick local preview
+        try {
+          const localUrl = URL.createObjectURL(file);
+          posterPreview.src = localUrl;
+          if (posterWrapper) posterWrapper.style.display = 'inline-block';
+          if (posterInput) posterInput.style.display = 'none';
+        } catch {}
+        if (posterChangeBtn) posterChangeBtn.style.display = 'inline-block';
+        // Show uploading UI
+        if (posterStatus) posterStatus.style.display = 'inline-block';
+        if (posterProgress) posterProgress.value = 0;
+        try {
+          const url = await uploadToCatboxWithProgress(file, pct => {
+            if (posterProgress) posterProgress.value = pct;
+          });
+          posterImageUrl = (url || '').trim();
+          if (posterStatus) posterStatus.style.display = 'none';
+        } catch (err) {
+          if (posterStatus) {
+            posterStatus.style.display = 'inline-block';
+            posterStatus.style.color = '#ff6b6b';
+            posterStatus.textContent = 'Image upload failed';
+          }
+          posterImageUrl = '';
+          if (posterChangeBtn) posterChangeBtn.style.display = 'none';
+        }
+      });
+    }
+    if (posterChangeBtn) {
+      posterChangeBtn.addEventListener('click', () => {
+        if (posterWrapper) posterWrapper.style.display = 'none';
+        if (posterInput) {
+          posterInput.style.display = 'inline-block';
+          posterInput.value = '';
+          posterInput.focus();
+        }
+        if (posterChangeBtn) posterChangeBtn.style.display = 'none';
+        posterImageUrl = '';
+        if (posterPreview) posterPreview.src = '';
+      });
+    }
     const addCategoryBtn = document.getElementById('addCategory');
     const outputEl = document.getElementById('output');
     const loadUrlInput = document.getElementById('loadUrl');
@@ -410,7 +505,8 @@
         });
         if (catTitle) cats.push({ category: catTitle, episodes: eps });
       });
-      const result = { title: titleVal, categories: cats };
+      const imageField = posterImageUrl || 'N/A';
+      const result = { title: titleVal, Image: imageField, categories: cats };
       const jsonString = JSON.stringify(result, null, 2);
       try {
         const blob = new Blob([jsonString], { type: 'application/json' });
@@ -439,7 +535,8 @@
         });
         if (catTitle) cats.push({ category: catTitle, episodes: eps });
       });
-      const payload = JSON.stringify({ title: titleVal, categories: cats });
+      const imageField = posterImageUrl || 'N/A';
+      const payload = JSON.stringify({ title: titleVal, Image: imageField, categories: cats });
       if (payload !== lastPayload) {
         lastPayload = payload;
         try {
@@ -590,6 +687,19 @@
       try {
         const res = await fetch(url);
         const json = await res.json();
+        // Set poster from JSON if present
+        posterImageUrl = (json.Image && json.Image !== 'N/A') ? json.Image : '';
+        if (posterImageUrl) {
+          posterPreview.src = posterImageUrl;
+          if (posterWrapper) posterWrapper.style.display = 'inline-block';
+          if (posterInput) posterInput.style.display = 'none';
+        } else {
+          posterPreview.src = '';
+          if (posterWrapper) posterWrapper.style.display = 'none';
+          if (posterInput) posterInput.style.display = 'inline-block';
+        }
+        if (posterChangeBtn) posterChangeBtn.style.display = posterImageUrl ? 'inline-block' : 'none';
+        if (posterStatus) { posterStatus.style.display = 'none'; posterStatus.style.color = '#9ecbff'; posterStatus.textContent = 'Uploading image…'; }
         // Clear existing
         document.getElementById('dirTitle').value = json.title || '';
         categoriesEl.innerHTML = '';
@@ -635,6 +745,12 @@
       categoriesEl.innerHTML = '';
       directoryCode = '';
       updateOutput();
+      posterImageUrl = '';
+      if (posterPreview) { posterPreview.src = ''; }
+      if (posterWrapper) posterWrapper.style.display = 'none';
+      if (posterInput) { posterInput.value = ''; posterInput.style.display = 'inline-block'; }
+      if (posterStatus) { posterStatus.style.display = 'none'; posterStatus.style.color = '#9ecbff'; posterStatus.textContent = 'Uploading image…'; }
+      if (posterChangeBtn) posterChangeBtn.style.display = 'none';
     });
     editTabBtn.addEventListener('click', () => {
       editTabBtn.classList.add('active');
@@ -644,6 +760,12 @@
       categoriesEl.innerHTML = '';
       directoryCode = '';
       updateOutput();
+      posterImageUrl = '';
+      if (posterPreview) { posterPreview.src = ''; }
+      if (posterWrapper) posterWrapper.style.display = 'none';
+      if (posterInput) { posterInput.value = ''; posterInput.style.display = 'inline-block'; }
+      if (posterStatus) { posterStatus.style.display = 'none'; posterStatus.style.color = '#9ecbff'; posterStatus.textContent = 'Uploading image…'; }
+      if (posterChangeBtn) posterChangeBtn.style.display = 'none';
     });
     homeTabBtn.addEventListener('click', () => {
       window.location.href = './index.html';
@@ -684,7 +806,8 @@
         });
         if (catTitle) categories.push({ category: catTitle, episodes });
       });
-      return { title, categories };
+      const imageField = posterImageUrl || 'N/A';
+      return { title, Image: imageField, categories };
     }
 
     document.addEventListener('keydown', (e) => {
