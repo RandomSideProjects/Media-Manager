@@ -30,22 +30,11 @@ jobs:
           set -euo pipefail
           FILE_DIR="Directorys/Files"
           INDEX_FILE="Directorys/SourceList.json"
-          POSTERS_DIR="Directorys/Posters"
-
-          # Create directories if they don't exist
-          mkdir -p "$FILE_DIR"
-          mkdir -p "$POSTERS_DIR"
 
           if [[ ! -d "$FILE_DIR" ]]; then
             echo "Directory '$FILE_DIR' does not exist; nothing to index."
             exit 0
           fi
-
-          # Debug information
-          echo "Starting indexing process"
-          echo "Working directory: $(pwd)"
-          echo "File directory exists: $(test -d "$FILE_DIR" && echo "Yes" || echo "No")"
-          echo "Posters directory exists: $(test -d "$POSTERS_DIR" && echo "Yes" || echo "No")"
 
           node <<'NODE'
           const fs = require('fs');
@@ -57,13 +46,7 @@ jobs:
           const FILE_DIR = 'Directorys/Files';
           const INDEX_FILE = 'Directorys/SourceList.json';
           const POSTERS_DIR = 'Directorys/Posters';
-          
-          console.log(`Ensuring directory exists: ${POSTERS_DIR}`);
-          if (!fs.existsSync(POSTERS_DIR)) {
-            console.log(`Creating directory: ${POSTERS_DIR}`);
-            fs.mkdirSync(POSTERS_DIR, { recursive: true });
-          }
-          console.log(`Posters directory status: ${fs.existsSync(POSTERS_DIR) ? 'exists' : 'missing'}`);
+          if (!fs.existsSync(POSTERS_DIR)) fs.mkdirSync(POSTERS_DIR, { recursive: true });
 
           function safePosterName(title, fallback) {
             const base = String(title || fallback || 'poster')
@@ -135,11 +118,9 @@ jobs:
               .filter(f => f.toLowerCase().endsWith('.json') && f.toLowerCase() !== 'exampledir.json');
 
             const result = { sources: [] };
-            console.log(`Found ${files.length} JSON files to process`);
 
             for (const file of files) {
               try {
-                console.log(`Processing file: ${file}`);
                 const full = path.join(FILE_DIR, file);
                 const raw = fs.readFileSync(full, 'utf8');
                 const json = JSON.parse(raw);
@@ -156,7 +137,6 @@ jobs:
                 let poster = null;
                 const imgUrl = (json.Image && json.Image !== 'N/A') ? json.Image : (json.image && json.image !== 'N/A' ? json.image : null);
                 if (imgUrl) {
-                  console.log(`Processing image for ${title} from ${imgUrl.substring(0, 50)}...`);
                   try {
                     let sourceBuffer;
                     if (imgUrl.startsWith('data:')) {
@@ -164,31 +144,21 @@ jobs:
                       if (!m) throw new Error('Unsupported data URI format');
                       sourceBuffer = Buffer.from(m[1], 'base64');
                     } else {
-                      console.log(`Fetching image from URL`);
                       const { buf } = await fetchBuffer(imgUrl);
                       sourceBuffer = buf;
                     }
-                    
-                    console.log(`Processing image with Sharp`);
                     const webpBuf = await sharp(sourceBuffer)
                       .resize({ height: 512 })
                       .webp({ quality: 80 })
                       .toBuffer();
 
                     const posterName = safePosterName(title, path.parse(file).name) + '.webp';
-                    const posterPath = path.join(POSTERS_DIR, posterName);
-                    console.log(`Saving poster to: ${posterPath}`);
-                    fs.writeFileSync(posterPath, webpBuf);
-                    
-                    // Verify the file was written
-                    if (fs.existsSync(posterPath)) {
-                      console.log(`Successfully saved poster: ${posterPath} (${fs.statSync(posterPath).size} bytes)`);
-                      poster = `./Posters/${posterName}`;
-                    } else {
-                      console.error(`Failed to write poster file: ${posterPath}`);
-                    }
+                    const posterAbs = path.join(POSTERS_DIR, posterName);
+                    fs.writeFileSync(posterAbs, webpBuf);
+                    console.log('Wrote poster:', posterAbs);
+                    poster = `./Posters/${posterName}`;
                   } catch (e) {
-                    console.error('Poster build failed for', file, '-', e.message, e.stack);
+                    console.warn('Poster build failed for', file, '-', e.message);
                   }
                 }
 
@@ -201,39 +171,22 @@ jobs:
                   episodeCount
                 });
               } catch (e) {
-                console.error('Skipping', file, e.message, e.stack);
+                console.warn('Skipping', file, e.message);
               }
             }
 
             // Sort by title for stable ordering
             result.sources.sort((a, b) => String(a.title).localeCompare(String(b.title)));
 
-            console.log(`Writing index file: ${INDEX_FILE}`);
             fs.writeFileSync(INDEX_FILE, JSON.stringify(result, null, 2));
-            
-            // List all generated posters
-            console.log("Listing contents of poster directory:");
-            if (fs.existsSync(POSTERS_DIR)) {
-              const posters = fs.readdirSync(POSTERS_DIR);
-              console.log(`Found ${posters.length} posters:`);
-              posters.forEach(p => console.log(`- ${p}`));
-            } else {
-              console.log("Poster directory doesn't exist!");
-            }
           })().catch(err => { console.error(err); process.exit(1); });
           NODE
-
-      - name: Debug - List directories
-        run: |
-          echo "Current directory structure:"
-          find Directorys -type d | sort
-          echo "Poster files:"
-          find Directorys/Posters -type f | sort
 
       - name: Commit and push changes
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: 'chore: update Directorys/SourceList.json and posters'
+          add_options: '-A'
           file_pattern: |
             Directorys/SourceList.json
-            Directorys/Posters/**
+            Directorys/Posters
