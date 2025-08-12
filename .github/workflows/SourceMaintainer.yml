@@ -16,6 +16,14 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v3
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install image processor (sharp)
+        run: npm install sharp@0.33
+
       - name: Generate Directorys/SourceList.json
         shell: bash
         run: |
@@ -33,6 +41,7 @@ jobs:
           const path = require('path');
           const http = require('http');
           const https = require('https');
+          const sharp = require('sharp');
 
           const FILE_DIR = 'Directorys/Files';
           const INDEX_FILE = 'Directorys/SourceList.json';
@@ -117,9 +126,24 @@ jobs:
                 const imgUrl = (json.Image && json.Image !== 'N/A') ? json.Image : (json.image && json.image !== 'N/A' ? json.image : null);
                 if (imgUrl) {
                   try {
-                    const { buf, contentType } = await fetchBuffer(imgUrl);
-                    const mime = (contentType && contentType.startsWith('image/')) ? contentType : guessMimeFromExt(imgUrl);
-                    image = `data:${mime};base64,${buf.toString('base64')}`;
+                    let sourceBuffer;
+
+                    if (imgUrl.startsWith('data:')) {
+                      const m = imgUrl.match(/^data:.*?;base64,(.*)$/);
+                      if (!m) throw new Error('Unsupported data URI format');
+                      sourceBuffer = Buffer.from(m[1], 'base64');
+                    } else {
+                      const { buf } = await fetchBuffer(imgUrl);
+                      sourceBuffer = buf;
+                    }
+
+                    // Resize to 512px height (auto width to preserve aspect ratio), convert to WebP
+                    const webpBuf = await sharp(sourceBuffer)
+                      .resize({ height: 512 })
+                      .webp({ quality: 80 })
+                      .toBuffer();
+
+                    image = `data:image/webp;base64,${webpBuf.toString('base64')}`;
                   } catch (e) {
                     console.warn('Poster inline failed for', file, '-> using remote URL:', e.message);
                     image = imgUrl; // fallback to remote URL instead of null
