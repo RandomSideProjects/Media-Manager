@@ -281,7 +281,8 @@
       const img = document.createElement('img');
       img.className = 'source-thumb';
       img.alt = `${title} poster`;
-      img.src = meta.image; // base64 data URI
+      // Accept either base64 data URI or plain URL from manifest
+      img.src = meta.image;
       img.addEventListener('error', () => { img.style.display = 'none'; });
       img.addEventListener('load', () => fitPosterToCard(img, card));
       if (img.complete && img.naturalWidth) fitPosterToCard(img, card);
@@ -306,7 +307,7 @@
     btn.className = 'pill-button';
     btn.textContent = 'Open';
     btn.onclick = () => {
-      const openParam = `Directorys/${openPath.replace(/^\.\//,'')}`;
+      const openParam = `Directorys/${openPath.replace(/^\.\//,'')}`; // openPath now like './Files/..'
       const src = encodeURIComponent(openParam);
       window.location.href = `../index.html?source=${src}`;
     };

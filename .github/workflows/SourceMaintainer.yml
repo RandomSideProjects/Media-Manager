@@ -37,7 +37,7 @@ jobs:
           const FILE_DIR = 'Directorys/Files';
           const INDEX_FILE = 'Directorys/SourceList.json';
 
-          function fetchBuffer(url) {
+          function fetchBuffer(url, timeoutMs = 8000) {
             return new Promise((resolve, reject) => {
               try {
                 const lib = url.startsWith('https:') ? https : http;
@@ -56,6 +56,9 @@ jobs:
                   });
                 });
                 req.on('error', reject);
+                req.setTimeout(timeoutMs, () => {
+                  req.destroy(new Error('timeout'));
+                });
               } catch (e) {
                 reject(e);
               }
@@ -94,7 +97,7 @@ jobs:
                   if (Array.isArray(c.episodes)) episodeCount += c.episodes.length;
                 }
 
-                // Fetch poster and inline as data URI if available
+                // Fetch poster and inline as data URI if available; fall back to URL if fetching fails
                 let image = null;
                 const imgUrl = (json.Image && json.Image !== 'N/A') ? json.Image : (json.image && json.image !== 'N/A' ? json.image : null);
                 if (imgUrl) {
@@ -102,16 +105,17 @@ jobs:
                     const { buf, contentType } = await fetchBuffer(imgUrl);
                     const mime = (contentType && contentType.startsWith('image/')) ? contentType : guessMimeFromExt(imgUrl);
                     image = `data:${mime};base64,${buf.toString('base64')}`;
-                  } catch (_) {
-                    // ignore poster failures
+                  } catch (e) {
+                    console.warn('Poster inline failed for', file, '-> using remote URL:', e.message);
+                    image = imgUrl; // fallback to remote URL instead of null
                   }
                 }
 
                 result.sources.push({
                   file,
-                  path: `../Directorys/Files/${file}`,
+                  path: `./Files/${file}`,
                   title,
-                  image,            // base64 data URI or null
+                  image,            // base64 data URI or remote URL
                   categoryCount,
                   episodeCount
                 });
