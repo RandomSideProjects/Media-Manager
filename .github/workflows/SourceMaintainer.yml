@@ -186,7 +186,5 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: 'chore: update Directorys/SourceList.json and posters'
-          add_options: '-A'
-          file_pattern: |
-            Directorys/SourceList.json
-            Directorys/Posters
+          file_pattern: 'Directorys/SourceList.json Directorys/Posters/**'
+
