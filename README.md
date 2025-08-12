@@ -1,34 +1,49 @@
 # RSP Media Manager
 
-A simple, modern web-based video player that loads episode lists from a remote JSON directory.
+A lightweight, browser-only video player that loads episode lists from small JSON directories.
 
-## Main Host 
+## Overview
 
-To access RSP Media Manager without locally hosting, please use the public host provided below.
+- Runs entirely client-side—open `index.html` and start watching.
+- Load sources via URL parameter, 6-character code, or local folder.
+- Resume playback, auto-advance to the next item, optional clipping/upload, theme toggle, and source download.
 
-https://randomsideprojects.github.io/Media-Manager/?source=
+## Repository Structure
 
-## Features
+| Path / File | Purpose |
+|-------------|---------|
+| `index.html` | Main entry point and UI layout. |
+| `style.css` | Global styles and dark/light theme definitions. |
+| `script.js` | Core logic for loading sources, rendering episode menus, playback management, clipping, and downloads. |
+| `creator.html` | Interactive tool for building or editing JSON directory files. |
+| `Directorys/` | Example and public source files plus listing page (`index.html`, `SourceList.json`). |
+| `Assets/` | Image assets used by the UI. |
+| `.github/workflows/SourceMaintainer.yml` | GitHub Action that keeps `Directorys/SourceList.json` in sync. |
 
-- Category-based episode selection
-- Resume playback using localStorage
-- Next Episode auto-advance and manual controls
-- Back to menu button
+## Key Concepts & Features
+
+- **Source JSON format** with `title`, `categories`, and `episodes` entries.
+- **Dynamic loading** of sources from URLs, codes, or local files.
+- **Playback management** with resume data in `localStorage` and next-item auto advance.
+- **Local folder import** and **source download** as a zip via JSZip.
+- **Optional clipping** tool that can upload to Catbox.
+- **Theme toggle** for dark or light mode.
 
 ## Getting Started
 
 ### Installation
 
-1. Download the project files (`index.html`, `style.css`, `script.js`, and any JSON directory files).
-2. Open `index.html` directly in your browser.
+1. Download the project files (`index.html`, `style.css`, `script.js`, and any JSON directory files`).
+2. Open `index.html` directly in your browser or host it via GitHub Pages.
+
+### Loading a Source
+
+- **Local host:** `index.html?source=[url_or_code]`
+- **Official host:** `https://randomsideprojects.github.io/Media-Manager/?source=[url_or_code]`
 
 ## Creating a Source JSON
 
-Update - July 16 : we now have a tool for this, please use Creator.html or navigate to the menu on the main page and select
-Update - July 17 : ok so it only works on local since it has some CORS issues on the page. Please use creator locally for the time being.
-
-
-A “source” is a JSON file describing your episodes. It must follow this structure:
+Use `creator.html` (works best when run locally due to CORS restrictions) or craft the JSON manually using the schema below:
 
 ```json
 {
@@ -40,10 +55,6 @@ A “source” is a JSON file describing your episodes. It must follow this stru
         {
           "title": "Episode 1",
           "src": "https://example.com/videos/episode1.mp4"
-        },
-        {
-          "title": "Episode 2",
-          "src": "https://example.com/videos/episode2.mp4"
         }
       ]
     }
@@ -51,12 +62,15 @@ A “source” is a JSON file describing your episodes. It must follow this stru
 }
 ```
 
-- **`title`**: The title shown at the top of the player.
-- **`categories`**: An array of category (e.g., season) objects.
-  - **`category`**: Name of the category.
-  - **`episodes`**: Array of episodes.
-    - **`title`**: Episode title shown in the menu.
-    - **`src`**: Public URL to the video file (must support CORS).
+
+For a complete example, see `Directorys/Files/ExampleDir.json`.
+=======
+-- **`title`**: The title shown at the top of the player.
+-- **`categories`**: An array of category (e.g., season) objects.
+  -- **`category`**: Name of the category.
+  -- **`episodes`**: Array of episodes.
+   -- **`title`**: Episode title shown in the menu.
+    ---**`src`**: Public URL to the video file (must support CORS).
 
 For reference, see Directorys/Files/ExampleDir.json
 
@@ -71,10 +85,24 @@ Offical Host
 `randomsideprojects.github.io/Media-Manager/?source=[source]` in your browser.
 
 
+## Tips for Newcomers
 
-## Troubleshooting/Known Errors
+1. Inspect the JSON schema to understand how sources are structured.
+2. Follow the flow in `script.js` (`init` → `renderEpisodeList` → `loadVideo`).
+3. Look at `localStorage` keys to see how resume data is stored.
+4. Explore the clipping logic near the end of `script.js`.
+5. Review the Catbox upload helpers in `creator.html`.
+6. Check the GitHub Action that maintains `Directorys/SourceList.json`.
 
-- **CORS Errors**: Ensure your JSON host sends `Access-Control-Allow-Origin: *`.
+## Where to Go Next
 
+- Enhance source discovery with search or filters.
+- Improve error handling for network or format issues.
+- Expand clipping/upload options beyond Catbox.
+- Add responsive and accessibility improvements.
+- Modularize JavaScript into smaller components.
 
+## Troubleshooting / Known Errors
+
+- **CORS errors**: Ensure your JSON host sends `Access-Control-Allow-Origin: *`.
 
