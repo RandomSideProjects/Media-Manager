@@ -1,19 +1,124 @@
 {
-  "Sources": [],
-  "100Kanojo.json": "../Directorys/Files/100Kanojo.json",
-  "5hanayome.json": "../Directorys/Files/5hanayome.json",
-  "ApothDiaries.json": "../Directorys/Files/ApothDiaries.json",
-  "BunnyGirlSenpai.json": "../Directorys/Files/BunnyGirlSenpai.json",
-  "DanDaDan.json": "../Directorys/Files/DanDaDan.json",
-  "ExampleDir.json": "../Directorys/Files/ExampleDir.json",
-  "FailureFrame.json": "../Directorys/Files/FailureFrame.json",
-  "Horimiya.json": "../Directorys/Files/Horimiya.json",
-  "Kanokari.json": "../Directorys/Files/Kanokari.json",
-  "LoserRanger.json": "../Directorys/Files/LoserRanger.json",
-  "Lvl2SuperPowers.json": "../Directorys/Files/Lvl2SuperPowers.json",
-  "MarriedNotLovers.json": "../Directorys/Files/MarriedNotLovers.json",
-  "MeidoSama.json": "../Directorys/Files/MeidoSama.json",
-  "MyDressUpDarling.json": "../Directorys/Files/MyDressUpDarling.json",
-  "Roshidere.json": "../Directorys/Files/Roshidere.json",
-  "TinySenpai.json": "../Directorys/Files/TinySenpai.json"
+  "sources": [
+    {
+      "file": "5hanayome.json",
+      "path": "../Directorys/Files/5hanayome.json",
+      "title": "5Hanayome (Quintessential Quintuplets)",
+      "image": null,
+      "categoryCount": 1,
+      "episodeCount": 12
+    },
+    {
+      "file": "ApothDiaries.json",
+      "path": "../Directorys/Files/ApothDiaries.json",
+      "title": "Apothecary diaries",
+      "image": null,
+      "categoryCount": 2,
+      "episodeCount": 48
+    },
+    {
+      "file": "Lvl2SuperPowers.json",
+      "path": "../Directorys/Files/Lvl2SuperPowers.json",
+      "title": "Chillin' in Another World with Level 2 Super Cheat Powers",
+      "image": null,
+      "categoryCount": 1,
+      "episodeCount": 12
+    },
+    {
+      "file": "DanDaDan.json",
+      "path": "../Directorys/Files/DanDaDan.json",
+      "title": "DanDaDan",
+      "image": null,
+      "categoryCount": 2,
+      "episodeCount": 16
+    },
+    {
+      "file": "FailureFrame.json",
+      "path": "../Directorys/Files/FailureFrame.json",
+      "title": "Failure Frame",
+      "image": null,
+      "categoryCount": 1,
+      "episodeCount": 12
+    },
+    {
+      "file": "LoserRanger.json",
+      "path": "../Directorys/Files/LoserRanger.json",
+      "title": "GO! GO! LOSER RANGER!",
+      "image": null,
+      "categoryCount": 1,
+      "episodeCount": 12
+    },
+    {
+      "file": "Horimiya.json",
+      "path": "../Directorys/Files/Horimiya.json",
+      "title": "Horimiya",
+      "image": null,
+      "categoryCount": 1,
+      "episodeCount": 13
+    },
+    {
+      "file": "Kanokari.json",
+      "path": "../Directorys/Files/Kanokari.json",
+      "title": "Kanokari (Rent-A-Girlfriend!)",
+      "image": null,
+      "categoryCount": 1,
+      "episodeCount": 12
+    },
+    {
+      "file": "MarriedNotLovers.json",
+      "path": "../Directorys/Files/MarriedNotLovers.json",
+      "title": "More Than a Married Couple, But Not Lovers",
+      "image": null,
+      "categoryCount": 1,
+      "episodeCount": 12
+    },
+    {
+      "file": "MyDressUpDarling.json",
+      "path": "../Directorys/Files/MyDressUpDarling.json",
+      "title": "My Dress-up Darling",
+      "image": null,
+      "categoryCount": 2,
+      "episodeCount": 16
+    },
+    {
+      "file": "TinySenpai.json",
+      "path": "../Directorys/Files/TinySenpai.json",
+      "title": "My Tiny Senpai",
+      "image": null,
+      "categoryCount": 1,
+      "episodeCount": 12
+    },
+    {
+      "file": "BunnyGirlSenpai.json",
+      "path": "../Directorys/Files/BunnyGirlSenpai.json",
+      "title": "Rascal Does Not Dream Of A Bunny Girl Senpai",
+      "image": null,
+      "categoryCount": 1,
+      "episodeCount": 13
+    },
+    {
+      "file": "Roshidere.json",
+      "path": "../Directorys/Files/Roshidere.json",
+      "title": "Roshidere (Alya Hides Her Feelings In Russian)",
+      "image": null,
+      "categoryCount": 1,
+      "episodeCount": 12
+    },
+    {
+      "file": "100Kanojo.json",
+      "path": "../Directorys/Files/100Kanojo.json",
+      "title": "The 100 Girlfriends Who Really, Really, Really, Really, Really Love You",
+      "image": null,
+      "categoryCount": 2,
+      "episodeCount": 24
+    },
+    {
+      "file": "MeidoSama.json",
+      "path": "../Directorys/Files/MeidoSama.json",
+      "title": "You are Ms. Servent (Kimi-wa Meido sama)",
+      "image": null,
+      "categoryCount": 1,
+      "episodeCount": 12
+    }
+  ]
 }
