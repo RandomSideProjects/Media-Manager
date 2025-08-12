@@ -62,7 +62,28 @@ Use `creator.html` (works best when run locally due to CORS restrictions) or cra
 }
 ```
 
+
 For a complete example, see `Directorys/Files/ExampleDir.json`.
+=======
+-- **`title`**: The title shown at the top of the player.
+-- **`categories`**: An array of category (e.g., season) objects.
+  -- **`category`**: Name of the category.
+  -- **`episodes`**: Array of episodes.
+   -- **`title`**: Episode title shown in the menu.
+    ---**`src`**: Public URL to the video file (must support CORS).
+
+For reference, see Directorys/Files/ExampleDir.json
+
+## Usage
+
+To load a source, you can
+
+Locally Hosted
+`index.html?source=[source]` in your browser.
+
+Offical Host 
+`randomsideprojects.github.io/Media-Manager/?source=[source]` in your browser.
+
 
 ## Tips for Newcomers
 
