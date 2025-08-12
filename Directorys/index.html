@@ -277,7 +277,7 @@
     const card = document.createElement('div');
     card.className = 'source-card';
 
-    if (meta.image) {
+    if (meta.image && String(meta.image).toLowerCase() !== 'null') {
       const img = document.createElement('img');
       img.className = 'source-thumb';
       img.alt = `${title} poster`;

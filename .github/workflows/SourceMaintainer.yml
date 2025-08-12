@@ -37,31 +37,46 @@ jobs:
           const FILE_DIR = 'Directorys/Files';
           const INDEX_FILE = 'Directorys/SourceList.json';
 
-          function fetchBuffer(url, timeoutMs = 8000) {
+          function fetchBuffer(url, timeoutMs = 12000, maxRedirects = 4) {
             return new Promise((resolve, reject) => {
-              try {
-                const lib = url.startsWith('https:') ? https : http;
-                const req = lib.get(url, res => {
-                  if (res.statusCode !== 200) {
-                    reject(new Error('HTTP ' + res.statusCode));
-                    res.resume();
-                    return;
-                  }
-                  const chunks = [];
-                  res.on('data', d => chunks.push(d));
-                  res.on('end', () => {
-                    const buf = Buffer.concat(chunks);
-                    const ct = res.headers['content-type'] || '';
-                    resolve({ buf, contentType: ct });
+              const visited = new Set();
+              function doRequest(target, redirectsLeft) {
+                try {
+                  if (visited.has(target)) return reject(new Error('redirect loop'));
+                  visited.add(target);
+                  const lib = target.startsWith('https:') ? https : http;
+                  const req = lib.get(target, {
+                    headers: {
+                      'User-Agent': 'Mozilla/5.0 (GitHubActions; +https://github.com) RSP-SourceMaintainer',
+                      'Accept': 'image/*,*/*;q=0.8',
+                      'Connection': 'close'
+                    }
+                  }, res => {
+                    const status = res.statusCode || 0;
+                    if ([301,302,303,307,308].includes(status) && res.headers.location && redirectsLeft > 0) {
+                      const next = new URL(res.headers.location, target).href;
+                      res.resume();
+                      return doRequest(next, redirectsLeft - 1);
+                    }
+                    if (status !== 200) {
+                      res.resume();
+                      return reject(new Error('HTTP ' + status));
+                    }
+                    const chunks = [];
+                    res.on('data', d => chunks.push(d));
+                    res.on('end', () => {
+                      const buf = Buffer.concat(chunks);
+                      const ct = res.headers['content-type'] || '';
+                      resolve({ buf, contentType: ct });
+                    });
                   });
-                });
-                req.on('error', reject);
-                req.setTimeout(timeoutMs, () => {
-                  req.destroy(new Error('timeout'));
-                });
-              } catch (e) {
-                reject(e);
+                  req.on('error', reject);
+                  req.setTimeout(timeoutMs, () => req.destroy(new Error('timeout')));
+                } catch (e) { reject(e); }
               }
+              // normalize protocol-relative URLs
+              if (url && url.startsWith('//')) url = 'https:' + url;
+              doRequest(url, maxRedirects);
             });
           }
 
