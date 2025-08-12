@@ -139,9 +139,9 @@ function loadVideo(index) {
   video.play();
   // Update the URL to reflect the current episode index
   const params = new URLSearchParams(window.location.search);
-  // Preserve or update existing '?item' key if present, otherwise use 'item'
-  if (params.has('?item')) {
-    params.set('?item', index + 1);
+  // Preserve or update existing 'item' key if present, otherwise set it
+  if (params.has('item')) {
+    params.set('item', index + 1);
   } else {
     params.set('item', index + 1);
   }
