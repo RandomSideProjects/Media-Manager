@@ -1,4 +1,4 @@
-# RSP Media Manager
+# [RSP Media Manager](https://randomsideprojects.github.io/Media-Manager/)
 
 A lightweight, browser-only video player that loads episode lists from small JSON directories.
 
