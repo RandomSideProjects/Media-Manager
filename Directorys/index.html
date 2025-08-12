@@ -268,6 +268,67 @@
     img.style.objectPosition = 'center';
   }
 
+  function buildSourceCardFromMeta(meta) {
+    const title = meta.title || meta.file || 'Untitled';
+    const categoryCount = typeof meta.categoryCount === 'number' ? meta.categoryCount : 0;
+    const episodeCount  = typeof meta.episodeCount  === 'number' ? meta.episodeCount  : 0;
+    const openPath = meta.path || `./Files/${meta.file || ''}`;
+
+    const card = document.createElement('div');
+    card.className = 'source-card';
+
+    if (meta.image) {
+      const img = document.createElement('img');
+      img.className = 'source-thumb';
+      img.alt = `${title} poster`;
+      img.src = meta.image; // base64 data URI
+      img.addEventListener('error', () => { img.style.display = 'none'; });
+      img.addEventListener('load', () => fitPosterToCard(img, card));
+      if (img.complete && img.naturalWidth) fitPosterToCard(img, card);
+      window.addEventListener('resize', () => fitPosterToCard(img, card));
+      card.appendChild(img);
+    } else {
+      card.classList.add('no-thumb');
+    }
+
+    const right = document.createElement('div');
+    right.className = 'source-right';
+
+    const h3 = document.createElement('h3');
+    h3.textContent = title;
+
+    const p1 = document.createElement('p');
+    p1.innerHTML = `<strong>${categoryCount}</strong> ${categoryCount === 1 ? 'Season' : 'Seasons'}`;
+    const p2 = document.createElement('p');
+    p2.innerHTML = `<strong>${episodeCount}</strong> ${episodeCount === 1 ? 'Episode' : 'Episodes'}`;
+
+    const btn = document.createElement('button');
+    btn.className = 'pill-button';
+    btn.textContent = 'Open';
+    btn.onclick = () => {
+      const openParam = `Directorys/${openPath.replace(/^\.\//,'')}`;
+      const src = encodeURIComponent(openParam);
+      window.location.href = `../index.html?source=${src}`;
+    };
+
+    right.append(h3, p1, p2, btn);
+    card.appendChild(right);
+
+    // right-click terminology toggle
+    card.addEventListener('contextmenu', e => {
+      e.preventDefault();
+      if (p1.textContent.includes('Season')) {
+        p1.innerHTML = `<strong>${categoryCount}</strong> ${categoryCount === 1 ? 'Category' : 'Categories'}`;
+        p2.innerHTML = `<strong>${episodeCount}</strong> ${episodeCount === 1 ? 'Item' : 'Items'}`;
+      } else {
+        p1.innerHTML = `<strong>${categoryCount}</strong> ${categoryCount === 1 ? 'Season' : 'Seasons'}`;
+        p2.innerHTML = `<strong>${episodeCount}</strong> ${episodeCount === 1 ? 'Episode' : 'Episodes'}`;
+      }
+    });
+
+    return card;
+  }
+
   function buildSourceCard(data, openSourceParam, fileNameForFallback) {
     const title = data.title || fileNameForFallback || 'Untitled';
     const categories = Array.isArray(data.categories) ? data.categories : [];
@@ -342,43 +403,45 @@
     container.innerHTML = '';
     try {
       const manifestUrl = new URL('SourceList.json', window.location.href).href;
-      let manifest;
-      try {
-        const response = await fetch(manifestUrl);
-        const text = await response.text();
-        manifest = JSON.parse(text);
-        console.log('Loaded SourceList.json:', manifestUrl);
-      } catch (err) {
-        throw new Error('Could not fetch or parse SourceList.json: ' + err.message);
-      }
-      for (const [fileName, filePath] of Object.entries(manifest)) {
-        if (typeof filePath !== 'string') continue;
-        const lower = fileName.toLowerCase();
-        if (!lower.endsWith('.json') || lower === 'exampledir.json') continue;
-        try {
-          const sourceJsonUrl = new URL(filePath, window.location.href).href;
-          console.log(`Fetching source JSON "${fileName}" from`, sourceJsonUrl);
-          let data;
+      const response = await fetch(manifestUrl);
+      const text = await response.text();
+      const manifest = JSON.parse(text);
+      console.log('Loaded SourceList.json:', manifestUrl);
+
+      if (Array.isArray(manifest.sources)) {
+        // New rich format
+        for (const meta of manifest.sources) {
           try {
-            const resp = await fetch(sourceJsonUrl);
-            const text = await resp.text();
-            data = JSON.parse(text);
-            console.log(`Successfully loaded source "${fileName}"`);
-          } catch (err) {
-            console.warn('Could not fetch or parse ' + sourceJsonUrl + ':', err);
-            continue;
+            const card = buildSourceCardFromMeta(meta);
+            container.appendChild(card);
+          } catch (e) {
+            console.warn('Skipping malformed entry in manifest:', e);
           }
-          const srcPath = filePath.startsWith('./') ? filePath.slice(2) : filePath;
-          const openParam = `Directorys/${srcPath}`;
-          const card = buildSourceCard(data, openParam, fileName);
-          container.appendChild(card);
-        } catch (err) {
-          console.warn('Failed to load/parse', fileName, err);
+        }
+      } else {
+        // Fallback to older key->path map
+        for (const [fileName, filePath] of Object.entries(manifest)) {
+          if (typeof filePath !== 'string') continue;
+          const lower = String(fileName).toLowerCase();
+          if (!lower.endsWith('.json') || lower === 'exampledir.json') continue;
+          try {
+            const sourceJsonUrl = new URL(filePath, window.location.href).href;
+            console.log(`Fetching source JSON "${fileName}" from`, sourceJsonUrl);
+            const resp = await fetch(sourceJsonUrl);
+            const t = await resp.text();
+            const data = JSON.parse(t);
+            const srcPath = filePath.startsWith('./') ? filePath.slice(2) : filePath;
+            const openParam = `Directorys/${srcPath}`;
+            const card = buildSourceCard(data, openParam, fileName);
+            container.appendChild(card);
+          } catch (err) {
+            console.warn('Could not fetch/parse', fileName, err);
+          }
         }
       }
     } catch (error) {
       container.innerHTML = '<p style="color:#f1f1f1;">Failed to load SourceList.json.</p>';
-      console.error(error);
+      console.error('Error:', error);
     }
   }
   (function exposeTempSourceAPI(){

@@ -28,18 +28,104 @@ jobs:
             exit 0
           fi
 
-          node -e "
-            const fs = require('fs');
-            const path = require('path');
-            const dir = '$FILE_DIR';
-            const exclude = ['index.json', 'index.html'];
-            const items = fs.readdirSync(dir).filter(f => !exclude.includes(f));
-            const obj = { Sources: [] };
-            for (const it of items) {
-              obj[it] = '../Directorys/Files/' + it;
+          node <<'NODE'
+          const fs = require('fs');
+          const path = require('path');
+          const http = require('http');
+          const https = require('https');
+
+          const FILE_DIR = 'Directorys/Files';
+          const INDEX_FILE = 'Directorys/SourceList.json';
+
+          function fetchBuffer(url) {
+            return new Promise((resolve, reject) => {
+              try {
+                const lib = url.startsWith('https:') ? https : http;
+                const req = lib.get(url, res => {
+                  if (res.statusCode !== 200) {
+                    reject(new Error('HTTP ' + res.statusCode));
+                    res.resume();
+                    return;
+                  }
+                  const chunks = [];
+                  res.on('data', d => chunks.push(d));
+                  res.on('end', () => {
+                    const buf = Buffer.concat(chunks);
+                    const ct = res.headers['content-type'] || '';
+                    resolve({ buf, contentType: ct });
+                  });
+                });
+                req.on('error', reject);
+              } catch (e) {
+                reject(e);
+              }
+            });
+          }
+
+          function guessMimeFromExt(p) {
+            const ext = path.extname(p).toLowerCase();
+            switch (ext) {
+              case '.jpg':
+              case '.jpeg': return 'image/jpeg';
+              case '.png': return 'image/png';
+              case '.webp': return 'image/webp';
+              case '.gif': return 'image/gif';
+              default: return 'application/octet-stream';
             }
-            fs.writeFileSync('$INDEX_FILE', JSON.stringify(obj, null, 2));
-          "
+          }
+
+          (async () => {
+            const files = fs.readdirSync(FILE_DIR)
+              .filter(f => f.toLowerCase().endsWith('.json') && f.toLowerCase() !== 'exampledir.json');
+
+            const result = { sources: [] };
+
+            for (const file of files) {
+              try {
+                const full = path.join(FILE_DIR, file);
+                const raw = fs.readFileSync(full, 'utf8');
+                const json = JSON.parse(raw);
+
+                const title = json.title || path.parse(file).name;
+                const cats = Array.isArray(json.categories) ? json.categories : [];
+                const categoryCount = cats.length;
+                let episodeCount = 0;
+                for (const c of cats) {
+                  if (Array.isArray(c.episodes)) episodeCount += c.episodes.length;
+                }
+
+                // Fetch poster and inline as data URI if available
+                let image = null;
+                const imgUrl = (json.Image && json.Image !== 'N/A') ? json.Image : (json.image && json.image !== 'N/A' ? json.image : null);
+                if (imgUrl) {
+                  try {
+                    const { buf, contentType } = await fetchBuffer(imgUrl);
+                    const mime = (contentType && contentType.startsWith('image/')) ? contentType : guessMimeFromExt(imgUrl);
+                    image = `data:${mime};base64,${buf.toString('base64')}`;
+                  } catch (_) {
+                    // ignore poster failures
+                  }
+                }
+
+                result.sources.push({
+                  file,
+                  path: `../Directorys/Files/${file}`,
+                  title,
+                  image,            // base64 data URI or null
+                  categoryCount,
+                  episodeCount
+                });
+              } catch (e) {
+                console.warn('Skipping', file, e.message);
+              }
+            }
+
+            // Sort by title for stable ordering
+            result.sources.sort((a, b) => String(a.title).localeCompare(String(b.title)));
+
+            fs.writeFileSync(INDEX_FILE, JSON.stringify(result, null, 2));
+          })().catch(err => { console.error(err); process.exit(1); });
+          NODE
 
       - name: Commit and push changes
         uses: stefanzweifel/git-auto-commit-action@v5
