@@ -58,7 +58,7 @@ A “source” is a JSON file describing your episodes. It must follow this stru
     - **`title`**: Episode title shown in the menu.
     - **`src`**: Public URL to the video file (must support CORS).
 
-For refrence, see Directorys/ExampleDir.json
+For reference, see Directorys/Files/ExampleDir.json
 
 ## Usage
 
