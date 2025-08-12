@@ -277,12 +277,12 @@
     const card = document.createElement('div');
     card.className = 'source-card';
 
-    if (meta.image && String(meta.image).toLowerCase() !== 'null') {
+    const posterSrc = meta.poster || meta.image; // prefer new path, fallback to old field
+    if (posterSrc && String(posterSrc).toLowerCase() !== 'null') {
       const img = document.createElement('img');
       img.className = 'source-thumb';
       img.alt = `${title} poster`;
-      // Accept either base64 data URI or plain URL from manifest
-      img.src = meta.image;
+      img.src = posterSrc; // relative './Posters/...' or data/url
       img.addEventListener('error', () => { img.style.display = 'none'; });
       img.addEventListener('load', () => fitPosterToCard(img, card));
       if (img.complete && img.naturalWidth) fitPosterToCard(img, card);

@@ -45,6 +45,18 @@ jobs:
 
           const FILE_DIR = 'Directorys/Files';
           const INDEX_FILE = 'Directorys/SourceList.json';
+          const POSTERS_DIR = 'Directorys/Posters';
+          if (!fs.existsSync(POSTERS_DIR)) fs.mkdirSync(POSTERS_DIR, { recursive: true });
+
+          function safePosterName(title, fallback) {
+            const base = String(title || fallback || 'poster')
+              .trim()
+              .replace(/[\\/:*?"<>|]+/g, ' ')  // remove illegal filename chars
+              .replace(/\s+/g, ' ')             // collapse spaces
+              .replace(/\./g, '_')              // dots to underscores
+              .replace(/\s/g, '_');             // spaces to underscores
+            return base || 'poster';
+          }
 
           function fetchBuffer(url, timeoutMs = 12000, maxRedirects = 4) {
             return new Promise((resolve, reject) => {
@@ -121,13 +133,12 @@ jobs:
                   if (Array.isArray(c.episodes)) episodeCount += c.episodes.length;
                 }
 
-                // Fetch poster and inline as data URI if available; fall back to URL if fetching fails
-                let image = null;
+                // Build poster file in repo (WebP, height=512) and reference by path
+                let poster = null;
                 const imgUrl = (json.Image && json.Image !== 'N/A') ? json.Image : (json.image && json.image !== 'N/A' ? json.image : null);
                 if (imgUrl) {
                   try {
                     let sourceBuffer;
-
                     if (imgUrl.startsWith('data:')) {
                       const m = imgUrl.match(/^data:.*?;base64,(.*)$/);
                       if (!m) throw new Error('Unsupported data URI format');
@@ -136,17 +147,17 @@ jobs:
                       const { buf } = await fetchBuffer(imgUrl);
                       sourceBuffer = buf;
                     }
-
-                    // Resize to 512px height (auto width to preserve aspect ratio), convert to WebP
                     const webpBuf = await sharp(sourceBuffer)
                       .resize({ height: 512 })
                       .webp({ quality: 80 })
                       .toBuffer();
 
-                    image = `data:image/webp;base64,${webpBuf.toString('base64')}`;
+                    const posterName = safePosterName(title, path.parse(file).name) + '.webp';
+                    const posterAbs = path.join(POSTERS_DIR, posterName);
+                    fs.writeFileSync(posterAbs, webpBuf);
+                    poster = `./Posters/${posterName}`;
                   } catch (e) {
-                    console.warn('Poster inline failed for', file, '-> using remote URL:', e.message);
-                    image = imgUrl; // fallback to remote URL instead of null
+                    console.warn('Poster build failed for', file, '-', e.message);
                   }
                 }
 
@@ -154,7 +165,7 @@ jobs:
                   file,
                   path: `./Files/${file}`,
                   title,
-                  image,            // base64 data URI or remote URL
+                  poster,           // './Posters/Title.webp' or null
                   categoryCount,
                   episodeCount
                 });
@@ -173,5 +184,7 @@ jobs:
       - name: Commit and push changes
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: 'chore: update Directorys/SourceList.json'
-          file_pattern: 'Directorys/SourceList.json'
+          commit_message: 'chore: update Directorys/SourceList.json and posters'
+          file_pattern: |
+            Directorys/SourceList.json
+            Directorys/Posters/**.webp
