@@ -109,34 +109,34 @@
       ]
     },
     {
-      "category": "Movie",
+      "category": "Movie (Split Parts)",
       "episodes": [
         {
-          "title": "Episode 1",
+          "title": "Part 1",
           "src": "https://files.catbox.moe/72z2m1.webm"
         },
         {
-          "title": "Episode 2",
+          "title": "Part 2",
           "src": "https://files.catbox.moe/qd5d6d.webm"
         },
         {
-          "title": "Episode 3",
+          "title": "Part 3",
           "src": "https://files.catbox.moe/6czg87.webm"
         },
         {
-          "title": "Episode 4",
+          "title": "Part 4",
           "src": "https://files.catbox.moe/hzbt6t.webm"
         },
         {
-          "title": "Episode 5",
+          "title": "Part 5",
           "src": "https://files.catbox.moe/1fspau.webm"
         },
         {
-          "title": "Episode 6",
+          "title": "Part 6",
           "src": "https://files.catbox.moe/lx1mw1.webm"
         },
         {
-          "title": "Episode 7",
+          "title": "Part 7",
           "src": "https://files.catbox.moe/8comr5.webm"
         }
       ]
