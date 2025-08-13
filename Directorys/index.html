@@ -5,6 +5,52 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Public Sources</title>
   <style>
+    /* Settings button (top-right) */
+    #sourcesSettingsBtn {
+      position: fixed;
+      top: 14px;
+      right: 14px;
+      z-index: 1001;
+      width: 40px;
+      height: 40px;
+      border: none;
+      border-radius: 10px;
+      background: #007bff;
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.35);
+    }
+    /* Settings overlay */
+    #sourcesSettingsOverlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    #sourcesSettingsPanel {
+      background: #1a1a1a;
+      color: #f1f1f1;
+      border: 1px solid #333;
+      border-radius: 12px;
+      width: 420px;
+      max-width: calc(100vw - 40px);
+      padding: 16px 18px;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.6);
+    }
+    #sourcesSettingsPanel h3 { margin: 0 0 8px 0; font-size: 1.05rem; }
+    #sourcesSettingsPanel .section { margin-top: 12px; padding-top: 10px; border-top: 1px solid #2a2a2a; }
+    .settings-row { display: flex; align-items: center; gap: 10px; margin: 6px 0; flex-wrap: wrap; }
+    .settings-actions { margin-top: 14px; display: flex; gap: 8px; justify-content: flex-end; }
+    .settings-actions button { padding: 8px 12px; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-primary { background: #007bff; color:#fff; }
+    .btn-ghost { background: #2a2a2a; color:#f1f1f1; }
+    .settings-radio { display: flex; gap: 10px; flex-wrap: wrap; }
+    .settings-radio label { display: flex; align-items: center; gap: 6px; }
+    .source-time { font-size: 0.8em; opacity: 0.85; }
     body {
       background: #121212;
       color: #f1f1f1;
@@ -141,11 +187,88 @@
   </style>
 </head>
 <body>
+  <button id="sourcesSettingsBtn" title="Settings" aria-label="Settings">⚙️</button>
+  <div id="sourcesSettingsOverlay">
+    <div id="sourcesSettingsPanel" role="dialog" aria-modal="true" aria-labelledby="sourcesSettingsTitle">
+      <h3 id="sourcesSettingsTitle">Public Sources — Settings</h3>
+      <div class="section">
+        <div class="settings-row"><strong>Sort by</strong></div>
+        <div class="settings-radio" id="sortOptions">
+          <label><input type="radio" name="sort" value="az"> A–Z</label>
+          <label><input type="radio" name="sort" value="za"> Z–A</label>
+          <label><input type="radio" name="sort" value="newold"> New → Old</label>
+          <label><input type="radio" name="sort" value="oldnew"> Old → New</label>
+        </div>
+      </div>
+      <div class="section">
+        <label class="settings-row" style="justify-content: space-between;">
+          <span>Hide posters</span>
+          <input type="checkbox" id="toggleHidePosters">
+        </label>
+      </div>
+      <div class="settings-actions">
+        <button id="settingsCancel" class="btn-ghost">Close</button>
+        <button id="settingsApply" class="btn-primary">Apply</button>
+      </div>
+    </div>
+  </div>
   <div class="container" id="sourcesContainer">
     <!-- Cards will be injected here -->
   </div>
 <script>
   const STATUS_URL = 'https://files.catbox.moe/6gkiu0.png'; // i made a typo lmao, had to add a new image to fix said typo ( Shouln't >> Should not )
+
+  // Settings state
+  let SOURCES_SORT = localStorage.getItem('sources_sortOrder') || 'az';
+  let SOURCES_HIDE_POSTERS = localStorage.getItem('sources_hidePosters') === '1';
+  let SOURCES_META = [];
+
+  function formatLocal(dt) {
+    try { return new Date(dt).toLocaleString(); } catch { return ''; }
+  }
+
+  function sortMeta(list, mode) {
+    const arr = [...list];
+    switch (mode) {
+      case 'az':
+        arr.sort((a,b)=>String(a.title).localeCompare(String(b.title)));
+        break;
+      case 'za':
+        arr.sort((a,b)=>String(b.title).localeCompare(String(a.title)));
+        break;
+      case 'newold': {
+        arr.sort((a,b)=>{
+          const at = a.LatestTime ? Date.parse(a.LatestTime) : (a._mtime||0);
+          const bt = b.LatestTime ? Date.parse(b.LatestTime) : (b._mtime||0);
+          return bt - at;
+        });
+        break; }
+      case 'oldnew': {
+        arr.sort((a,b)=>{
+          const at = a.LatestTime ? Date.parse(a.LatestTime) : (a._mtime||0);
+          const bt = b.LatestTime ? Date.parse(b.LatestTime) : (b._mtime||0);
+          return at - bt;
+        });
+        break; }
+    }
+    return arr;
+  }
+
+  async function hydrateMtimes(list) {
+    const tasks = list.map(async (m, idx) => {
+      if (m.LatestTime) return; // we have explicit timestamp
+      if (typeof m._mtime === 'number') return;
+      try {
+        const url = new URL(m.path || m.openPath || '', window.location.href).href;
+        const resp = await fetch(url, { method: 'HEAD', cache: 'no-store' });
+        const lm = resp.headers.get('last-modified') || resp.headers.get('Last-Modified');
+        m._mtime = lm ? Date.parse(lm) : idx;
+      } catch {
+        m._mtime = idx;
+      }
+    });
+    await Promise.allSettled(tasks);
+  }
 
   function showHostFailure(container, codeText) {
     container.innerHTML = `
@@ -277,12 +400,12 @@
     const card = document.createElement('div');
     card.className = 'source-card';
 
-    const posterSrc = meta.poster || meta.image; // prefer new path, fallback to old field
-    if (posterSrc && String(posterSrc).toLowerCase() !== 'null') {
+    const posterSrc = meta.poster || meta.image;
+    if (!SOURCES_HIDE_POSTERS && posterSrc && String(posterSrc).toLowerCase() !== 'null') {
       const img = document.createElement('img');
       img.className = 'source-thumb';
       img.alt = `${title} poster`;
-      img.src = posterSrc; // relative './Posters/...' or data/url
+      img.src = posterSrc;
       img.addEventListener('error', () => { img.style.display = 'none'; });
       img.addEventListener('load', () => fitPosterToCard(img, card));
       if (img.complete && img.naturalWidth) fitPosterToCard(img, card);
@@ -303,32 +426,86 @@
     const p2 = document.createElement('p');
     p2.innerHTML = `<strong>${episodeCount}</strong> ${episodeCount === 1 ? 'Episode' : 'Episodes'}`;
 
+    const timeP = document.createElement('p');
+    timeP.className = 'source-time';
+    timeP.style.display = 'none';
+    if (meta.LatestTime) {
+      timeP.textContent = 'Updated: ' + formatLocal(meta.LatestTime);
+    }
+
     const btn = document.createElement('button');
     btn.className = 'pill-button';
     btn.textContent = 'Open';
     btn.onclick = () => {
-      const openParam = `Directorys/${openPath.replace(/^\.\//,'')}`; // openPath now like './Files/..'
+      const openParam = `Directorys/${openPath.replace(/^\.\//,'')}`;
       const src = encodeURIComponent(openParam);
       window.location.href = `../index.html?source=${src}`;
     };
 
-    right.append(h3, p1, p2, btn);
+    right.append(h3, p1, p2, timeP, btn);
     card.appendChild(right);
 
     // right-click terminology toggle
     card.addEventListener('contextmenu', e => {
       e.preventDefault();
-      if (p1.textContent.includes('Season')) {
+      const inSeasonMode = p1.textContent.includes('Season');
+      if (inSeasonMode) {
         p1.innerHTML = `<strong>${categoryCount}</strong> ${categoryCount === 1 ? 'Category' : 'Categories'}`;
         p2.innerHTML = `<strong>${episodeCount}</strong> ${episodeCount === 1 ? 'Item' : 'Items'}`;
+        timeP.style.display = meta.LatestTime ? 'block' : 'none';
       } else {
         p1.innerHTML = `<strong>${categoryCount}</strong> ${categoryCount === 1 ? 'Season' : 'Seasons'}`;
         p2.innerHTML = `<strong>${episodeCount}</strong> ${episodeCount === 1 ? 'Episode' : 'Episodes'}`;
+        timeP.style.display = 'none';
       }
     });
 
     return card;
   }
+
+  function renderSourcesFromState() {
+    const container = document.getElementById('sourcesContainer');
+    container.innerHTML = '';
+    const sorted = sortMeta(SOURCES_META, SOURCES_SORT);
+    for (const meta of sorted) {
+      const card = buildSourceCardFromMeta(meta);
+      container.appendChild(card);
+    }
+  }
+
+  (function initSourcesSettings(){
+    const btn = document.getElementById('sourcesSettingsBtn');
+    const overlay = document.getElementById('sourcesSettingsOverlay');
+    const applyBtn = document.getElementById('settingsApply');
+    const cancelBtn = document.getElementById('settingsCancel');
+    const hideToggle = document.getElementById('toggleHidePosters');
+    const radios = Array.from(document.querySelectorAll('#sortOptions input[name="sort"]'));
+
+    function openPanel(){
+      hideToggle.checked = !!SOURCES_HIDE_POSTERS;
+      for (const r of radios) r.checked = (r.value === SOURCES_SORT);
+      overlay.style.display = 'flex';
+    }
+    function closePanel(){ overlay.style.display = 'none'; }
+
+    btn.addEventListener('click', openPanel);
+    cancelBtn.addEventListener('click', closePanel);
+
+    applyBtn.addEventListener('click', async () => {
+      const selected = radios.find(r => r.checked);
+      SOURCES_SORT = selected ? selected.value : 'az';
+      SOURCES_HIDE_POSTERS = !!hideToggle.checked;
+      localStorage.setItem('sources_sortOrder', SOURCES_SORT);
+      localStorage.setItem('sources_hidePosters', SOURCES_HIDE_POSTERS ? '1':'0');
+      if (SOURCES_SORT === 'newold' || SOURCES_SORT === 'oldnew') {
+        await hydrateMtimes(SOURCES_META);
+      }
+      renderSourcesFromState();
+      closePanel();
+    });
+
+    overlay.addEventListener('click', (e)=>{ if (e.target === overlay) closePanel(); });
+  })();
 
   function buildSourceCard(data, openSourceParam, fileNameForFallback) {
     const title = data.title || fileNameForFallback || 'Untitled';
@@ -410,35 +587,32 @@
       console.log('Loaded SourceList.json:', manifestUrl);
 
       if (Array.isArray(manifest.sources)) {
-        // New rich format
-        for (const meta of manifest.sources) {
-          try {
-            const card = buildSourceCardFromMeta(meta);
-            container.appendChild(card);
-          } catch (e) {
-            console.warn('Skipping malformed entry in manifest:', e);
-          }
-        }
+        SOURCES_META = manifest.sources.map((m, idx)=> ({ ...m, _idx: idx }));
       } else {
-        // Fallback to older key->path map
+        const temp = [];
+        let idx = 0;
         for (const [fileName, filePath] of Object.entries(manifest)) {
           if (typeof filePath !== 'string') continue;
           const lower = String(fileName).toLowerCase();
           if (!lower.endsWith('.json') || lower === 'exampledir.json') continue;
-          try {
-            const sourceJsonUrl = new URL(filePath, window.location.href).href;
-            console.log(`Fetching source JSON "${fileName}" from`, sourceJsonUrl);
-            const resp = await fetch(sourceJsonUrl);
-            const t = await resp.text();
-            const data = JSON.parse(t);
-            const srcPath = filePath.startsWith('./') ? filePath.slice(2) : filePath;
-            const openParam = `Directorys/${srcPath}`;
-            const card = buildSourceCard(data, openParam, fileName);
-            container.appendChild(card);
-          } catch (err) {
-            console.warn('Could not fetch/parse', fileName, err);
-          }
+          temp.push({
+            file: fileName,
+            path: filePath,
+            title: fileName.replace(/\.json$/i, ''),
+            poster: null,
+            categoryCount: 0,
+            episodeCount: 0,
+            LatestTime: null,
+            _idx: idx++
+          });
         }
+        SOURCES_META = temp;
+      }
+
+      renderSourcesFromState();
+      if ((SOURCES_SORT === 'newold' || SOURCES_SORT === 'oldnew')) {
+        await hydrateMtimes(SOURCES_META);
+        renderSourcesFromState();
       }
     } catch (error) {
       container.innerHTML = '<p style="color:#f1f1f1;">Failed to load SourceList.json.</p>';

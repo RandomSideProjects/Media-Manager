@@ -1,5 +1,6 @@
 {
   "title": "Rascal Does Not Dream Of A Bunny Girl Senpai",
+  "LatestTime": "2025-08-11T12:36:00",
   "Image": "https://files.catbox.moe/y32fjp.jpg",
   "categories": [
     {
@@ -56,6 +57,23 @@
         {
           "title": "Episode 13",
           "src": "https://files.catbox.moe/9dfd9n.mp4"
+        }
+      ]
+    },
+    {
+      "category": "Season 2",
+      "episodes": [
+        {
+          "title": "Episode 1",
+          "src": "https://files.catbox.moe/xmv1b3.mp4"
+        },
+        {
+          "title": "Episode 2",
+          "src": "https://files.catbox.moe/fn2jpo.mp4"
+        },
+        {
+          "title": "Episode 3",
+          "src": "https://files.catbox.moe/7roldc.mp4"
         }
       ]
     }

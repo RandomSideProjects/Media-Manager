@@ -168,7 +168,8 @@ jobs:
                   title,
                   poster,           // './Posters/Title.webp' or null
                   categoryCount,
-                  episodeCount
+                  episodeCount,
+                  LatestTime: json.LatestTime || null
                 });
               } catch (e) {
                 console.warn('Skipping', file, e.message);

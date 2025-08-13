@@ -490,24 +490,10 @@
     const outputLink = document.getElementById('outputLink');
 
 
-    // Auto-upload current configuration
-    async function autoUpload() {
-      const titleVal = document.getElementById('dirTitle').value.trim();
-      const cats = [];
-      document.querySelectorAll('.category').forEach(cat => {
-        const catTitle = cat.querySelector('label input').value.trim();
-        const eps = [];
-        cat.querySelectorAll('.episode').forEach(epDiv => {
-          const inputs = epDiv.querySelectorAll('input[type="text"]');
-          const t = inputs[0].value.trim();
-          const s = inputs[1].value.trim();
-          if (t && s) eps.push({ title: t, src: s });
-        });
-        if (catTitle) cats.push({ category: catTitle, episodes: eps });
-      });
-      const imageField = posterImageUrl || 'N/A';
-      const result = { title: titleVal, Image: imageField, categories: cats };
-      const jsonString = JSON.stringify(result, null, 2);
+    // Auto-upload current configuration (with LatestTime)
+    async function autoUploadFromContent(contentObj) {
+      const payload = { ...contentObj, LatestTime: new Date().toISOString() };
+      const jsonString = JSON.stringify(payload, null, 2);
       try {
         const blob = new Blob([jsonString], { type: 'application/json' });
         const file = new File([blob], 'directory.json', { type: 'application/json' });
@@ -519,7 +505,7 @@
       }
     }
     // Auto-upload when data changes, every 500ms
-    let lastPayload = null;
+    let lastContent = null; // JSON string of title/Image/categories only
     setInterval(async () => {
       if (isFolderUploading) return;
       const titleVal = document.getElementById('dirTitle').value.trim();
@@ -536,14 +522,11 @@
         if (catTitle) cats.push({ category: catTitle, episodes: eps });
       });
       const imageField = posterImageUrl || 'N/A';
-      const payload = JSON.stringify({ title: titleVal, Image: imageField, categories: cats });
-      if (payload !== lastPayload) {
-        lastPayload = payload;
-        try {
-          await autoUpload();
-        } catch (err) {
-          console.error('Auto-upload error:', err);
-        }
+      const contentOnly = { title: titleVal, Image: imageField, categories: cats };
+      const contentStr = JSON.stringify(contentOnly);
+      if (contentStr !== lastContent) {
+        lastContent = contentStr;
+        try { await autoUploadFromContent(contentOnly); } catch (err) { console.error('Auto-upload error:', err); }
       }
     }, 500);
 
@@ -704,6 +687,9 @@
         document.getElementById('dirTitle').value = json.title || '';
         categoriesEl.innerHTML = '';
         json.categories.forEach(cat => addCategory(cat));
+        // Set lastContent so loading doesn't immediately trigger upload
+        const contentOnly = { title: json.title || '', Image: posterImageUrl || 'N/A', categories: json.categories || [] };
+        lastContent = JSON.stringify(contentOnly);
       } catch (err) {
         outputEl.textContent = 'Failed to load: ' + err.message;
       }
@@ -807,7 +793,7 @@
         if (catTitle) categories.push({ category: catTitle, episodes });
       });
       const imageField = posterImageUrl || 'N/A';
-      return { title, Image: imageField, categories };
+      return { title, Image: imageField, categories, LatestTime: new Date().toISOString() };
     }
 
     document.addEventListener('keydown', (e) => {
