@@ -54,6 +54,92 @@
           "src": "https://files.catbox.moe/gxsgip.mp4"
         }
       ]
+    },
+    {
+      "category": "Season 2",
+      "episodes": [
+        {
+          "title": "Episode 1",
+          "src": "https://files.catbox.moe/xnf626.mp4"
+        },
+        {
+          "title": "Episode 2",
+          "src": "https://files.catbox.moe/v65nod.mp4"
+        },
+        {
+          "title": "Episode 3",
+          "src": "https://files.catbox.moe/uhclrf.mp4"
+        },
+        {
+          "title": "Episode 4",
+          "src": "https://files.catbox.moe/yzsylo.mp4"
+        },
+        {
+          "title": "Episode 5",
+          "src": "https://files.catbox.moe/ewpj9n.mp4"
+        },
+        {
+          "title": "Episode 6",
+          "src": "https://files.catbox.moe/4us0re.mp4"
+        },
+        {
+          "title": "Episode 7",
+          "src": "https://files.catbox.moe/aumtxt.mp4"
+        },
+        {
+          "title": "Episode 8",
+          "src": "https://files.catbox.moe/9iy11o.mp4"
+        },
+        {
+          "title": "Episode 9",
+          "src": "https://files.catbox.moe/w6ukfm.mp4"
+        },
+        {
+          "title": "Episode 10",
+          "src": "https://files.catbox.moe/uol3xl.mp4"
+        },
+        {
+          "title": "Episode 11",
+          "src": "https://files.catbox.moe/i4d2q0.mp4"
+        },
+        {
+          "title": "Episode 12",
+          "src": "https://files.catbox.moe/q6k0f3.mp4"
+        }
+      ]
+    },
+    {
+      "category": "Movie",
+      "episodes": [
+        {
+          "title": "Episode 1",
+          "src": "https://files.catbox.moe/72z2m1.webm"
+        },
+        {
+          "title": "Episode 2",
+          "src": "https://files.catbox.moe/qd5d6d.webm"
+        },
+        {
+          "title": "Episode 3",
+          "src": "https://files.catbox.moe/6czg87.webm"
+        },
+        {
+          "title": "Episode 4",
+          "src": "https://files.catbox.moe/hzbt6t.webm"
+        },
+        {
+          "title": "Episode 5",
+          "src": "https://files.catbox.moe/1fspau.webm"
+        },
+        {
+          "title": "Episode 6",
+          "src": "https://files.catbox.moe/lx1mw1.webm"
+        },
+        {
+          "title": "Episode 7",
+          "src": "https://files.catbox.moe/8comr5.webm"
+        }
+      ]
     }
   ]
 }
