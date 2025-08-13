@@ -6,7 +6,26 @@
       "title": "5Hanayome (Quintessential Quintuplets)",
       "poster": "./Posters/5Hanayome_(Quintessential_Quintuplets).webp",
       "categoryCount": 3,
-      "episodeCount": 31
+      "episodeCount": 31,
+      "LatestTime": "2025-08-12T23:36:00"
+    },
+    {
+      "file": "A Condition Called Love.json",
+      "path": "./Files/A Condition Called Love.json",
+      "title": "A Condition Called Love",
+      "poster": "./Posters/A_Condition_Called_Love.webp",
+      "categoryCount": 1,
+      "episodeCount": 12,
+      "LatestTime": "2025-08-11T12:36:00"
+    },
+    {
+      "file": "A Couple Of Cuckoos.json",
+      "path": "./Files/A Couple Of Cuckoos.json",
+      "title": "A Couple Of Cuckoos",
+      "poster": "./Posters/A_Couple_Of_Cuckoos.webp",
+      "categoryCount": 2,
+      "episodeCount": 28,
+      "LatestTime": "2025-08-11T12:36:00"
     },
     {
       "file": "ApothDiaries.json",
@@ -14,7 +33,8 @@
       "title": "Apothecary diaries",
       "poster": "./Posters/Apothecary_diaries.webp",
       "categoryCount": 2,
-      "episodeCount": 48
+      "episodeCount": 48,
+      "LatestTime": "2025-08-11T12:36:00"
     },
     {
       "file": "Lvl2SuperPowers.json",
@@ -22,7 +42,8 @@
       "title": "Chillin' in Another World with Level 2 Super Cheat Powers",
       "poster": "./Posters/Chillin'_in_Another_World_with_Level_2_Super_Cheat_Powers.webp",
       "categoryCount": 1,
-      "episodeCount": 12
+      "episodeCount": 12,
+      "LatestTime": "2025-08-11T12:36:00"
     },
     {
       "file": "DanDaDan.json",
@@ -30,7 +51,8 @@
       "title": "DanDaDan",
       "poster": "./Posters/DanDaDan.webp",
       "categoryCount": 2,
-      "episodeCount": 16
+      "episodeCount": 16,
+      "LatestTime": "2025-08-11T12:36:00"
     },
     {
       "file": "FailureFrame.json",
@@ -38,7 +60,8 @@
       "title": "Failure Frame",
       "poster": "./Posters/Failure_Frame.webp",
       "categoryCount": 1,
-      "episodeCount": 12
+      "episodeCount": 12,
+      "LatestTime": "2025-08-12T12:36:00"
     },
     {
       "file": "LoserRanger.json",
@@ -46,7 +69,8 @@
       "title": "GO! GO! LOSER RANGER!",
       "poster": "./Posters/GO!_GO!_LOSER_RANGER!.webp",
       "categoryCount": 1,
-      "episodeCount": 12
+      "episodeCount": 12,
+      "LatestTime": "2025-08-11T12:36:00"
     },
     {
       "file": "Horimiya.json",
@@ -54,7 +78,8 @@
       "title": "Horimiya",
       "poster": "./Posters/Horimiya.webp",
       "categoryCount": 1,
-      "episodeCount": 13
+      "episodeCount": 13,
+      "LatestTime": "2025-08-11T12:36:00"
     },
     {
       "file": "Kanokari.json",
@@ -62,7 +87,8 @@
       "title": "Kanokari (Rent-A-Girlfriend!)",
       "poster": "./Posters/Kanokari_(Rent-A-Girlfriend!).webp",
       "categoryCount": 1,
-      "episodeCount": 12
+      "episodeCount": 12,
+      "LatestTime": "2025-08-11T12:36:00"
     },
     {
       "file": "MarriedNotLovers.json",
@@ -70,7 +96,8 @@
       "title": "More Than a Married Couple, But Not Lovers",
       "poster": "./Posters/More_Than_a_Married_Couple,_But_Not_Lovers.webp",
       "categoryCount": 1,
-      "episodeCount": 12
+      "episodeCount": 12,
+      "LatestTime": "2025-08-11T12:36:00"
     },
     {
       "file": "MyDressUpDarling.json",
@@ -78,7 +105,8 @@
       "title": "My Dress-up Darling",
       "poster": "./Posters/My_Dress-up_Darling.webp",
       "categoryCount": 2,
-      "episodeCount": 16
+      "episodeCount": 16,
+      "LatestTime": "2025-08-11T12:36:00"
     },
     {
       "file": "TinySenpai.json",
@@ -86,15 +114,17 @@
       "title": "My Tiny Senpai",
       "poster": "./Posters/My_Tiny_Senpai.webp",
       "categoryCount": 1,
-      "episodeCount": 12
+      "episodeCount": 12,
+      "LatestTime": "2025-08-11T12:36:00"
     },
     {
       "file": "BunnyGirlSenpai.json",
       "path": "./Files/BunnyGirlSenpai.json",
       "title": "Rascal Does Not Dream Of A Bunny Girl Senpai",
       "poster": "./Posters/Rascal_Does_Not_Dream_Of_A_Bunny_Girl_Senpai.webp",
-      "categoryCount": 1,
-      "episodeCount": 13
+      "categoryCount": 2,
+      "episodeCount": 16,
+      "LatestTime": "2025-08-11T12:36:00"
     },
     {
       "file": "Roshidere.json",
@@ -102,7 +132,8 @@
       "title": "Roshidere (Alya Hides Her Feelings In Russian)",
       "poster": "./Posters/Roshidere_(Alya_Hides_Her_Feelings_In_Russian).webp",
       "categoryCount": 1,
-      "episodeCount": 12
+      "episodeCount": 12,
+      "LatestTime": "2025-08-11T12:36:00"
     },
     {
       "file": "100Kanojo.json",
@@ -110,7 +141,8 @@
       "title": "The 100 Girlfriends Who Really, Really, Really, Really, Really Love You",
       "poster": "./Posters/The_100_Girlfriends_Who_Really,_Really,_Really,_Really,_Really_Love_You.webp",
       "categoryCount": 2,
-      "episodeCount": 24
+      "episodeCount": 24,
+      "LatestTime": "2025-08-11T12:36:00"
     },
     {
       "file": "MeidoSama.json",
@@ -118,7 +150,8 @@
       "title": "You are Ms. Servent (Kimi-wa Meido sama)",
       "poster": "./Posters/You_are_Ms__Servent_(Kimi-wa_Meido_sama).webp",
       "categoryCount": 1,
-      "episodeCount": 12
+      "episodeCount": 12,
+      "LatestTime": "2025-08-11T12:36:00"
     }
   ]
 }
