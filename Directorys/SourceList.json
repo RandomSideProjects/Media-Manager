@@ -37,15 +37,6 @@
       "LatestTime": "2025-08-11T12:36:00"
     },
     {
-      "file": "Lvl2SuperPowers.json",
-      "path": "./Files/Lvl2SuperPowers.json",
-      "title": "Chillin' in Another World with Level 2 Super Cheat Powers",
-      "poster": "./Posters/Chillin'_in_Another_World_with_Level_2_Super_Cheat_Powers.webp",
-      "categoryCount": 1,
-      "episodeCount": 12,
-      "LatestTime": "2025-08-11T12:36:00"
-    },
-    {
       "file": "DanDaDan.json",
       "path": "./Files/DanDaDan.json",
       "title": "DanDaDan",
@@ -53,15 +44,6 @@
       "categoryCount": 2,
       "episodeCount": 16,
       "LatestTime": "2025-08-11T12:36:00"
-    },
-    {
-      "file": "Failure Frame.json",
-      "path": "./Files/Failure Frame.json",
-      "title": "Failure Frame",
-      "poster": "./Posters/Failure_Frame.webp",
-      "categoryCount": 1,
-      "episodeCount": 12,
-      "LatestTime": "2025-08-14T04:14:14.591Z"
     },
     {
       "file": "LoserRanger.json",
