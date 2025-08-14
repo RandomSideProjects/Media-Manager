@@ -1,13 +1,13 @@
 {
   "sources": [
     {
-      "file": "5hanayome.json",
-      "path": "./Files/5hanayome.json",
+      "file": "5Hanayome (Quintessential Quintuplets).json",
+      "path": "./Files/5Hanayome (Quintessential Quintuplets).json",
       "title": "5Hanayome (Quintessential Quintuplets)",
       "poster": "./Posters/5Hanayome_(Quintessential_Quintuplets).webp",
-      "categoryCount": 3,
-      "episodeCount": 31,
-      "LatestTime": "2025-08-12T23:36:00"
+      "categoryCount": 2,
+      "episodeCount": 24,
+      "LatestTime": "2025-08-14T04:24:41.852Z"
     },
     {
       "file": "A Condition Called Love.json",
@@ -61,7 +61,7 @@
       "poster": "./Posters/Failure_Frame.webp",
       "categoryCount": 1,
       "episodeCount": 12,
-      "LatestTime": "2025-08-14T01:19:31.095Z"
+      "LatestTime": "2025-08-14T04:14:14.591Z"
     },
     {
       "file": "LoserRanger.json",
