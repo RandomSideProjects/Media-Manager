@@ -1,0 +1,60 @@
+{
+  "title": "Failure Frame",
+  "Image": "https://files.catbox.moe/5kt9mj.jpg",
+  "categories": [
+    {
+      "category": "Season 1",
+      "episodes": [
+        {
+          "title": "Episode 1",
+          "src": "https://files.catbox.moe/h80y7s.mp4"
+        },
+        {
+          "title": "Episode 2",
+          "src": "https://files.catbox.moe/m3tako.mp4"
+        },
+        {
+          "title": "Episode 3",
+          "src": "https://files.catbox.moe/sfg5nx.mp4"
+        },
+        {
+          "title": "Episode 4",
+          "src": "https://files.catbox.moe/kgw3f5.mp4"
+        },
+        {
+          "title": "Episode 5",
+          "src": "https://files.catbox.moe/v7j578.mp4"
+        },
+        {
+          "title": "Episode 6",
+          "src": "https://files.catbox.moe/ogck4o.mp4"
+        },
+        {
+          "title": "Episode 7",
+          "src": "https://files.catbox.moe/mayi8k.mp4"
+        },
+        {
+          "title": "Episode 8",
+          "src": "https://files.catbox.moe/8iytci.mp4"
+        },
+        {
+          "title": "Episode 9",
+          "src": "https://files.catbox.moe/dh5i2e.mp4"
+        },
+        {
+          "title": "Episode 10",
+          "src": "https://files.catbox.moe/tjg24f.mp4"
+        },
+        {
+          "title": "Episode 11",
+          "src": "https://files.catbox.moe/1h8s7d.mp4"
+        },
+        {
+          "title": "Episode 12",
+          "src": "https://files.catbox.moe/jue66j.mp4"
+        }
+      ]
+    }
+  ],
+  "LatestTime": "2025-08-14T01:19:31.095Z"
+}

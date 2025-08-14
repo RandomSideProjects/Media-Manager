@@ -1,10 +1,9 @@
 {
   "title": "Horimiya",
-  "LatestTime": "2025-08-11T12:36:00",
   "Image": "https://files.catbox.moe/edoey1.jpg",
   "categories": [
     {
-      "category": "Season 1",
+      "category": "Season 1 (Horimiya)",
       "episodes": [
         {
           "title": "Episode 1",
@@ -59,6 +58,64 @@
           "src": "https://files.catbox.moe/36tbou.mp4"
         }
       ]
+    },
+    {
+      "category": "Season 2",
+      "episodes": [
+        {
+          "title": "Episode 1",
+          "src": "https://files.catbox.moe/03i5ba.mp4"
+        },
+        {
+          "title": "Episode 2",
+          "src": "https://files.catbox.moe/cmq4s5.mp4"
+        },
+        {
+          "title": "Episode 3",
+          "src": "https://files.catbox.moe/b1b904.mp4"
+        },
+        {
+          "title": "Episode 4",
+          "src": "https://files.catbox.moe/w7o3y1.mp4"
+        },
+        {
+          "title": "Episode 5",
+          "src": "https://files.catbox.moe/i0cguv.mp4"
+        },
+        {
+          "title": "Episode 6",
+          "src": "https://files.catbox.moe/zn8p3r.mp4"
+        },
+        {
+          "title": "Episode 7",
+          "src": "https://files.catbox.moe/io33qo.mp4"
+        },
+        {
+          "title": "Episode 8",
+          "src": "https://files.catbox.moe/1t4mjv.mp4"
+        },
+        {
+          "title": "Episode 9",
+          "src": "https://files.catbox.moe/kifoc6.mp4"
+        },
+        {
+          "title": "Episode 10",
+          "src": "https://files.catbox.moe/7e3nwy.mp4"
+        },
+        {
+          "title": "Episode 11",
+          "src": "https://files.catbox.moe/vkllmu.mp4"
+        },
+        {
+          "title": "Episode 12",
+          "src": "https://files.catbox.moe/fl2vva.mp4"
+        },
+        {
+          "title": "Episode 13",
+          "src": "https://files.catbox.moe/rj3mpy.mp4"
+        }
+      ]
     }
-  ]
+  ],
+  "LatestTime": "2025-08-14T00:45:54.033Z"
 }
