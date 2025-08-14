@@ -64,15 +64,6 @@
       "LatestTime": "2025-08-14T01:19:31.095Z"
     },
     {
-      "file": "FailureFrame.json",
-      "path": "./Files/FailureFrame.json",
-      "title": "Failure Frame",
-      "poster": "./Posters/Failure_Frame.webp",
-      "categoryCount": 1,
-      "episodeCount": 12,
-      "LatestTime": "2025-08-12T12:36:00"
-    },
-    {
       "file": "LoserRanger.json",
       "path": "./Files/LoserRanger.json",
       "title": "GO! GO! LOSER RANGER!",
