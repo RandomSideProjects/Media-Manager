@@ -277,20 +277,31 @@
         const form = new FormData();
         form.append('reqtype', 'fileupload');
         form.append('fileToUpload', file);
+
         xhr.upload.addEventListener('progress', (e) => {
           if (e.lengthComputable) {
             const percent = (e.loaded / e.total) * 100;
-            onProgress(percent);
+            try { onProgress && onProgress(percent); } catch {}
           }
         });
+
         xhr.onload = () => {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            resolve(xhr.responseText);
+          const ok = xhr.status >= 200 && xhr.status < 300;
+          if (ok && typeof xhr.responseText === 'string' && xhr.responseText.trim()) {
+            resolve(xhr.responseText.trim());
           } else {
-            reject(new Error('Upload error: ' + xhr.status));
+            const err = new Error('Upload error: ' + xhr.status);
+            err.status = xhr.status;
+            reject(err);
           }
         };
-        xhr.onerror = () => reject(new Error('Network error'));
+
+        xhr.onerror = () => {
+          const err = new Error('Network error');
+          err.status = 0;
+          reject(err);
+        };
+
         xhr.send(form);
       });
     }
@@ -358,6 +369,8 @@
     const homeTabBtn = document.getElementById('homeTabBtn');
     const folderInput = document.getElementById('folderInput');
     let isFolderUploading = false;
+    const UPLOAD_CONCURRENCY = 3; // conservative to avoid 412 from server under load
+    const sleep = (ms) => new Promise(res => setTimeout(res, ms));
     // Import a single folder as the next season
     folderInput.addEventListener('change', async (e) => {
       const files = Array.from(e.target.files);
@@ -401,9 +414,14 @@
       document.body.appendChild(folderOverlay);
       const folderUploadList = folderOverlay.querySelector('#folderUploadList');
       const folderUploadSummary = folderOverlay.querySelector('#folderUploadSummary');
-      // Upload all episodes concurrently with retry indicators
-      const uploadTasks = [];
+      // Show total immediately
+      folderUploadSummary.textContent = `0 / ${filesInSeason.length} completed`;
+
+      // Build tasks but run them with limited concurrency
+      const taskFns = [];
       const maxAttempts = 5;
+      let completedCount = 0;
+
       filesInSeason.forEach(({ file, epNum }) => {
         // Add episode UI stub
         addEpisode(episodesDiv, { title: `Episode ${epNum}`, src: '' });
@@ -412,6 +430,7 @@
         const epSrcInput = inputs[1];
         const epError = epDiv.querySelector('.ep-error');
         epError.textContent = '';
+
         // Overlay progress row
         const row = document.createElement('div');
         row.style.display = 'flex';
@@ -426,60 +445,66 @@
         label.style.flex = '1';
         const status = document.createElement('div');
         status.textContent = 'Queued';
-        status.style.minWidth = '90px';
+        status.style.minWidth = '110px';
         const progressWrapper = document.createElement('div');
         progressWrapper.style.flex = '2';
         const prog = document.createElement('progress');
-        prog.max = 100;
-        prog.value = 0;
-        prog.style.width = '100%';
+        prog.max = 100; prog.value = 0; prog.style.width = '100%';
         progressWrapper.appendChild(prog);
         row.appendChild(label);
         row.appendChild(progressWrapper);
         row.appendChild(status);
         folderUploadList.appendChild(row);
-        // Upload with retries
-        const task = (async () => {
+
+        const fn = async () => {
           for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-            status.textContent = attempt > 1 ? `Retry ${attempt} of ${maxAttempts}` : 'Uploading';
+            status.textContent = (attempt === 1) ? 'Uploading' : `Retry ${attempt} of ${maxAttempts}`;
             prog.value = 0;
             try {
-              const url = await uploadToCatboxWithProgress(file, pct => {
-                prog.value = pct;
-              });
+              const url = await uploadToCatboxWithProgress(file, pct => { prog.value = pct; });
               epSrcInput.value = url;
               epError.textContent = '';
               status.textContent = 'Done';
               status.style.color = '#6ec1e4';
               prog.value = 100;
+              completedCount++;
+              folderUploadSummary.textContent = `${completedCount} / ${filesInSeason.length} completed`;
               return;
-            } catch {
-              if (attempt === maxAttempts) {
-                status.textContent = 'Failed';
-                status.style.color = '#ff4444';
-                epError.innerHTML = '<span style="color:red">Upload failed</span>';
+            } catch (err) {
+              // Backoff for retryable statuses (412, 429, 503) or generic failures
+              if (attempt < maxAttempts) {
+                const base = 800 * Math.pow(2, attempt - 1); // 0.8s, 1.6s, 3.2s, ...
+                const jitter = base * (0.3 + Math.random() * 0.4); // 30–70% jitter
+                await sleep(base + jitter);
+                continue;
               }
+              status.textContent = 'Failed';
+              status.style.color = '#ff4444';
+              epError.innerHTML = '<span style="color:red">Upload failed</span>';
+              return;
             }
           }
-        })();
-        uploadTasks.push(task);
-        // Update summary after task finishes
-        task.finally(() => {
-          const total = filesInSeason.length;
-          const completed = Array.from(folderUploadList.children).filter(r => {
-            const st = r.querySelector('div:nth-child(3)').textContent;
-            return st === 'Done';
-          }).length;
-          folderUploadSummary.textContent = `${completed} / ${total} completed`;
-        });
+        };
+        taskFns.push(fn);
       });
+
+      // Run with limited concurrency
+      const runWithConcurrency = async (fns, limit) => {
+        let idx = 0;
+        const workers = Array.from({ length: Math.min(limit, fns.length) }, async () => {
+          while (idx < fns.length) {
+            const current = fns[idx++];
+            await current();
+          }
+        });
+        await Promise.all(workers);
+      };
+
       try {
-        await Promise.all(uploadTasks);
+        await runWithConcurrency(taskFns, UPLOAD_CONCURRENCY);
       } finally {
         isFolderUploading = false;
-        if (folderOverlay) {
-          folderOverlay.remove();
-        }
+        if (folderOverlay) folderOverlay.remove();
       }
     });
     // Start in Create mode

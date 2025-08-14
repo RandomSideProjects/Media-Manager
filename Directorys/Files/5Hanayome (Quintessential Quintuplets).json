@@ -1,6 +1,5 @@
 {
   "title": "5Hanayome (Quintessential Quintuplets)",
-  "LatestTime": "2025-08-12T23:36:00",
   "Image": "https://files.catbox.moe/lz4pm3.jpg",
   "categories": [
     {
@@ -108,39 +107,7 @@
           "src": "https://files.catbox.moe/q6k0f3.mp4"
         }
       ]
-    },
-    {
-      "category": "Movie (Split Parts)",
-      "episodes": [
-        {
-          "title": "Part 1",
-          "src": "https://files.catbox.moe/72z2m1.webm"
-        },
-        {
-          "title": "Part 2",
-          "src": "https://files.catbox.moe/qd5d6d.webm"
-        },
-        {
-          "title": "Part 3",
-          "src": "https://files.catbox.moe/6czg87.webm"
-        },
-        {
-          "title": "Part 4",
-          "src": "https://files.catbox.moe/hzbt6t.webm"
-        },
-        {
-          "title": "Part 5",
-          "src": "https://files.catbox.moe/1fspau.webm"
-        },
-        {
-          "title": "Part 6",
-          "src": "https://files.catbox.moe/lx1mw1.webm"
-        },
-        {
-          "title": "Part 7",
-          "src": "https://files.catbox.moe/8comr5.webm"
-        }
-      ]
     }
-  ]
+  ],
+  "LatestTime": "2025-08-14T04:24:41.852Z"
 }
