@@ -1,222 +1,5 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Public Sources</title>
-  <style>
-    /* Settings button (top-right) */
-    #sourcesSettingsBtn {
-      position: fixed;
-      top: 14px;
-      right: 14px;
-      z-index: 1001;
-      width: 40px;
-      height: 40px;
-      border: none;
-      border-radius: 10px;
-      background: #007bff;
-      color: #fff;
-      font-weight: 700;
-      cursor: pointer;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.35);
-    }
-    /* Settings overlay */
-    #sourcesSettingsOverlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.55);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-    }
-    #sourcesSettingsPanel {
-      background: #1a1a1a;
-      color: #f1f1f1;
-      border: 1px solid #333;
-      border-radius: 12px;
-      width: 420px;
-      max-width: calc(100vw - 40px);
-      padding: 16px 18px;
-      box-shadow: 0 16px 40px rgba(0,0,0,0.6);
-    }
-    #sourcesSettingsPanel h3 { margin: 0 0 8px 0; font-size: 1.05rem; }
-    #sourcesSettingsPanel .section { margin-top: 12px; padding-top: 10px; border-top: 1px solid #2a2a2a; }
-    .settings-row { display: flex; align-items: center; gap: 10px; margin: 6px 0; flex-wrap: wrap; }
-    .settings-actions { margin-top: 14px; display: flex; gap: 8px; justify-content: flex-end; }
-    .settings-actions button { padding: 8px 12px; border: none; border-radius: 8px; cursor: pointer; }
-    .btn-primary { background: #007bff; color:#fff; }
-    .btn-ghost { background: #2a2a2a; color:#f1f1f1; }
-    .settings-radio { display: flex; gap: 10px; flex-wrap: wrap; }
-    .settings-radio label { display: flex; align-items: center; gap: 6px; }
-    .source-time { font-size: 0.8em; opacity: 0.85; }
-    body {
-      background: #121212;
-      color: #f1f1f1;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0;
-      padding: 0;
-    }
-    .container {
-      width: 90%;
-      max-width: 900px;
-      margin: 2em auto;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1.5em;
-      justify-content: center;
-    }
-    .source-card {
-      background: #1a1a1a;
-      border: 1px solid #333;
-      border-radius: 12px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.4);
-      width: 360px;
-      height: 260px; /* needed so the poster can use 90% height */
-      padding: 1em;
-      display: flex;
-      flex-direction: row; /* image left, text right */
-      align-items: center;
-      gap: 1em;
-      position: relative;
-      overflow: hidden; /* prevent poster from pushing out of the card */
-    }
-    .source-card.no-thumb {
-      height: auto;                 /* let content define height */
-      flex-direction: column;       /* revert to pre-image vertical stack */
-      align-items: flex-start;
-      gap: 0.5em;
-    }
-    .source-card.no-thumb .source-right {
-      min-width: 0;                 /* allow full width */
-      width: 100%;
-    }
-    .source-card h3 {
-      margin: 0;
-    }
-    .source-title-row {
-      display: flex;
-      align-items: center;
-      gap: 0.6em;
-      min-height: 48px;
-    }
-    .source-thumb {
-      /* Size set dynamically in JS using naturalWidth/naturalHeight */
-      border-radius: 10px;    /* curved corners */
-      background: #2a2a2a;
-      border: 1px solid #333;
-      display: block;
-      flex: 0 0 auto;
-    }
-
-    .source-right {
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 0.35em;
-      flex: 1 1 auto;
-      min-width: 40%; /* ensure space for text */
-    }
-    .source-right h3 { margin: 0; }
-    .source-card p {
-      margin: 0.25em 0;
-    }
-    .pill-button {
-      margin-top: auto;
-      padding: 0.5em 1em;
-      background: #007bff;
-      color: white;
-      border: none;
-      border-radius: 999px;
-      cursor: pointer;
-      text-transform: uppercase;
-      font-family: inherit;
-      transition: background 0.2s, transform 0.1s;
-    }
-    .pill-button:hover { background: #0056b3; }
-
-    #serverStatusBox {
-      position: fixed;
-      top: 1rem;
-      left: 1rem;
-      background: #1a1a1a;
-      color: #f1f1f1;
-      border: 1px solid #333;
-      border-radius: 10px;
-      padding: 0.6em 0.9em;
-      font-size: 0.9rem;
-      line-height: 1.2;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.4);
-      z-index: 9999;
-      white-space: pre-line;
-    }
-    /* Server check loading box */
-    #serverCheckBox {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: #1a1a1a;
-      color: #f1f1f1;
-      border: 1px solid #333;
-      border-radius: 12px;
-      padding: 1em 1.25em;
-      display: none; /* shown while checking */
-      align-items: center;
-      gap: 0.75em;
-      box-shadow: 0 12px 30px rgba(0,0,0,0.5);
-      z-index: 10000;
-    }
-    #serverCheckBox .serverCheckText {
-      white-space: pre-line;
-      font-weight: 600;
-      line-height: 1.3;
-    }
-    .spinner {
-      width: 24px;
-      height: 24px;
-      border: 3px solid rgba(255,255,255,0.25);
-      border-top-color: #5ab8ff;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      flex: 0 0 24px;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-  </style>
-</head>
-<body>
-  <button id="sourcesSettingsBtn" title="Settings" aria-label="Settings">⚙️</button>
-  <div id="sourcesSettingsOverlay">
-    <div id="sourcesSettingsPanel" role="dialog" aria-modal="true" aria-labelledby="sourcesSettingsTitle">
-      <h3 id="sourcesSettingsTitle">Public Sources — Settings</h3>
-      <div class="section">
-        <div class="settings-row"><strong>Sort by</strong></div>
-        <div class="settings-radio" id="sortOptions">
-          <label><input type="radio" name="sort" value="az"> A–Z</label>
-          <label><input type="radio" name="sort" value="za"> Z–A</label>
-          <label><input type="radio" name="sort" value="newold"> New → Old</label>
-          <label><input type="radio" name="sort" value="oldnew"> Old → New</label>
-        </div>
-      </div>
-      <div class="section">
-        <label class="settings-row" style="justify-content: space-between;">
-          <span>Hide posters</span>
-          <input type="checkbox" id="toggleHidePosters">
-        </label>
-      </div>
-      <div class="settings-actions">
-        <button id="settingsCancel" class="btn-ghost">Close</button>
-        <button id="settingsApply" class="btn-primary">Apply</button>
-      </div>
-    </div>
-  </div>
-  <div class="container" id="sourcesContainer">
-    <!-- Cards will be injected here -->
-  </div>
-<script>
   const STATUS_URL = 'https://files.catbox.moe/6gkiu0.png'; // i made a typo lmao, had to add a new image to fix said typo ( Shouln't >> Should not )
+  const DIR_PREFIX = '/Directorys/';
 
   // Settings state
   let SOURCES_SORT = localStorage.getItem('sources_sortOrder') || 'az';
@@ -259,7 +42,8 @@
       if (m.LatestTime) return; // we have explicit timestamp
       if (typeof m._mtime === 'number') return;
       try {
-        const url = new URL(m.path || m.openPath || '', window.location.href).href;
+        const rel = m.path || m.openPath || '';
+        const url = /^https?:/i.test(rel) ? rel : DIR_PREFIX + rel.replace(/^\.\//,'');
         const resp = await fetch(url, { method: 'HEAD', cache: 'no-store' });
         const lm = resp.headers.get('last-modified') || resp.headers.get('Last-Modified');
         m._mtime = lm ? Date.parse(lm) : idx;
@@ -396,6 +180,7 @@
     const categoryCount = typeof meta.categoryCount === 'number' ? meta.categoryCount : 0;
     const episodeCount  = typeof meta.episodeCount  === 'number' ? meta.episodeCount  : 0;
     const openPath = meta.path || `./Files/${meta.file || ''}`;
+    const openParam = DIR_PREFIX + openPath.replace(/^\.\//,'');
 
     const card = document.createElement('div');
     card.className = 'source-card';
@@ -405,7 +190,7 @@
       const img = document.createElement('img');
       img.className = 'source-thumb';
       img.alt = `${title} poster`;
-      img.src = posterSrc;
+      img.src = /^https?:/i.test(posterSrc) ? posterSrc : DIR_PREFIX + posterSrc.replace(/^\.\//,'');
       img.addEventListener('error', () => { img.style.display = 'none'; });
       img.addEventListener('load', () => fitPosterToCard(img, card));
       if (img.complete && img.naturalWidth) fitPosterToCard(img, card);
@@ -437,7 +222,6 @@
     btn.className = 'pill-button';
     btn.textContent = 'Open';
     btn.onclick = () => {
-      const openParam = `Directorys/${openPath.replace(/^\.\//,'')}`;
       const src = encodeURIComponent(openParam);
       window.location.href = `../index.html?source=${src}`;
     };
@@ -527,7 +311,7 @@
       const img = document.createElement('img');
       img.className = 'source-thumb';
       img.alt = `${title} poster`;
-      img.src = imgUrl;
+      img.src = /^https?:/i.test(imgUrl) ? imgUrl : DIR_PREFIX + imgUrl.replace(/^\.\//,'');
       img.referrerPolicy = 'no-referrer';
       img.addEventListener('error', () => { img.style.display = 'none'; });
       img.addEventListener('load', () => fitPosterToCard(img, card));
@@ -580,7 +364,7 @@
     const container = document.getElementById('sourcesContainer');
     container.innerHTML = '';
     try {
-      const manifestUrl = new URL('SourceList.json', window.location.href).href;
+      const manifestUrl = DIR_PREFIX + 'SourceList.json';
       const response = await fetch(manifestUrl);
       const text = await response.text();
       const manifest = JSON.parse(text);
@@ -627,12 +411,12 @@
       try {
         let data, openParam, displayName = name;
         if (typeof input === 'string') {
-          // If string looks like full URL or blob, treat as direct; else resolve relative to this page.
+          // If string looks like full URL or blob, treat as direct; else resolve relative to data directory.
           const isDirect = /^(https?:|blob:)/i.test(input);
-          const fetchUrl = isDirect ? input : new URL(input, window.location.href).href;
+          const fetchUrl = isDirect ? input : DIR_PREFIX + input.replace(/^\.\//,'');
           const text = await (await fetch(fetchUrl)).text();
           data = JSON.parse(text);
-          openParam = isDirect ? input : `Directorys/${(input || '').replace(/^\.\//,'')}`;
+          openParam = isDirect ? input : DIR_PREFIX + (input || '').replace(/^\.\//,'');
           displayName = displayName || (data && data.title) || input;
         } else if (input && typeof input === 'object') {
           data = input;
@@ -690,7 +474,7 @@
       const img = document.createElement('img');
       img.className = 'source-thumb';
       img.alt = `${title} poster`;
-      img.src = imgUrl;
+      img.src = /^https?:/i.test(imgUrl) ? imgUrl : DIR_PREFIX + imgUrl.replace(/^\.\//,'');
       img.referrerPolicy = 'no-referrer';
       img.addEventListener('error', () => { img.style.display = 'none'; });
       img.addEventListener('load', () => fitPosterToCard(img, card));
@@ -719,7 +503,7 @@
     if (openTarget) {
       btn.onclick = () => {
         const isFull = /^https?:\/\//i.test(openTarget);
-        const srcParam = isFull ? openTarget : `Directorys/${openTarget.replace(/^\.\/?/, '')}`;
+        const srcParam = isFull ? openTarget : DIR_PREFIX + openTarget.replace(/^\.\/?/, '');
         window.location.href = `../index.html?source=${encodeURIComponent(srcParam)}`;
       };
     } else {
@@ -779,6 +563,4 @@
   window.addTempSource = addTempSource;
 
   checkHostAndLoad();
-</script>
-</body>
-</html>
+

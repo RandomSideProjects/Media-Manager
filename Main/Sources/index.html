@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Public Sources</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <button id="sourcesSettingsBtn" title="Settings" aria-label="Settings">⚙️</button>
+  <div id="sourcesSettingsOverlay">
+    <div id="sourcesSettingsPanel" role="dialog" aria-modal="true" aria-labelledby="sourcesSettingsTitle">
+      <h3 id="sourcesSettingsTitle">Public Sources — Settings</h3>
+      <div class="section">
+        <div class="settings-row"><strong>Sort by</strong></div>
+        <div class="settings-radio" id="sortOptions">
+          <label><input type="radio" name="sort" value="az"> A–Z</label>
+          <label><input type="radio" name="sort" value="za"> Z–A</label>
+          <label><input type="radio" name="sort" value="newold"> New → Old</label>
+          <label><input type="radio" name="sort" value="oldnew"> Old → New</label>
+        </div>
+      </div>
+      <div class="section">
+        <label class="settings-row" style="justify-content: space-between;">
+          <span>Hide posters</span>
+          <input type="checkbox" id="toggleHidePosters">
+        </label>
+      </div>
+      <div class="settings-actions">
+        <button id="settingsCancel" class="btn-ghost">Close</button>
+        <button id="settingsApply" class="btn-primary">Apply</button>
+      </div>
+    </div>
+  </div>
+  <div class="container" id="sourcesContainer">
+    <!-- Cards will be injected here -->
+  </div>
+<script src="script.js"></script>
+</body>
+</html>
