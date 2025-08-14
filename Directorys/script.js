@@ -1,0 +1,564 @@
+  const STATUS_URL = 'https://files.catbox.moe/6gkiu0.png'; // i made a typo lmao, had to add a new image to fix said typo ( Shouln't >> Should not )
+
+  // Settings state
+  let SOURCES_SORT = localStorage.getItem('sources_sortOrder') || 'az';
+  let SOURCES_HIDE_POSTERS = localStorage.getItem('sources_hidePosters') === '1';
+  let SOURCES_META = [];
+
+  function formatLocal(dt) {
+    try { return new Date(dt).toLocaleString(); } catch { return ''; }
+  }
+
+  function sortMeta(list, mode) {
+    const arr = [...list];
+    switch (mode) {
+      case 'az':
+        arr.sort((a,b)=>String(a.title).localeCompare(String(b.title)));
+        break;
+      case 'za':
+        arr.sort((a,b)=>String(b.title).localeCompare(String(a.title)));
+        break;
+      case 'newold': {
+        arr.sort((a,b)=>{
+          const at = a.LatestTime ? Date.parse(a.LatestTime) : (a._mtime||0);
+          const bt = b.LatestTime ? Date.parse(b.LatestTime) : (b._mtime||0);
+          return bt - at;
+        });
+        break; }
+      case 'oldnew': {
+        arr.sort((a,b)=>{
+          const at = a.LatestTime ? Date.parse(a.LatestTime) : (a._mtime||0);
+          const bt = b.LatestTime ? Date.parse(b.LatestTime) : (b._mtime||0);
+          return at - bt;
+        });
+        break; }
+    }
+    return arr;
+  }
+
+  async function hydrateMtimes(list) {
+    const tasks = list.map(async (m, idx) => {
+      if (m.LatestTime) return; // we have explicit timestamp
+      if (typeof m._mtime === 'number') return;
+      try {
+        const url = new URL(m.path || m.openPath || '', window.location.href).href;
+        const resp = await fetch(url, { method: 'HEAD', cache: 'no-store' });
+        const lm = resp.headers.get('last-modified') || resp.headers.get('Last-Modified');
+        m._mtime = lm ? Date.parse(lm) : idx;
+      } catch {
+        m._mtime = idx;
+      }
+    });
+    await Promise.allSettled(tasks);
+  }
+
+  function showHostFailure(container, codeText) {
+    container.innerHTML = `
+      <div style="
+        padding: 3em 1.5em;
+        text-align: center;
+        font-weight: 800;
+        color: #ffffff;
+        font-size: 1.6rem;
+        white-space: pre-line;
+      ">
+        Unfortunately, our public source host is currently unavailable.
+        \nPlease try again.
+        \n<code style="background:#000; display:inline-block; padding:0.6em 0.8em; border-radius:8px; margin-top:0.9em; color:#fff;">HTTP Code : ${codeText}</code>
+      </div>
+    `;
+  }
+
+  async function checkHostAndLoad() {
+    const container = document.getElementById('sourcesContainer');
+    // Create status box (hidden until success)
+    let statusBox = document.getElementById('serverStatusBox');
+    if (!statusBox) {
+      statusBox = document.createElement('div');
+      statusBox.id = 'serverStatusBox';
+      statusBox.style.display = 'none';
+      document.body.appendChild(statusBox);
+    }
+
+    // Create loading box
+    let checkBox = document.getElementById('serverCheckBox');
+    if (!checkBox) {
+      checkBox = document.createElement('div');
+      checkBox.id = 'serverCheckBox';
+      checkBox.innerHTML = `
+        <div class="spinner" aria-hidden="true"></div>
+        <div class="serverCheckText" id="serverCheckText">Checking if server is responsive\nTime Elapsed : 00:00</div>
+      `;
+      document.body.appendChild(checkBox);
+    }
+    const checkText = document.getElementById('serverCheckText');
+    checkBox.style.display = 'flex';
+
+    const started = Date.now();
+    const fmt = (ms) => {
+      const s = Math.floor(ms / 1000);
+      const m = Math.floor(s / 60);
+      const sec = s % 60;
+      return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+    };
+    const tick = () => {
+      if (checkText) checkText.textContent = `Checking if server is responsive\nTime Elapsed : ${fmt(Date.now() - started)}`;
+    };
+    tick();
+    const timer = setInterval(tick, 250);
+
+    const stop = () => {
+      clearInterval(timer);
+      if (checkBox) checkBox.remove();
+    };
+
+    let resp;
+    try {
+      resp = await fetch(STATUS_URL, { cache: 'no-store' });
+    } catch (err) {
+      stop();
+      showHostFailure(container, err && err.message ? err.message : 'Network error');
+      return;
+    }
+
+    if (!resp || !resp.ok) {
+      const codeText = resp ? `${resp.status} ${resp.statusText || ''}`.trim() : 'Unknown error';
+      stop();
+      showHostFailure(container, codeText);
+      return;
+    }
+
+    // Success path: show status code box and continue to load sources
+    stop();
+    statusBox.textContent = `Server status code\n${resp.status}`;
+    statusBox.style.display = 'block';
+    await loadSources();
+  }
+
+  function fitPosterToCard(img, card) {
+    const cardH = card.clientHeight;
+    const cardW = card.clientWidth;
+    const maxH = Math.max(1, Math.floor(cardH * 0.9));   // 90% of card height
+    const maxW = Math.max(1, Math.floor(cardW * 0.55));  // keep space for text
+
+    const iw = img.naturalWidth || 0;
+    const ih = img.naturalHeight || 0;
+    if (!iw || !ih) return;
+
+    const aspect = iw / ih; // width / height
+    let targetW, targetH;
+
+    if (ih >= iw) {
+      // Portrait (or square): try to use full 90% height
+      targetH = maxH;
+      targetW = Math.round(targetH * aspect);
+      if (targetW > maxW) {
+        // Width would overflow; scale down proportionally
+        targetW = maxW;
+        targetH = Math.round(targetW / aspect);
+      }
+    } else {
+      // Landscape: cap by width first, then ensure we don't exceed maxH
+      targetW = maxW;
+      targetH = Math.round(targetW / aspect);
+      if (targetH > maxH) {
+        targetH = maxH;
+        targetW = Math.round(targetH * aspect);
+      }
+    }
+
+    img.style.width  = targetW + 'px';
+    img.style.height = targetH + 'px';
+    img.style.objectFit = 'contain';
+    img.style.objectPosition = 'center';
+  }
+
+  function buildSourceCardFromMeta(meta) {
+    const title = meta.title || meta.file || 'Untitled';
+    const categoryCount = typeof meta.categoryCount === 'number' ? meta.categoryCount : 0;
+    const episodeCount  = typeof meta.episodeCount  === 'number' ? meta.episodeCount  : 0;
+    const openPath = meta.path || `./Files/${meta.file || ''}`;
+
+    const card = document.createElement('div');
+    card.className = 'source-card';
+
+    const posterSrc = meta.poster || meta.image;
+    if (!SOURCES_HIDE_POSTERS && posterSrc && String(posterSrc).toLowerCase() !== 'null') {
+      const img = document.createElement('img');
+      img.className = 'source-thumb';
+      img.alt = `${title} poster`;
+      img.src = posterSrc;
+      img.addEventListener('error', () => { img.style.display = 'none'; });
+      img.addEventListener('load', () => fitPosterToCard(img, card));
+      if (img.complete && img.naturalWidth) fitPosterToCard(img, card);
+      window.addEventListener('resize', () => fitPosterToCard(img, card));
+      card.appendChild(img);
+    } else {
+      card.classList.add('no-thumb');
+    }
+
+    const right = document.createElement('div');
+    right.className = 'source-right';
+
+    const h3 = document.createElement('h3');
+    h3.textContent = title;
+
+    const p1 = document.createElement('p');
+    p1.innerHTML = `<strong>${categoryCount}</strong> ${categoryCount === 1 ? 'Season' : 'Seasons'}`;
+    const p2 = document.createElement('p');
+    p2.innerHTML = `<strong>${episodeCount}</strong> ${episodeCount === 1 ? 'Episode' : 'Episodes'}`;
+
+    const timeP = document.createElement('p');
+    timeP.className = 'source-time';
+    timeP.style.display = 'none';
+    if (meta.LatestTime) {
+      timeP.textContent = 'Updated: ' + formatLocal(meta.LatestTime);
+    }
+
+    const btn = document.createElement('button');
+    btn.className = 'pill-button';
+    btn.textContent = 'Open';
+    btn.onclick = () => {
+      const openParam = `Directorys/${openPath.replace(/^\.\//,'')}`;
+      const src = encodeURIComponent(openParam);
+      window.location.href = `../index.html?source=${src}`;
+    };
+
+    right.append(h3, p1, p2, timeP, btn);
+    card.appendChild(right);
+
+    // right-click terminology toggle
+    card.addEventListener('contextmenu', e => {
+      e.preventDefault();
+      const inSeasonMode = p1.textContent.includes('Season');
+      if (inSeasonMode) {
+        p1.innerHTML = `<strong>${categoryCount}</strong> ${categoryCount === 1 ? 'Category' : 'Categories'}`;
+        p2.innerHTML = `<strong>${episodeCount}</strong> ${episodeCount === 1 ? 'Item' : 'Items'}`;
+        timeP.style.display = meta.LatestTime ? 'block' : 'none';
+      } else {
+        p1.innerHTML = `<strong>${categoryCount}</strong> ${categoryCount === 1 ? 'Season' : 'Seasons'}`;
+        p2.innerHTML = `<strong>${episodeCount}</strong> ${episodeCount === 1 ? 'Episode' : 'Episodes'}`;
+        timeP.style.display = 'none';
+      }
+    });
+
+    return card;
+  }
+
+  function renderSourcesFromState() {
+    const container = document.getElementById('sourcesContainer');
+    container.innerHTML = '';
+    const sorted = sortMeta(SOURCES_META, SOURCES_SORT);
+    for (const meta of sorted) {
+      const card = buildSourceCardFromMeta(meta);
+      container.appendChild(card);
+    }
+  }
+
+  (function initSourcesSettings(){
+    const btn = document.getElementById('sourcesSettingsBtn');
+    const overlay = document.getElementById('sourcesSettingsOverlay');
+    const applyBtn = document.getElementById('settingsApply');
+    const cancelBtn = document.getElementById('settingsCancel');
+    const hideToggle = document.getElementById('toggleHidePosters');
+    const radios = Array.from(document.querySelectorAll('#sortOptions input[name="sort"]'));
+
+    function openPanel(){
+      hideToggle.checked = !!SOURCES_HIDE_POSTERS;
+      for (const r of radios) r.checked = (r.value === SOURCES_SORT);
+      overlay.style.display = 'flex';
+    }
+    function closePanel(){ overlay.style.display = 'none'; }
+
+    btn.addEventListener('click', openPanel);
+    cancelBtn.addEventListener('click', closePanel);
+
+    applyBtn.addEventListener('click', async () => {
+      const selected = radios.find(r => r.checked);
+      SOURCES_SORT = selected ? selected.value : 'az';
+      SOURCES_HIDE_POSTERS = !!hideToggle.checked;
+      localStorage.setItem('sources_sortOrder', SOURCES_SORT);
+      localStorage.setItem('sources_hidePosters', SOURCES_HIDE_POSTERS ? '1':'0');
+      if (SOURCES_SORT === 'newold' || SOURCES_SORT === 'oldnew') {
+        await hydrateMtimes(SOURCES_META);
+      }
+      renderSourcesFromState();
+      closePanel();
+    });
+
+    overlay.addEventListener('click', (e)=>{ if (e.target === overlay) closePanel(); });
+  })();
+
+  function buildSourceCard(data, openSourceParam, fileNameForFallback) {
+    const title = data.title || fileNameForFallback || 'Untitled';
+    const categories = Array.isArray(data.categories) ? data.categories : [];
+    const seasons = categories.length;
+    let episodes = 0;
+    categories.forEach(cat => {
+      if (Array.isArray(cat.episodes)) episodes += cat.episodes.length;
+    });
+
+    const card = document.createElement('div');
+    card.className = 'source-card';
+
+    // Left: poster image (preserve aspect ratio)
+    const imgUrl = (typeof data.Image === 'string' && data.Image !== 'N/A')
+      ? data.Image
+      : (typeof data.image === 'string' && data.image !== 'N/A' ? data.image : '');
+    if (imgUrl) {
+      const img = document.createElement('img');
+      img.className = 'source-thumb';
+      img.alt = `${title} poster`;
+      img.src = imgUrl;
+      img.referrerPolicy = 'no-referrer';
+      img.addEventListener('error', () => { img.style.display = 'none'; });
+      img.addEventListener('load', () => fitPosterToCard(img, card));
+      if (img.complete && img.naturalWidth) fitPosterToCard(img, card);
+      window.addEventListener('resize', () => fitPosterToCard(img, card));
+      card.appendChild(img);
+    } else {
+      card.classList.add('no-thumb');
+    }
+
+    // Right: text/content column
+    const right = document.createElement('div');
+    right.className = 'source-right';
+
+    const h3 = document.createElement('h3');
+    h3.textContent = title;
+
+    const p1 = document.createElement('p');
+    p1.innerHTML = `<strong>${seasons}</strong> ${seasons === 1 ? 'Season' : 'Seasons'}`;
+    const p2 = document.createElement('p');
+    p2.innerHTML = `<strong>${episodes}</strong> ${episodes === 1 ? 'Episode' : 'Episodes'}`;
+
+    const btn = document.createElement('button');
+    btn.className = 'pill-button';
+    btn.textContent = 'Open';
+    btn.onclick = () => {
+      const src = encodeURIComponent(openSourceParam);
+      window.location.href = `../index.html?source=${src}`;
+    };
+
+    right.append(h3, p1, p2, btn);
+    card.appendChild(right);
+
+    // Right-click terminology toggle (Season/Categories, Episode/Items)
+    card.addEventListener('contextmenu', e => {
+      e.preventDefault();
+      if (p1.textContent.includes('Season')) {
+        p1.innerHTML = `<strong>${seasons}</strong> ${seasons === 1 ? 'Category' : 'Categories'}`;
+        p2.innerHTML = `<strong>${episodes}</strong> ${episodes === 1 ? 'Item' : 'Items'}`;
+      } else {
+        p1.innerHTML = `<strong>${seasons}</strong> ${seasons === 1 ? 'Season' : 'Seasons'}`;
+        p2.innerHTML = `<strong>${episodes}</strong> ${episodes === 1 ? 'Episode' : 'Episodes'}`;
+      }
+    });
+
+    return card;
+  }
+
+  async function loadSources() {
+    const container = document.getElementById('sourcesContainer');
+    container.innerHTML = '';
+    try {
+      const manifestUrl = new URL('SourceList.json', window.location.href).href;
+      const response = await fetch(manifestUrl);
+      const text = await response.text();
+      const manifest = JSON.parse(text);
+      console.log('Loaded SourceList.json:', manifestUrl);
+
+      if (Array.isArray(manifest.sources)) {
+        SOURCES_META = manifest.sources.map((m, idx)=> ({ ...m, _idx: idx }));
+      } else {
+        const temp = [];
+        let idx = 0;
+        for (const [fileName, filePath] of Object.entries(manifest)) {
+          if (typeof filePath !== 'string') continue;
+          const lower = String(fileName).toLowerCase();
+          if (!lower.endsWith('.json') || lower === 'exampledir.json') continue;
+          temp.push({
+            file: fileName,
+            path: filePath,
+            title: fileName.replace(/\.json$/i, ''),
+            poster: null,
+            categoryCount: 0,
+            episodeCount: 0,
+            LatestTime: null,
+            _idx: idx++
+          });
+        }
+        SOURCES_META = temp;
+      }
+
+      renderSourcesFromState();
+      if ((SOURCES_SORT === 'newold' || SOURCES_SORT === 'oldnew')) {
+        await hydrateMtimes(SOURCES_META);
+        renderSourcesFromState();
+      }
+    } catch (error) {
+      container.innerHTML = '<p style="color:#f1f1f1;">Failed to load SourceList.json.</p>';
+      console.error('Error:', error);
+    }
+  }
+  (function exposeTempSourceAPI(){
+    const container = document.getElementById('sourcesContainer');
+    const temp = { urls: [] };
+
+    async function addTempSource(input, name) {
+      try {
+        let data, openParam, displayName = name;
+        if (typeof input === 'string') {
+          // If string looks like full URL or blob, treat as direct; else resolve relative to this page.
+          const isDirect = /^(https?:|blob:)/i.test(input);
+          const fetchUrl = isDirect ? input : new URL(input, window.location.href).href;
+          const text = await (await fetch(fetchUrl)).text();
+          data = JSON.parse(text);
+          openParam = isDirect ? input : `Directorys/${(input || '').replace(/^\.\//,'')}`;
+          displayName = displayName || (data && data.title) || input;
+        } else if (input && typeof input === 'object') {
+          data = input;
+          displayName = displayName || data.title || 'Temporary Source';
+          const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+          const blobUrl = URL.createObjectURL(blob);
+          temp.urls.push(blobUrl);
+          openParam = blobUrl; // pass blob URL straight to viewer
+        } else {
+          throw new Error('addTempSource expects a URL string or a JSON object.');
+        }
+
+        const card = buildSourceCard(data, openParam, displayName);
+        card.dataset.temp = '1';
+        container.prepend(card);
+        console.log('✅ Temp source added:', displayName);
+        return card;
+      } catch (e) {
+        console.error('addTempSource failed:', e);
+        throw e;
+      }
+    }
+
+    function clearTempSources() {
+      document.querySelectorAll('.source-card[data-temp="1"]').forEach(el => el.remove());
+      temp.urls.forEach(u => { try { URL.revokeObjectURL(u); } catch {} });
+      temp.urls = [];
+      console.log('🧹 Cleared temporary sources.');
+    }
+
+    // Expose to console
+    window.addTempSource = addTempSource;
+    window.clearTempSources = clearTempSources;
+    console.log('%cTip:', 'color:#5ab8ff', 'Use addTempSource(urlOrObject[, name]) to temporarily add a source card. Call clearTempSources() to remove them.');
+  })();
+  // ----- Temp source injection helpers (console) -----
+  function createSourceCard(data, openTarget) {
+    const container = document.getElementById('sourcesContainer');
+    const title = data.title || 'Temporary Source';
+    const categories = Array.isArray(data.categories) ? data.categories : [];
+    const seasons = categories.length;
+    let episodes = 0;
+    categories.forEach(cat => {
+      if (Array.isArray(cat.episodes)) episodes += cat.episodes.length;
+    });
+
+    const card = document.createElement('div');
+    card.className = 'source-card';
+
+    // Left: poster image (preserve aspect ratio, no cropping)
+    const imgUrl = (typeof data.Image === 'string' && data.Image !== 'N/A')
+      ? data.Image
+      : (typeof data.image === 'string' && data.image !== 'N/A' ? data.image : '');
+    if (imgUrl) {
+      const img = document.createElement('img');
+      img.className = 'source-thumb';
+      img.alt = `${title} poster`;
+      img.src = imgUrl;
+      img.referrerPolicy = 'no-referrer';
+      img.addEventListener('error', () => { img.style.display = 'none'; });
+      img.addEventListener('load', () => fitPosterToCard(img, card));
+      if (img.complete && img.naturalWidth) fitPosterToCard(img, card);
+      window.addEventListener('resize', () => fitPosterToCard(img, card));
+      card.appendChild(img);
+    } else {
+      card.classList.add('no-thumb');
+    }
+
+    // Right: text/content column
+    const right = document.createElement('div');
+    right.className = 'source-right';
+
+    const h3 = document.createElement('h3');
+    h3.textContent = title;
+
+    const p1 = document.createElement('p');
+    p1.innerHTML = `<strong>${seasons}</strong> ${seasons === 1 ? 'Season' : 'Seasons'}`;
+    const p2 = document.createElement('p');
+    p2.innerHTML = `<strong>${episodes}</strong> ${episodes === 1 ? 'Episode' : 'Episodes'}`;
+
+    const btn = document.createElement('button');
+    btn.className = 'pill-button';
+    btn.textContent = 'Open';
+    if (openTarget) {
+      btn.onclick = () => {
+        const isFull = /^https?:\/\//i.test(openTarget);
+        const srcParam = isFull ? openTarget : `Directorys/${openTarget.replace(/^\.\/?/, '')}`;
+        window.location.href = `../index.html?source=${encodeURIComponent(srcParam)}`;
+      };
+    } else {
+      btn.disabled = true;
+      btn.title = 'No source URL provided for this temporary card';
+    }
+
+    right.append(h3, p1, p2, btn);
+    card.appendChild(right);
+
+    // Right-click terminology toggle (Season/Categories, Episode/Items)
+    card.addEventListener('contextmenu', e => {
+      e.preventDefault();
+      if (p1.textContent.includes('Season')) {
+        p1.innerHTML = `<strong>${seasons}</strong> ${seasons === 1 ? 'Category' : 'Categories'}`;
+        p2.innerHTML = `<strong>${episodes}</strong> ${episodes === 1 ? 'Item' : 'Items'}`;
+      } else {
+        p1.innerHTML = `<strong>${seasons}</strong> ${seasons === 1 ? 'Season' : 'Seasons'}`;
+        p2.innerHTML = `<strong>${episodes}</strong> ${episodes === 1 ? 'Episode' : 'Episodes'}`;
+      }
+    });
+
+    container.prepend(card);
+    return card;
+  }
+
+  async function addTempSource(input) {
+    try {
+      let data = null;
+      let open = null;
+      if (typeof input === 'string') {
+        // Treat as URL to JSON
+        const resp = await fetch(input);
+        const text = await resp.text();
+        data = JSON.parse(text);
+        open = input;
+      } else if (input && typeof input === 'object') {
+        if (input.data && typeof input.data === 'object') {
+          data = input.data;
+        }
+        if (typeof input.url === 'string') {
+          const resp = await fetch(input.url);
+          const text = await resp.text();
+          data = JSON.parse(text);
+          open = input.url;
+        }
+        if (typeof input.open === 'string') open = input.open; // explicit open target
+      }
+      if (!data) throw new Error('No data provided or failed to fetch/parse JSON.');
+      createSourceCard(data, open);
+      console.log('Temp source added:', data.title || '(untitled)');
+    } catch (e) {
+      console.error('addTempSource error:', e);
+    }
+  }
+  // Expose to console
+  window.addTempSource = addTempSource;
+
+  checkHostAndLoad();
+
