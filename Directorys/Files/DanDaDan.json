@@ -1,6 +1,5 @@
 {
   "title": "DanDaDan",
-  "LatestTime": "2025-08-11T12:36:00",
   "Image": "https://files.catbox.moe/5tl41x.jpg",
   "categories": [
     {
@@ -74,8 +73,21 @@
         {
           "title": "Episode 4",
           "src": "https://files.catbox.moe/dw2jvf.mp4"
+        },
+        {
+          "title": "Episode 5",
+          "src": "https://files.catbox.moe/nkyvxo.mp4"
+        },
+        {
+          "title": "Episode 6",
+          "src": "https://files.catbox.moe/3v45qk.mp4"
+        },
+        {
+          "title": "Episode 7",
+          "src": "https://files.catbox.moe/6k6to8.mp4"
         }
       ]
     }
-  ]
+  ],
+  "LatestTime": "2025-08-15T03:15:21.864Z"
 }
