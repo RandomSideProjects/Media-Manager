@@ -5,9 +5,9 @@
       "path": "./Files/5Hanayome (Quintessential Quintuplets).json",
       "title": "5Hanayome (Quintessential Quintuplets)",
       "poster": "./Posters/5Hanayome_(Quintessential_Quintuplets).webp",
-      "categoryCount": 1,
-      "episodeCount": 12,
-      "LatestTime": "2025-08-14T04:24:41.852Z"
+      "categoryCount": 3,
+      "episodeCount": 31,
+      "LatestTime": "2025-08-15T00:53:37.020Z"
     },
     {
       "file": "A Condition Called Love.json",
@@ -37,6 +37,15 @@
       "LatestTime": "2025-08-11T12:36:00"
     },
     {
+      "file": "Chillin' In A World With Level 2 Super Powers.json",
+      "path": "./Files/Chillin' In A World With Level 2 Super Powers.json",
+      "title": "Chillin' In A World With Level 2 Super Powers",
+      "poster": "./Posters/Chillin'_In_A_World_With_Level_2_Super_Powers.webp",
+      "categoryCount": 1,
+      "episodeCount": 12,
+      "LatestTime": "2025-08-15T00:45:40.890Z"
+    },
+    {
       "file": "DanDaDan.json",
       "path": "./Files/DanDaDan.json",
       "title": "DanDaDan",
@@ -44,6 +53,15 @@
       "categoryCount": 2,
       "episodeCount": 16,
       "LatestTime": "2025-08-11T12:36:00"
+    },
+    {
+      "file": "Failure Frame.json",
+      "path": "./Files/Failure Frame.json",
+      "title": "Failure Frame",
+      "poster": "./Posters/Failure_Frame.webp",
+      "categoryCount": 1,
+      "episodeCount": 12,
+      "LatestTime": "2025-08-15T00:33:47.052Z"
     },
     {
       "file": "LoserRanger.json",
