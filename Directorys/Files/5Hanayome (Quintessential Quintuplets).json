@@ -54,7 +54,93 @@
           "src": "https://files.catbox.moe/gxsgip.mp4"
         }
       ]
+    },
+    {
+      "category": "Season 2",
+      "episodes": [
+        {
+          "title": "Episode 1",
+          "src": "https://files.catbox.moe/uhdcoo.mp4"
+        },
+        {
+          "title": "Episode 2",
+          "src": "https://files.catbox.moe/cvvp24.mp4"
+        },
+        {
+          "title": "Episode 3",
+          "src": "https://files.catbox.moe/3xvwe8.mp4"
+        },
+        {
+          "title": "Episode 4",
+          "src": "https://files.catbox.moe/wbr72n.mp4"
+        },
+        {
+          "title": "Episode 5",
+          "src": "https://files.catbox.moe/k2gbwb.mp4"
+        },
+        {
+          "title": "Episode 6",
+          "src": "https://files.catbox.moe/h4lim3.mp4"
+        },
+        {
+          "title": "Episode 7",
+          "src": "https://files.catbox.moe/duku65.mp4"
+        },
+        {
+          "title": "Episode 8",
+          "src": "https://files.catbox.moe/yir5wk.mp4"
+        },
+        {
+          "title": "Episode 9",
+          "src": "https://files.catbox.moe/dt0dv3.mp4"
+        },
+        {
+          "title": "Episode 10",
+          "src": "https://files.catbox.moe/untyji.mp4"
+        },
+        {
+          "title": "Episode 11",
+          "src": "https://files.catbox.moe/8245p9.mp4"
+        },
+        {
+          "title": "Episode 12",
+          "src": "https://files.catbox.moe/qecmp3.mp4"
+        }
+      ]
+    },
+    {
+      "category": "Movie (Split into 7 Parts)",
+      "episodes": [
+        {
+          "title": "Part 1",
+          "src": "https://files.catbox.moe/kq0ye6.webm"
+        },
+        {
+          "title": "Part 2",
+          "src": "https://files.catbox.moe/n6tzt8.webm"
+        },
+        {
+          "title": "Part 3",
+          "src": "https://files.catbox.moe/gamjc5.webm"
+        },
+        {
+          "title": "Part 4",
+          "src": "https://files.catbox.moe/ycgj2j.webm"
+        },
+        {
+          "title": "Part 5",
+          "src": "https://files.catbox.moe/owij5u.webm"
+        },
+        {
+          "title": "Part 6",
+          "src": "https://files.catbox.moe/f0xuha.webm"
+        },
+        {
+          "title": "Part 7",
+          "src": "https://files.catbox.moe/ckjy0f.webm"
+        }
+      ]
     }
   ],
-  "LatestTime": "2025-08-14T04:24:41.852Z"
+  "LatestTime": "2025-08-15T00:53:37.020Z"
 }
