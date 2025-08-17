@@ -369,7 +369,7 @@
     const homeTabBtn = document.getElementById('homeTabBtn');
     const folderInput = document.getElementById('folderInput');
     let isFolderUploading = false;
-    const UPLOAD_CONCURRENCY = 5; // conservative to avoid 412 from server under load
+    const UPLOAD_CONCURRENCY = 2; // conservative to avoid 412 from server under load
     const sleep = (ms) => new Promise(res => setTimeout(res, ms));
     // Import a single folder as the next season
     folderInput.addEventListener('change', async (e) => {
