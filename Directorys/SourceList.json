@@ -1,8 +1,8 @@
 {
   "sources": [
     {
-      "file": "5Hanayome (Quintessential Quintuplets).json",
-      "path": "./Files/5Hanayome (Quintessential Quintuplets).json",
+      "file": "5Hanayome_(Quintessential_Quintuplets).json",
+      "path": "./Files/5Hanayome_(Quintessential_Quintuplets).json",
       "title": "5Hanayome (Quintessential Quintuplets)",
       "poster": "./Posters/5Hanayome_(Quintessential_Quintuplets).webp",
       "categoryCount": 3,
@@ -10,8 +10,8 @@
       "LatestTime": "2025-08-15T00:53:37.020Z"
     },
     {
-      "file": "A Condition Called Love.json",
-      "path": "./Files/A Condition Called Love.json",
+      "file": "A_Condition_Called_Love.json",
+      "path": "./Files/A_Condition_Called_Love.json",
       "title": "A Condition Called Love",
       "poster": "./Posters/A_Condition_Called_Love.webp",
       "categoryCount": 1,
@@ -19,8 +19,8 @@
       "LatestTime": "2025-08-11T12:36:00"
     },
     {
-      "file": "A Couple Of Cuckoos.json",
-      "path": "./Files/A Couple Of Cuckoos.json",
+      "file": "A_Couple_Of_Cuckoos.json",
+      "path": "./Files/A_Couple_Of_Cuckoos.json",
       "title": "A Couple Of Cuckoos",
       "poster": "./Posters/A_Couple_Of_Cuckoos.webp",
       "categoryCount": 2,
@@ -37,8 +37,8 @@
       "LatestTime": "2025-08-11T12:36:00"
     },
     {
-      "file": "Chillin' In A World With Level 2 Super Powers.json",
-      "path": "./Files/Chillin' In A World With Level 2 Super Powers.json",
+      "file": "Chillin'_In_A_World_With_Level_2_Super_Powers.json",
+      "path": "./Files/Chillin'_In_A_World_With_Level_2_Super_Powers.json",
       "title": "Chillin' In A World With Level 2 Super Powers",
       "poster": "./Posters/Chillin'_In_A_World_With_Level_2_Super_Powers.webp",
       "categoryCount": 1,
@@ -55,8 +55,8 @@
       "LatestTime": "2025-08-15T03:15:21.864Z"
     },
     {
-      "file": "Failure Frame.json",
-      "path": "./Files/Failure Frame.json",
+      "file": "Failure_Frame.json",
+      "path": "./Files/Failure_Frame.json",
       "title": "Failure Frame",
       "poster": "./Posters/Failure_Frame.webp",
       "categoryCount": 1,
@@ -80,6 +80,15 @@
       "categoryCount": 2,
       "episodeCount": 26,
       "LatestTime": "2025-08-14T00:45:54.033Z"
+    },
+    {
+      "file": "Kaguya-Sama_Love_Is_War.json",
+      "path": "./Files/Kaguya-Sama_Love_Is_War.json",
+      "title": "Kaguya-Sama: Love Is War",
+      "poster": "./Posters/Kaguya-Sama_Love_Is_War.webp",
+      "categoryCount": 4,
+      "episodeCount": 41,
+      "LatestTime": "2025-08-17T15:25:52.898Z"
     },
     {
       "file": "Kanokari.json",
