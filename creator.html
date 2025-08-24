@@ -176,6 +176,25 @@
       border-radius: 8px 8px 0 0;
       overflow: hidden;
     }
+    .settings-button {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      background: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      font-size: 1.2em;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10020;
+    }
+    .settings-button:hover { background: #0056b3; }
     .tab-button {
       background: transparent;
       color: #f1f1f1;
@@ -205,6 +224,93 @@
       margin-top: 1em;
       justify-content: center;
     }
+    /* Server status badge */
+    #serverStatusBox {
+      position: fixed;
+      top: 1rem;
+      left: 1rem;
+      background: #1a1a1a;
+      color: #f1f1f1;
+      border: 1px solid #333;
+      border-radius: 10px;
+      padding: 0.6em 0.9em;
+      font-size: 0.9rem;
+      line-height: 1.2;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+      z-index: 9999;
+      white-space: pre-line;
+      display: none; /* default hidden until success */
+    }
+    /* Server check loading box */
+    #serverCheckBox {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #1a1a1a;
+      color: #f1f1f1;
+      border: 1px solid #333;
+      border-radius: 12px;
+      padding: 1em 1.25em;
+      display: none; /* shown while checking */
+      align-items: center;
+      gap: 0.75em;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.5);
+      z-index: 10000;
+    }
+    #serverCheckBox .serverCheckText {
+      white-space: pre-line;
+      font-weight: 600;
+      line-height: 1.3;
+    }
+    .spinner {
+      width: 24px;
+      height: 24px;
+      border: 3px solid rgba(255,255,255,0.25);
+      border-top-color: #5ab8ff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      flex: 0 0 24px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+  <style>
+    /* ===== Upload Settings (injected) ===== */
+    .mm-settings-fab {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 10010;
+      padding: 0.6em 0.9em;
+      border-radius: 50px;
+      background: #007bff;
+      color: #fff;
+      border: none;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+      cursor: pointer;
+      font-weight: 600;
+      letter-spacing: .3px;
+    }
+    .mm-settings-fab:hover { background:#0056b3; }
+
+    .mm-settings-panel {
+      position: fixed; inset: 0; display: none;
+      align-items: center; justify-content: center; z-index: 10011;
+      background: rgba(0,0,0,0.7);
+      font-family: inherit; color: #f1f1f1;
+    }
+    .mm-settings-panel .mm-card {
+      width: 92%; max-width: 520px; background: #1a1a1a; color: #f1f1f1;
+      border-radius: 12px; padding: 16px; box-shadow: 0 10px 24px rgba(0,0,0,0.55);
+    }
+    .mm-settings-row { display:flex; align-items:center; gap:.5em; margin:.5em 0; }
+    .mm-toggle { display:flex; align-items:center; gap:.5em; cursor:pointer; }
+    .mm-input { width:100%; padding:.6em; border-radius:6px; border:1px solid #444; background:#2a2a2a; color:#f1f1f1; }
+    .mm-actions { display:flex; gap:.5em; justify-content:flex-end; margin-top: 10px; }
+    .mm-btn { padding:.55em 1em; border:none; border-radius:8px; cursor:pointer; }
+    .mm-btn.primary { background:#007bff; color:#fff; }
+    .mm-btn.primary:hover { background:#0056b3; }
+    .mm-btn.ghost { background:#2a2a2a; color:#f1f1f1; border:1px solid #444; }
   </style>
 </head>
 <body>
@@ -214,6 +320,7 @@
       <button id="createTabBtn" class="tab-button active">Create</button>
       <button id="editTabBtn" class="tab-button">Edit</button>
     </div>
+    <button id="mmUploadSettingsBtn" class="settings-button">⚙️</button>
     <h1>Directory Creator</h1>
     <div class="field-group" id="loadUrlContainer">
       <label for="loadUrl">Load Directory URL:</label><br/>
@@ -258,10 +365,143 @@
   </div>
 
   <script>
+    const STATUS_URL = 'https://files.catbox.moe/6gkiu0.png';
+
+    // === Global block flags for server failure ===
+    window.MM_BLOCKED = false; // true when server check fails until user continues
+    window.MM_POLL_TIMER = null; // holds auto-upload polling interval id
+
+    function showHostFailure(container, codeText) {
+      // Create a full-screen overlay instead of replacing the container content
+      let overlay = document.getElementById('serverFailOverlay');
+      if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'serverFailOverlay';
+        overlay.style.position = 'fixed';
+        overlay.style.inset = '0';
+        overlay.style.background = 'rgba(0,0,0,0.85)';
+        overlay.style.zIndex = '10050';
+        overlay.style.display = 'flex';
+        overlay.style.alignItems = 'center';
+        overlay.style.justifyContent = 'center';
+        overlay.innerHTML = `
+          <div style="background:#1a1a1a; color:#f1f1f1; border:1px solid #333; border-radius:12px; padding:18px 22px; max-width:720px; width:92%; text-align:center; box-shadow:0 16px 40px rgba(0,0,0,.6);">
+            <div style="font-weight:800; font-size:1.25rem; line-height:1.35; white-space:pre-line;">
+              Unfortunately, our public source host is currently unavailable.\nPlease try again.
+            </div>
+            <div style="margin-top:10px;">
+              <code style="background:#000; display:inline-block; padding:0.6em 0.8em; border-radius:8px; color:#fff;">HTTP Code : ${codeText}</code>
+            </div>
+            <div style="margin-top:14px; display:flex; gap:10px; justify-content:center;">
+              <button id="serverContinueBtn" style="padding:8px 14px; border:none; border-radius:8px; background:#007bff; color:#fff; cursor:pointer;">Continue</button>
+            </div>
+          </div>`;
+        document.body.appendChild(overlay);
+      } else {
+        const codeEl = overlay.querySelector('code');
+        if (codeEl) codeEl.textContent = `HTTP Code : ${codeText}`;
+      }
+
+      // Block functionality until user continues
+      window.MM_BLOCKED = true;
+
+      // Wire the Continue button once
+      const btn = document.getElementById('serverContinueBtn');
+      if (btn && !btn.dataset.bound) {
+        btn.dataset.bound = '1';
+        btn.addEventListener('click', () => {
+          window.MM_BLOCKED = false;
+          // Start polling if defined and not already running
+          if (typeof startAutoUploadPolling === 'function' && !window.MM_POLL_TIMER) {
+            startAutoUploadPolling();
+          }
+          // Hide the overlay
+          const ov = document.getElementById('serverFailOverlay');
+          if (ov) ov.remove();
+        });
+      }
+    }
+
+    async function checkHostAndLoadCreator() {
+      const container = document.querySelector('.container') || document.body;
+      // Create status box (hidden until success)
+      let statusBox = document.getElementById('serverStatusBox');
+      if (!statusBox) {
+        statusBox = document.createElement('div');
+        statusBox.id = 'serverStatusBox';
+        document.body.appendChild(statusBox);
+      }
+
+      // Create loading box
+      let checkBox = document.getElementById('serverCheckBox');
+      if (!checkBox) {
+        checkBox = document.createElement('div');
+        checkBox.id = 'serverCheckBox';
+        checkBox.innerHTML = `
+          <div class="spinner" aria-hidden="true"></div>
+          <div class="serverCheckText" id="serverCheckText">Checking if server is responsive\nTime Elapsed : 00:00</div>
+        `;
+        document.body.appendChild(checkBox);
+      }
+      const checkText = document.getElementById('serverCheckText');
+      checkBox.style.display = 'flex';
+
+      const started = Date.now();
+      const fmt = (ms) => {
+        const s = Math.floor(ms / 1000);
+        const m = Math.floor(s / 60);
+        const sec = s % 60;
+        return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+      };
+      const tick = () => {
+        if (checkText) checkText.textContent = `Checking if server is responsive\nTime Elapsed : ${fmt(Date.now() - started)}`;
+      };
+      tick();
+      const timer = setInterval(tick, 250);
+
+      const stop = () => {
+        clearInterval(timer);
+        if (checkBox) checkBox.remove();
+      };
+
+      let resp;
+      try {
+        resp = await fetch(STATUS_URL, { cache: 'no-store' });
+      } catch (err) {
+        stop();
+        showHostFailure(container, err && err.message ? err.message : 'Network error');
+        return;
+      }
+
+      if (!resp || !resp.ok) {
+        const codeText = resp ? `${resp.status} ${resp.statusText || ''}`.trim() : 'Unknown error';
+        stop();
+        showHostFailure(container, codeText);
+        return;
+      }
+
+      // Success path: show status code box and continue
+      stop();
+      statusBox.textContent = `Server status code\n${resp.status}`;
+      statusBox.style.display = 'block';
+    }
+
+    // Run the check as soon as the script loads
+    checkHostAndLoadCreator();
     async function uploadToCatbox(file) {
       const form = new FormData();
       form.append('reqtype', 'fileupload');
       form.append('fileToUpload', file);
+
+      // Pull current settings; anonymous defaults to true
+      let st = { anonymous: true, userhash: '' };
+      try { st = JSON.parse(localStorage.getItem('mm_upload_settings')||'{}') || st; } catch {}
+      const isAnon = (typeof st.anonymous === 'boolean') ? st.anonymous : true;
+      const effectiveUserhash = ((st.userhash || '').trim()) || '2cdcc7754c86c2871ed2bde9d';
+      if (!isAnon) {
+        form.append('userhash', effectiveUserhash);
+      }
+
       const res = await fetch('https://catbox.moe/user/api.php', {
         method: 'POST',
         body: form
@@ -277,6 +517,14 @@
         const form = new FormData();
         form.append('reqtype', 'fileupload');
         form.append('fileToUpload', file);
+        // Pull current settings; anonymous defaults to true
+        let st = { anonymous: true, userhash: '' };
+        try { st = JSON.parse(localStorage.getItem('mm_upload_settings')||'{}') || st; } catch {}
+        const isAnon = (typeof st.anonymous === 'boolean') ? st.anonymous : true;
+        const effectiveUserhash = ((st.userhash || '').trim()) || '2cdcc7754c86c2871ed2bde9d';
+        if (!isAnon) {
+          form.append('userhash', effectiveUserhash);
+        }
 
         xhr.upload.addEventListener('progress', (e) => {
           if (e.lengthComputable) {
@@ -529,31 +777,44 @@
         outputEl.textContent = 'Failed to auto-upload: ' + err.message;
       }
     }
-    // Auto-upload when data changes, every 500ms
-    let lastContent = null; // JSON string of title/Image/categories only
-    setInterval(async () => {
-      if (isFolderUploading) return;
-      const titleVal = document.getElementById('dirTitle').value.trim();
-      const cats = [];
-      document.querySelectorAll('.category').forEach(cat => {
-        const catTitle = cat.querySelector('label input').value.trim();
-        const eps = [];
-        cat.querySelectorAll('.episode').forEach(epDiv => {
-          const inputs = epDiv.querySelectorAll('input[type="text"]');
-          const t = inputs[0].value.trim();
-          const s = inputs[1].value.trim();
-          if (t && s) eps.push({ title: t, src: s });
+    // Auto-upload when data changes, every 500ms (starts only when not blocked)
+    function startAutoUploadPolling() {
+      if (window.MM_POLL_TIMER) return; // already started
+      if (window.MM_BLOCKED) return;    // don't start when blocked
+      let lastContent = null; // JSON string of title/Image/categories only
+      window.MM_POLL_TIMER = setInterval(async () => {
+        if (window.MM_BLOCKED) return; // hard stop while blocked
+        if (isFolderUploading) return;
+        const titleEl = document.getElementById('dirTitle');
+        if (!titleEl) return; // elements not ready
+        const titleVal = titleEl.value.trim();
+        const cats = [];
+        document.querySelectorAll('.category').forEach(cat => {
+          const input = cat.querySelector('label input');
+          const catTitle = input ? input.value.trim() : '';
+          const eps = [];
+          cat.querySelectorAll('.episode').forEach(epDiv => {
+            const inputs = epDiv.querySelectorAll('input[type="text"]');
+            const t = inputs[0] ? inputs[0].value.trim() : '';
+            const s = inputs[1] ? inputs[1].value.trim() : '';
+            if (t && s) eps.push({ title: t, src: s });
+          });
+          if (catTitle) cats.push({ category: catTitle, episodes: eps });
         });
-        if (catTitle) cats.push({ category: catTitle, episodes: eps });
-      });
-      const imageField = posterImageUrl || 'N/A';
-      const contentOnly = { title: titleVal, Image: imageField, categories: cats };
-      const contentStr = JSON.stringify(contentOnly);
-      if (contentStr !== lastContent) {
-        lastContent = contentStr;
-        try { await autoUploadFromContent(contentOnly); } catch (err) { console.error('Auto-upload error:', err); }
-      }
-    }, 500);
+        const imageField = posterImageUrl || 'N/A';
+        const contentOnly = { title: titleVal, Image: imageField, categories: cats };
+        const contentStr = JSON.stringify(contentOnly);
+        if (contentStr !== lastContent) {
+          lastContent = contentStr;
+          try { await autoUploadFromContent(contentOnly); } catch (err) { console.error('Auto-upload error:', err); }
+        }
+      }, 500);
+    }
+
+    // Start polling only if not blocked
+    if (!window.MM_BLOCKED) {
+      startAutoUploadPolling();
+    }
 
     // Add a new category block
     function addCategory(data) {
@@ -784,6 +1045,44 @@
 
     // Auto-upload now handled by polling loop; no need for input event listeners
 
+    // --- Pomf.cat uploader script block ---
+    // Example usage:
+    //   uploadToPomf(file, { anonymous: false }, userhash, apiKey)
+    // Returns a Promise for the uploaded file URL
+    function uploadToPomf(file, settings = {}, effectiveUserhash, POMF_API_KEY) {
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', 'https://a.pomf.cat/upload.php');
+        xhr.setRequestHeader('api-key', POMF_API_KEY);
+        // Only include userhash if anonymous is false
+        if (settings.anonymous === false) {
+          xhr.setRequestHeader('userhash', effectiveUserhash);
+        }
+        const form = new FormData();
+        form.append('files[]', file);
+        xhr.onload = function () {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              const resp = JSON.parse(xhr.responseText);
+              if (resp.success && resp.files && resp.files[0] && resp.files[0].url) {
+                resolve(resp.files[0].url);
+              } else {
+                reject(new Error('Upload error'));
+              }
+            } catch (e) {
+              reject(new Error('Invalid server response'));
+            }
+          } else {
+            reject(new Error('Upload error: ' + xhr.status));
+          }
+        };
+        xhr.onerror = function () {
+          reject(new Error('Network error'));
+        };
+        xhr.send(form);
+      });
+    }
+
     const confirmModal = document.getElementById('confirmModal');
     const confirmYes = document.getElementById('confirmYes');
     const confirmNo = document.getElementById('confirmNo');
@@ -837,4 +1136,232 @@
     });
   </script>
 </body>
+  <!-- ===== Upload Settings UI (injected) ===== -->
+  <div id="mmUploadSettingsPanel" class="mm-settings-panel" role="dialog" aria-modal="true">
+    <div class="mm-card">
+      <h3 style="margin:.2em 0 0.6em 0;">Upload Settings</h3>
+      <div class="mm-settings-row">
+        <label class="mm-toggle">
+          <input type="checkbox" id="mmAnonToggle" checked>
+          <span>Anonymous uploads</span>
+        </label>
+      </div>
+      <div id="mmUserhashRow" class="mm-settings-row" style="display:none; flex-direction:column; align-items:stretch;">
+        <label for="mmUserhashInput">Userhash (used when Anonymous is off)</label>
+        <input id="mmUserhashInput" class="mm-input" type="text" placeholder="Leave blank to use default">
+        <small>Default if blank: <code>2cdcc7754c86c2871ed2bde9d</code></small>
+      </div>
+      <div class="mm-actions">
+        <button id="mmSaveUploadSettings" class="mm-btn primary">Save</button>
+        <button id="mmCloseUploadSettings" class="mm-btn ghost">Close</button>
+      </div>
+    </div>
+  </div>
+  <script>
+  (function(){
+    // ===== Constants =====
+    const POMF_ENDPOINT = 'https://pomf.cat/upload';
+    const POMF_API_KEY  = '3e1ba203-5a93-4c18-a7d9-f728e1c98cd6';
+    const POMF_MAX_BYTES = 75 * 1024 * 1024; // 75 MB
+    const DEFAULT_USERHASH = '2cdcc7754c86c2871ed2bde9d';
+    const LS_SETTINGS_KEY = 'mm_upload_settings';
+
+    // ===== Settings state =====
+    function loadUploadSettings(){
+      try {
+        const raw = localStorage.getItem(LS_SETTINGS_KEY);
+        if (!raw) return { anonymous: true, userhash: '' };
+        const p = JSON.parse(raw);
+        return { anonymous: typeof p.anonymous==='boolean' ? p.anonymous : true, userhash: (p.userhash||'').trim() };
+      } catch { return { anonymous: true, userhash: '' }; }
+    }
+    function saveUploadSettings(s){
+      localStorage.setItem(LS_SETTINGS_KEY, JSON.stringify({ anonymous: !!s.anonymous, userhash: (s.userhash||'').trim() }));
+    }
+
+    // ===== File helpers =====
+    function isJsonFile(file){
+      const n=(file?.name||'').toLowerCase(); const t=(file?.type||'').toLowerCase();
+      return n.endsWith('.json') || t==='application/json';
+    }
+    function isVideoFile(file){
+      const t=(file?.type||'').toLowerCase(); const n=(file?.name||'').toLowerCase();
+      return t.startsWith('video/') || /\.(mp4|webm|mkv|mov|avi|m4v)$/i.test(n);
+    }
+    function shouldUsePomf(file){
+      return isVideoFile(file) && file.size <= POMF_MAX_BYTES;
+    }
+
+    // ===== pomf.cat uploader (XHR for progress) =====
+    function uploadToPomf(file, { onProgress } = {}){
+      const settings = loadUploadSettings();
+      const effectiveUserhash = (settings.userhash || '').trim() || DEFAULT_USERHASH;
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', POMF_ENDPOINT);
+        xhr.setRequestHeader('api-key', POMF_API_KEY);
+        if (!settings.anonymous) {
+          xhr.setRequestHeader('userhash', effectiveUserhash);
+        }
+        if (xhr.upload && typeof onProgress === 'function') {
+          xhr.upload.onprogress = (evt) => {
+            if (evt.lengthComputable) {
+              const pct = Math.round((evt.loaded/evt.total)*100);
+              try { onProgress(pct, evt.loaded, evt.total); } catch {}
+            }
+          };
+        }
+        xhr.onreadystatechange = () => {
+          if (xhr.readyState !== 4) return;
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              const data = JSON.parse(xhr.responseText || '{}');
+              const url = (function(resp){
+                if (!resp) return null;
+                if (resp.files && Array.isArray(resp.files) && resp.files[0]?.url) return resp.files[0].url;
+                if (typeof resp.url === 'string') return resp.url;
+                if (typeof resp.file === 'string') return resp.file;
+                if (resp.files && Array.isArray(resp.files) && resp.files[0]?.url && !/^https?:\/\//i.test(resp.files[0].url)) {
+                  return new URL(resp.files[0].url, 'https://pomf.cat').toString();
+                }
+                return null;
+              })(data);
+              if (!url) return reject(new Error('Upload succeeded but no URL returned by pomf.cat.'));
+              resolve(url);
+            } catch(e) {
+              reject(new Error('Upload succeeded but response parse failed: '+e.message));
+            }
+          } else {
+            reject(new Error(`pomf.cat upload failed (${xhr.status})`));
+          }
+        };
+        const fd = new FormData();
+        fd.append('file', file, file.name);
+        xhr.send(fd);
+      });
+    }
+
+    // ===== Public API: policy-aware uploader =====
+    // Use this helper in your other code: window.mm_uploadFileWithPolicy(file, { onProgress })
+    async function mm_uploadFileWithPolicy(file, { onProgress } = {}){
+      if (!file) throw new Error('No file provided');
+      if (isJsonFile(file)) {
+        // NEVER route JSON through pomf
+        throw new Error('JSON uploads must use the existing JSON uploader (not pomf.cat).');
+      }
+      if (shouldUsePomf(file)) {
+        return uploadToPomf(file, { onProgress });
+      }
+      throw new Error('File should be routed to your primary uploader (non-pomf).');
+    }
+
+    // Expose globals
+    window.mm_uploadFileWithPolicy = mm_uploadFileWithPolicy;
+    window.mm_uploadSettings = { load: loadUploadSettings, save: saveUploadSettings };
+
+    // ===== UI wiring =====
+    const btn = document.getElementById('mmUploadSettingsBtn');
+    const panel = document.getElementById('mmUploadSettingsPanel');
+    const anonToggle = document.getElementById('mmAnonToggle');
+    const userhashRow = document.getElementById('mmUserhashRow');
+    const userhashInput = document.getElementById('mmUserhashInput');
+    const saveBtn = document.getElementById('mmSaveUploadSettings');
+    const closeBtn = document.getElementById('mmCloseUploadSettings');
+
+    if (btn && panel && anonToggle && userhashRow && userhashInput && saveBtn && closeBtn) {
+      const st = loadUploadSettings();
+      anonToggle.checked = !!st.anonymous;
+      userhashInput.value = st.userhash || '';
+      userhashRow.style.display = st.anonymous ? 'none' : '';
+
+      btn.addEventListener('click', () => { panel.style.display = 'flex'; });
+      closeBtn.addEventListener('click', () => { panel.style.display = 'none'; });
+      panel.addEventListener('click', (e)=>{ if(e.target===panel) panel.style.display='none'; });
+      anonToggle.addEventListener('change', () => { userhashRow.style.display = anonToggle.checked ? 'none' : ''; });
+      saveBtn.addEventListener('click', () => {
+        saveUploadSettings({ anonymous: anonToggle.checked, userhash: userhashInput.value.trim() });
+        panel.style.display = 'none';
+      });
+    }
+
+    // ===== Test JSON sender + 'Q' hotkey =====
+    async function mm_sendTestJson() {
+      try {
+        // snapshot current settings
+        const st = loadUploadSettings();
+        const effectiveUserhash = (st.userhash || '').trim() || DEFAULT_USERHASH;
+        // grab a tiny snapshot of page state (best-effort; tolerate missing els)
+        let titleVal = '';
+        try { const t = document.getElementById('dirTitle'); titleVal = t ? (t.value || '').trim() : ''; } catch {}
+        let categoryCount = 0;
+        try { categoryCount = document.querySelectorAll('.category').length; } catch {}
+
+        const payload = {
+          _type: 'media-manager-test',
+          page: 'creator.html',
+          at: new Date().toISOString(),
+          settings: {
+            anonymous: !!st.anonymous,
+            userhash: st.anonymous ? '(ignored: anonymous=true)' : effectiveUserhash
+          },
+          state: {
+            title: titleVal,
+            categories: categoryCount
+          },
+          ua: navigator.userAgent || ''
+        };
+
+        const json = JSON.stringify(payload, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
+        const file = new File([blob], `mm_test_${Date.now()}.json`, { type: 'application/json' });
+
+        // Log the intended request details (what we control here)
+        console.log('[MM][TestJSON] Preparing request:', {
+          endpoint: 'https://catbox.moe/user/api.php',
+          method: 'POST',
+          headers: { /* FormData boundary handled by XHR; no custom headers for catbox */ },
+          formFields: ['reqtype=fileupload', `fileToUpload=${file.name} (${file.size} bytes)`],
+          appliedSettings: payload.settings,
+          preview: json.slice(0, 400) + (json.length > 400 ? '…' : '')
+        });
+
+        // Use the existing XHR uploader (no progress UI needed for test)
+        const url = await (window.uploadToCatboxWithProgress ? uploadToCatboxWithProgress(file) : (async () => {
+          const fd = new FormData();
+          fd.append('reqtype', 'fileupload');
+          fd.append('fileToUpload', file);
+          const res = await fetch('https://catbox.moe/user/api.php', { method: 'POST', body: fd });
+          if (!res.ok) throw new Error('Upload error: ' + res.status);
+          return (await res.text()).trim();
+        })());
+
+        console.log('[MM][TestJSON] ✅ Uploaded. URL:', url);
+        try {
+          // show the link in the output area if present
+          const outputLink = document.getElementById('outputLink');
+          if (outputLink) { outputLink.href = url; outputLink.textContent = url; }
+        } catch {}
+        return url;
+      } catch (err) {
+        console.error('[MM][TestJSON] ❌ Failed:', err);
+        throw err;
+      }
+    }
+
+    // Bind global for console access as well
+    window.mm_sendTestJson = mm_sendTestJson;
+
+    // Hotkey: press 'Q' (outside inputs) to send test JSON and log request
+    document.addEventListener('keydown', (e) => {
+      try {
+        if ((e.key || '').toLowerCase() !== 'q') return;
+        const tag = (e.target && e.target.tagName) || '';
+        if (tag === 'INPUT' || tag === 'TEXTAREA') return; // don't hijack typing
+        e.preventDefault();
+        mm_sendTestJson();
+      } catch {}
+    });
+
+  })();
+  </script>
 </html>
