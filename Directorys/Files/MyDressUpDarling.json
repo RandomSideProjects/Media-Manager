@@ -1,6 +1,6 @@
 {
   "title": "My Dress-up Darling",
-  "LatestTime": "2025-08-23T16:00:00",
+  "LatestTime": "2025-08-24T16:00:00",
   "Image": "https://files.catbox.moe/zini98.png",
   "categories": [
     {
@@ -82,6 +82,10 @@
         {
           "title": "Episode 6",
           "src": "https://files.catbox.moe/gorsse.mp4"
+        },
+        {
+          "title": "Episode 7",
+          "src": "https://files.catbox.moe/2ghymd.mp4"
         }
       ]
     }
