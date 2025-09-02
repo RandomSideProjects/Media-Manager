@@ -433,6 +433,35 @@
       timeP.textContent = 'Updated: ' + formatLocal(meta.LatestTime);
     }
 
+    // New: totals (hidden by default; shown on right-click)
+    const formatBytes = (n) => {
+      if (!Number.isFinite(n) || n <= 0) return '—';
+      const units = ['B','KB','MB','GB','TB'];
+      let i = 0; let v = n;
+      while (v >= 1024 && i < units.length - 1) { v /= 1024; i++; }
+      return `${v.toFixed(v >= 100 ? 0 : v >= 10 ? 1 : 2)} ${units[i]}`;
+    };
+    const formatDur = (s) => {
+      if (!Number.isFinite(s) || s <= 0) return '—';
+      const h = Math.floor(s / 3600);
+      const m = Math.floor((s % 3600) / 60);
+      const sec = Math.floor(s % 60);
+      return h > 0 ? `${h}h ${m}m ${sec}s` : `${m}m ${sec}s`;
+    };
+
+    const sizeP = document.createElement('p');
+    sizeP.className = 'source-time';
+    sizeP.style.display = 'none';
+    const durP = document.createElement('p');
+    durP.className = 'source-time';
+    durP.style.display = 'none';
+    if (typeof meta.totalFileSizeBytes === 'number') {
+      sizeP.textContent = 'Size: ' + formatBytes(meta.totalFileSizeBytes);
+    }
+    if (typeof meta.totalDurationSeconds === 'number') {
+      durP.textContent = 'Duration: ' + formatDur(meta.totalDurationSeconds);
+    }
+
     const btn = document.createElement('button');
     btn.className = 'pill-button';
     btn.textContent = 'Open';
@@ -442,7 +471,7 @@
       window.location.href = `../index.html?source=${src}`;
     };
 
-    right.append(h3, p1, p2, timeP, btn);
+    right.append(h3, p1, p2, timeP, sizeP, durP, btn);
     card.appendChild(right);
 
     // right-click terminology toggle
@@ -453,10 +482,14 @@
         p1.innerHTML = `<strong>${categoryCount}</strong> ${categoryCount === 1 ? 'Category' : 'Categories'}`;
         p2.innerHTML = `<strong>${episodeCount}</strong> ${episodeCount === 1 ? 'Item' : 'Items'}`;
         timeP.style.display = meta.LatestTime ? 'block' : 'none';
+        sizeP.style.display = (typeof meta.totalFileSizeBytes === 'number') ? 'block' : 'none';
+        durP.style.display = (typeof meta.totalDurationSeconds === 'number') ? 'block' : 'none';
       } else {
         p1.innerHTML = `<strong>${categoryCount}</strong> ${categoryCount === 1 ? 'Season' : 'Seasons'}`;
         p2.innerHTML = `<strong>${episodeCount}</strong> ${episodeCount === 1 ? 'Episode' : 'Episodes'}`;
         timeP.style.display = 'none';
+        sizeP.style.display = 'none';
+        durP.style.display = 'none';
       }
     });
 
@@ -515,6 +548,20 @@
     categories.forEach(cat => {
       if (Array.isArray(cat.episodes)) episodes += cat.episodes.length;
     });
+    // Compute totals if available
+    let totalBytes = (typeof data.totalFileSizeBytes === 'number') ? data.totalFileSizeBytes : 0;
+    let totalSecs = (typeof data.totalDurationSeconds === 'number') ? data.totalDurationSeconds : 0;
+    if ((!totalBytes || !totalSecs) && categories.length) {
+      let b = 0, s = 0;
+      for (const c of categories) {
+        for (const e of (c.episodes || [])) {
+          if (typeof e.fileSizeBytes === 'number' && Number.isFinite(e.fileSizeBytes)) b += e.fileSizeBytes;
+          if (typeof e.durationSeconds === 'number' && Number.isFinite(e.durationSeconds)) s += e.durationSeconds;
+        }
+      }
+      if (!totalBytes) totalBytes = b;
+      if (!totalSecs) totalSecs = s;
+    }
 
     const card = document.createElement('div');
     card.className = 'source-card';
@@ -558,7 +605,27 @@
       window.location.href = `../index.html?source=${src}`;
     };
 
-    right.append(h3, p1, p2, btn);
+    // Totals (hidden by default)
+    const formatBytes = (n) => {
+      if (!Number.isFinite(n) || n <= 0) return '—';
+      const u = ['B','KB','MB','GB','TB'];
+      let i = 0; let v = n;
+      while (v >= 1024 && i < u.length - 1) { v /= 1024; i++; }
+      return `${v.toFixed(v >= 100 ? 0 : v >= 10 ? 1 : 2)} ${u[i]}`;
+    };
+    const formatDur = (s) => {
+      if (!Number.isFinite(s) || s <= 0) return '—';
+      const h = Math.floor(s / 3600);
+      const m = Math.floor((s % 3600) / 60);
+      const sec = Math.floor(s % 60);
+      return h > 0 ? `${h}h ${m}m ${sec}s` : `${m}m ${sec}s`;
+    };
+    const sizeP = document.createElement('p'); sizeP.className = 'source-time'; sizeP.style.display = 'none';
+    const durP = document.createElement('p'); durP.className = 'source-time'; durP.style.display = 'none';
+    if (totalBytes) sizeP.textContent = 'Size: ' + formatBytes(totalBytes);
+    if (totalSecs) durP.textContent = 'Duration: ' + formatDur(totalSecs);
+
+    right.append(h3, p1, p2, sizeP, durP, btn);
     card.appendChild(right);
 
     // Right-click terminology toggle (Season/Categories, Episode/Items)
@@ -567,9 +634,13 @@
       if (p1.textContent.includes('Season')) {
         p1.innerHTML = `<strong>${seasons}</strong> ${seasons === 1 ? 'Category' : 'Categories'}`;
         p2.innerHTML = `<strong>${episodes}</strong> ${episodes === 1 ? 'Item' : 'Items'}`;
+        sizeP.style.display = (totalBytes) ? 'block' : 'none';
+        durP.style.display = (totalSecs) ? 'block' : 'none';
       } else {
         p1.innerHTML = `<strong>${seasons}</strong> ${seasons === 1 ? 'Season' : 'Seasons'}`;
         p2.innerHTML = `<strong>${episodes}</strong> ${episodes === 1 ? 'Episode' : 'Episodes'}`;
+        sizeP.style.display = 'none';
+        durP.style.display = 'none';
       }
     });
 

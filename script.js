@@ -3,6 +3,42 @@ let videoList = [];
 let sourceKey = '';
 let flatList = [];
 let currentIndex = 0;
+let sourceImageUrl = '';
+
+// Format seconds as H:MM:SS or M:SS
+function formatTime(totalSeconds) {
+  const s = Math.max(0, Math.floor(Number(totalSeconds) || 0));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  const mm = String(m).padStart(h > 0 ? 2 : 1, '0');
+  const ss = String(sec).padStart(2, '0');
+  return h > 0 ? `${h}:${mm}:${ss}` : `${m}:${ss}`;
+}
+
+// Format bytes to human-readable string
+function formatBytes(n) {
+  const num = Number(n);
+  if (!Number.isFinite(num) || num <= 0) return '—';
+  const units = ['B','KB','MB','GB','TB'];
+  let i = 0; let v = num;
+  while (v >= 1024 && i < units.length - 1) { v /= 1024; i++; }
+  return `${v.toFixed(v >= 100 ? 0 : v >= 10 ? 1 : 2)} ${units[i]}`;
+}
+
+// Decimal formatter: choose the largest unit whose value is >= 1 (base 1000)
+function formatBytesDecimalMaxUnit(n) {
+  const num = Number(n);
+  if (!Number.isFinite(num) || num <= 0) return '0 B';
+  const units = ['B','KB','MB','GB','TB'];
+  const base = 1000;
+  let i = 0; let v = num;
+  while (v >= base && i < units.length - 1) { v /= base; i++; }
+  // Ensure chosen unit has value >= 1; if v < 1 and i > 0, step back
+  if (v < 1 && i > 0) { v *= base; i -= 1; }
+  return `${v.toFixed(v >= 100 ? 0 : v >= 10 ? 1 : 2)} ${units[i]}`;
+}
+
 
 
 const video = document.getElementById("videoPlayer");
@@ -27,9 +63,12 @@ const urlInputContainer = document.getElementById("urlInputContainer");
 const urlInput = document.getElementById("urlInput");
 const goBtn = document.getElementById("goBtn");
 const errorMessage = document.getElementById("errorMessage");
+const directoryHeader = document.getElementById("directoryHeader");
+const directoryPoster = document.getElementById("directoryPoster");
 const directoryTitle = document.getElementById("directoryTitle");
 const backBtn = document.getElementById("backBtn");
 const theaterBtn = document.getElementById("theaterBtn");
+const placeholderNotice = document.getElementById('placeholderNotice');
 theaterBtn.addEventListener("click", () => {
   video.pause();
   const src = video.src;
@@ -104,7 +143,29 @@ function renderEpisodeList() {
 
       const button = document.createElement("button");
       button.className = "episode-button";
-      button.textContent = episode.title;
+      // Left: title
+      const left = document.createElement('span');
+      left.textContent = episode.title;
+      // Right: meta (watched/duration)
+      const right = document.createElement('span');
+      right.className = 'episode-meta';
+      // Determine duration and watched time
+      let durationSec = Number.isFinite(Number(episode.durationSeconds)) ? Number(episode.durationSeconds) : NaN;
+      if (!Number.isFinite(durationSec)) {
+        const lsDur = parseFloat(localStorage.getItem((episode.src || '') + ':duration'));
+        if (Number.isFinite(lsDur)) durationSec = Math.round(lsDur);
+      }
+      const watched = parseFloat(localStorage.getItem(episode.src || ''));
+      const hasWatched = Number.isFinite(watched) && watched > 0;
+      if (Number.isFinite(durationSec) && durationSec > 0) {
+        right.textContent = hasWatched ? `${formatTime(watched)} / ${formatTime(durationSec)}` : `${formatTime(durationSec)}`;
+      } else if (hasWatched) {
+        // Fallback: show watched only if started
+        right.textContent = `${formatTime(watched)}`;
+      } else {
+        right.textContent = '';
+      }
+      button.append(left, right);
       button.addEventListener("click", () => {
         // Remember which episode was last opened
         localStorage.setItem('lastEpSrc', episode.src);
@@ -124,19 +185,54 @@ function renderEpisodeList() {
 
 function loadVideo(index) {
   const item = flatList[index];
-  video.src = item.src;
-  video.addEventListener('loadedmetadata', function onMeta() {
-    localStorage.setItem(video.src + ':duration', video.duration);
-    video.removeEventListener('loadedmetadata', onMeta);
-  });
-  const savedTime = localStorage.getItem(video.src);
-  if (savedTime) {
-    video.currentTime = parseFloat(savedTime);
+  // Update browser tab title to include source and item
+  try {
+    const sourceTitleText = (directoryTitle && directoryTitle.textContent ? directoryTitle.textContent.trim() : '') || 'Source';
+    const itemTitleText = (item && item.title) ? item.title : 'Item';
+    document.title = `${sourceTitleText} | ${itemTitleText} on RSP Media Manager`;
+  } catch {}
+  // Handle placeholder episodes (not downloaded)
+  if (item && item.isPlaceholder) {
+    // Hide actual video player, show custom alert overlay
+    if (video) {
+      video.pause();
+      video.removeAttribute('src');
+      try { video.load(); } catch {}
+      video.style.display = 'none';
+    }
+    if (theaterBtn) theaterBtn.style.display = 'none';
+    showPlayerAlert("Unfortunatly, this file in unavalible at this moment, please try again later.\n If this is a local source, please download the remaining files to continue");
+  } else {
+    // Normal playback
+    if (placeholderNotice) placeholderNotice.style.display = 'none';
+    if (video) {
+      video.style.display = '';
+      video.src = item.src;
+      video.addEventListener('loadedmetadata', function onMeta() {
+        localStorage.setItem(video.src + ':duration', video.duration);
+        video.removeEventListener('loadedmetadata', onMeta);
+      });
+      // Show custom alert if the player cannot load the file
+      function onVideoError() {
+        try { video.pause(); } catch {}
+        video.style.display = 'none';
+        showPlayerAlert("Unfortunatly, this file in unavalible at this moment, please try again later.\n If this is a local source, please download the remaining files to continue");
+        video.removeEventListener('error', onVideoError);
+      }
+      video.addEventListener('error', onVideoError);
+      const savedTime = localStorage.getItem(video.src);
+      if (savedTime) {
+        video.currentTime = parseFloat(savedTime);
+      }
+    }
+    if (theaterBtn) theaterBtn.style.display = 'inline-block';
   }
   title.textContent = item.title;
   nextBtn.style.display = "none";
-  video.load();
-  video.play();
+  if (!item.isPlaceholder) {
+    video.load();
+    video.play();
+  }
   // Update the URL to reflect the current episode index
   const params = new URLSearchParams(window.location.search);
   // Preserve or update existing 'item' key if present, otherwise set it
@@ -146,6 +242,31 @@ function loadVideo(index) {
     params.set('item', index + 1);
   }
   window.history.replaceState(null, '', `${window.location.pathname}?${params.toString()}`);
+}
+
+// Custom alert overlay used by player errors and placeholders
+function showPlayerAlert(message) {
+  let overlay = document.getElementById('playerFailOverlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'playerFailOverlay';
+    Object.assign(overlay.style, {
+      position: 'fixed', inset: '0', background: 'rgba(0,0,0,0.85)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10050,
+      color: '#ffffff', textAlign: 'center'
+    });
+    const box = document.createElement('div');
+    Object.assign(box.style, {
+      background: '#1a1a1a', color: '#f1f1f1', border: '1px solid #333',
+      borderRadius: '12px', padding: '1em 1.25em', maxWidth: '680px', boxShadow: '0 12px 30px rgba(0,0,0,0.5)'
+    });
+    const p = document.createElement('div'); p.style.whiteSpace = 'pre-line'; p.style.fontWeight = '800'; p.style.fontSize = '1.1rem'; p.id = 'playerFailMessage';
+    const btn = document.createElement('button'); btn.textContent = 'Close'; btn.className = 'pill-button'; btn.style.marginTop = '10px';
+    btn.addEventListener('click', () => { try { overlay.remove(); } catch {} });
+    box.append(p, btn); overlay.appendChild(box); document.body.appendChild(overlay);
+  }
+  const msgEl = document.getElementById('playerFailMessage');
+  if (msgEl) msgEl.textContent = message;
 }
 
 video.addEventListener("timeupdate", () => {
@@ -232,6 +353,23 @@ async function init() {
     errorMessage.style.display = 'none';
     urlInputContainer.style.display = 'none';
     directoryTitle.textContent = title;
+    // Set tab title to show source title on menu
+    try { document.title = `${(title || '').trim() || 'Source'} on RSP Media Manager`; } catch {}
+    // Poster image next to title (supports Image or image, ignoring 'N/A')
+    const imgUrl = (typeof json.Image === 'string' && json.Image !== 'N/A')
+      ? json.Image
+      : (typeof json.image === 'string' && json.image !== 'N/A' ? json.image : '');
+    sourceImageUrl = imgUrl || '';
+    if (directoryPoster) {
+      if (imgUrl) {
+        directoryPoster.src = imgUrl;
+        directoryPoster.style.display = 'inline-block';
+      } else {
+        try { directoryPoster.removeAttribute('src'); } catch {}
+        directoryPoster.style.display = 'none';
+      }
+    }
+    if (directoryHeader) directoryHeader.style.display = 'flex';
     directoryTitle.style.display = 'block';
     selectorScreen.style.display = 'flex';
     renderEpisodeList();
@@ -283,10 +421,24 @@ async function handleFolderUpload(event) {
       const fileName = ep.src.split("/").pop();
       const fileObj = files.find(f => f.name === fileName);
       const srcUrl = fileObj ? URL.createObjectURL(fileObj) : "";
-      return { title: ep.title, src: srcUrl };
+      const isPlaceholder = !fileObj || (fileObj && fileObj.size === 0);
+      return {
+        title: ep.title,
+        src: srcUrl,
+        isPlaceholder,
+        // keep metadata from manifest when available so durations show in menu
+        durationSeconds: (typeof ep.durationSeconds === 'number') ? ep.durationSeconds : null,
+        fileSizeBytes: (typeof ep.fileSizeBytes === 'number') ? ep.fileSizeBytes : null
+      };
     })
   }));
   directoryTitle.textContent = dirTitle;
+  // Set tab title to show source title on menu (local import)
+  try { document.title = `${(dirTitle || '').trim() || 'Source'} on RSP Media Manager`; } catch {}
+  // No poster for local folder imports; hide poster image
+  sourceImageUrl = '';
+  if (directoryPoster) { try { directoryPoster.removeAttribute('src'); } catch {} directoryPoster.style.display = 'none'; }
+  if (directoryHeader) directoryHeader.style.display = 'flex';
   directoryTitle.style.display = "block";
   errorMessage.style.display = "none";
   urlInputContainer.style.display = "none";
@@ -303,6 +455,13 @@ backBtn.addEventListener("click", () => {
   backBtn.style.display = "none";
   theaterBtn.style.display = "none";
   document.body.classList.remove("theater-mode");
+  // Restore tab title to just the source title when back to menu
+  try {
+    const st = (directoryTitle && directoryTitle.textContent ? directoryTitle.textContent.trim() : '') || 'Source';
+    document.title = `${st} on RSP Media Manager`;
+  } catch {}
+  // Refresh list to show updated watched/duration info
+  renderEpisodeList();
   // Remove any item parameter from the URL
   const params = new URLSearchParams(window.location.search);
   params.delete('item');
@@ -312,7 +471,83 @@ backBtn.addEventListener("click", () => {
   window.history.replaceState(null, '', newUrl);
 });
 
-async function downloadSourceFolder() {
+// Open a selection modal for categories; returns Set of selected indices
+async function openSeasonSelectionModal() {
+  return new Promise((resolve) => {
+    // Backdrop for outside click to close
+    const backdrop = document.createElement('div');
+    Object.assign(backdrop.style, {
+      position: 'fixed', inset: '0', background: 'transparent', zIndex: 9998
+    });
+    const panel = document.createElement('div');
+    Object.assign(panel.style, {
+      position: 'fixed',
+      background: '#1a1a1a', color: '#f1f1f1', border: '1px solid #444',
+      borderRadius: '10px', padding: '12px', width: '340px',
+      boxShadow: '0 10px 24px rgba(0,0,0,0.55)', zIndex: 9999
+    });
+    // Anchor near settings button
+    try {
+      const btn = document.getElementById('settingsBtn');
+      const r = btn ? btn.getBoundingClientRect() : { top: 16, right: window.innerWidth - 16, bottom: 16 };
+      panel.style.top = Math.round((r.bottom || 16) + 8) + 'px';
+      panel.style.right = Math.round(Math.max(8, window.innerWidth - (r.right || (window.innerWidth - 16)))) + 'px';
+    } catch {}
+
+    const h = document.createElement('div'); h.textContent = 'Download Seasons'; h.style.fontWeight = '700'; h.style.margin = '0 0 6px 0';
+    const list = document.createElement('div'); list.style.maxHeight = '50vh'; list.style.overflow = 'auto'; list.style.padding = '4px 0';
+
+    const footer = document.createElement('div');
+    Object.assign(footer.style, { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginTop: '8px' });
+    const btnOk = document.createElement('button'); btnOk.textContent = 'Download'; btnOk.className = 'pill-button';
+    const totalSpan = document.createElement('span'); totalSpan.style.color = '#b6b6b6'; totalSpan.style.whiteSpace = 'nowrap';
+
+    const checkboxes = [];
+    const seasonSizes = [];
+    function computeTotal() {
+      let sum = 0;
+      checkboxes.forEach((cb, i) => { if (cb.checked) sum += (seasonSizes[i] || 0); });
+      totalSpan.textContent = formatBytesDecimalMaxUnit(sum);
+    }
+
+    videoList.forEach((cat, idx) => {
+      const row = document.createElement('label');
+      Object.assign(row.style, { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', padding: '6px 0' });
+      const leftWrap = document.createElement('span');
+      const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = true; cb.dataset.index = String(idx);
+      const name = document.createElement('span'); name.textContent = cat.category; name.style.marginLeft = '6px';
+      leftWrap.append(cb, name);
+      const sizeSpan = document.createElement('span'); sizeSpan.style.color = '#b6b6b6'; sizeSpan.style.whiteSpace = 'nowrap';
+      let seasonBytes = 0;
+      try { (cat.episodes || []).forEach(e => { const v = Number(e.fileSizeBytes); if (Number.isFinite(v) && v >= 0) seasonBytes += v; }); } catch {}
+      seasonSizes[idx] = seasonBytes;
+      sizeSpan.textContent = formatBytesDecimalMaxUnit(seasonBytes);
+      row.append(leftWrap, sizeSpan);
+      list.appendChild(row);
+      checkboxes.push(cb);
+      cb.addEventListener('change', computeTotal);
+    });
+
+    computeTotal();
+    footer.append(btnOk, totalSpan);
+    panel.append(h, list, footer);
+    document.body.append(backdrop, panel);
+
+    function closeMenu(result) {
+      try { panel.remove(); } catch {}
+      try { backdrop.remove(); } catch {}
+      resolve(result);
+    }
+    backdrop.addEventListener('click', () => closeMenu(null));
+    btnOk.addEventListener('click', () => {
+      const selected = new Set(checkboxes.filter(cb => cb.checked).map(cb => parseInt(cb.dataset.index, 10)));
+      closeMenu(selected);
+    });
+  });
+}
+
+async function downloadSourceFolder(options = {}) {
+  const selectedSet = options.selectedCategories instanceof Set ? options.selectedCategories : null;
   const overlay = document.createElement('div');
   Object.assign(overlay.style, {
     position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
@@ -331,30 +566,59 @@ async function downloadSourceFolder() {
 
   const zip = new JSZip();
   const titleText = directoryTitle.textContent.trim() || 'directory';
+  const safeZipSegment = (name) => {
+    try {
+      return String(name || '')
+        .replace(/[\\/]+/g, ' - ')          // path separators -> hyphen
+        .replace(/[<>:"|?*]+/g, '')         // illegal on Windows
+        .replace(/\s{2,}/g, ' ')            // collapse spaces
+        .trim();
+    } catch { return 'untitled'; }
+  };
   const rootFolder = zip.folder(titleText);
   rootFolder.file(
     'PUT THIS FOLDER IN YOUR /DIRECTORYS/ FOLDER.txt',
     'https://github.com/RandomSideProjects/Media-Manager/ is the origin of this web app.'
   );
 
-  const manifest = { title: titleText, categories: [] };
+  const manifest = { title: titleText, Image: sourceImageUrl || 'N/A', categories: [] };
   const catFolders = [];
   const catObjs = [];
 
-  videoList.forEach(cat => {
-    const catFolder = rootFolder.folder(cat.category);
+  const sanitizedCats = videoList.map(cat => safeZipSegment(cat.category));
+  videoList.forEach((cat, i) => {
+    const catFolder = rootFolder.folder(sanitizedCats[i]);
     catFolders.push(catFolder);
     // Pre-create episodes array to preserve original order
-    const episodesPlaceholders = cat.episodes.map(ep => ({ title: ep.title, src: '' }));
+    const episodesPlaceholders = cat.episodes.map(ep => ({
+      title: ep.title,
+      // default to original remote until overridden for selected downloads
+      src: ep.src,
+      fileSizeBytes: (typeof ep.fileSizeBytes === 'number') ? ep.fileSizeBytes : null,
+      durationSeconds: (typeof ep.durationSeconds === 'number') ? ep.durationSeconds : null
+    }));
     const catObj = { category: cat.category, episodes: episodesPlaceholders };
     catObjs.push(catObj);
     manifest.categories.push(catObj);
   });
 
+  // Plan file names per episode and build tasks only for selected categories
+  const plannedNames = videoList.map(() => []);
   const tasks = [];
-  videoList.forEach((cat, ci) =>
-    cat.episodes.forEach((episode, ei) => tasks.push({ ci, ei, episode }))
-  );
+  videoList.forEach((cat, ci) => {
+    cat.episodes.forEach((episode, ei) => {
+      const urlParts = new URL(episode.src, window.location.href);
+      const origName = decodeURIComponent(urlParts.pathname.split('/').pop());
+      const ext = origName.includes('.') ? origName.slice(origName.lastIndexOf('.')) : '';
+      const pad = String(ei + 1).padStart(2, '0');
+      const fileName = `E${pad}${ext}`;
+      plannedNames[ci][ei] = fileName;
+      const shouldDownload = !selectedSet || selectedSet.has(ci);
+      if (shouldDownload) {
+        tasks.push({ ci, ei, episode, fileName });
+      }
+    });
+  });
 
   const progressBars = [];
   // --- 1. Insert initialization of loadedBytes, totalBytes, and after ETA label, speedLabel and dataLeftLabels ---
@@ -419,10 +683,31 @@ async function downloadSourceFolder() {
   let lastTime = Date.now();
   let lastLoaded = 0;
   let avgSpeed = 0;
+  let downloadedBytes = 0; // track actual downloaded bytes for selected
+  async function computeBlobDurationSeconds(blob) {
+    return new Promise((resolve) => {
+      try {
+        const url = URL.createObjectURL(blob);
+        const v = document.createElement('video');
+        v.preload = 'metadata';
+        const done = () => {
+          try { URL.revokeObjectURL(url); } catch {}
+          const d = isFinite(v.duration) ? v.duration : NaN;
+          resolve(d);
+        };
+        v.onloadedmetadata = done;
+        v.onerror = done;
+        v.src = url;
+      } catch {
+        resolve(NaN);
+      }
+    });
+  }
+
   const workers = Array.from({ length: concurrency }, async () => {
     while (!cancelRequested && pointer < tasks.length) {
       const idx = pointer++;
-      const { ci, ei, episode } = tasks[idx];
+      const { ci, ei, episode, fileName } = tasks[idx];
       try {
         const blob = await new Promise((resolve, reject) => {
           const xhr = new XMLHttpRequest();
@@ -478,14 +763,26 @@ async function downloadSourceFolder() {
           xhr.onerror = () => reject(new Error('Network error'));
           xhr.send();
         });
-        const urlParts = new URL(episode.src, window.location.href);
-        const origName = decodeURIComponent(urlParts.pathname.split('/').pop());
-        const ext = origName.includes('.') ? origName.slice(origName.lastIndexOf('.')) : '';
-        const pad = String(ei + 1).padStart(2, '0');
-        const fileName = `E${pad}${ext}`;
         catFolders[ci].file(fileName, blob);
         // Assign the local path to the pre-allocated episode slot
-        catObjs[ci].episodes[ei].src = `Directorys/${titleText}/${videoList[ci].category}/${fileName}`;
+        const epObj = catObjs[ci].episodes[ei];
+        epObj.src = `Directorys/${titleText}/${sanitizedCats[ci]}/${fileName}`;
+        // Record file size
+        try {
+          const sz = Number(blob && blob.size);
+          if (Number.isFinite(sz) && sz >= 0) {
+            epObj.fileSizeBytes = sz;
+            downloadedBytes += sz;
+          }
+        } catch {}
+        // Compute duration from blob metadata
+        try {
+          const d = await computeBlobDurationSeconds(blob);
+          if (Number.isFinite(d) && d > 0) {
+            const sec = Math.round(d);
+            epObj.durationSeconds = sec;
+          }
+        } catch {}
       } catch (err) {
         console.error('Error downloading', episode.src, err);
       }
@@ -494,10 +791,49 @@ async function downloadSourceFolder() {
 
   await Promise.all(workers);
 
+  // For unselected categories, keep remote src and any existing metadata (no placeholder files)
+
   if (cancelRequested) {
     return;
   }
 
+  // Compute root totals across ALL episodes (selected and unselected) using available metadata
+  let totalBytesAll = 0, totalSecsAll = 0;
+  try {
+    for (const c of catObjs) {
+      for (const e of c.episodes) {
+        const b = Number(e.fileSizeBytes);
+        const d = Number(e.durationSeconds);
+        if (Number.isFinite(b) && b >= 0) totalBytesAll += Math.floor(b);
+        if (Number.isFinite(d) && d >= 0) totalSecsAll += Math.floor(d);
+      }
+    }
+  } catch {}
+  manifest.totalFileSizeBytes = totalBytesAll || 0;
+  manifest.totalDurationSeconds = totalSecsAll || 0;
+
+  // Inline poster image as data URI if possible
+  async function fetchAsDataURL(url) {
+    try {
+      const resp = await fetch(url, { cache: 'no-store' });
+      if (!resp.ok) throw new Error('image fetch failed');
+      const blob = await resp.blob();
+      return await new Promise((resolve, reject) => {
+        const fr = new FileReader();
+        fr.onload = () => resolve(String(fr.result || ''));
+        fr.onerror = reject;
+        fr.readAsDataURL(blob);
+      });
+    } catch {
+      return null;
+    }
+  }
+  if (sourceImageUrl) {
+    try {
+      const dataUrl = await fetchAsDataURL(sourceImageUrl);
+      if (dataUrl) manifest.Image = dataUrl;
+    } catch {}
+  }
   rootFolder.file('index.json', JSON.stringify(manifest, null, 2));
 
   const content = await zip.generateAsync({ type: 'blob' });
@@ -512,11 +848,10 @@ async function downloadSourceFolder() {
 
 const downloadBtn = document.getElementById('downloadBtn');
 if (downloadBtn) {
-  downloadBtn.addEventListener('click', () => {
-    const proceed = window.confirm(
-      'Zipping all videos into a single archive may take a long time and use significant memory. Proceed?'
-    );
-    if (proceed) downloadSourceFolder();
+  downloadBtn.addEventListener('click', async () => {
+    const selected = await openSeasonSelectionModal();
+    if (selected === null) return; // cancelled
+    downloadSourceFolder({ selectedCategories: selected });
   });
 }
 
@@ -1011,6 +1346,7 @@ const settingsPanel = document.getElementById('settingsPanel');
 const settingsCloseBtn = document.getElementById('settingsCloseBtn');
 const clipToggle = document.getElementById('clipToggle');
 const clipPreviewToggle = document.getElementById('clipPreviewToggle');
+const selectiveDownloadToggle = document.getElementById('selectiveDownloadToggle');
 
 settingsBtn.addEventListener('click', (e) => {
   e.stopPropagation();
@@ -1041,10 +1377,21 @@ if (clipBtn) clipBtn.style.display = clippingEnabled ? 'inline-block' : 'none';
 const clipPreviewEnabledStored = localStorage.getItem('clipPreviewEnabled') === 'true';
 if (clipPreviewToggle) clipPreviewToggle.checked = clipPreviewEnabledStored;
 
+// Initialize selective downloads toggle from localStorage
+const selectiveDownloadsEnabledStored = localStorage.getItem('selectiveDownloadsEnabled') === 'true';
+if (selectiveDownloadToggle) selectiveDownloadToggle.checked = selectiveDownloadsEnabledStored;
+
 // Persist clip preview setting
 if (clipPreviewToggle) {
   clipPreviewToggle.addEventListener('change', () => {
     localStorage.setItem('clipPreviewEnabled', clipPreviewToggle.checked);
+  });
+}
+
+// Persist selective downloads setting
+if (selectiveDownloadToggle) {
+  selectiveDownloadToggle.addEventListener('change', () => {
+    localStorage.setItem('selectiveDownloadsEnabled', selectiveDownloadToggle.checked);
   });
 }
 

@@ -133,6 +133,22 @@ jobs:
                   if (Array.isArray(c.episodes)) episodeCount += c.episodes.length;
                 }
 
+                // Compute totals if provided per-episode
+                let totalFileSizeBytes = 0;
+                let totalDurationSeconds = 0;
+                for (const c of cats) {
+                  const eps = Array.isArray(c.episodes) ? c.episodes : [];
+                  for (const e of eps) {
+                    const fs = Number(e.fileSizeBytes ?? e.file_size ?? e.size ?? NaN);
+                    const du = Number(e.durationSeconds ?? e.duration ?? NaN);
+                    if (Number.isFinite(fs) && fs >= 0) totalFileSizeBytes += Math.floor(fs);
+                    if (Number.isFinite(du) && du >= 0) totalDurationSeconds += Math.floor(du);
+                  }
+                }
+                // Override totals if root already provides them
+                if (Number.isFinite(Number(json.totalFileSizeBytes))) totalFileSizeBytes = Number(json.totalFileSizeBytes);
+                if (Number.isFinite(Number(json.totalDurationSeconds))) totalDurationSeconds = Number(json.totalDurationSeconds);
+
                 // Build poster file in repo (WebP, height=512) and reference by path
                 let poster = null;
                 const imgUrl = (json.Image && json.Image !== 'N/A') ? json.Image : (json.image && json.image !== 'N/A' ? json.image : null);
@@ -169,7 +185,9 @@ jobs:
                   poster,           // './Posters/Title.webp' or null
                   categoryCount,
                   episodeCount,
-                  LatestTime: json.LatestTime || null
+                  LatestTime: json.LatestTime || null,
+                  totalFileSizeBytes: totalFileSizeBytes || 0,
+                  totalDurationSeconds: totalDurationSeconds || 0
                 });
               } catch (e) {
                 console.warn('Skipping', file, e.message);
@@ -188,4 +206,3 @@ jobs:
         with:
           commit_message: 'chore: update Directorys/SourceList.json and posters'
           file_pattern: 'Directorys/SourceList.json Directorys/Posters/**'
-

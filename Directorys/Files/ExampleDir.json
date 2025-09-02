@@ -7,53 +7,79 @@
       "episodes": [
         {
           "title": "Episode 1",
-          "src": "https://files.catbox.moe/41ll4t.mp4"
+          "src": "https://files.catbox.moe/41ll4t.mp4",
+          "fileSizeBytes": 172184042,
+          "durationSeconds": 1480
         },
         {
           "title": "Episode 2",
-          "src": "https://files.catbox.moe/26ts4i.mp4"
+          "src": "https://files.catbox.moe/26ts4i.mp4",
+          "fileSizeBytes": 194849268,
+          "durationSeconds": 1480
         },
         {
           "title": "Episode 3",
-          "src": "https://files.catbox.moe/g90kjp.mp4"
+          "src": "https://files.catbox.moe/g90kjp.mp4",
+          "fileSizeBytes": 180090171,
+          "durationSeconds": 1480
         },
         {
           "title": "Episode 4",
-          "src": "https://files.catbox.moe/8kt4g7.mp4"
+          "src": "https://files.catbox.moe/8kt4g7.mp4",
+          "fileSizeBytes": 178980147,
+          "durationSeconds": 1450
         },
         {
           "title": "Episode 5",
-          "src": "https://files.catbox.moe/folevt.mp4"
+          "src": "https://files.catbox.moe/folevt.mp4",
+          "fileSizeBytes": 175688211,
+          "durationSeconds": 1450
         },
         {
           "title": "Episode 6",
-          "src": "https://files.catbox.moe/2cpt1t.mp4"
+          "src": "https://files.catbox.moe/2cpt1t.mp4",
+          "fileSizeBytes": 183363485,
+          "durationSeconds": 1420
         },
         {
           "title": "Episode 7",
-          "src": "https://files.catbox.moe/teaaoj.mp4"
+          "src": "https://files.catbox.moe/teaaoj.mp4",
+          "fileSizeBytes": 156508067,
+          "durationSeconds": 1480
         },
         {
           "title": "Episode 8",
-          "src": "https://files.catbox.moe/zsv3qa.mp4"
+          "src": "https://files.catbox.moe/zsv3qa.mp4",
+          "fileSizeBytes": 141244618,
+          "durationSeconds": 1450
         },
         {
           "title": "Episode 9",
-          "src": "https://files.catbox.moe/rfddn3.mp4"
+          "src": "https://files.catbox.moe/rfddn3.mp4",
+          "fileSizeBytes": 180062059,
+          "durationSeconds": 1510
         },
         {
           "title": "Episode 10",
-          "src": "https://files.catbox.moe/qw4pe7.mp4"
+          "src": "https://files.catbox.moe/qw4pe7.mp4",
+          "fileSizeBytes": 177195720,
+          "durationSeconds": 1450
         },
         {
           "title": "Episode 11",
-          "src": "https://files.catbox.moe/f2inl2.mp4"
+          "src": "https://files.catbox.moe/f2inl2.mp4",
+          "fileSizeBytes": 174686154,
+          "durationSeconds": 1480
         },
         {
           "title": "Episode 12",
-          "src": "https://files.catbox.moe/jjubhm.mp4"
+          "src": "https://files.catbox.moe/jjubhm.mp4",
+          "fileSizeBytes": 147639451,
+          "durationSeconds": 1510
         }
       ]
     }
-  ]
+  ],
+  "totalFileSizeBytes": 2062491393,
+  "totalDurationSeconds": 17640
 }

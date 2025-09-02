@@ -640,6 +640,18 @@
         const epNum = m ? parseInt(m[1], 10) : idx + 1;
         return { file, epNum };
       }).sort((a, b) => a.epNum - b.epNum);
+      // Helper to compute duration without blocking
+      const computeLocalFileDurationSeconds = (file) => new Promise((resolve) => {
+        try {
+          const url = URL.createObjectURL(file);
+          const v = document.createElement('video');
+          v.preload = 'metadata';
+          const done = () => { try { URL.revokeObjectURL(url); } catch {}; resolve(isFinite(v.duration) ? v.duration : NaN); };
+          v.onloadedmetadata = done;
+          v.onerror = () => resolve(NaN);
+          v.src = url;
+        } catch { resolve(NaN); }
+      });
       // Create overlay UI
       const folderOverlay = document.createElement('div');
       folderOverlay.id = 'folderUploadOverlay';
@@ -674,6 +686,14 @@
         // Add episode UI stub
         addEpisode(episodesDiv, { title: `Episode ${epNum}`, src: '' });
         const epDiv = episodesDiv.lastElementChild;
+        // Record file size metadata for totals
+        try { epDiv.dataset.fileSizeBytes = String(file.size); } catch {}
+        // Best-effort compute duration (fire-and-forget)
+        try {
+          computeLocalFileDurationSeconds(file).then(d => {
+            if (!Number.isNaN(d) && d > 0) epDiv.dataset.durationSeconds = String(Math.round(d));
+          });
+        } catch {}
         const inputs = epDiv.querySelectorAll('input[type="text"]');
         const epSrcInput = inputs[1];
         const epError = epDiv.querySelector('.ep-error');
@@ -797,12 +817,24 @@
             const inputs = epDiv.querySelectorAll('input[type="text"]');
             const t = inputs[0] ? inputs[0].value.trim() : '';
             const s = inputs[1] ? inputs[1].value.trim() : '';
-            if (t && s) eps.push({ title: t, src: s });
+            let fs = null, dur = null;
+            try { const v = parseFloat(epDiv.dataset.fileSizeBytes); if (Number.isFinite(v) && v >= 0) fs = Math.round(v); } catch {}
+            try { const v = parseFloat(epDiv.dataset.durationSeconds); if (Number.isFinite(v) && v >= 0) dur = Math.round(v); } catch {}
+            if (t && s) eps.push({ title: t, src: s, fileSizeBytes: fs, durationSeconds: dur });
           });
           if (catTitle) cats.push({ category: catTitle, episodes: eps });
         });
         const imageField = posterImageUrl || 'N/A';
-        const contentOnly = { title: titleVal, Image: imageField, categories: cats };
+        // Compute totals across all items
+        let totalFileSizeBytes = 0;
+        let totalDurationSeconds = 0;
+        for (const c of cats) {
+          for (const e of c.episodes) {
+            if (typeof e.fileSizeBytes === 'number' && Number.isFinite(e.fileSizeBytes)) totalFileSizeBytes += e.fileSizeBytes;
+            if (typeof e.durationSeconds === 'number' && Number.isFinite(e.durationSeconds)) totalDurationSeconds += e.durationSeconds;
+          }
+        }
+        const contentOnly = { title: titleVal, Image: imageField, categories: cats, totalFileSizeBytes, totalDurationSeconds };
         const contentStr = JSON.stringify(contentOnly);
         if (contentStr !== lastContent) {
           lastContent = contentStr;
@@ -871,6 +903,11 @@
 
       const epDiv = document.createElement('div');
       epDiv.className = 'episode';
+      // Initialize optional metadata from provided data
+      try {
+        if (data && typeof data.fileSizeBytes === 'number') epDiv.dataset.fileSizeBytes = String(data.fileSizeBytes);
+        if (data && typeof data.durationSeconds === 'number') epDiv.dataset.durationSeconds = String(data.durationSeconds);
+      } catch {}
 
       epDiv.addEventListener('contextmenu', (e) => {
         e.preventDefault();
@@ -899,6 +936,24 @@
       const epError = document.createElement('div');
       epError.className = 'ep-error';
 
+      // Helper: compute local file duration (seconds)
+      async function computeLocalFileDurationSeconds(file) {
+        return new Promise((resolve) => {
+          try {
+            const url = URL.createObjectURL(file);
+            const v = document.createElement('video');
+            v.preload = 'metadata';
+            const done = () => {
+              try { URL.revokeObjectURL(url); } catch {}
+              resolve(isFinite(v.duration) ? v.duration : NaN);
+            };
+            v.onloadedmetadata = done;
+            v.onerror = () => resolve(NaN);
+            v.src = url;
+          } catch { resolve(NaN); }
+        });
+      }
+
       epFile.addEventListener('change', async (e) => {
         const file = e.target.files[0];
         if (!file) return;
@@ -908,6 +963,12 @@
           epError.innerHTML = '<span style="color:#f1f1f1">Our built-in uploader only supports 200 MB. Please try again with a smaller size.</span>';
           return;
         }
+        // Record metadata
+        try { epDiv.dataset.fileSizeBytes = String(file.size); } catch {}
+        try {
+          const d = await computeLocalFileDurationSeconds(file);
+          if (!Number.isNaN(d) && d > 0) epDiv.dataset.durationSeconds = String(Math.round(d));
+        } catch {}
         // Primary upload with progress bar
         epSrc.value = '';
         epError.innerHTML = ''; // clear previous messages
@@ -931,6 +992,81 @@
           epSrc.value = '';
         }
       });
+
+      // Helper: fetch remote content length via HEAD or range GET
+      async function fetchRemoteContentLength(url) {
+        try {
+          const head = await fetch(url, { method: 'HEAD', cache: 'no-store' });
+          if (head.ok) {
+            const cl = head.headers.get('content-length') || head.headers.get('Content-Length');
+            const n = cl ? parseInt(cl, 10) : NaN;
+            if (Number.isFinite(n) && n >= 0) return n;
+          }
+        } catch {}
+        // Fallback: GET with range 0-0 to read Content-Range total
+        try {
+          const resp = await fetch(url, { method: 'GET', headers: { 'Range': 'bytes=0-0' }, cache: 'no-store' });
+          if (resp.ok || resp.status === 206) {
+            const cr = resp.headers.get('content-range') || resp.headers.get('Content-Range');
+            if (cr) {
+              const m = cr.match(/\/(\d+)\s*$/);
+              if (m) {
+                const n = parseInt(m[1], 10);
+                if (Number.isFinite(n) && n >= 0) return n;
+              }
+            }
+            const cl = resp.headers.get('content-length') || resp.headers.get('Content-Length');
+            const n = cl ? parseInt(cl, 10) : NaN;
+            if (Number.isFinite(n) && n > 1) return n; // note: may be 1 for range response
+          }
+        } catch {}
+        return NaN;
+      }
+
+      // Helper: compute duration from remote URL (metadata only)
+      async function computeRemoteDurationSeconds(url) {
+        return new Promise((resolve) => {
+          try {
+            const v = document.createElement('video');
+            v.preload = 'metadata';
+            v.crossOrigin = 'anonymous';
+            const done = () => {
+              const d = isFinite(v.duration) ? v.duration : NaN;
+              resolve(d);
+            };
+            v.onloadedmetadata = done;
+            v.onerror = () => resolve(NaN);
+            v.src = url;
+          } catch {
+            resolve(NaN);
+          }
+        });
+      }
+
+      async function maybeFetchUrlMetadata() {
+        // Skip if a file was selected; file handler records metadata
+        if (epFile && epFile.files && epFile.files.length > 0) return;
+        const url = (epSrc.value || '').trim();
+        if (!/^https?:\/\//i.test(url)) return;
+        // If metadata already recorded, skip
+        if (epDiv.dataset && (epDiv.dataset.fileSizeBytes || epDiv.dataset.durationSeconds)) return;
+        try { epError.style.color = '#9ecbff'; epError.textContent = 'Fetching metadata…'; } catch {}
+        try {
+          const [size, dur] = await Promise.all([
+            fetchRemoteContentLength(url),
+            computeRemoteDurationSeconds(url)
+          ]);
+          if (Number.isFinite(size) && size >= 0) epDiv.dataset.fileSizeBytes = String(Math.round(size));
+          if (Number.isFinite(dur) && dur > 0) epDiv.dataset.durationSeconds = String(Math.round(dur));
+          epError.textContent = '';
+        } catch {
+          // non-fatal
+          epError.textContent = '';
+        }
+      }
+
+      epSrc.addEventListener('change', maybeFetchUrlMetadata);
+      epSrc.addEventListener('blur', maybeFetchUrlMetadata);
 
       epDiv.appendChild(epTitle);
 
@@ -1045,43 +1181,7 @@
 
     // Auto-upload now handled by polling loop; no need for input event listeners
 
-    // --- Pomf.cat uploader script block ---
-    // Example usage:
-    //   uploadToPomf(file, { anonymous: false }, userhash, apiKey)
-    // Returns a Promise for the uploaded file URL
-    function uploadToPomf(file, settings = {}, effectiveUserhash, POMF_API_KEY) {
-      return new Promise((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', 'https://a.pomf.cat/upload.php');
-        xhr.setRequestHeader('api-key', POMF_API_KEY);
-        // Only include userhash if anonymous is false
-        if (settings.anonymous === false) {
-          xhr.setRequestHeader('userhash', effectiveUserhash);
-        }
-        const form = new FormData();
-        form.append('files[]', file);
-        xhr.onload = function () {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            try {
-              const resp = JSON.parse(xhr.responseText);
-              if (resp.success && resp.files && resp.files[0] && resp.files[0].url) {
-                resolve(resp.files[0].url);
-              } else {
-                reject(new Error('Upload error'));
-              }
-            } catch (e) {
-              reject(new Error('Invalid server response'));
-            }
-          } else {
-            reject(new Error('Upload error: ' + xhr.status));
-          }
-        };
-        xhr.onerror = function () {
-          reject(new Error('Network error'));
-        };
-        xhr.send(form);
-      });
-    }
+    // (Removed pomf uploader helper)
 
     const confirmModal = document.getElementById('confirmModal');
     const confirmYes = document.getElementById('confirmYes');
@@ -1105,6 +1205,8 @@
     function buildLocalDirectoryJSON() {
       const title = document.getElementById('dirTitle').value.trim();
       const categories = [];
+      let totalBytes = 0;
+      let totalSecs = 0;
       document.querySelectorAll('.category').forEach(cat => {
         const catTitle = cat.querySelector('input[type="text"]').value.trim();
         const episodes = [];
@@ -1112,12 +1214,22 @@
           const inputs = epDiv.querySelectorAll('input[type="text"]');
           const t = inputs[0].value.trim();
           const s = inputs[1].value.trim();
-          if (t && s) episodes.push({ title: t, src: s });
+          let fs = null, dur = null;
+          try { const v = parseFloat(epDiv.dataset.fileSizeBytes); if (Number.isFinite(v) && v >= 0) { fs = Math.round(v); totalBytes += fs; } } catch {}
+          try { const v = parseFloat(epDiv.dataset.durationSeconds); if (Number.isFinite(v) && v >= 0) { dur = Math.round(v); totalSecs += dur; } } catch {}
+          if (t && s) episodes.push({ title: t, src: s, fileSizeBytes: fs, durationSeconds: dur });
         });
         if (catTitle) categories.push({ category: catTitle, episodes });
       });
       const imageField = posterImageUrl || 'N/A';
-      return { title, Image: imageField, categories, LatestTime: new Date().toISOString() };
+      return {
+        title,
+        Image: imageField,
+        categories,
+        LatestTime: new Date().toISOString(),
+        totalFileSizeBytes: totalBytes || 0,
+        totalDurationSeconds: totalSecs || 0
+      };
     }
 
     document.addEventListener('keydown', (e) => {
@@ -1160,9 +1272,6 @@
   <script>
   (function(){
     // ===== Constants =====
-    const POMF_ENDPOINT = 'https://pomf.cat/upload';
-    const POMF_API_KEY  = '3e1ba203-5a93-4c18-a7d9-f728e1c98cd6';
-    const POMF_MAX_BYTES = 75 * 1024 * 1024; // 75 MB
     const DEFAULT_USERHASH = '2cdcc7754c86c2871ed2bde9d';
     const LS_SETTINGS_KEY = 'mm_upload_settings';
 
@@ -1179,84 +1288,7 @@
       localStorage.setItem(LS_SETTINGS_KEY, JSON.stringify({ anonymous: !!s.anonymous, userhash: (s.userhash||'').trim() }));
     }
 
-    // ===== File helpers =====
-    function isJsonFile(file){
-      const n=(file?.name||'').toLowerCase(); const t=(file?.type||'').toLowerCase();
-      return n.endsWith('.json') || t==='application/json';
-    }
-    function isVideoFile(file){
-      const t=(file?.type||'').toLowerCase(); const n=(file?.name||'').toLowerCase();
-      return t.startsWith('video/') || /\.(mp4|webm|mkv|mov|avi|m4v)$/i.test(n);
-    }
-    function shouldUsePomf(file){
-      return isVideoFile(file) && file.size <= POMF_MAX_BYTES;
-    }
-
-    // ===== pomf.cat uploader (XHR for progress) =====
-    function uploadToPomf(file, { onProgress } = {}){
-      const settings = loadUploadSettings();
-      const effectiveUserhash = (settings.userhash || '').trim() || DEFAULT_USERHASH;
-      return new Promise((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', POMF_ENDPOINT);
-        xhr.setRequestHeader('api-key', POMF_API_KEY);
-        if (!settings.anonymous) {
-          xhr.setRequestHeader('userhash', effectiveUserhash);
-        }
-        if (xhr.upload && typeof onProgress === 'function') {
-          xhr.upload.onprogress = (evt) => {
-            if (evt.lengthComputable) {
-              const pct = Math.round((evt.loaded/evt.total)*100);
-              try { onProgress(pct, evt.loaded, evt.total); } catch {}
-            }
-          };
-        }
-        xhr.onreadystatechange = () => {
-          if (xhr.readyState !== 4) return;
-          if (xhr.status >= 200 && xhr.status < 300) {
-            try {
-              const data = JSON.parse(xhr.responseText || '{}');
-              const url = (function(resp){
-                if (!resp) return null;
-                if (resp.files && Array.isArray(resp.files) && resp.files[0]?.url) return resp.files[0].url;
-                if (typeof resp.url === 'string') return resp.url;
-                if (typeof resp.file === 'string') return resp.file;
-                if (resp.files && Array.isArray(resp.files) && resp.files[0]?.url && !/^https?:\/\//i.test(resp.files[0].url)) {
-                  return new URL(resp.files[0].url, 'https://pomf.cat').toString();
-                }
-                return null;
-              })(data);
-              if (!url) return reject(new Error('Upload succeeded but no URL returned by pomf.cat.'));
-              resolve(url);
-            } catch(e) {
-              reject(new Error('Upload succeeded but response parse failed: '+e.message));
-            }
-          } else {
-            reject(new Error(`pomf.cat upload failed (${xhr.status})`));
-          }
-        };
-        const fd = new FormData();
-        fd.append('file', file, file.name);
-        xhr.send(fd);
-      });
-    }
-
-    // ===== Public API: policy-aware uploader =====
-    // Use this helper in your other code: window.mm_uploadFileWithPolicy(file, { onProgress })
-    async function mm_uploadFileWithPolicy(file, { onProgress } = {}){
-      if (!file) throw new Error('No file provided');
-      if (isJsonFile(file)) {
-        // NEVER route JSON through pomf
-        throw new Error('JSON uploads must use the existing JSON uploader (not pomf.cat).');
-      }
-      if (shouldUsePomf(file)) {
-        return uploadToPomf(file, { onProgress });
-      }
-      throw new Error('File should be routed to your primary uploader (non-pomf).');
-    }
-
     // Expose globals
-    window.mm_uploadFileWithPolicy = mm_uploadFileWithPolicy;
     window.mm_uploadSettings = { load: loadUploadSettings, save: saveUploadSettings };
 
     // ===== UI wiring =====

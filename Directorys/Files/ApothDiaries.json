@@ -8,99 +8,147 @@
       "episodes": [
         {
           "title": "Episode 1",
-          "src": "https://files.catbox.moe/3qolip.mp4"
+          "src": "https://files.catbox.moe/3qolip.mp4",
+          "fileSizeBytes": 97502120,
+          "durationSeconds": 1370
         },
         {
           "title": "Episode 2",
-          "src": "https://files.catbox.moe/siw5jg.mp4"
+          "src": "https://files.catbox.moe/siw5jg.mp4",
+          "fileSizeBytes": 83622447,
+          "durationSeconds": 1370
         },
         {
           "title": "Episode 3",
-          "src": "https://files.catbox.moe/lww0aw.mp4"
+          "src": "https://files.catbox.moe/lww0aw.mp4",
+          "fileSizeBytes": 73533411,
+          "durationSeconds": 1370
         },
         {
           "title": "Episode 4",
-          "src": "https://files.catbox.moe/epifd2.mp4"
+          "src": "https://files.catbox.moe/epifd2.mp4",
+          "fileSizeBytes": 81402592,
+          "durationSeconds": 1370
         },
         {
           "title": "Episode 5",
-          "src": "https://files.catbox.moe/hcapbh.mp4"
+          "src": "https://files.catbox.moe/hcapbh.mp4",
+          "fileSizeBytes": 95727914,
+          "durationSeconds": 1370
         },
         {
           "title": "Episode 6",
-          "src": "https://files.catbox.moe/9d1mxk.mp4"
+          "src": "https://files.catbox.moe/9d1mxk.mp4",
+          "fileSizeBytes": 93930410,
+          "durationSeconds": 1370
         },
         {
           "title": "Episode 7",
-          "src": "https://files.catbox.moe/qcp178.mp4"
+          "src": "https://files.catbox.moe/qcp178.mp4",
+          "fileSizeBytes": 86634466,
+          "durationSeconds": 1370
         },
         {
           "title": "Episode 8",
-          "src": "https://files.catbox.moe/3co6rn.mp4"
+          "src": "https://files.catbox.moe/3co6rn.mp4",
+          "fileSizeBytes": 85166647,
+          "durationSeconds": 1370
         },
         {
           "title": "Episode 9",
-          "src": "https://files.catbox.moe/68jdab.mp4"
+          "src": "https://files.catbox.moe/68jdab.mp4",
+          "fileSizeBytes": 77062229,
+          "durationSeconds": 1370
         },
         {
           "title": "Episode 10",
-          "src": "https://files.catbox.moe/jb4n9b.mp4"
+          "src": "https://files.catbox.moe/jb4n9b.mp4",
+          "fileSizeBytes": 92955888,
+          "durationSeconds": 1370
         },
         {
           "title": "Episode 11",
-          "src": "https://files.catbox.moe/qlfqi6.mp4"
+          "src": "https://files.catbox.moe/qlfqi6.mp4",
+          "fileSizeBytes": 80439425,
+          "durationSeconds": 1370
         },
         {
           "title": "Episode 12",
-          "src": "https://files.catbox.moe/5cvyoa.mp4"
+          "src": "https://files.catbox.moe/5cvyoa.mp4",
+          "fileSizeBytes": 88184894,
+          "durationSeconds": 1370
         },
         {
           "title": "Episode 13",
-          "src": "https://files.catbox.moe/kdhjxg.mp4"
+          "src": "https://files.catbox.moe/kdhjxg.mp4",
+          "fileSizeBytes": 67678390,
+          "durationSeconds": 1370
         },
         {
           "title": "Episode 14",
-          "src": "https://files.catbox.moe/umidp9.mp4"
+          "src": "https://files.catbox.moe/umidp9.mp4",
+          "fileSizeBytes": 78451906,
+          "durationSeconds": 1370
         },
         {
           "title": "Episode 15",
-          "src": "https://files.catbox.moe/e93a8e.mp4"
+          "src": "https://files.catbox.moe/e93a8e.mp4",
+          "fileSizeBytes": 67640704,
+          "durationSeconds": 1370
         },
         {
           "title": "Episode 16",
-          "src": "https://files.catbox.moe/wat7pc.mp4"
+          "src": "https://files.catbox.moe/wat7pc.mp4",
+          "fileSizeBytes": 64212176,
+          "durationSeconds": 1370
         },
         {
           "title": "Episode 17",
-          "src": "https://files.catbox.moe/1qrq4t.mp4"
+          "src": "https://files.catbox.moe/1qrq4t.mp4",
+          "fileSizeBytes": 74774977,
+          "durationSeconds": 1370
         },
         {
           "title": "Episode 18",
-          "src": "https://files.catbox.moe/3zgp6e.mp4"
+          "src": "https://files.catbox.moe/3zgp6e.mp4",
+          "fileSizeBytes": 65724082,
+          "durationSeconds": 1370
         },
         {
           "title": "Episode 19",
-          "src": "https://files.catbox.moe/i4qbrs.mp4"
+          "src": "https://files.catbox.moe/i4qbrs.mp4",
+          "fileSizeBytes": 77916553,
+          "durationSeconds": 1370
         },
         {
           "title": "Episode 20",
-          "src": "https://files.catbox.moe/bykiwq.mp4"
+          "src": "https://files.catbox.moe/bykiwq.mp4",
+          "fileSizeBytes": 68055974,
+          "durationSeconds": 1370
         },
         {
           "title": "Episode 21",
-          "src": "https://files.catbox.moe/4i1wzf.mp4"
+          "src": "https://files.catbox.moe/4i1wzf.mp4",
+          "fileSizeBytes": 75063433,
+          "durationSeconds": 1370
         },
         {
           "title": "Episode 22",
-          "src": "https://files.catbox.moe/q2xiez.mp4"
+          "src": "https://files.catbox.moe/q2xiez.mp4",
+          "fileSizeBytes": 82473796,
+          "durationSeconds": 1370
         },
         {
           "title": "Episode 23",
-          "src": "https://files.catbox.moe/iy1fe9.mp4"
+          "src": "https://files.catbox.moe/iy1fe9.mp4",
+          "fileSizeBytes": 75624443,
+          "durationSeconds": 1370
         },
         {
           "title": "Episode 24",
-          "src": "https://files.catbox.moe/39fb9t.mp4"
+          "src": "https://files.catbox.moe/39fb9t.mp4",
+          "fileSizeBytes": 73429325,
+          "durationSeconds": 1370
         }
       ]
     },
@@ -109,101 +157,151 @@
       "episodes": [
         {
           "title": "Episode 1",
-          "src": "https://files.catbox.moe/f4yepj.mp4"
+          "src": "https://files.catbox.moe/f4yepj.mp4",
+          "fileSizeBytes": 79538997,
+          "durationSeconds": 1440
         },
         {
           "title": "Episode 2",
-          "src": "https://files.catbox.moe/v7nf40.mp4"
+          "src": "https://files.catbox.moe/v7nf40.mp4",
+          "fileSizeBytes": 73445981,
+          "durationSeconds": 1440
         },
         {
           "title": "Episode 3",
-          "src": "https://files.catbox.moe/ju6j6q.mp4"
+          "src": "https://files.catbox.moe/ju6j6q.mp4",
+          "fileSizeBytes": 69283208,
+          "durationSeconds": 1440
         },
         {
           "title": "Episode 4",
-          "src": "https://files.catbox.moe/kmnvmv.mp4"
+          "src": "https://files.catbox.moe/kmnvmv.mp4",
+          "fileSizeBytes": 69435853,
+          "durationSeconds": 1440
         },
         {
           "title": "Episode 5",
-          "src": "https://files.catbox.moe/u4kdwa.mp4"
+          "src": "https://files.catbox.moe/u4kdwa.mp4",
+          "fileSizeBytes": 92584354,
+          "durationSeconds": 1440
         },
         {
           "title": "Episode 6",
-          "src": "https://files.catbox.moe/97i4r7.mp4"
+          "src": "https://files.catbox.moe/97i4r7.mp4",
+          "fileSizeBytes": 76618580,
+          "durationSeconds": 1440
         },
         {
           "title": "Episode 7",
-          "src": "https://files.catbox.moe/9gey1v.mp4"
+          "src": "https://files.catbox.moe/9gey1v.mp4",
+          "fileSizeBytes": 60900692,
+          "durationSeconds": 1440
         },
         {
           "title": "Episode 8",
-          "src": "https://files.catbox.moe/slbt40.mp4"
+          "src": "https://files.catbox.moe/slbt40.mp4",
+          "fileSizeBytes": 87166239,
+          "durationSeconds": 1440
         },
         {
           "title": "Episode 9",
-          "src": "https://files.catbox.moe/melf2q.mp4"
+          "src": "https://files.catbox.moe/melf2q.mp4",
+          "fileSizeBytes": 66391705,
+          "durationSeconds": 1440
         },
         {
           "title": "Episode 10",
-          "src": "https://files.catbox.moe/yzg945.mp4"
+          "src": "https://files.catbox.moe/yzg945.mp4",
+          "fileSizeBytes": 62489907,
+          "durationSeconds": 1440
         },
         {
           "title": "Episode 11",
-          "src": "https://files.catbox.moe/f59hgb.mp4"
+          "src": "https://files.catbox.moe/f59hgb.mp4",
+          "fileSizeBytes": 95103140,
+          "durationSeconds": 1440
         },
         {
           "title": "Episode 12",
-          "src": "https://files.catbox.moe/htykf4.mp4"
+          "src": "https://files.catbox.moe/htykf4.mp4",
+          "fileSizeBytes": 71173210,
+          "durationSeconds": 1440
         },
         {
           "title": "Episode 13",
-          "src": "https://files.catbox.moe/md56lq.mp4"
+          "src": "https://files.catbox.moe/md56lq.mp4",
+          "fileSizeBytes": 84877511,
+          "durationSeconds": 1440
         },
         {
           "title": "Episode 14",
-          "src": "https://files.catbox.moe/49btuj.mp4"
+          "src": "https://files.catbox.moe/49btuj.mp4",
+          "fileSizeBytes": 67995376,
+          "durationSeconds": 1440
         },
         {
           "title": "Episode 15",
-          "src": "https://files.catbox.moe/d2u5cj.mp4"
+          "src": "https://files.catbox.moe/d2u5cj.mp4",
+          "fileSizeBytes": 68955212,
+          "durationSeconds": 1440
         },
         {
           "title": "Episode 16",
-          "src": "https://files.catbox.moe/x82bul.mp4"
+          "src": "https://files.catbox.moe/x82bul.mp4",
+          "fileSizeBytes": 64982385,
+          "durationSeconds": 1440
         },
         {
           "title": "Episode 17",
-          "src": "https://files.catbox.moe/4bby51.mp4"
+          "src": "https://files.catbox.moe/4bby51.mp4",
+          "fileSizeBytes": 84758685,
+          "durationSeconds": 1440
         },
         {
           "title": "Episode 18",
-          "src": "https://files.catbox.moe/b3u0wx.mp4"
+          "src": "https://files.catbox.moe/b3u0wx.mp4",
+          "fileSizeBytes": 72798246,
+          "durationSeconds": 1440
         },
         {
           "title": "Episode 19",
-          "src": "https://files.catbox.moe/h5w8kg.mp4"
+          "src": "https://files.catbox.moe/h5w8kg.mp4",
+          "fileSizeBytes": 71566461,
+          "durationSeconds": 1440
         },
         {
           "title": "Episode 20",
-          "src": "https://files.catbox.moe/ftbqnm.mp4"
+          "src": "https://files.catbox.moe/ftbqnm.mp4",
+          "fileSizeBytes": 64163295,
+          "durationSeconds": 1440
         },
         {
           "title": "Episode 21",
-          "src": "https://files.catbox.moe/66xcba.mp4"
+          "src": "https://files.catbox.moe/66xcba.mp4",
+          "fileSizeBytes": 64494046,
+          "durationSeconds": 1440
         },
         {
           "title": "Episode 22",
-          "src": "https://files.catbox.moe/kqkmxv.mp4"
+          "src": "https://files.catbox.moe/kqkmxv.mp4",
+          "fileSizeBytes": 66826650,
+          "durationSeconds": 1440
         },
         {
           "title": "Episode 23",
-          "src": "https://files.catbox.moe/meg9c0.mp4"
+          "src": "https://files.catbox.moe/meg9c0.mp4",
+          "fileSizeBytes": 75082540,
+          "durationSeconds": 1440
         },
         {
           "title": "Episode 24",
-          "src": "https://files.catbox.moe/3vgkhr.mp4"
+          "src": "https://files.catbox.moe/3vgkhr.mp4",
+          "fileSizeBytes": 63987014,
+          "durationSeconds": 1423
         }
       ]
     }
-  ]
+  ],
+  "totalFileSizeBytes": 3661827489,
+  "totalDurationSeconds": 67423
 }

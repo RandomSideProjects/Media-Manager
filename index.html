@@ -26,6 +26,10 @@
         <input type="checkbox" id="clipPreviewToggle">
         <label for="clipPreviewToggle">Clip preview</label>
       </div>
+      <div class="setting-row" style="display:flex; align-items:center; gap:0.5em; margin-top:0.5rem;">
+        <input type="checkbox" id="selectiveDownloadToggle">
+        <label for="selectiveDownloadToggle">Selective downloads</label>
+      </div>
     </div>
   </div>
     <button onclick="location.href='./index.html'" class="tab-button">Home</button>
@@ -122,7 +126,10 @@
       <label for="folderInput" class="folder-button">Select Folder</label>
       <input type="file" id="folderInput" webkitdirectory multiple style="display:none">
     </div>
-    <h2 id="directoryTitle"></h2>
+    <div id="directoryHeader" class="directory-header" style="display:none;">
+      <img id="directoryPoster" alt="Poster" referrerpolicy="no-referrer" />
+      <h2 id="directoryTitle"></h2>
+    </div>
     <div id="selectorScreen" style="display: none;">
       <div id="resumeMessage"></div>
       <h2>Select an Episode</h2>
@@ -136,6 +143,9 @@
       <button id="clipBtn" style="margin-left:0.5em; padding:0.6em 1.2em; background:var(--button-bg); color:var(--button-text); border:none; border-radius:6px; cursor:pointer; text-transform:uppercase; letter-spacing:0.5px;">Clip</button>
       <h2 id="videoTitle">Loading...</h2>
       <video id="videoPlayer" controls></video>
+      <div id="placeholderNotice" style="display:none; padding:1em; background:rgba(0,0,0,0.5); color:var(--text); border:1px solid #444; border-radius:8px; margin:0.75em 0;">
+        To view this file, please download the respective category from the source and merge with the folders.
+      </div>
       <button id="nextBtn">Next Item</button>
     </div>
   </div>
