@@ -72,10 +72,21 @@
       "title": "DanDaDan",
       "poster": "./Posters/DanDaDan.webp",
       "categoryCount": 2,
-      "episodeCount": 20,
-      "LatestTime": "2025-08-21T20:32:41.644Z",
-      "totalFileSizeBytes": 2753411893,
-      "totalDurationSeconds": 28715
+      "episodeCount": 22,
+      "LatestTime": "2025-09-05T05:16:46.516Z",
+      "totalFileSizeBytes": 2982911044,
+      "totalDurationSeconds": 31579
+    },
+    {
+      "file": "DARLING_in_the_FRANXX.json",
+      "path": "./Files/DARLING_in_the_FRANXX.json",
+      "title": "DARLING in the FRANXX",
+      "poster": "./Posters/DARLING_in_the_FRANXX.webp",
+      "categoryCount": 2,
+      "episodeCount": 24,
+      "LatestTime": "2025-09-05T05:25:34.010Z",
+      "totalFileSizeBytes": 2275740927,
+      "totalDurationSeconds": 34559
     },
     {
       "file": "Failure_Frame.json",
@@ -100,6 +111,17 @@
       "totalDurationSeconds": 17121
     },
     {
+      "file": "Hokkaido_Gals_Are_Super_Adorable!.json",
+      "path": "./Files/Hokkaido_Gals_Are_Super_Adorable!.json",
+      "title": "Hokkaido Gals Are Super Adorable!",
+      "poster": "./Posters/Hokkaido_Gals_Are_Super_Adorable!.webp",
+      "categoryCount": 1,
+      "episodeCount": 12,
+      "LatestTime": "2025-09-05T05:11:52.044Z",
+      "totalFileSizeBytes": 1469343927,
+      "totalDurationSeconds": 17280
+    },
+    {
       "file": "Horimiya.json",
       "path": "./Files/Horimiya.json",
       "title": "Horimiya",
@@ -109,6 +131,17 @@
       "LatestTime": "2025-08-14T00:45:54.033Z",
       "totalFileSizeBytes": 2827094047,
       "totalDurationSeconds": 37173
+    },
+    {
+      "file": "In_Another_World_With_My_Smartphone.json",
+      "path": "./Files/In_Another_World_With_My_Smartphone.json",
+      "title": "In Another World With My Smartphone",
+      "poster": "./Posters/In_Another_World_With_My_Smartphone.webp",
+      "categoryCount": 2,
+      "episodeCount": 24,
+      "LatestTime": "2025-09-05T04:01:07.498Z",
+      "totalFileSizeBytes": 3130241596,
+      "totalDurationSeconds": 34224
     },
     {
       "file": "Kaguya-Sama__Love_Is_War.json",
@@ -142,6 +175,17 @@
       "LatestTime": "2025-08-11T12:36:00",
       "totalFileSizeBytes": 1264865331,
       "totalDurationSeconds": 17426
+    },
+    {
+      "file": "My_Deer_Friend_Nokotan.json",
+      "path": "./Files/My_Deer_Friend_Nokotan.json",
+      "title": "My Deer Friend Nokotan",
+      "poster": "./Posters/My_Deer_Friend_Nokotan.webp",
+      "categoryCount": 1,
+      "episodeCount": 12,
+      "LatestTime": "2025-09-05T02:57:26.963Z",
+      "totalFileSizeBytes": 1959815768,
+      "totalDurationSeconds": 16992
     },
     {
       "file": "MyDressUpDarling.json",
@@ -188,6 +232,17 @@
       "totalDurationSeconds": 17640
     },
     {
+      "file": "Shikimori's_Not_Just_a_Cutie.json",
+      "path": "./Files/Shikimori's_Not_Just_a_Cutie.json",
+      "title": "Shikimori's Not Just a Cutie",
+      "poster": "./Posters/Shikimori's_Not_Just_a_Cutie.webp",
+      "categoryCount": 1,
+      "episodeCount": 12,
+      "LatestTime": "2025-09-05T05:01:05.937Z",
+      "totalFileSizeBytes": 1538838962,
+      "totalDurationSeconds": 16860
+    },
+    {
       "file": "100Kanojo.json",
       "path": "./Files/100Kanojo.json",
       "title": "The 100 Girlfriends Who Really, Really, Really, Really, Really Love You",
@@ -197,6 +252,39 @@
       "LatestTime": "2025-08-11T12:36:00",
       "totalFileSizeBytes": 3796211196,
       "totalDurationSeconds": 34218
+    },
+    {
+      "file": "The_Ice_Guy_and_His_Cool_Female_Colleague.json",
+      "path": "./Files/The_Ice_Guy_and_His_Cool_Female_Colleague.json",
+      "title": "The Ice Guy and His Cool Female Colleague",
+      "poster": "./Posters/The_Ice_Guy_and_His_Cool_Female_Colleague.webp",
+      "categoryCount": 1,
+      "episodeCount": 12,
+      "LatestTime": "2025-09-05T05:35:15.833Z",
+      "totalFileSizeBytes": 949573746,
+      "totalDurationSeconds": 17040
+    },
+    {
+      "file": "The_Shiunji_Family_Children.json",
+      "path": "./Files/The_Shiunji_Family_Children.json",
+      "title": "The Shiunji Family Children",
+      "poster": "./Posters/The_Shiunji_Family_Children.webp",
+      "categoryCount": 1,
+      "episodeCount": 12,
+      "LatestTime": "2025-09-05T05:07:12.860Z",
+      "totalFileSizeBytes": 1506263286,
+      "totalDurationSeconds": 17060
+    },
+    {
+      "file": "Tomo-chan_Is_A_Girl!.json",
+      "path": "./Files/Tomo-chan_Is_A_Girl!.json",
+      "title": "Tomo-chan Is A Girl!",
+      "poster": "./Posters/Tomo-chan_Is_A_Girl!.webp",
+      "categoryCount": 1,
+      "episodeCount": 13,
+      "LatestTime": "2025-09-05T05:26:32.932Z",
+      "totalFileSizeBytes": 1088823358,
+      "totalDurationSeconds": 18486
     },
     {
       "file": "MeidoSama.json",
