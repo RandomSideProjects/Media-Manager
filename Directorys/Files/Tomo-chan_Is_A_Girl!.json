@@ -1,0 +1,92 @@
+{
+  "title": "Tomo-chan Is A Girl!",
+  "Image": "https://files.catbox.moe/39isw7.jpg",
+  "categories": [
+    {
+      "category": "Season 1",
+      "episodes": [
+        {
+          "title": "Episode 1",
+          "src": "https://files.catbox.moe/9ipnjt.mp4",
+          "fileSizeBytes": 90011578,
+          "durationSeconds": 1422
+        },
+        {
+          "title": "Episode 2",
+          "src": "https://files.catbox.moe/gnnlnm.mp4",
+          "fileSizeBytes": 74028423,
+          "durationSeconds": 1422
+        },
+        {
+          "title": "Episode 3",
+          "src": "https://files.catbox.moe/yb5ao4.mp4",
+          "fileSizeBytes": 79004913,
+          "durationSeconds": 1422
+        },
+        {
+          "title": "Episode 4",
+          "src": "https://files.catbox.moe/ibbddm.mp4",
+          "fileSizeBytes": 76703619,
+          "durationSeconds": 1422
+        },
+        {
+          "title": "Episode 5",
+          "src": "https://files.catbox.moe/24urfq.mp4",
+          "fileSizeBytes": 70694290,
+          "durationSeconds": 1422
+        },
+        {
+          "title": "Episode 6",
+          "src": "https://files.catbox.moe/xht29r.mp4",
+          "fileSizeBytes": 92558539,
+          "durationSeconds": 1422
+        },
+        {
+          "title": "Episode 7",
+          "src": "https://files.catbox.moe/oqzdoz.mp4",
+          "fileSizeBytes": 92480288,
+          "durationSeconds": 1422
+        },
+        {
+          "title": "Episode 8",
+          "src": "https://files.catbox.moe/cpkd6x.mp4",
+          "fileSizeBytes": 76815193,
+          "durationSeconds": 1422
+        },
+        {
+          "title": "Episode 9",
+          "src": "https://files.catbox.moe/1zxeqy.mp4",
+          "fileSizeBytes": 84284170,
+          "durationSeconds": 1422
+        },
+        {
+          "title": "Episode 10",
+          "src": "https://files.catbox.moe/rhmmfg.mp4",
+          "fileSizeBytes": 98360327,
+          "durationSeconds": 1422
+        },
+        {
+          "title": "Episode 11",
+          "src": "https://files.catbox.moe/4sag7d.mp4",
+          "fileSizeBytes": 74139968,
+          "durationSeconds": 1422
+        },
+        {
+          "title": "Episode 12",
+          "src": "https://files.catbox.moe/dncobu.mp4",
+          "fileSizeBytes": 82799389,
+          "durationSeconds": 1422
+        },
+        {
+          "title": "Episode 13",
+          "src": "https://files.catbox.moe/5hi250.mp4",
+          "fileSizeBytes": 96942661,
+          "durationSeconds": 1422
+        }
+      ]
+    }
+  ],
+  "LatestTime": "2025-09-05T05:26:32.932Z",
+  "totalFileSizeBytes": 1088823358,
+  "totalDurationSeconds": 18486
+}

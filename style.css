@@ -105,6 +105,7 @@ button:hover {
   max-width: 600px;
 }
 #errorMessage {
+  display: none;
   color: #ff4444;
   font-weight: bold;
   margin-bottom: 1em;
@@ -139,6 +140,210 @@ header {
   color: #aaa;
   margin-top: 1em;
 }
+
+/* Nav tabs and dropdown */
+.tabs {
+  display: flex;
+  gap: 0.5em;
+  margin-bottom: 1em;
+}
+.tab-button {
+  padding: 0.6em 1.2em;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: background 0.2s, transform 0.1s;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+.tab-button:hover { background: #0056b3; }
+.tab-button:active { transform: scale(0.98); }
+.dropdown { position: relative; }
+.dropdown-content {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  flex-direction: column;
+  background: #1a1a1a;
+  padding: 0.5em;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+}
+.dropdown-item { width: 90%; text-align: center; margin-bottom: 0.5em; }
+.dropdown-item:last-child { margin-bottom: 0; }
+.dropdown:hover .dropdown-content { display: flex; }
+
+/* Folder select button */
+.folder-button {
+  padding: 0.6em 1.2em;
+  background: var(--button-bg);
+  color: var(--button-text);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0.5em;
+  display: inline-block;
+}
+.folder-button:hover { background: var(--button-hover-bg); }
+
+/* Settings button */
+#settingsBtn {
+  position: fixed;
+  top: 1rem;
+  right: 4.5rem;
+  width: 2.5em;
+  height: 2.5em;
+  border: none;
+  border-radius: 6px;
+  background: var(--button-bg);
+  color: var(--button-text);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2em;
+  z-index: 10000;
+}
+
+/* Settings overlay/panel */
+#settingsOverlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.6);
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+#settingsPanel {
+  background: var(--container-bg);
+  color: var(--text);
+  border: 1px solid #444;
+  padding: 1rem 1.25rem;
+  border-radius: 12px;
+  min-width: 300px;
+  max-width: 90%;
+  box-shadow: 0 20px 40px -10px rgba(0,0,0,0.6);
+}
+.setting-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  margin-bottom: 0.5rem;
+}
+/* Settings header row spacing */
+#settingsPanel .setting-row:first-child { justify-content: space-between; }
+#settingsPanel h3 { margin: 0; }
+#settingsPanel .setting-row + .setting-row { margin-top: 0.5rem; }
+label[for="downloadConcurrencyRange"] { min-width: 8.5em; }
+#downloadConcurrencyRange { flex: 1; }
+#downloadConcurrencyValue { width: 2.5em; text-align: right; }
+
+/* Download button */
+#downloadBtn { margin-top: 1em; }
+#downloadBtn:hover { background: #0056b3; }
+#downloadBtn:active { transform: scale(0.98); }
+
+/* Back and Clip buttons */
+#backBtn { margin-bottom: 1em; display: none; }
+#clipBtn {
+  margin-left: 0.5em;
+  padding: 0.6em 1.2em;
+  background: var(--button-bg);
+  color: var(--button-text);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Placeholder notice */
+#placeholderNotice {
+  display: none;
+  padding: 1em;
+  background: rgba(0,0,0,0.5);
+  color: var(--text);
+  border: 1px solid #444;
+  border-radius: 8px;
+  margin: 0.75em 0;
+}
+
+/* Clip overlay */
+#clipOverlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.7);
+  align-items: center; justify-content: center;
+  z-index: 10001;
+  text-align: center;
+}
+#clipOverlayContent {
+  padding: 1em;
+  background: var(--container-bg);
+  border-radius: 8px;
+  max-width: 90%;
+  margin: auto;
+}
+#clipMessage { margin-bottom: 1em; word-break: break-all; color: var(--text); }
+#clipButtonsRow { display: flex; gap: 0.5em; justify-content: center; }
+#clipDoneBtn, #clipDownloadBtn {
+  padding: 0.6em 1.2em;
+  background: var(--button-bg);
+  color: var(--button-text);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Clip progress overlay */
+#clipProgressOverlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.7);
+  align-items: center; justify-content: center;
+  z-index: 10002; text-align: center;
+}
+#clipProgressContent {
+  padding: 1em;
+  background: var(--container-bg);
+  border-radius: 8px;
+  max-width: 90%;
+  margin: auto;
+  color: var(--text);
+}
+#clipProgressMessage { margin-bottom: 1em; }
+#clipProgressBar { width: 100%; }
+
+/* GitHub link */
+#githubLink {
+  position: fixed;
+  bottom: 1rem;
+  left: 1rem;
+  background: var(--button-bg);
+  color: var(--button-text);
+  text-decoration: none;
+  padding: 0.6em 1em;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  font-size: 1rem;
+  font-family: inherit;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  z-index: 10000;
+}
+#githubLink img { height: 1em; width: 1em; }
 
 #themeToggle {
   position: fixed;

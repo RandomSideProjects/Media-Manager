@@ -1,0 +1,182 @@
+/* Settings button (top-right) */
+#sourcesSettingsBtn {
+  position: fixed;
+  top: 14px;
+  right: 14px;
+  z-index: 1001;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 10px;
+  background: #007bff;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.35);
+}
+/* Settings overlay */
+#sourcesSettingsOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+#sourcesSettingsPanel {
+  background: #1a1a1a;
+  color: #f1f1f1;
+  border: 1px solid #333;
+  border-radius: 12px;
+  width: 420px;
+  max-width: calc(100vw - 40px);
+  padding: 16px 18px;
+  box-shadow: 0 16px 40px rgba(0,0,0,0.6);
+}
+#sourcesSettingsPanel h3 { margin: 0 0 8px 0; font-size: 1.05rem; }
+#sourcesSettingsPanel .section { margin-top: 12px; padding-top: 10px; border-top: 1px solid #2a2a2a; }
+.settings-row { display: flex; align-items: center; gap: 10px; margin: 6px 0; flex-wrap: wrap; }
+.settings-actions { margin-top: 14px; display: flex; gap: 8px; justify-content: flex-end; }
+.settings-actions button { padding: 8px 12px; border: none; border-radius: 8px; cursor: pointer; }
+.btn-primary { background: #007bff; color:#fff; }
+.btn-ghost { background: #2a2a2a; color:#f1f1f1; }
+.settings-radio { display: flex; gap: 10px; flex-wrap: wrap; }
+.settings-radio label { display: flex; align-items: center; gap: 6px; }
+.source-time { font-size: 0.8em; opacity: 0.85; }
+body {
+  background: #121212;
+  color: #f1f1f1;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+.container {
+  --cols: 3;
+  --gap: 1.5em;
+  width: 90%;
+  max-width: none;
+  margin: 2em auto;
+  display: grid;
+  grid-template-columns: repeat(var(--cols), 360px);
+  gap: var(--gap);
+  justify-content: center;
+  overflow-x: auto;
+}
+.source-card {
+  box-sizing: border-box;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+  width: 360px;
+  height: 260px; /* needed so the poster can use 90% height */
+  padding: 1em;
+  display: flex;
+  flex-direction: row; /* image left, text right */
+  align-items: center;
+  gap: 1em;
+  position: relative;
+  overflow: hidden; /* prevent poster from pushing out of the card */
+}
+.source-card.no-thumb {
+  height: auto;                 /* let content define height */
+  flex-direction: column;       /* revert to pre-image vertical stack */
+  align-items: flex-start;
+  gap: 0.5em;
+}
+.source-card.no-thumb .source-right {
+  min-width: 0;                 /* allow full width */
+  width: 100%;
+}
+.source-card h3 {
+  margin: 0;
+}
+.source-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  min-height: 48px;
+}
+.source-thumb {
+  /* Size set dynamically in JS using naturalWidth/naturalHeight */
+  border-radius: 10px;    /* curved corners */
+  background: #2a2a2a;
+  border: 1px solid #333;
+  display: block;
+  flex: 0 0 auto;
+}
+.source-right {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.35em;
+  flex: 1 1 auto;
+  min-width: 40%; /* ensure space for text */
+}
+.source-right h3 { margin: 0; }
+.source-card p {
+  margin: 0.25em 0;
+}
+.pill-button {
+  margin-top: auto;
+  padding: 0.5em 1em;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  text-transform: uppercase;
+  font-family: inherit;
+  transition: background 0.2s, transform 0.1s;
+}
+.pill-button:hover { background: #0056b3; }
+
+#serverStatusBox {
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  background: #1a1a1a;
+  color: #f1f1f1;
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding: 0.6em 0.9em;
+  font-size: 0.9rem;
+  line-height: 1.2;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+  z-index: 9999;
+  white-space: pre-line;
+}
+/* Server check loading box */
+#serverCheckBox {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #1a1a1a;
+  color: #f1f1f1;
+  border: 1px solid #333;
+  border-radius: 12px;
+  padding: 1em 1.25em;
+  display: none; /* shown while checking */
+  align-items: center;
+  gap: 0.75em;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.5);
+  z-index: 10000;
+}
+#serverCheckBox .serverCheckText {
+  white-space: pre-line;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid rgba(255,255,255,0.25);
+  border-top-color: #5ab8ff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  flex: 0 0 24px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }

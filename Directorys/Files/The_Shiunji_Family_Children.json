@@ -1,0 +1,86 @@
+{
+  "title": "The Shiunji Family Children",
+  "Image": "https://files.catbox.moe/2j1c7c.jpg",
+  "categories": [
+    {
+      "category": "Season 1",
+      "episodes": [
+        {
+          "title": "Episode 1",
+          "src": "https://files.catbox.moe/mrw67b.mp4",
+          "fileSizeBytes": 116383461,
+          "durationSeconds": 1420
+        },
+        {
+          "title": "Episode 2",
+          "src": "https://files.catbox.moe/1s35i2.mp4",
+          "fileSizeBytes": 122968459,
+          "durationSeconds": 1420
+        },
+        {
+          "title": "Episode 3",
+          "src": "https://files.catbox.moe/jzwitx.mp4",
+          "fileSizeBytes": 130236866,
+          "durationSeconds": 1420
+        },
+        {
+          "title": "Episode 4",
+          "src": "https://files.catbox.moe/o8rwqx.mp4",
+          "fileSizeBytes": 118373220,
+          "durationSeconds": 1420
+        },
+        {
+          "title": "Episode 5",
+          "src": "https://files.catbox.moe/af7nkq.mp4",
+          "fileSizeBytes": 129853854,
+          "durationSeconds": 1420
+        },
+        {
+          "title": "Episode 6",
+          "src": "https://files.catbox.moe/tm4b0p.mp4",
+          "fileSizeBytes": 114917264,
+          "durationSeconds": 1420
+        },
+        {
+          "title": "Episode 7",
+          "src": "https://files.catbox.moe/e1d6de.mp4",
+          "fileSizeBytes": 126425319,
+          "durationSeconds": 1440
+        },
+        {
+          "title": "Episode 8",
+          "src": "https://files.catbox.moe/329e7z.mp4",
+          "fileSizeBytes": 115533472,
+          "durationSeconds": 1420
+        },
+        {
+          "title": "Episode 9",
+          "src": "https://files.catbox.moe/h033o9.mp4",
+          "fileSizeBytes": 119404073,
+          "durationSeconds": 1420
+        },
+        {
+          "title": "Episode 10",
+          "src": "https://files.catbox.moe/llfy2a.mp4",
+          "fileSizeBytes": 134641383,
+          "durationSeconds": 1420
+        },
+        {
+          "title": "Episode 11",
+          "src": "https://files.catbox.moe/lbsizp.mp4",
+          "fileSizeBytes": 134891113,
+          "durationSeconds": 1420
+        },
+        {
+          "title": "Episode 12",
+          "src": "https://files.catbox.moe/qdxzp0.mp4",
+          "fileSizeBytes": 142634802,
+          "durationSeconds": 1420
+        }
+      ]
+    }
+  ],
+  "LatestTime": "2025-09-05T05:07:12.860Z",
+  "totalFileSizeBytes": 1506263286,
+  "totalDurationSeconds": 17060
+}

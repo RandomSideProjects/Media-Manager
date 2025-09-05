@@ -1,0 +1,86 @@
+{
+  "title": "My Deer Friend Nokotan",
+  "Image": "https://files.catbox.moe/yr6wfp.jpg",
+  "categories": [
+    {
+      "category": "Season 1",
+      "episodes": [
+        {
+          "title": "Episode 1",
+          "src": "https://files.catbox.moe/27cs0k.mp4",
+          "fileSizeBytes": 180739132,
+          "durationSeconds": 1416
+        },
+        {
+          "title": "Episode 2",
+          "src": "https://files.catbox.moe/e3iqdm.mp4",
+          "fileSizeBytes": 117869970,
+          "durationSeconds": 1416
+        },
+        {
+          "title": "Episode 3",
+          "src": "https://files.catbox.moe/u51w95.mp4",
+          "fileSizeBytes": 178790774,
+          "durationSeconds": 1416
+        },
+        {
+          "title": "Episode 4",
+          "src": "https://files.catbox.moe/fphf0x.mp4",
+          "fileSizeBytes": 169489100,
+          "durationSeconds": 1416
+        },
+        {
+          "title": "Episode 5",
+          "src": "https://files.catbox.moe/q2pezq.mp4",
+          "fileSizeBytes": 177428833,
+          "durationSeconds": 1416
+        },
+        {
+          "title": "Episode 6",
+          "src": "https://files.catbox.moe/xolfy6.mp4",
+          "fileSizeBytes": 176099896,
+          "durationSeconds": 1416
+        },
+        {
+          "title": "Episode 7",
+          "src": "https://files.catbox.moe/4uc4v8.mp4",
+          "fileSizeBytes": 170714362,
+          "durationSeconds": 1416
+        },
+        {
+          "title": "Episode 8",
+          "src": "https://files.catbox.moe/pjl1pi.mp4",
+          "fileSizeBytes": 179618195,
+          "durationSeconds": 1416
+        },
+        {
+          "title": "Episode 9",
+          "src": "https://files.catbox.moe/ytqnnv.mp4",
+          "fileSizeBytes": 121067721,
+          "durationSeconds": 1416
+        },
+        {
+          "title": "Episode 10",
+          "src": "https://files.catbox.moe/qkersw.mp4",
+          "fileSizeBytes": 150397740,
+          "durationSeconds": 1416
+        },
+        {
+          "title": "Episode 11",
+          "src": "https://files.catbox.moe/jv9rjs.mp4",
+          "fileSizeBytes": 152503720,
+          "durationSeconds": 1416
+        },
+        {
+          "title": "Episode 12",
+          "src": "https://files.catbox.moe/dw87uu.mp4",
+          "fileSizeBytes": 185096325,
+          "durationSeconds": 1416
+        }
+      ]
+    }
+  ],
+  "LatestTime": "2025-09-05T02:57:26.963Z",
+  "totalFileSizeBytes": 1959815768,
+  "totalDurationSeconds": 16992
+}

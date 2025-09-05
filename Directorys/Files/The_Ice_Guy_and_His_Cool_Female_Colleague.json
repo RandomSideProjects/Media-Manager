@@ -1,0 +1,86 @@
+{
+  "title": "The Ice Guy and His Cool Female Colleague",
+  "Image": "https://files.catbox.moe/iibbbj.jpg",
+  "categories": [
+    {
+      "category": "Season 1",
+      "episodes": [
+        {
+          "title": "Episode 1",
+          "src": "https://files.catbox.moe/x2cn1m.mp4",
+          "fileSizeBytes": 88522624,
+          "durationSeconds": 1420
+        },
+        {
+          "title": "Episode 2",
+          "src": "https://files.catbox.moe/9ljr4s.mp4",
+          "fileSizeBytes": 88468632,
+          "durationSeconds": 1420
+        },
+        {
+          "title": "Episode 3",
+          "src": "https://files.catbox.moe/bak5hp.mp4",
+          "fileSizeBytes": 72945749,
+          "durationSeconds": 1420
+        },
+        {
+          "title": "Episode 4",
+          "src": "https://files.catbox.moe/jyl0e5.mp4",
+          "fileSizeBytes": 67691877,
+          "durationSeconds": 1420
+        },
+        {
+          "title": "Episode 5",
+          "src": "https://files.catbox.moe/gckbdc.mp4",
+          "fileSizeBytes": 70181488,
+          "durationSeconds": 1420
+        },
+        {
+          "title": "Episode 6",
+          "src": "https://files.catbox.moe/t31kbb.mp4",
+          "fileSizeBytes": 79244036,
+          "durationSeconds": 1420
+        },
+        {
+          "title": "Episode 7",
+          "src": "https://files.catbox.moe/udjsq9.mp4",
+          "fileSizeBytes": 71964218,
+          "durationSeconds": 1420
+        },
+        {
+          "title": "Episode 8",
+          "src": "https://files.catbox.moe/hq31wq.mp4",
+          "fileSizeBytes": 90048419,
+          "durationSeconds": 1420
+        },
+        {
+          "title": "Episode 9",
+          "src": "https://files.catbox.moe/plm6o2.mp4",
+          "fileSizeBytes": 83388553,
+          "durationSeconds": 1420
+        },
+        {
+          "title": "Episode 10",
+          "src": "https://files.catbox.moe/ee1z3m.mp4",
+          "fileSizeBytes": 79917144,
+          "durationSeconds": 1420
+        },
+        {
+          "title": "Episode 11",
+          "src": "https://files.catbox.moe/pu21r4.mp4",
+          "fileSizeBytes": 75657401,
+          "durationSeconds": 1420
+        },
+        {
+          "title": "Episode 12",
+          "src": "https://files.catbox.moe/yzfy2y.mp4",
+          "fileSizeBytes": 81543605,
+          "durationSeconds": 1420
+        }
+      ]
+    }
+  ],
+  "LatestTime": "2025-09-05T05:35:15.833Z",
+  "totalFileSizeBytes": 949573746,
+  "totalDurationSeconds": 17040
+}
