@@ -1,0 +1,163 @@
+{
+  "title": "Komi Can't Communicate",
+  "Image": "https://files.catbox.moe/dbregg.jpg",
+  "categories": [
+    {
+      "category": "Season 1",
+      "episodes": [
+        {
+          "title": "Episode 1",
+          "src": "https://files.catbox.moe/srm6d2.mp4",
+          "fileSizeBytes": 185673647,
+          "durationSeconds": 1432
+        },
+        {
+          "title": "Episode 2",
+          "src": "https://files.catbox.moe/3g4wet.mp4",
+          "fileSizeBytes": 188572092,
+          "durationSeconds": 1426
+        },
+        {
+          "title": "Episode 3",
+          "src": "https://files.catbox.moe/d0sr49.mp4",
+          "fileSizeBytes": 185488040,
+          "durationSeconds": 1432
+        },
+        {
+          "title": "Episode 4",
+          "src": "https://files.catbox.moe/uktj35.mp4",
+          "fileSizeBytes": 185512674,
+          "durationSeconds": 1432
+        },
+        {
+          "title": "Episode 5",
+          "src": "https://files.catbox.moe/8iazvi.mp4",
+          "fileSizeBytes": 185573742,
+          "durationSeconds": 1432
+        },
+        {
+          "title": "Episode 6",
+          "src": "https://files.catbox.moe/z4sogs.mp4",
+          "fileSizeBytes": 185526823,
+          "durationSeconds": 1432
+        },
+        {
+          "title": "Episode 7",
+          "src": "https://files.catbox.moe/u5cd66.mp4",
+          "fileSizeBytes": 185510052,
+          "durationSeconds": 1432
+        },
+        {
+          "title": "Episode 8",
+          "src": "https://files.catbox.moe/zpuq80.mp4",
+          "fileSizeBytes": 185607629,
+          "durationSeconds": 1432
+        },
+        {
+          "title": "Episode 9",
+          "src": "https://files.catbox.moe/5f6ak4.mp4",
+          "fileSizeBytes": 185443201,
+          "durationSeconds": 1432
+        },
+        {
+          "title": "Episode 10",
+          "src": "https://files.catbox.moe/d4au1k.mp4",
+          "fileSizeBytes": 185523536,
+          "durationSeconds": 1432
+        },
+        {
+          "title": "Episode 11",
+          "src": "https://files.catbox.moe/ghcmdl.mp4",
+          "fileSizeBytes": 185996122,
+          "durationSeconds": 1484
+        },
+        {
+          "title": "Episode 12",
+          "src": "https://files.catbox.moe/ybv8cr.mp4",
+          "fileSizeBytes": 186238846,
+          "durationSeconds": 1484
+        }
+      ]
+    },
+    {
+      "category": "Season 2",
+      "episodes": [
+        {
+          "title": "Episode 1",
+          "src": "https://files.catbox.moe/gqmm7z.mp4",
+          "fileSizeBytes": 182476216,
+          "durationSeconds": 1432
+        },
+        {
+          "title": "Episode 2",
+          "src": "https://files.catbox.moe/vfsm5d.mp4",
+          "fileSizeBytes": 182821630,
+          "durationSeconds": 1432
+        },
+        {
+          "title": "Episode 3",
+          "src": "https://files.catbox.moe/100l83.mp4",
+          "fileSizeBytes": 183165472,
+          "durationSeconds": 1432
+        },
+        {
+          "title": "Episode 4",
+          "src": "https://files.catbox.moe/f13930.mp4",
+          "fileSizeBytes": 182486693,
+          "durationSeconds": 1432
+        },
+        {
+          "title": "Episode 5",
+          "src": "https://files.catbox.moe/4qf59h.mp4",
+          "fileSizeBytes": 183165227,
+          "durationSeconds": 1432
+        },
+        {
+          "title": "Episode 6",
+          "src": "https://files.catbox.moe/n1mrur.mp4",
+          "fileSizeBytes": 182719839,
+          "durationSeconds": 1432
+        },
+        {
+          "title": "Episode 7",
+          "src": "https://files.catbox.moe/r3fwzz.mp4",
+          "fileSizeBytes": 183474550,
+          "durationSeconds": 1432
+        },
+        {
+          "title": "Episode 8",
+          "src": "https://files.catbox.moe/k4etqs.mp4",
+          "fileSizeBytes": 183286203,
+          "durationSeconds": 1432
+        },
+        {
+          "title": "Episode 9",
+          "src": "https://files.catbox.moe/aqabg5.mp4",
+          "fileSizeBytes": 182802392,
+          "durationSeconds": 1432
+        },
+        {
+          "title": "Episode 10",
+          "src": "https://files.catbox.moe/yysbz3.mp4",
+          "fileSizeBytes": 183989424,
+          "durationSeconds": 1432
+        },
+        {
+          "title": "Episode 11",
+          "src": "https://files.catbox.moe/gs3jzb.mp4",
+          "fileSizeBytes": 184706593,
+          "durationSeconds": 1432
+        },
+        {
+          "title": "Episode 12",
+          "src": "https://files.catbox.moe/vzyx0y.mp4",
+          "fileSizeBytes": 182900546,
+          "durationSeconds": 1432
+        }
+      ]
+    }
+  ],
+  "LatestTime": "2025-09-06T22:35:31.536Z",
+  "totalFileSizeBytes": 4428661189,
+  "totalDurationSeconds": 34466
+}

@@ -510,7 +510,8 @@ document.addEventListener('keydown', (e) => {
     const blob = new Blob([jsonString], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = `${result.title || 'directory'}.json`;
+    const baseName = (result.title || 'directory').trim().replace(/ /g, '_');
+    a.download = `${baseName}.json`;
     document.body.appendChild(a);
     a.click();
     a.remove();

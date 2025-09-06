@@ -273,7 +273,14 @@ async function downloadSourceFolder(options = {}) {
   if (sourceImageUrl) { try { const dataUrl = await fetchAsDataURL(sourceImageUrl); if (dataUrl) manifest.Image = dataUrl; } catch {} }
   rootFolder.file('index.json', JSON.stringify(manifest, null, 2));
   const content = await zip.generateAsync({ type: 'blob' });
-  const a = document.createElement('a'); a.href = URL.createObjectURL(content); a.download = `${titleText}.zip`; document.body.appendChild(a); a.click(); a.remove(); overlay.remove();
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(content);
+  const zipBase = String(titleText || 'download').trim().replace(/ /g, '_');
+  a.download = `${zipBase}.zip`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  overlay.remove();
 }
 
 if (downloadBtn) {
