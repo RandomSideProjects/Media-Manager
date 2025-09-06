@@ -1,17 +1,8 @@
 {
   "sources": [
     {
-      "file": "5Hanayome_(Quintessential_Quintuplets).json",
-      "path": "./Files/5Hanayome_(Quintessential_Quintuplets).json",
-      "title": "5Hanayome (Quintessential Quintuplets)",
-      "poster": "./Posters/5Hanayome_(Quintessential_Quintuplets).webp",
-      "categoryCount": 3,
-      "episodeCount": 31,
-      "LatestTime": "2025-08-15T00:53:37.020Z"
-    },
-    {
-      "file": "A_Condition_Called_Love.json",
-      "path": "./Files/A_Condition_Called_Love.json",
+      "file": "ConditionLove.json",
+      "path": "./Files/ConditionLove.json",
       "title": "A Condition Called Love",
       "poster": "./Posters/A_Condition_Called_Love.webp",
       "categoryCount": 1,
@@ -19,13 +10,13 @@
       "LatestTime": "2025-08-11T12:36:00"
     },
     {
-      "file": "A_Couple_Of_Cuckoos.json",
-      "path": "./Files/A_Couple_Of_Cuckoos.json",
+      "file": "Cuckoos.json",
+      "path": "./Files/Cuckoos.json",
       "title": "A Couple Of Cuckoos",
       "poster": "./Posters/A_Couple_Of_Cuckoos.webp",
       "categoryCount": 2,
-      "episodeCount": 28,
-      "LatestTime": "2025-08-11T12:36:00"
+      "episodeCount": 30,
+      "LatestTime": "2025-09-06T18:20:33.268Z"
     },
     {
       "file": "NeverThoughtGirlOnline.json",
@@ -46,8 +37,8 @@
       "LatestTime": "2025-08-11T12:36:00"
     },
     {
-      "file": "Chillin'_In_A_World_With_Level_2_Super_Powers.json",
-      "path": "./Files/Chillin'_In_A_World_With_Level_2_Super_Powers.json",
+      "file": "ChillinLvl2SCP.json",
+      "path": "./Files/ChillinLvl2SCP.json",
       "title": "Chillin' In A World With Level 2 Super Powers",
       "poster": "./Posters/Chillin'_In_A_World_With_Level_2_Super_Powers.webp",
       "categoryCount": 1,
@@ -64,8 +55,8 @@
       "LatestTime": "2025-09-05T05:16:46.516Z"
     },
     {
-      "file": "DARLING_in_the_FRANXX.json",
-      "path": "./Files/DARLING_in_the_FRANXX.json",
+      "file": "Franxx.json",
+      "path": "./Files/Franxx.json",
       "title": "DARLING in the FRANXX",
       "poster": "./Posters/DARLING_in_the_FRANXX.webp",
       "categoryCount": 1,
@@ -82,8 +73,8 @@
       "LatestTime": "2025-08-15T00:33:47.052Z"
     },
     {
-      "file": "Gamers!.json",
-      "path": "./Files/Gamers!.json",
+      "file": "Gamers.json",
+      "path": "./Files/Gamers.json",
       "title": "Gamers!",
       "poster": "./Posters/Gamers!.webp",
       "categoryCount": 1,
@@ -100,8 +91,8 @@
       "LatestTime": "2025-08-11T12:36:00"
     },
     {
-      "file": "Hokkaido_Gals_Are_Super_Adorable!.json",
-      "path": "./Files/Hokkaido_Gals_Are_Super_Adorable!.json",
+      "file": "Hokkaido!.json",
+      "path": "./Files/Hokkaido!.json",
       "title": "Hokkaido Gals Are Super Adorable!",
       "poster": "./Posters/Hokkaido_Gals_Are_Super_Adorable!.webp",
       "categoryCount": 1,
@@ -118,8 +109,8 @@
       "LatestTime": "2025-08-14T00:45:54.033Z"
     },
     {
-      "file": "In_Another_World_With_My_Smartphone.json",
-      "path": "./Files/In_Another_World_With_My_Smartphone.json",
+      "file": "AnotherWorldSmartphone.json",
+      "path": "./Files/AnotherWorldSmartphone.json",
       "title": "In Another World With My Smartphone",
       "poster": "./Posters/In_Another_World_With_My_Smartphone.webp",
       "categoryCount": 2,
@@ -127,13 +118,22 @@
       "LatestTime": "2025-09-05T04:01:07.498Z"
     },
     {
-      "file": "Kaguya-Sama__Love_Is_War.json",
-      "path": "./Files/Kaguya-Sama__Love_Is_War.json",
+      "file": "LoveIsWar.json",
+      "path": "./Files/LoveIsWar.json",
       "title": "Kaguya-Sama: Love Is War",
       "poster": "./Posters/Kaguya-Sama_Love_Is_War.webp",
       "categoryCount": 4,
       "episodeCount": 41,
       "LatestTime": "2025-08-22T03:48:20.383Z"
+    },
+    {
+      "file": "Komi_Can't_Communicate.json",
+      "path": "./Files/Komi_Can't_Communicate.json",
+      "title": "Komi Can't Communicate",
+      "poster": "./Posters/Komi_Can't_Communicate.webp",
+      "categoryCount": 2,
+      "episodeCount": 24,
+      "LatestTime": "2025-09-06T22:35:31.536Z"
     },
     {
       "file": "MarriedNotLovers.json",
@@ -154,13 +154,13 @@
       "LatestTime": "2025-09-05T02:57:26.963Z"
     },
     {
-      "file": "MyDressUpDarling.json",
-      "path": "./Files/MyDressUpDarling.json",
+      "file": "My_Dress-up_Darling.json",
+      "path": "./Files/My_Dress-up_Darling.json",
       "title": "My Dress-up Darling",
       "poster": "./Posters/My_Dress-up_Darling.webp",
       "categoryCount": 2,
-      "episodeCount": 19,
-      "LatestTime": "2025-08-24T16:00:00"
+      "episodeCount": 20,
+      "LatestTime": "2025-09-06T23:00:14.504Z"
     },
     {
       "file": "My Love Story With Yamada-kun At Lv999.json",
@@ -181,6 +181,15 @@
       "LatestTime": "2025-08-11T12:36:00"
     },
     {
+      "file": "Quintuplets.json",
+      "path": "./Files/Quintuplets.json",
+      "title": "Quintessential Quintuplets",
+      "poster": "./Posters/Quintessential_Quintuplets.webp",
+      "categoryCount": 3,
+      "episodeCount": 31,
+      "LatestTime": "2025-08-15T00:53:37.020Z"
+    },
+    {
       "file": "BunnyGirlSenpai.json",
       "path": "./Files/BunnyGirlSenpai.json",
       "title": "Rascal Does Not Dream Of A Bunny Girl Senpai",
@@ -192,8 +201,8 @@
     {
       "file": "Kanokari.json",
       "path": "./Files/Kanokari.json",
-      "title": "Rent-A-Girlfriend! (Kanokari!)",
-      "poster": "./Posters/Rent-A-Girlfriend!_(Kanokari!).webp",
+      "title": "Rent-A-Girlfriend! ",
+      "poster": "./Posters/Rent-A-Girlfriend!.webp",
       "categoryCount": 1,
       "episodeCount": 12,
       "LatestTime": "2025-08-11T12:36:00"
@@ -208,8 +217,8 @@
       "LatestTime": "2025-08-11T12:36:00"
     },
     {
-      "file": "Shikimori's_Not_Just_a_Cutie.json",
-      "path": "./Files/Shikimori's_Not_Just_a_Cutie.json",
+      "file": "Shikimori.json",
+      "path": "./Files/Shikimori.json",
       "title": "Shikimori's Not Just a Cutie",
       "poster": "./Posters/Shikimori's_Not_Just_a_Cutie.webp",
       "categoryCount": 1,
@@ -217,8 +226,17 @@
       "LatestTime": "2025-09-05T05:01:05.937Z"
     },
     {
-      "file": "100Kanojo.json",
-      "path": "./Files/100Kanojo.json",
+      "file": "Spy_𝙭_Family.json",
+      "path": "./Files/Spy_𝙭_Family.json",
+      "title": "Spy 𝙭 Family",
+      "poster": "./Posters/Spy_𝙭_Family.webp",
+      "categoryCount": 2,
+      "episodeCount": 37,
+      "LatestTime": "2025-09-06T19:36:25.302Z"
+    },
+    {
+      "file": "Hyakano.json",
+      "path": "./Files/Hyakano.json",
       "title": "The 100 Girlfriends Who Really, Really, Really, Really, Really Love You",
       "poster": "./Posters/The_100_Girlfriends_Who_Really,_Really,_Really,_Really,_Really_Love_You.webp",
       "categoryCount": 2,
@@ -226,8 +244,8 @@
       "LatestTime": "2025-08-11T12:36:00"
     },
     {
-      "file": "The_Ice_Guy_and_His_Cool_Female_Colleague.json",
-      "path": "./Files/The_Ice_Guy_and_His_Cool_Female_Colleague.json",
+      "file": "IceGuy.json",
+      "path": "./Files/IceGuy.json",
       "title": "The Ice Guy and His Cool Female Colleague",
       "poster": "./Posters/The_Ice_Guy_and_His_Cool_Female_Colleague.webp",
       "categoryCount": 1,
@@ -235,8 +253,8 @@
       "LatestTime": "2025-09-05T05:35:15.833Z"
     },
     {
-      "file": "The_Shiunji_Family_Children.json",
-      "path": "./Files/The_Shiunji_Family_Children.json",
+      "file": "Shiunji_Children.json",
+      "path": "./Files/Shiunji_Children.json",
       "title": "The Shiunji Family Children",
       "poster": "./Posters/The_Shiunji_Family_Children.webp",
       "categoryCount": 1,
@@ -244,8 +262,8 @@
       "LatestTime": "2025-09-05T05:07:12.860Z"
     },
     {
-      "file": "Tomo-chan_Is_A_Girl!.json",
-      "path": "./Files/Tomo-chan_Is_A_Girl!.json",
+      "file": "Tomochan.json",
+      "path": "./Files/Tomochan.json",
       "title": "Tomo-chan Is A Girl!",
       "poster": "./Posters/Tomo-chan_Is_A_Girl!.webp",
       "categoryCount": 1,
@@ -253,8 +271,8 @@
       "LatestTime": "2025-09-05T05:26:32.932Z"
     },
     {
-      "file": "Toradora!.json",
-      "path": "./Files/Toradora!.json",
+      "file": "Toradora.json",
+      "path": "./Files/Toradora.json",
       "title": "Toradora!",
       "poster": "./Posters/Toradora!.webp",
       "categoryCount": 3,
