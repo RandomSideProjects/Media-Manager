@@ -136,15 +136,6 @@
       "LatestTime": "2025-08-22T03:48:20.383Z"
     },
     {
-      "file": "Kanokari.json",
-      "path": "./Files/Kanokari.json",
-      "title": "Kanokari (Rent-A-Girlfriend!)",
-      "poster": "./Posters/Kanokari_(Rent-A-Girlfriend!).webp",
-      "categoryCount": 1,
-      "episodeCount": 12,
-      "LatestTime": "2025-08-11T12:36:00"
-    },
-    {
       "file": "MarriedNotLovers.json",
       "path": "./Files/MarriedNotLovers.json",
       "title": "More Than a Married Couple, But Not Lovers",
@@ -172,6 +163,15 @@
       "LatestTime": "2025-08-24T16:00:00"
     },
     {
+      "file": "My Love Story With Yamada-kun At Lv999.json",
+      "path": "./Files/My Love Story With Yamada-kun At Lv999.json",
+      "title": "My Love Story With Yamada-kun At Lv999",
+      "poster": "./Posters/My_Love_Story_With_Yamada-kun_At_Lv999.webp",
+      "categoryCount": 1,
+      "episodeCount": 13,
+      "LatestTime": "2025-09-06T05:20:44.454Z"
+    },
+    {
       "file": "TinySenpai.json",
       "path": "./Files/TinySenpai.json",
       "title": "My Tiny Senpai",
@@ -187,6 +187,15 @@
       "poster": "./Posters/Rascal_Does_Not_Dream_Of_A_Bunny_Girl_Senpai.webp",
       "categoryCount": 2,
       "episodeCount": 16,
+      "LatestTime": "2025-08-11T12:36:00"
+    },
+    {
+      "file": "Kanokari.json",
+      "path": "./Files/Kanokari.json",
+      "title": "Rent-A-Girlfriend! (Kanokari!)",
+      "poster": "./Posters/Rent-A-Girlfriend!_(Kanokari!).webp",
+      "categoryCount": 1,
+      "episodeCount": 12,
       "LatestTime": "2025-08-11T12:36:00"
     },
     {
@@ -242,6 +251,15 @@
       "categoryCount": 1,
       "episodeCount": 13,
       "LatestTime": "2025-09-05T05:26:32.932Z"
+    },
+    {
+      "file": "Toradora!.json",
+      "path": "./Files/Toradora!.json",
+      "title": "Toradora!",
+      "poster": "./Posters/Toradora!.webp",
+      "categoryCount": 3,
+      "episodeCount": 30,
+      "LatestTime": "2025-09-06T05:24:17.927Z"
     },
     {
       "file": "MeidoSama.json",
