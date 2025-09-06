@@ -177,6 +177,15 @@ header {
 .dropdown-item:last-child { margin-bottom: 0; }
 .dropdown:hover .dropdown-content { display: flex; }
 
+/* Danger button style */
+.danger-button, .tab-button.danger {
+  background: #d9534f;
+  color: #fff;
+}
+.danger-button:hover, .tab-button.danger:hover {
+  background: #c13f3b;
+}
+
 /* Folder select button */
 .folder-button {
   padding: 0.6em 1.2em;
@@ -324,6 +333,28 @@ label[for="downloadConcurrencyRange"] { min-width: 8.5em; }
 }
 #clipProgressMessage { margin-bottom: 1em; }
 #clipProgressBar { width: 100%; }
+
+/* Clear Storage confirmation overlay */
+#clearStorageOverlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(139, 0, 0, 0.35); /* reddish tint */
+  align-items: center; justify-content: center;
+  z-index: 10050;
+}
+#clearStoragePanel {
+  background: linear-gradient(180deg, #3a0b0b, #2b0a0a);
+  color: #ffdede;
+  border: 1px solid #a33;
+  padding: 1rem 1.25rem;
+  border-radius: 12px;
+  min-width: 300px;
+  max-width: 90%;
+  box-shadow: 0 20px 40px -10px rgba(0,0,0,0.7);
+}
+#clearStoragePanel h3 { margin: 0 0 0.5rem 0; }
+#clearStoragePanel p { margin-top: 0; margin-bottom: 0.75rem; }
 
 /* GitHub link */
 #githubLink {

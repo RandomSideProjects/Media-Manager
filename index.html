@@ -35,6 +35,9 @@
         <input type="range" id="downloadConcurrencyRange" min="1" max="8" step="1" value="2">
         <span id="downloadConcurrencyValue">2</span>
       </div>
+      <div class="setting-row">
+        <button id="clearStorageOpenBtn" class="danger-button">CLEAR STORAGE</button>
+      </div>
     </div>
   </div>
     <button onclick="location.href='./index.html'" class="tab-button">Home</button>
@@ -71,7 +74,7 @@
       <button id="theaterBtn" title="Pop-out Player">⤴</button>
       <button id="clipBtn">Clip</button>
       <h2 id="videoTitle">Loading...</h2>
-      <video id="videoPlayer" controls></video>
+      <video id="videoPlayer" controls autoplay playsinline></video>
       <div id="placeholderNotice">
         To view this file, please download the respective category from the source and merge with the folders.
       </div>
@@ -89,6 +92,20 @@
   <script src="scripts/theme.js"></script>
   <script src="scripts/init.js"></script>
   <script src="scripts/local-folder.js"></script>
+  <script src="scripts/clear-storage.js"></script>
+  <!-- Clear Storage Confirm Overlay moved outside nav for full-screen coverage -->
+  <div id="clearStorageOverlay">
+    <div id="clearStoragePanel">
+      <div class="setting-row">
+        <h3>Confirm Clear Storage</h3>
+      </div>
+      <p>This will remove all saved progress, preferences, and cached data for this app. This cannot be undone.</p>
+      <div class="setting-row">
+        <button id="clearStorageConfirmBtn" class="danger-button">Yes, clear storage</button>
+        <button id="clearStorageCancelBtn">Cancel</button>
+      </div>
+    </div>
+  </div>
   <div id="clipOverlay">
     <div id="clipOverlayContent">
       <p id="clipMessage"></p>
