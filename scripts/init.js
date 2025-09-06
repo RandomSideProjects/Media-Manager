@@ -13,41 +13,62 @@ async function loadSource(rawInput) {
   }
 
   let srcUrl = '';
+  let directJson = null;
   // Allow encoded sources (we previously encoded in URL param) – decode once.
   const decodedRaw = decodeURIComponent(rawSrc);
-  if (/^https?:\/\//i.test(decodedRaw)) {
+  // New: allow pasting raw JSON or data: URIs directly
+  try {
+    if (decodedRaw.startsWith('{') || decodedRaw.startsWith('[')) {
+      directJson = JSON.parse(decodedRaw);
+    } else if (/^data:\s*application\/json/i.test(decodedRaw)) {
+      const m = decodedRaw.match(/^data:\s*application\/json(?:;base64)?,(.*)$/i);
+      if (m) {
+        const isB64 = /;base64,/.test(decodedRaw);
+        const payload = isB64 ? atob(m[1]) : decodeURIComponent(m[1]);
+        directJson = JSON.parse(payload);
+      }
+    }
+  } catch {}
+
+  if (directJson) {
+    srcUrl = '';
+    sourceKey = 'inline';
+  }
+  if (!directJson && /^https?:\/\//i.test(decodedRaw)) {
     srcUrl = decodedRaw;
-  } else if (/\.(json)(?:$|[?#])/i.test(decodedRaw) || decodedRaw.toLowerCase().endsWith('.json')) {
+  } else if (!directJson && (/\.(json)(?:$|[?#])/i.test(decodedRaw) || decodedRaw.toLowerCase().endsWith('.json'))) {
     // Relative json path support
     if (decodedRaw.startsWith('./') || decodedRaw.startsWith('/')) srcUrl = decodedRaw; else srcUrl = `./${decodedRaw}`;
-  } else if (/^[A-Za-z0-9]{6}$/.test(decodedRaw)) {
+  } else if (!directJson && /^[A-Za-z0-9]{6}$/.test(decodedRaw)) {
     // Catbox 6-char ID
     srcUrl = `https://files.catbox.moe/${decodedRaw}.json`;
-  } else {
+  } else if (!directJson) {
     // Fallback – treat as relative json if missing extension
     srcUrl = decodedRaw.endsWith('.json') ? decodedRaw : `./${decodedRaw}.json`;
   }
-  sourceKey = decodedRaw;
+  if (!directJson) sourceKey = decodedRaw;
 
   try {
-    const response = await fetch(srcUrl, { cache: 'no-store' });
-    if (!response) throw new Error('No response');
-    const statusPart = response.status;
-    const allowStatus0 = statusPart === 0; // file:// or opaque (CORS) – attempt parse anyway
-    if (!response.ok && !allowStatus0) {
-      let extra = '';
-      if (statusPart === 0) {
-        extra = ' (Possible CORS / opaque response)';
+    let json = directJson;
+    if (!json) {
+      const response = await fetch(srcUrl, { cache: 'no-store' });
+      if (!response) throw new Error('No response');
+      const statusPart = response.status;
+      const allowStatus0 = statusPart === 0; // file:// or opaque (CORS) – attempt parse anyway
+      if (!response.ok && !allowStatus0) {
+        let extra = '';
+        if (statusPart === 0) {
+          extra = ' (Possible CORS / opaque response)';
+        }
+        throw new Error(`${statusPart || 'Network'} error${extra}`);
       }
-      throw new Error(`${statusPart || 'Network'} error${extra}`);
-    }
-    let json;
-    try { json = await response.json(); }
-    catch (e) {
-      if (allowStatus0) {
-        throw new Error('0 error: Received opaque/local response but could not parse JSON. If using file:// run a local web server (e.g., python -m http.server) so fetch can read the file. ' + (e && e.message ? e.message : e));
+      try { json = await response.json(); }
+      catch (e) {
+        if (allowStatus0) {
+          throw new Error('0 error: Received opaque/local response but could not parse JSON. If using file:// run a local web server (e.g., python -m http.server) so fetch can read the file. ' + (e && e.message ? e.message : e));
+        }
+        throw new Error('Invalid JSON: ' + (e && e.message ? e.message : e));
       }
-      throw new Error('Invalid JSON: ' + (e && e.message ? e.message : e));
     }
     const { title: srcTitle, categories } = json || {};
     if (!Array.isArray(categories)) throw new Error("Unexpected JSON structure: 'categories' must be an array");
@@ -62,6 +83,7 @@ async function loadSource(rawInput) {
       if (imgUrl) { directoryPoster.src = imgUrl; directoryPoster.style.display = 'inline-block'; }
       else { try { directoryPoster.removeAttribute('src'); } catch {} directoryPoster.style.display = 'none'; }
     }
+
     if (directoryHeader) directoryHeader.style.display = 'flex';
     directoryTitle.style.display = 'block';
     selectorScreen.style.display = 'flex';

@@ -7,7 +7,7 @@ async function openSeasonSelectionModal() {
     const panel = document.createElement('div');
     Object.assign(panel.style, {
       position: 'fixed', background: '#1a1a1a', color: '#f1f1f1', border: '1px solid #444',
-      borderRadius: '10px', padding: '12px', width: '340px', boxShadow: '0 10px 24px rgba(0,0,0,0.55)', zIndex: 9999
+      borderRadius: '10px', padding: '12px', width: '380px', boxShadow: '0 10px 24px rgba(0,0,0,0.55)', zIndex: 9999
     });
     try {
       const btn = document.getElementById('settingsBtn');
@@ -16,42 +16,141 @@ async function openSeasonSelectionModal() {
       panel.style.right = Math.round(Math.max(8, window.innerWidth - (r.right || (window.innerWidth - 16)))) + 'px';
     } catch {}
 
-    const h = document.createElement('div'); h.textContent = 'Download Seasons'; h.style.fontWeight = '700'; h.style.margin = '0 0 6px 0';
+    const h = document.createElement('div'); h.textContent = 'Download Selection'; h.style.fontWeight = '700'; h.style.margin = '0 0 6px 0';
     const list = document.createElement('div'); list.style.maxHeight = '50vh'; list.style.overflow = 'auto'; list.style.padding = '4px 0';
     const footer = document.createElement('div');
     Object.assign(footer.style, { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginTop: '8px' });
     const btnOk = document.createElement('button'); btnOk.textContent = 'Download'; btnOk.className = 'pill-button';
     const totalSpan = document.createElement('span'); totalSpan.style.color = '#b6b6b6'; totalSpan.style.whiteSpace = 'nowrap';
 
-    const checkboxes = [];
+    // State
+    const seasonCbs = [];
     const seasonSizes = [];
+    const episodeCbs = []; // [seasonIndex] => [HTMLInputElement]
+    const episodeSizes = []; // [seasonIndex] => [number]
+
     function computeTotal() {
-      let sum = 0; checkboxes.forEach((cb, i) => { if (cb.checked) sum += (seasonSizes[i] || 0); });
+      // Sum across selected episodes
+      let sum = 0;
+      for (let si = 0; si < episodeCbs.length; si++) {
+        const eps = episodeCbs[si] || [];
+        const sizes = episodeSizes[si] || [];
+        for (let ei = 0; ei < eps.length; ei++) {
+          if (eps[ei] && eps[ei].checked) {
+            sum += (sizes[ei] || 0);
+          }
+        }
+      }
       totalSpan.textContent = formatBytesDecimalMaxUnit(sum);
     }
 
+    function updateSeasonIndeterminate(seasonIndex) {
+      const cb = seasonCbs[seasonIndex];
+      const eps = episodeCbs[seasonIndex] || [];
+      if (!cb || eps.length === 0) return;
+      const checkedCount = eps.filter(e => e.checked).length;
+      cb.indeterminate = checkedCount > 0 && checkedCount < eps.length;
+      cb.checked = checkedCount === eps.length;
+    }
+
+    // Build rows
     videoList.forEach((cat, idx) => {
-      const row = document.createElement('label');
+      const row = document.createElement('div');
       Object.assign(row.style, { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', padding: '6px 0' });
-      const leftWrap = document.createElement('span');
+
+      const leftWrap = document.createElement('div');
+      Object.assign(leftWrap.style, { display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 });
+
+      const caret = document.createElement('button');
+      caret.textContent = '▸';
+      Object.assign(caret.style, { cursor: 'pointer', border: 'none', background: 'transparent', color: '#f1f1f1', fontSize: '14px', width: '18px', marginLeft: '6px' });
+
       const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = true; cb.dataset.index = String(idx);
-      const name = document.createElement('span'); name.textContent = cat.category; name.style.marginLeft = '6px';
-      leftWrap.append(cb, name);
+      const name = document.createElement('span'); name.textContent = cat.category; name.style.marginLeft = '2px'; name.style.whiteSpace = 'nowrap'; name.style.overflow = 'hidden'; name.style.textOverflow = 'ellipsis';
+      leftWrap.append(cb, name, caret);
+
       const sizeSpan = document.createElement('span'); sizeSpan.style.color = '#b6b6b6'; sizeSpan.style.whiteSpace = 'nowrap';
       let seasonBytes = 0; try { (cat.episodes || []).forEach(e => { const v = Number(e.fileSizeBytes); if (Number.isFinite(v) && v >= 0) seasonBytes += v; }); } catch {}
       seasonSizes[idx] = seasonBytes; sizeSpan.textContent = formatBytesDecimalMaxUnit(seasonBytes);
-      row.append(leftWrap, sizeSpan); list.appendChild(row); checkboxes.push(cb); cb.addEventListener('change', computeTotal);
+
+      row.append(leftWrap, sizeSpan); list.appendChild(row); seasonCbs.push(cb);
+
+      // Episodes container (collapsed by default)
+      const epsContainer = document.createElement('div');
+      Object.assign(epsContainer.style, { display: 'none', paddingLeft: '24px', borderLeft: '1px solid #333', marginLeft: '8px' });
+
+      const epsCbs = [];
+      const epsSizes = [];
+      (cat.episodes || []).forEach((ep, ei) => {
+        const epRow = document.createElement('label');
+        Object.assign(epRow.style, { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', padding: '4px 0' });
+        const epLeft = document.createElement('span');
+        const epCb = document.createElement('input'); epCb.type = 'checkbox'; epCb.checked = true; epCb.dataset.season = String(idx); epCb.dataset.episode = String(ei);
+        const epTitle = document.createElement('span'); epTitle.textContent = ep.title || `Episode ${ei+1}`; epTitle.style.marginLeft = '6px';
+        epLeft.append(epCb, epTitle);
+        const epSize = document.createElement('span'); epSize.style.color = '#b6b6b6'; epSize.style.whiteSpace = 'nowrap';
+        let epBytes = 0; try { const v = Number(ep.fileSizeBytes); if (Number.isFinite(v) && v >= 0) epBytes = v; } catch {}
+        epSize.textContent = formatBytesDecimalMaxUnit(epBytes);
+        epsSizes[ei] = epBytes;
+        epRow.append(epLeft, epSize);
+        epsContainer.appendChild(epRow);
+
+        epCb.addEventListener('change', () => { updateSeasonIndeterminate(idx); computeTotal(); });
+        epsCbs.push(epCb);
+      });
+
+      episodeCbs[idx] = epsCbs;
+      episodeSizes[idx] = epsSizes;
+      list.appendChild(epsContainer);
+
+      // Caret toggle
+      caret.addEventListener('click', () => {
+        const isOpen = epsContainer.style.display !== 'none';
+        epsContainer.style.display = isOpen ? 'none' : 'block';
+        caret.textContent = isOpen ? '▸' : '▾';
+      });
+
+      // Season checkbox toggles all episodes
+      cb.addEventListener('change', () => {
+        const check = cb.checked;
+        const eps = episodeCbs[idx] || [];
+        eps.forEach(e => { e.checked = check; });
+        updateSeasonIndeterminate(idx);
+        computeTotal();
+      });
     });
 
+    // Initialize total and states
+    videoList.forEach((_, idx) => updateSeasonIndeterminate(idx));
     computeTotal(); footer.append(btnOk, totalSpan); panel.append(h, list, footer); document.body.append(backdrop, panel);
+
     function closeMenu(result) { try { panel.remove(); } catch {} try { backdrop.remove(); } catch {} resolve(result); }
     backdrop.addEventListener('click', () => closeMenu(null));
-    btnOk.addEventListener('click', () => { const selected = new Set(checkboxes.filter(cb => cb.checked).map(cb => parseInt(cb.dataset.index, 10))); closeMenu(selected); });
+
+    btnOk.addEventListener('click', () => {
+      // Build selection: seasons where all eps checked => selectedCategories; otherwise selectedEpisodesBySeason
+      const selectedCategories = new Set();
+      const selectedEpisodesBySeason = {};
+      for (let si = 0; si < episodeCbs.length; si++) {
+        const eps = episodeCbs[si] || [];
+        if (eps.length === 0) continue;
+        const checkedIdxs = eps.map((cb, i) => cb.checked ? i : -1).filter(i => i >= 0);
+        if (checkedIdxs.length === 0) continue;
+        if (checkedIdxs.length === eps.length) {
+          selectedCategories.add(si);
+        } else {
+          selectedEpisodesBySeason[si] = new Set(checkedIdxs);
+        }
+      }
+      closeMenu({ selectedCategories, selectedEpisodesBySeason });
+    });
   });
 }
 
 async function downloadSourceFolder(options = {}) {
   const selectedSet = options.selectedCategories instanceof Set ? options.selectedCategories : null;
+  // selectedEpisodesBySeason: { [seasonIndex]: Set(episodeIndex) }
+  const selectedEpisodesBySeason = options.selectedEpisodesBySeason && typeof options.selectedEpisodesBySeason === 'object' ? options.selectedEpisodesBySeason : null;
   const overlay = document.createElement('div');
   Object.assign(overlay.style, { position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', color: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 9999, fontFamily: 'Segoe UI, sans-serif', textAlign: 'center' });
   document.body.appendChild(overlay);
@@ -88,7 +187,16 @@ async function downloadSourceFolder(options = {}) {
       const ext = origName.includes('.') ? origName.slice(origName.lastIndexOf('.')) : '';
       const pad = String(ei + 1).padStart(2, '0');
       const fileName = `E${pad}${ext}`; plannedNames[ci][ei] = fileName;
-      const shouldDownload = !selectedSet || selectedSet.has(ci); if (shouldDownload) tasks.push({ ci, ei, episode, fileName });
+      let shouldDownload = true;
+      if (selectedEpisodesBySeason) {
+        const set = selectedEpisodesBySeason[ci];
+        shouldDownload = !!(set && set.has && set.has(ei));
+      } else if (selectedSet) {
+        shouldDownload = selectedSet.has(ci);
+      } else {
+        shouldDownload = true;
+      }
+      if (shouldDownload) tasks.push({ ci, ei, episode, fileName });
     });
   });
 
@@ -171,8 +279,10 @@ async function downloadSourceFolder(options = {}) {
 if (downloadBtn) {
   downloadBtn.addEventListener('click', async () => {
     const selectiveEnabled = localStorage.getItem('selectiveDownloadsEnabled') === 'true';
-    if (!selectiveEnabled || (Array.isArray(videoList) && videoList.length <= 1)) { downloadSourceFolder(); return; }
-    const selected = await openSeasonSelectionModal(); if (selected === null) return; downloadSourceFolder({ selectedCategories: selected });
+    if (!selectiveEnabled) { downloadSourceFolder(); return; }
+    const selected = await openSeasonSelectionModal();
+    if (selected === null) return;
+    // selected can include { selectedCategories: Set<number>, selectedEpisodesBySeason: { [seasonIdx]: Set<number> } }
+    downloadSourceFolder({ selectedCategories: selected.selectedCategories, selectedEpisodesBySeason: selected.selectedEpisodesBySeason });
   });
 }
-

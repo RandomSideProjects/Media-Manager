@@ -58,4 +58,3 @@ window.addEventListener('message', (e) => {
     try { if (video) video.currentTime = e.data.currentTime; } catch {}
   }
 });
-

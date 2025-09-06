@@ -51,6 +51,7 @@ function startAutoUploadPolling() {
         if (typeof e.durationSeconds === 'number' && Number.isFinite(e.durationSeconds)) totalDurationSeconds += e.durationSeconds;
       }
     }
+    // Subtitle + color (conditionally include)
     const contentOnly = { title: titleVal, Image: imageField, categories: cats, totalFileSizeBytes, totalDurationSeconds };
     const contentStr = JSON.stringify(contentOnly);
     if (contentStr !== lastContent) {
@@ -61,4 +62,3 @@ function startAutoUploadPolling() {
 }
 
 if (!window.MM_BLOCKED) { startAutoUploadPolling(); }
-

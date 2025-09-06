@@ -226,4 +226,3 @@ function buildSourceCard(data, openSourceParam, fileNameForFallback) {
 
   return card;
 }
-

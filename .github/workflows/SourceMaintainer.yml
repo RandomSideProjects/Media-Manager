@@ -188,4 +188,3 @@ jobs:
         with:
           commit_message: 'chore: update Directorys/SourceList.json and posters'
           file_pattern: 'Directorys/SourceList.json Directorys/Posters/**'
-
