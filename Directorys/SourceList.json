@@ -163,6 +163,15 @@
       "LatestTime": "2025-09-06T22:35:31.536Z"
     },
     {
+      "file": "Love_Flops.json",
+      "path": "./Files/Love_Flops.json",
+      "title": "Love Flops",
+      "poster": "./Posters/Love_Flops.webp",
+      "categoryCount": 1,
+      "episodeCount": 12,
+      "LatestTime": "2025-09-07T07:04:35.767Z"
+    },
+    {
       "file": "MarriedNotLovers.json",
       "path": "./Files/MarriedNotLovers.json",
       "title": "More Than a Married Couple, But Not Lovers",
