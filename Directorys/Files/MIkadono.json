@@ -1,0 +1,86 @@
+{
+  "title": "Dealing With Mikadono Sisters Is A Breeze",
+  "Image": "https://files.catbox.moe/dgf6x5.webp",
+  "categories": [
+    {
+      "category": "Season 1",
+      "episodes": [
+        {
+          "title": "Episode 1",
+          "src": "https://files.catbox.moe/9qjabd.mp4",
+          "fileSizeBytes": 161260367,
+          "durationSeconds": 1420
+        },
+        {
+          "title": "Episode 2",
+          "src": "https://files.catbox.moe/90kn0u.mp4",
+          "fileSizeBytes": 161262219,
+          "durationSeconds": 1420
+        },
+        {
+          "title": "Episode 3",
+          "src": "https://files.catbox.moe/45mh5v.mp4",
+          "fileSizeBytes": 122251666,
+          "durationSeconds": 1075
+        },
+        {
+          "title": "Episode 4",
+          "src": "https://files.catbox.moe/p0g2cn.mp4",
+          "fileSizeBytes": 168154270,
+          "durationSeconds": 1480
+        },
+        {
+          "title": "Episode 5",
+          "src": "https://files.catbox.moe/tkdfmv.mp4",
+          "fileSizeBytes": 161528148,
+          "durationSeconds": 1420
+        },
+        {
+          "title": "Episode 6",
+          "src": "https://files.catbox.moe/scxui0.mp4",
+          "fileSizeBytes": 161762193,
+          "durationSeconds": 1420
+        },
+        {
+          "title": "Episode 7",
+          "src": "https://files.catbox.moe/65hs1l.mp4",
+          "fileSizeBytes": 190084534,
+          "durationSeconds": 1420
+        },
+        {
+          "title": "Episode 8 [NOT RELEASED, PLACEHOLDER]",
+          "src": "Replace",
+          "fileSizeBytes": null,
+          "durationSeconds": null
+        },
+        {
+          "title": "Episode 9 [NOT RELEASED, PLACEHOLDER]",
+          "src": "Replace",
+          "fileSizeBytes": null,
+          "durationSeconds": null
+        },
+        {
+          "title": "Episode 10 [NOT RELEASED, PLACEHOLDER]",
+          "src": "Replace",
+          "fileSizeBytes": null,
+          "durationSeconds": null
+        },
+        {
+          "title": "Episode 11 [NOT RELEASED, PLACEHOLDER]",
+          "src": "Replace",
+          "fileSizeBytes": null,
+          "durationSeconds": null
+        },
+        {
+          "title": "Episode 12 [NOT RELEASED, PLACEHOLDER]",
+          "src": "Replace",
+          "fileSizeBytes": null,
+          "durationSeconds": null
+        }
+      ]
+    }
+  ],
+  "LatestTime": "2025-09-07T03:49:41.602Z",
+  "totalFileSizeBytes": 1126303397,
+  "totalDurationSeconds": 9655
+}
