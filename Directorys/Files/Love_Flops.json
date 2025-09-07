@@ -1,0 +1,86 @@
+{
+  "title": "Love Flops",
+  "Image": "https://files.catbox.moe/3r8bk2.jpg",
+  "categories": [
+    {
+      "category": "Season 1",
+      "episodes": [
+        {
+          "title": "Episode 1",
+          "src": "https://files.catbox.moe/1dxz41.mp4",
+          "fileSizeBytes": 189082531,
+          "durationSeconds": 1421
+        },
+        {
+          "title": "Episode 2",
+          "src": "https://files.catbox.moe/wjlaiz.mp4",
+          "fileSizeBytes": 190337587,
+          "durationSeconds": 1421
+        },
+        {
+          "title": "Episode 3",
+          "src": "https://files.catbox.moe/bny158.mp4",
+          "fileSizeBytes": 191165545,
+          "durationSeconds": 1421
+        },
+        {
+          "title": "Episode 4",
+          "src": "https://files.catbox.moe/40vo6u.mp4",
+          "fileSizeBytes": 189666734,
+          "durationSeconds": 1421
+        },
+        {
+          "title": "Episode 5",
+          "src": "https://files.catbox.moe/8vwstk.mp4",
+          "fileSizeBytes": 189579268,
+          "durationSeconds": 1421
+        },
+        {
+          "title": "Episode 6",
+          "src": "https://files.catbox.moe/xjjt2x.mp4",
+          "fileSizeBytes": 190865238,
+          "durationSeconds": 1421
+        },
+        {
+          "title": "Episode 7",
+          "src": "https://files.catbox.moe/xcm89u.mp4",
+          "fileSizeBytes": 190216734,
+          "durationSeconds": 1421
+        },
+        {
+          "title": "Episode 8",
+          "src": "https://files.catbox.moe/d52uk4.mp4",
+          "fileSizeBytes": 190737388,
+          "durationSeconds": 1421
+        },
+        {
+          "title": "Episode 9",
+          "src": "https://files.catbox.moe/avvx1a.mp4",
+          "fileSizeBytes": 190905794,
+          "durationSeconds": 1421
+        },
+        {
+          "title": "Episode 10",
+          "src": "https://files.catbox.moe/1s3xg3.mp4",
+          "fileSizeBytes": 190928556,
+          "durationSeconds": 1421
+        },
+        {
+          "title": "Episode 11",
+          "src": "https://files.catbox.moe/o8kwx0.mp4",
+          "fileSizeBytes": 191462853,
+          "durationSeconds": 1421
+        },
+        {
+          "title": "Episode 12",
+          "src": "https://files.catbox.moe/xk73uq.mp4",
+          "fileSizeBytes": 191470791,
+          "durationSeconds": 1421
+        }
+      ]
+    }
+  ],
+  "LatestTime": "2025-09-07T07:04:35.767Z",
+  "totalFileSizeBytes": 2286419019,
+  "totalDurationSeconds": 17052
+}
