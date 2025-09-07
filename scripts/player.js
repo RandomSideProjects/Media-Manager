@@ -63,7 +63,10 @@ function showPlayerAlert(message) {
     });
     const p = document.createElement('div'); p.style.whiteSpace = 'pre-line'; p.style.fontWeight = '800'; p.style.fontSize = '1.1rem'; p.id = 'playerFailMessage';
     const btn = document.createElement('button'); btn.textContent = 'Close'; btn.className = 'pill-button'; btn.style.marginTop = '10px';
-    btn.addEventListener('click', () => { try { overlay.remove(); } catch {} });
+    btn.addEventListener('click', () => {
+      try { overlay.remove(); } catch {}
+      try { if (typeof backBtn !== 'undefined' && backBtn) backBtn.click(); } catch {}
+    });
     box.append(p, btn); overlay.appendChild(box); document.body.appendChild(overlay);
   }
   const msgEl = document.getElementById('playerFailMessage');
@@ -112,4 +115,3 @@ if (backBtn) {
     window.history.replaceState(null, '', newUrl);
   });
 }
-
