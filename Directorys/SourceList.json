@@ -82,6 +82,15 @@
       "LatestTime": "2025-08-15T00:33:47.052Z"
     },
     {
+      "file": "Frieren.json",
+      "path": "./Files/Frieren.json",
+      "title": "Frieren: Beyond Journey's End",
+      "poster": "./Posters/Frieren_Beyond_Journey's_End.webp",
+      "categoryCount": 1,
+      "episodeCount": 28,
+      "LatestTime": "2025-09-07T05:58:52.948Z"
+    },
+    {
       "file": "Gamers.json",
       "path": "./Files/Gamers.json",
       "title": "Gamers!",
@@ -91,13 +100,13 @@
       "LatestTime": "2025-09-05T07:20:01.007Z"
     },
     {
-      "file": "LoserRanger.json",
-      "path": "./Files/LoserRanger.json",
+      "file": "GGLR.json",
+      "path": "./Files/GGLR.json",
       "title": "GO! GO! LOSER RANGER!",
       "poster": "./Posters/GO!_GO!_LOSER_RANGER!.webp",
-      "categoryCount": 1,
-      "episodeCount": 12,
-      "LatestTime": "2025-08-11T12:36:00"
+      "categoryCount": 2,
+      "episodeCount": 24,
+      "LatestTime": "2025-09-07T05:59:36.421Z"
     },
     {
       "file": "Hokkaido!.json",
