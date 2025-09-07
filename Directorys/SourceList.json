@@ -64,6 +64,15 @@
       "LatestTime": "2025-09-05T05:25:34.010Z"
     },
     {
+      "file": "MIkadono.json",
+      "path": "./Files/MIkadono.json",
+      "title": "Dealing With Mikadono Sisters Is A Breeze",
+      "poster": "./Posters/Dealing_With_Mikadono_Sisters_Is_A_Breeze.webp",
+      "categoryCount": 1,
+      "episodeCount": 12,
+      "LatestTime": "2025-09-07T03:49:41.602Z"
+    },
+    {
       "file": "Failure_Frame.json",
       "path": "./Files/Failure_Frame.json",
       "title": "Failure Frame",
