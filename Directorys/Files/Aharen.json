@@ -1,0 +1,163 @@
+{
+  "title": "Aharen Is Indecipherable",
+  "Image": "https://files.catbox.moe/ro45t7.png",
+  "categories": [
+    {
+      "category": "Season 1",
+      "episodes": [
+        {
+          "title": "Episode 1",
+          "src": "https://files.catbox.moe/1l7724.mp4",
+          "fileSizeBytes": 114386639,
+          "durationSeconds": 1468
+        },
+        {
+          "title": "Episode 2",
+          "src": "https://files.catbox.moe/q2vrzx.mp4",
+          "fileSizeBytes": 135612029,
+          "durationSeconds": 1468
+        },
+        {
+          "title": "Episode 3",
+          "src": "https://files.catbox.moe/17v5ms.mp4",
+          "fileSizeBytes": 135920158,
+          "durationSeconds": 1468
+        },
+        {
+          "title": "Episode 4",
+          "src": "https://files.catbox.moe/4jma90.mp4",
+          "fileSizeBytes": 138611078,
+          "durationSeconds": 1468
+        },
+        {
+          "title": "Episode 5",
+          "src": "https://files.catbox.moe/2ynjsj.mp4",
+          "fileSizeBytes": 126279134,
+          "durationSeconds": 1468
+        },
+        {
+          "title": "Episode 6",
+          "src": "https://files.catbox.moe/dh3hdi.mp4",
+          "fileSizeBytes": 144728485,
+          "durationSeconds": 1468
+        },
+        {
+          "title": "Episode 7",
+          "src": "https://files.catbox.moe/0ucsza.mp4",
+          "fileSizeBytes": 113944487,
+          "durationSeconds": 1468
+        },
+        {
+          "title": "Episode 8",
+          "src": "https://files.catbox.moe/pxq9fg.mp4",
+          "fileSizeBytes": 136195859,
+          "durationSeconds": 1453
+        },
+        {
+          "title": "Episode 9",
+          "src": "https://files.catbox.moe/gv00zd.mp4",
+          "fileSizeBytes": 113084779,
+          "durationSeconds": 1453
+        },
+        {
+          "title": "Episode 10",
+          "src": "https://files.catbox.moe/1a22vq.mp4",
+          "fileSizeBytes": 133271209,
+          "durationSeconds": 1453
+        },
+        {
+          "title": "Episode 11",
+          "src": "https://files.catbox.moe/xn7bxz.mp4",
+          "fileSizeBytes": 108390544,
+          "durationSeconds": 1453
+        },
+        {
+          "title": "Episode 12",
+          "src": "https://files.catbox.moe/ztos1j.mp4",
+          "fileSizeBytes": 122326980,
+          "durationSeconds": 1453
+        }
+      ]
+    },
+    {
+      "category": "Season 2",
+      "episodes": [
+        {
+          "title": "Episode 1",
+          "src": "https://files.catbox.moe/u82zoq.mp4",
+          "fileSizeBytes": 128734837,
+          "durationSeconds": 1441
+        },
+        {
+          "title": "Episode 2",
+          "src": "https://files.catbox.moe/4jnym3.mp4",
+          "fileSizeBytes": 152462038,
+          "durationSeconds": 1441
+        },
+        {
+          "title": "Episode 3",
+          "src": "https://files.catbox.moe/fswh7n.mp4",
+          "fileSizeBytes": 177699436,
+          "durationSeconds": 1441
+        },
+        {
+          "title": "Episode 4",
+          "src": "https://files.catbox.moe/8ppm24.mp4",
+          "fileSizeBytes": 150003451,
+          "durationSeconds": 1441
+        },
+        {
+          "title": "Episode 5",
+          "src": "https://files.catbox.moe/t5bkr7.mp4",
+          "fileSizeBytes": 127255469,
+          "durationSeconds": 1441
+        },
+        {
+          "title": "Episode 6",
+          "src": "https://files.catbox.moe/xr5q7o.mp4",
+          "fileSizeBytes": 146844684,
+          "durationSeconds": 1441
+        },
+        {
+          "title": "Episode 7",
+          "src": "https://files.catbox.moe/tteskb.mp4",
+          "fileSizeBytes": 125445706,
+          "durationSeconds": 1441
+        },
+        {
+          "title": "Episode 8",
+          "src": "https://files.catbox.moe/kltl81.mp4",
+          "fileSizeBytes": 109587468,
+          "durationSeconds": 1441
+        },
+        {
+          "title": "Episode 9",
+          "src": "https://files.catbox.moe/fis9a7.mp4",
+          "fileSizeBytes": 141472232,
+          "durationSeconds": 1441
+        },
+        {
+          "title": "Episode 10",
+          "src": "https://files.catbox.moe/gexg16.mp4",
+          "fileSizeBytes": 155250245,
+          "durationSeconds": 1441
+        },
+        {
+          "title": "Episode 11",
+          "src": "https://files.catbox.moe/fs36fl.mp4",
+          "fileSizeBytes": 113249486,
+          "durationSeconds": 1441
+        },
+        {
+          "title": "Episode 12",
+          "src": "https://files.catbox.moe/5gz0la.mp4",
+          "fileSizeBytes": 97997315,
+          "durationSeconds": 1441
+        }
+      ]
+    }
+  ],
+  "LatestTime": "2025-09-07T06:49:49.243Z",
+  "totalFileSizeBytes": 3148753748,
+  "totalDurationSeconds": 34833
+}
