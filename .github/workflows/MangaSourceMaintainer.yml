@@ -45,7 +45,7 @@ jobs:
 
           const FILE_DIR = 'Directorys/Files/Manga';
           const INDEX_FILE = 'Directorys/MangaSourceList.json';
-          const POSTERS_DIR = 'Directorys/Posters';
+          const POSTERS_DIR = 'Directorys/Posters/Manga';
           if (!fs.existsSync(POSTERS_DIR)) fs.mkdirSync(POSTERS_DIR, { recursive: true });
 
           function safePosterName(title, fallback) {
@@ -160,7 +160,7 @@ jobs:
                     const posterAbs = path.join(POSTERS_DIR, posterName);
                     fs.writeFileSync(posterAbs, webpBuf);
                     console.log('Wrote poster:', posterAbs);
-                    poster = `./Posters/${posterName}`;
+                    poster = `./Posters/Manga/${posterName}`;
                   } catch (e) {
                     console.warn('Poster build failed for', file, '-', e.message);
                   }
@@ -191,5 +191,5 @@ jobs:
       - name: Commit and push changes
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: 'chore: update Directorys/MangaSourceList.json and posters'
-          file_pattern: 'Directorys/MangaSourceList.json Directorys/Posters/**'
+          commit_message: 'chore: update Directorys/MangaSourceList.json and manga posters'
+          file_pattern: 'Directorys/MangaSourceList.json Directorys/Posters/Manga/**'

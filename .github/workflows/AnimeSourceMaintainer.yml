@@ -76,7 +76,7 @@ jobs:
 
           const FILE_DIR = 'Directorys/Files/Anime';
           const INDEX_FILE = 'Directorys/AnimeSourceList.json';
-          const POSTERS_DIR = 'Directorys/Posters';
+          const POSTERS_DIR = 'Directorys/Posters/Anime';
           if (!fs.existsSync(POSTERS_DIR)) fs.mkdirSync(POSTERS_DIR, { recursive: true });
 
           function safePosterName(title, fallback) {
@@ -181,7 +181,7 @@ jobs:
                     const posterAbs = path.join(POSTERS_DIR, posterName);
                     fs.writeFileSync(posterAbs, webpBuf);
                     console.log('Wrote poster:', posterAbs);
-                    poster = `./Posters/${posterName}`;
+                    poster = `./Posters/Anime/${posterName}`;
                   } catch (e) {
                     console.warn('Poster build failed for', file, '-', e.message);
                   }
@@ -213,5 +213,5 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           branch: ${{ github.ref_name }}
-          commit_message: 'chore: update Directorys/AnimeSourceList.json and posters'
-          file_pattern: 'Directorys/AnimeSourceList.json Directorys/Posters/**'
+          commit_message: 'chore: update Directorys/AnimeSourceList.json and anime posters'
+          file_pattern: 'Directorys/AnimeSourceList.json Directorys/Posters/Anime/**'
