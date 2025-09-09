@@ -18,6 +18,27 @@ const loadUrlContainer = document.getElementById('loadUrlContainer');
 const homeTabBtn = document.getElementById('homeTabBtn');
 const folderInput = document.getElementById('folderInput');
 let isFolderUploading = false;
+let __currentCreatorMode = (function(){ try { const p = JSON.parse(localStorage.getItem('mm_upload_settings')||'{}'); return (p.libraryMode === 'manga') ? 'manga' : 'anime'; } catch { return 'anime'; } })();
+function getCreatorMode(){
+  try { const p = JSON.parse(localStorage.getItem('mm_upload_settings')||'{}'); return (p.libraryMode === 'manga') ? 'manga' : 'anime'; } catch { return 'anime'; }
+}
+function isMangaMode(){ return getCreatorMode() === 'manga'; }
+function labelForUnit(n){ return isMangaMode() ? `Volume ${n}` : `Episode ${n}`; }
+function unitTitlePlaceholder(){ return isMangaMode() ? 'Volume Title' : 'Episode Title'; }
+function getCreatorMode(){
+  try { const p = JSON.parse(localStorage.getItem('mm_upload_settings')||'{}'); return (p.libraryMode === 'manga') ? 'manga' : 'anime'; } catch { return 'anime'; }
+}
+function isMangaMode(){ return getCreatorMode() === 'manga'; }
+function labelForUnit(n){ return isMangaMode() ? `Volume ${n}` : `Episode ${n}`; }
+function unitTitlePlaceholder(){ return isMangaMode() ? 'Volume Title' : 'Episode Title'; }
+function updateCategoryButtonVisibility(){
+  try {
+    if (!addCategoryBtn) return;
+    addCategoryBtn.textContent = isMangaMode() ? 'Add Volumes' : 'Add Category';
+    if (isMangaMode() && categoriesEl.children.length >= 1) { addCategoryBtn.disabled = true; addCategoryBtn.style.opacity = '0.6'; }
+    else { addCategoryBtn.disabled = false; addCategoryBtn.style.opacity = ''; }
+  } catch {}
+}
 function getUploadConcurrency(){
   try {
     const raw = localStorage.getItem('mm_upload_settings') || '{}';
@@ -75,16 +96,16 @@ folderInput.addEventListener('change', async (e) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
 
-    // Prompt for season index or create new
-    const seasonIndex = categoriesEl.children.length + 1;
+    // Prompt for season/collection index or create new
+    const seasonIndex = Math.min(1, categoriesEl.children.length + 1);
     const categoryDiv = document.createElement('div');
     categoryDiv.className = 'category';
     const titleLabel = document.createElement('label');
     titleLabel.textContent = 'Category Title:';
     const titleInput = document.createElement('input');
     titleInput.type = 'text';
-    titleInput.placeholder = `Season ${seasonIndex}`;
-    titleInput.value = `Season ${seasonIndex}`;
+    if (isMangaMode()) { titleInput.placeholder = 'Volumes'; titleInput.value = 'Volumes'; }
+    else { titleInput.placeholder = `Season ${seasonIndex}`; titleInput.value = `Season ${seasonIndex}`; }
     titleLabel.appendChild(document.createElement('br'));
     titleLabel.appendChild(titleInput);
     const episodesDiv = document.createElement('div');
@@ -93,15 +114,21 @@ folderInput.addEventListener('change', async (e) => {
     categoryDiv.appendChild(episodesDiv);
     categoriesEl.appendChild(categoryDiv);
 
-    // Derive episode numbers from filenames like E01, E1, etc.; fallback to order
+    // Derive numbers from filenames
     const filesInSeason = files
       .map((file, idx) => {
         const name = (file.webkitRelativePath || file.name || '').split('/').pop();
-        const m = name.match(/E0?(\d{1,2})/i);
-        const epNum = m ? parseInt(m[1], 10) : (idx + 1);
-        return { file, epNum };
+        let num = idx + 1;
+        if (isMangaMode()) {
+          const mv = name.match(/(?:\bvol(?:ume)?\s*|\bv\s*)(\d{1,3})/i);
+          if (mv) num = parseInt(mv[1], 10);
+        } else {
+          const me = name.match(/E0?(\d{1,3})/i);
+          if (me) num = parseInt(me[1], 10);
+        }
+        return { file, num };
       })
-      .sort((a, b) => a.epNum - b.epNum);
+      .sort((a, b) => a.num - b.num);
 
     // Overlay UI for progress
     let folderOverlay = document.getElementById('folderUploadOverlay');
@@ -132,13 +159,15 @@ folderInput.addEventListener('change', async (e) => {
     const maxAttempts = 5;
     let completedCount = 0;
 
-    filesInSeason.forEach(({ file, epNum }) => {
-      addEpisode(episodesDiv, { title: `Episode ${epNum}`, src: '' });
+    filesInSeason.forEach(async ({ file, num }) => {
+      addEpisode(episodesDiv, { title: labelForUnit(num), src: '' });
       const epDiv = episodesDiv.lastElementChild;
       try { epDiv.dataset.fileSizeBytes = String(file.size); } catch {}
-      try {
-        computeLocalFileDurationSeconds(file).then(d => { if (!Number.isNaN(d) && d > 0) epDiv.dataset.durationSeconds = String(Math.round(d)); });
-      } catch {}
+      if (isMangaMode() && /\.cbz$/i.test(file.name||'')) {
+        try { const ab = await file.arrayBuffer(); const zip = await JSZip.loadAsync(ab); const names = Object.keys(zip.files).filter(n => /\.(jpe?g|png|gif|webp|bmp)$/i.test(n)); epDiv.dataset.VolumePageCount = String(names.length); epDiv.dataset.volumePageCount = String(names.length); } catch {}
+      } else {
+        try { computeLocalFileDurationSeconds(file).then(d => { if (!Number.isNaN(d) && d > 0) epDiv.dataset.durationSeconds = String(Math.round(d)); }); } catch {}
+      }
       const inputs = epDiv.querySelectorAll('input[type="text"]');
       const epSrcInput = inputs[1];
       const epError = epDiv.querySelector('.ep-error');
@@ -153,7 +182,7 @@ folderInput.addEventListener('change', async (e) => {
       row.style.borderRadius = '6px';
       row.style.fontSize = '0.9em';
       const label = document.createElement('div');
-      label.textContent = `Episode ${epNum}`;
+      label.textContent = labelForUnit(num);
       label.style.flex = '1';
       const status = document.createElement('div');
       status.textContent = 'Queued';
@@ -223,7 +252,8 @@ folderInput.addEventListener('change', async (e) => {
 
 // Add a new category block
 function addCategory(data) {
-  const categoryIndex = categoriesEl.children.length + 1;
+  if (isMangaMode() && categoriesEl.children.length >= 1) { updateCategoryButtonVisibility(); return; }
+  const categoryIndex = Math.min(1, categoriesEl.children.length + 1);
   const categoryDiv = document.createElement('div');
   categoryDiv.className = 'category';
   categoryDiv.addEventListener('contextmenu', (e) => {
@@ -236,8 +266,13 @@ function addCategory(data) {
   titleLabel.textContent = 'Category Title:';
   const titleInput = document.createElement('input');
   titleInput.type = 'text';
-  titleInput.placeholder = `Season ${categoryIndex}`;
-  if (data && data.category) { titleInput.value = data.category; } else { titleInput.value = `Season ${categoryIndex}`; }
+  if (isMangaMode()) {
+    titleInput.placeholder = 'Volumes';
+    if (data && data.category) { titleInput.value = data.category; } else { titleInput.value = 'Volumes'; }
+  } else {
+    titleInput.placeholder = `Season ${categoryIndex}`;
+    if (data && data.category) { titleInput.value = data.category; } else { titleInput.value = `Season ${categoryIndex}`; }
+  }
   titleLabel.appendChild(document.createElement('br'));
   titleLabel.appendChild(titleInput);
 
@@ -245,7 +280,7 @@ function addCategory(data) {
   episodesDiv.className = 'episodes';
   const addEpBtn = document.createElement('button');
   addEpBtn.type = 'button';
-  addEpBtn.textContent = 'Add Episode';
+  addEpBtn.textContent = isMangaMode() ? 'Add Volume' : 'Add Episode';
   addEpBtn.addEventListener('click', () => addEpisode(episodesDiv));
 
   categoryDiv.appendChild(titleLabel);
@@ -254,6 +289,7 @@ function addCategory(data) {
   categoriesEl.appendChild(categoryDiv);
 
   if (data && data.episodes) { data.episodes.forEach(ep => addEpisode(episodesDiv, ep)); }
+  updateCategoryButtonVisibility();
 }
 
 // Add a new episode block within a category
@@ -269,17 +305,17 @@ function addEpisode(container, data) {
 
   const epTitle = document.createElement('input');
   epTitle.type = 'text';
-  epTitle.placeholder = 'Episode Title';
-  epTitle.value = (data && data.title) ? data.title : `Episode ${episodeIndex}`;
+  epTitle.placeholder = unitTitlePlaceholder();
+  epTitle.value = (data && data.title) ? data.title : labelForUnit(episodeIndex);
 
   const epSrc = document.createElement('input');
   epSrc.type = 'text';
-  epSrc.placeholder = 'MP4 or WebM URL';
+  epSrc.placeholder = isMangaMode() ? 'CBZ URL' : 'MP4 or WebM URL';
   if (data && data.src) epSrc.value = data.src;
 
   const epFile = document.createElement('input');
   epFile.type = 'file';
-  epFile.accept = '.mp4, .webm';
+  epFile.accept = isMangaMode() ? '.cbz' : '.mp4, .webm';
 
   const epError = document.createElement('div');
   epError.className = 'ep-error';
@@ -302,18 +338,38 @@ function addEpisode(container, data) {
     const file = e.target.files[0];
     if (!file) return;
     epError.textContent = '';
-    if (file.size > 200 * 1024 * 1024) { epError.innerHTML = '<span style="color:#f1f1f1">Our built-in uploader only supports 200 MB. Please try again with a smaller size.</span>'; return; }
-    try { epDiv.dataset.fileSizeBytes = String(file.size); } catch {}
-    try { const d = await computeLocalFileDurationSeconds(file); if (!Number.isNaN(d) && d > 0) epDiv.dataset.durationSeconds = String(Math.round(d)); } catch {}
-    epSrc.value = '';
-    epError.innerHTML = '';
-    const uploadingMsg = document.createElement('span'); uploadingMsg.style.color = 'blue'; uploadingMsg.textContent = 'Uploading'; epError.appendChild(uploadingMsg);
-    const progressBar = document.createElement('progress'); progressBar.max = 100; progressBar.value = 0; progressBar.style.marginLeft = '0.5em'; epError.appendChild(progressBar);
-    try {
-      const url = await uploadToCatboxWithProgress(file, (percent) => { progressBar.value = percent; });
-      epSrc.value = url; epError.textContent = '';
-    } catch (err) {
-      epError.innerHTML = '<span style="color:red">Upload failed</span>'; epSrc.value = '';
+    if (isMangaMode()) {
+      if (!/\.cbz$/i.test(file.name||'')) { epError.innerHTML = '<span style="color:red">Please select a .cbz file in Manga mode.</span>'; return; }
+      try { epDiv.dataset.fileSizeBytes = String(file.size); } catch {}
+      try { const ab = await file.arrayBuffer(); const zip = await JSZip.loadAsync(ab); const names = Object.keys(zip.files).filter(n => /\.(jpe?g|png|gif|webp|bmp)$/i.test(n)); epDiv.dataset.VolumePageCount = String(names.length); epDiv.dataset.volumePageCount = String(names.length); } catch {}
+      epSrc.value = '';
+      epError.innerHTML = '';
+      const uploadingMsg = document.createElement('span'); uploadingMsg.style.color = 'blue'; uploadingMsg.textContent = 'Uploading'; epError.appendChild(uploadingMsg);
+      const progressBar = document.createElement('progress'); progressBar.max = 100; progressBar.value = 0; progressBar.style.marginLeft = '0.5em'; epError.appendChild(progressBar);
+      try { const url = await uploadToCatboxWithProgress(file, (percent) => { progressBar.value = percent; }); epSrc.value = url; epError.textContent = ''; }
+      catch (err) { epError.innerHTML = '<span style="color:red">Upload failed</span>'; epSrc.value = ''; }
+    } else {
+    if (isMangaMode()) {
+      if (!/\.cbz$/i.test(file.name||'')) { epError.innerHTML = '<span style="color:red">Please select a .cbz file in Manga mode.</span>'; return; }
+      try { epDiv.dataset.fileSizeBytes = String(file.size); } catch {}
+      try {
+        const ab = await file.arrayBuffer();
+        const zip = await JSZip.loadAsync(ab);
+        const names = Object.keys(zip.files).filter(n => /\.(jpe?g|png|gif|webp|bmp)$/i.test(n));
+        epDiv.dataset.VolumePageCount = String(names.length);
+        epDiv.dataset.volumePageCount = String(names.length);
+      } catch {}
+    } else {
+      if (file.size > 200 * 1024 * 1024) { epError.innerHTML = '<span style="color:#f1f1f1">Our built-in uploader only supports 200 MB. Please try again with a smaller size.</span>'; return; }
+      try { epDiv.dataset.fileSizeBytes = String(file.size); } catch {}
+      try { const d = await computeLocalFileDurationSeconds(file); if (!Number.isNaN(d) && d > 0) epDiv.dataset.durationSeconds = String(Math.round(d)); } catch {}
+    }
+      epSrc.value = '';
+      epError.innerHTML = '';
+      const uploadingMsg = document.createElement('span'); uploadingMsg.style.color = 'blue'; uploadingMsg.textContent = 'Uploading'; epError.appendChild(uploadingMsg);
+      const progressBar = document.createElement('progress'); progressBar.max = 100; progressBar.value = 0; progressBar.style.marginLeft = '0.5em'; epError.appendChild(progressBar);
+      try { const url = await uploadToCatboxWithProgress(file, (percent) => { progressBar.value = percent; }); epSrc.value = url; epError.textContent = ''; }
+      catch (err) { epError.innerHTML = '<span style="color:red">Upload failed</span>'; epSrc.value = ''; }
     }
   });
 
@@ -360,14 +416,29 @@ function addEpisode(container, data) {
     if (epFile && epFile.files && epFile.files.length > 0) return;
     const url = (epSrc.value || '').trim();
     if (!/^https?:\/\//i.test(url)) return;
-    if (epDiv.dataset && (epDiv.dataset.fileSizeBytes || epDiv.dataset.durationSeconds)) return;
-    try { epError.style.color = '#9ecbff'; epError.textContent = 'Fetching metadata…'; } catch {}
-    try {
-      const [size, dur] = await Promise.all([ fetchRemoteContentLength(url), computeRemoteDurationSeconds(url) ]);
-      if (Number.isFinite(size) && size >= 0) epDiv.dataset.fileSizeBytes = String(Math.round(size));
-      if (Number.isFinite(dur) && dur > 0) epDiv.dataset.durationSeconds = String(Math.round(dur));
+    if (isMangaMode()) {
+      if (epDiv.dataset && epDiv.dataset.volumePageCount) return;
+      if (!/\.cbz(?:$|[?#])/i.test(url)) return;
+      try { epError.style.color = '#9ecbff'; epError.textContent = 'Fetching CBZ…'; } catch {}
+      try {
+        const resp = await fetch(url, { cache: 'no-store' });
+        const blob = await resp.blob();
+        const zip = await JSZip.loadAsync(blob);
+        const pages = Object.keys(zip.files).filter(n => /\.(jpe?g|png|gif|webp|bmp)$/i.test(n));
+        epDiv.dataset.VolumePageCount = String(pages.length);
+        epDiv.dataset.volumePageCount = String(pages.length);
+      } catch {}
       epError.textContent = '';
-    } catch { epError.textContent = ''; }
+    } else {
+      if (epDiv.dataset && (epDiv.dataset.fileSizeBytes || epDiv.dataset.durationSeconds)) return;
+      try { epError.style.color = '#9ecbff'; epError.textContent = 'Fetching metadata…'; } catch {}
+      try {
+        const [size, dur] = await Promise.all([ fetchRemoteContentLength(url), computeRemoteDurationSeconds(url) ]);
+        if (Number.isFinite(size) && size >= 0) epDiv.dataset.fileSizeBytes = String(Math.round(size));
+        if (Number.isFinite(dur) && dur > 0) epDiv.dataset.durationSeconds = String(Math.round(dur));
+        epError.textContent = '';
+      } catch { epError.textContent = ''; }
+    }
   }
   epSrc.addEventListener('change', maybeFetchUrlMetadata);
   epSrc.addEventListener('blur', maybeFetchUrlMetadata);
@@ -415,6 +486,29 @@ loadBtn.addEventListener('click', loadDirectory);
 
 // Button handlers
 addCategoryBtn.addEventListener('click', () => addCategory());
+// Initialize button state based on mode
+updateCategoryButtonVisibility();
+window.addEventListener('mm_settings_saved', (e) => {
+  const newMode = (e && e.detail && e.detail.libraryMode) ? e.detail.libraryMode : getCreatorMode();
+  const changed = newMode !== __currentCreatorMode;
+  __currentCreatorMode = newMode;
+  updateCategoryButtonVisibility();
+  if (changed) {
+    // Clear Creator state when mode changes
+    try {
+      document.getElementById('dirTitle').value = '';
+      categoriesEl.innerHTML = '';
+      directoryCode = '';
+      updateOutput();
+      posterImageUrl = '';
+      if (posterPreview) { posterPreview.src = ''; }
+      if (posterWrapper) posterWrapper.style.display = 'none';
+      if (posterInput) { posterInput.value = ''; posterInput.style.display = 'inline-block'; }
+      if (posterStatus) { posterStatus.style.display = 'none'; posterStatus.style.color = '#9ecbff'; posterStatus.textContent = 'Uploading image…'; }
+      if (posterChangeBtn) posterChangeBtn.style.display = 'none';
+    } catch {}
+  }
+});
 
 function updateOutput() {
   if (!directoryCode) { outputLink.textContent = ''; outputLink.href = '#'; return; }
@@ -469,6 +563,7 @@ let pendingRemoval = null;
 confirmYes.addEventListener('click', () => {
   if (pendingRemoval && pendingRemoval.type === 'category') { pendingRemoval.elem.remove(); }
   confirmModal.style.display = 'none'; pendingRemoval = null;
+  updateCategoryButtonVisibility();
 });
 confirmNo.addEventListener('click', () => { confirmModal.style.display = 'none'; pendingRemoval = null; });
 
@@ -478,6 +573,7 @@ function buildLocalDirectoryJSON() {
   const categories = [];
   let totalBytes = 0;
   let totalSecs = 0;
+  let totalPages = 0;
   document.querySelectorAll('.category').forEach(cat => {
     const catTitle = cat.querySelector('input[type="text"]').value.trim();
     const episodes = [];
@@ -487,20 +583,26 @@ function buildLocalDirectoryJSON() {
       const s = inputs[1].value.trim();
       let fs = null, dur = null;
       try { const v = parseFloat(epDiv.dataset.fileSizeBytes); if (Number.isFinite(v) && v >= 0) { fs = Math.round(v); totalBytes += fs; } } catch {}
-      try { const v = parseFloat(epDiv.dataset.durationSeconds); if (Number.isFinite(v) && v >= 0) { dur = Math.round(v); totalSecs += dur; } } catch {}
-      if (t && s) episodes.push({ title: t, src: s, fileSizeBytes: fs, durationSeconds: dur });
+      if (isMangaMode()) {
+        let pages = null; try { const v = parseFloat(epDiv.dataset.volumePageCount || epDiv.dataset.VolumePageCount); if (Number.isFinite(v) && v >= 0) { pages = Math.round(v); totalPages += pages; } } catch {}
+        if (t && s) episodes.push({ title: t, src: s, fileSizeBytes: fs, VolumePageCount: pages });
+      } else {
+        try { const v = parseFloat(epDiv.dataset.durationSeconds); if (Number.isFinite(v) && v >= 0) { dur = Math.round(v); totalSecs += dur; } } catch {}
+        if (t && s) episodes.push({ title: t, src: s, fileSizeBytes: fs, durationSeconds: dur });
+      }
     });
     if (catTitle) categories.push({ category: catTitle, episodes });
   });
   const imageField = posterImageUrl || 'N/A';
-  return {
+  const base = {
     title,
     Image: imageField,
     categories,
     LatestTime: new Date().toISOString(),
-    totalFileSizeBytes: totalBytes || 0,
-    totalDurationSeconds: totalSecs || 0
+    totalFileSizeBytes: totalBytes || 0
   };
+  if (!isMangaMode()) base.totalDurationSeconds = totalSecs || 0; else base.totalPagecount = totalPages || 0;
+  return base;
 }
 document.addEventListener('keydown', (e) => {
   if (['a', 'z'].includes((e.key||'').toLowerCase())) {

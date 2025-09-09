@@ -22,6 +22,18 @@ const folderInput = document.getElementById("folderInput");
 const downloadBtn = document.getElementById('downloadBtn');
 const themeToggle = document.getElementById('themeToggle');
 
+// CBZ viewer elements
+const cbzViewer = document.getElementById('cbzViewer');
+const cbzPrevBtn = document.getElementById('cbzPrevBtn');
+const cbzNextBtn = document.getElementById('cbzNextBtn');
+const cbzPageInfo = document.getElementById('cbzPageInfo');
+const cbzImage = document.getElementById('cbzImage');
+
+// CBZ progress elements
+const cbzProgressOverlay = document.getElementById('cbzProgressOverlay');
+const cbzProgressBar = document.getElementById('cbzProgressBar');
+const cbzProgressMessage = document.getElementById('cbzProgressMessage');
+
 // Clip overlay
 const clipBtn = document.getElementById('clipBtn');
 const clipOverlay = document.getElementById('clipOverlay');

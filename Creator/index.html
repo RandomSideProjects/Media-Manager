@@ -63,6 +63,17 @@
   <div id="mmUploadSettingsPanel" class="mm-settings-panel" role="dialog" aria-modal="true">
     <div class="mm-card">
       <h3 style="margin:.2em 0 0.6em 0;">Upload Settings</h3>
+      <div class="mm-settings-row" style="align-items:center; gap:.6em;">
+        <label style="min-width:110px;">Library</label>
+        <label class="mm-toggle" style="gap:.4em;">
+          <input type="radio" name="mmLibraryMode" id="mmModeAnime" value="anime">
+          <span>Anime</span>
+        </label>
+        <label class="mm-toggle" style="gap:.4em;">
+          <input type="radio" name="mmLibraryMode" id="mmModeManga" value="manga">
+          <span>Manga</span>
+        </label>
+      </div>
       <div class="mm-settings-row">
         <label class="mm-toggle">
           <input type="checkbox" id="mmAnonToggle" checked>
@@ -88,6 +99,7 @@
   </div>
 
   <script src="scripts/constants.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="scripts/uploader.js"></script>
   <script src="scripts/ui.js"></script>
   <script src="scripts/polling.js"></script>

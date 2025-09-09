@@ -47,6 +47,8 @@ async function handleFolderUpload(event) {
       return {
         title: ep.title,
         src: srcUrl,
+        fileName: fileObj ? (fileObj.name || '') : '',
+        file: fileObj || null,
         isPlaceholder,
         durationSeconds: (typeof ep.durationSeconds === 'number') ? ep.durationSeconds : null,
         fileSizeBytes: (typeof ep.fileSizeBytes === 'number') ? ep.fileSizeBytes : null

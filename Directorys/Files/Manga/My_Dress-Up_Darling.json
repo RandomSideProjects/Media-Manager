@@ -1,0 +1,92 @@
+{
+  "title": "My Dress-Up Darling",
+  "Image": "N/A",
+  "categories": [
+    {
+      "category": "Volumes",
+      "episodes": [
+        {
+          "title": "Volume 1",
+          "src": "https://files.catbox.moe/7y0o7k.cbz",
+          "fileSizeBytes": 166822995,
+          "durationSeconds": null
+        },
+        {
+          "title": "Volume 2",
+          "src": "https://files.catbox.moe/2v6y1o.cbz",
+          "fileSizeBytes": 160853943,
+          "durationSeconds": null
+        },
+        {
+          "title": "Volume 3",
+          "src": "https://files.catbox.moe/phvzoe.cbz",
+          "fileSizeBytes": 145431745,
+          "durationSeconds": null
+        },
+        {
+          "title": "Volume 4",
+          "src": "https://files.catbox.moe/6zymrz.cbz",
+          "fileSizeBytes": 153559868,
+          "durationSeconds": null
+        },
+        {
+          "title": "Volume 5",
+          "src": "https://files.catbox.moe/1d2a9u.cbz",
+          "fileSizeBytes": 139565468,
+          "durationSeconds": null
+        },
+        {
+          "title": "Volume 6",
+          "src": "https://files.catbox.moe/33xe0k.cbz",
+          "fileSizeBytes": 124287748,
+          "durationSeconds": null
+        },
+        {
+          "title": "Volume 7",
+          "src": "https://files.catbox.moe/i82lsk.cbz",
+          "fileSizeBytes": 116191290,
+          "durationSeconds": null
+        },
+        {
+          "title": "Volume 8",
+          "src": "https://files.catbox.moe/hd8qpk.cbz",
+          "fileSizeBytes": 119501333,
+          "durationSeconds": null
+        },
+        {
+          "title": "Volume 9",
+          "src": "https://files.catbox.moe/emrz7m.cbz",
+          "fileSizeBytes": 123365856,
+          "durationSeconds": null
+        },
+        {
+          "title": "Volume 10",
+          "src": "https://files.catbox.moe/f4r0jh.cbz",
+          "fileSizeBytes": 137410700,
+          "durationSeconds": null
+        },
+        {
+          "title": "Volume 11",
+          "src": "https://files.catbox.moe/1r547p.cbz",
+          "fileSizeBytes": 117562404,
+          "durationSeconds": null
+        },
+        {
+          "title": "Volume 12",
+          "src": "https://files.catbox.moe/untwxj.cbz",
+          "fileSizeBytes": 113655379,
+          "durationSeconds": null
+        },
+        {
+          "title": "Volume 13",
+          "src": "https://files.catbox.moe/qmmj71.cbz",
+          "fileSizeBytes": 119917309,
+          "durationSeconds": null
+        }
+      ]
+    }
+  ],
+  "LatestTime": "2025-09-08T23:09:59.472Z",
+  "totalFileSizeBytes": 1738126038,
+  "totalDurationSeconds": 0
+}

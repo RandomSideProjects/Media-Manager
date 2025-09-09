@@ -4,6 +4,11 @@
   const categoriesEl = document.getElementById('categories');
   if (!folderInput || !categoriesEl) return;
 
+  function getMode(){
+    try { const p = JSON.parse(localStorage.getItem('mm_upload_settings')||'{}'); return (p.libraryMode === 'manga') ? 'manga' : 'anime'; } catch { return 'anime'; }
+  }
+  function isManga(){ return getMode() === 'manga'; }
+
   function getUploadConcurrency(){
     try {
       const p = JSON.parse(localStorage.getItem('mm_upload_settings')||'{}');
@@ -25,19 +30,26 @@
     try { window.isFolderUploading = true; } catch {}
     try { folderInput.value = ''; } catch {}
 
-    const seasonNum = categoriesEl.children.length + 1;
+    const seasonNum = Math.min(1, categoriesEl.children.length + 1);
     if (typeof addCategory === 'function') {
-      addCategory({ category: `Season ${seasonNum}`, episodes: [] });
+      const defaultCat = isManga() ? 'Volumes' : `Season ${seasonNum}`;
+      addCategory({ category: defaultCat, episodes: [] });
     }
     const catDiv = categoriesEl.lastElementChild;
     const episodesDiv = catDiv ? catDiv.querySelector('.episodes') : null;
 
     const filesInSeason = files.map((file, idx) => {
       const name = (file.webkitRelativePath || file.name || '').split('/').pop();
-      const m = name.match(/E0?(\d{1,2})/i);
-      const epNum = m ? parseInt(m[1], 10) : idx + 1;
-      return { file, epNum };
-    }).sort((a, b) => a.epNum - b.epNum);
+      let num = idx + 1;
+      if (isManga()) {
+        const mv = name.match(/(?:\bvol(?:ume)?\s*|\bv\s*)(\d{1,3})/i);
+        if (mv) num = parseInt(mv[1], 10);
+      } else {
+        const me = name.match(/E0?(\d{1,3})/i);
+        if (me) num = parseInt(me[1], 10);
+      }
+      return { file, num };
+    }).sort((a, b) => a.num - b.num);
 
     const folderOverlay = document.createElement('div');
     folderOverlay.id = 'folderUploadOverlay';
@@ -73,11 +85,16 @@
       } catch { resolve(NaN); }
     });
 
-    filesInSeason.forEach(({ file, epNum }) => {
-      if (typeof addEpisode === 'function' && episodesDiv) addEpisode(episodesDiv, { title: `Episode ${epNum}`, src: '' });
+    filesInSeason.forEach(async ({ file, num }) => {
+      const label = isManga() ? `Volume ${num}` : `Episode ${num}`;
+      if (typeof addEpisode === 'function' && episodesDiv) addEpisode(episodesDiv, { title: label, src: '' });
       const epDiv = episodesDiv ? episodesDiv.lastElementChild : null;
       try { if (epDiv) epDiv.dataset.fileSizeBytes = String(file.size); } catch {}
-      try { computeLocalFileDurationSeconds(file).then(d => { if (epDiv && !Number.isNaN(d) && d > 0) epDiv.dataset.durationSeconds = String(Math.round(d)); }); } catch {}
+      if (isManga() && /\.cbz$/i.test(file.name||'')) {
+        try { const ab = await file.arrayBuffer(); const zip = await JSZip.loadAsync(ab); const names = Object.keys(zip.files).filter(n => /\.(jpe?g|png|gif|webp|bmp)$/i.test(n)); if (epDiv) { epDiv.dataset.VolumePageCount = String(names.length); epDiv.dataset.volumePageCount = String(names.length); } } catch {}
+      } else {
+        try { computeLocalFileDurationSeconds(file).then(d => { if (epDiv && !Number.isNaN(d) && d > 0) epDiv.dataset.durationSeconds = String(Math.round(d)); }); } catch {}
+      }
       const inputs = epDiv ? epDiv.querySelectorAll('input[type="text"]') : [];
       const epSrcInput = inputs && inputs[1];
       const epError = epDiv ? epDiv.querySelector('.ep-error') : null;
@@ -85,12 +102,12 @@
 
       const row = document.createElement('div');
       Object.assign(row.style, { display:'flex', alignItems:'center', gap:'0.75em', padding:'6px 8px', background:'#222', borderRadius:'6px', fontSize:'0.9em' });
-      const label = document.createElement('div'); label.textContent = `Episode ${epNum}`; label.style.flex = '1';
+      const labelEl = document.createElement('div'); labelEl.textContent = label; labelEl.style.flex = '1';
       const status = document.createElement('div'); status.textContent = 'Queued'; status.style.minWidth = '110px';
       const progressWrapper = document.createElement('div'); progressWrapper.style.flex = '2';
       const prog = document.createElement('progress'); prog.max = 100; prog.value = 0; prog.style.width = '100%';
       progressWrapper.appendChild(prog);
-      row.append(label, progressWrapper, status);
+      row.append(labelEl, progressWrapper, status);
       folderUploadList.appendChild(row);
 
       const fn = async () => {
@@ -146,4 +163,3 @@
   // Capture phase to prevent the old handler from running
   folderInput.addEventListener('change', onChange, true);
 })();
-

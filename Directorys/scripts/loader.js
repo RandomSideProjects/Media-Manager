@@ -90,11 +90,12 @@ async function loadSources() {
   const container = document.getElementById('sourcesContainer');
   container.innerHTML = '';
   try {
-    const manifestUrl = new URL('SourceList.json', window.location.href).href;
+    const manifestName = (typeof SOURCES_MODE !== 'undefined' && SOURCES_MODE === 'manga') ? 'MangaSourceList.json' : 'AnimeSourceList.json';
+    const manifestUrl = new URL(manifestName, window.location.href).href;
     const response = await fetch(manifestUrl);
     const text = await response.text();
     const manifest = JSON.parse(text);
-    console.log('Loaded SourceList.json:', manifestUrl);
+    console.log('Loaded', manifestName + ':', manifestUrl);
 
     if (Array.isArray(manifest.sources)) {
       SOURCES_META = manifest.sources.map((m, idx)=> ({ ...m, _idx: idx }));
@@ -125,11 +126,11 @@ async function loadSources() {
       renderSourcesFromState();
     }
   } catch (error) {
-    container.innerHTML = '<p style="color:#f1f1f1;">Failed to load SourceList.json.</p>';
+    const n = (typeof SOURCES_MODE !== 'undefined' && SOURCES_MODE === 'manga') ? 'MangaSourceList.json' : 'AnimeSourceList.json';
+    container.innerHTML = `<p style="color:#f1f1f1;">Failed to load ${n}.</p>`;
     console.error('Error:', error);
   }
 }
 
 // Kick off on load
 checkHostAndLoad();
-

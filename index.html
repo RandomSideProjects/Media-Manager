@@ -70,11 +70,29 @@
     </div>
     <div id="playerScreen" style="display: none;">
       <div id="loadingSpinner" class="spinner"></div>
+      <!-- CBZ progress overlay -->
+      <div id="cbzProgressOverlay">
+        <div id="cbzProgressContent">
+          <p id="cbzProgressMessage">Preparing…</p>
+          <progress id="cbzProgressBar" max="100" value="0"></progress>
+        </div>
+      </div>
       <button id="backBtn">≡</button>
       <button id="theaterBtn" title="Pop-out Player">⤴</button>
       <button id="clipBtn">Clip</button>
       <h2 id="videoTitle">Loading...</h2>
       <video id="videoPlayer" controls autoplay playsinline></video>
+      <!-- CBZ Viewer -->
+      <div id="cbzViewer" style="display:none">
+        <div id="cbzControls" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75em;gap:0.5em;">
+          <button id="cbzPrevBtn" title="Previous Page">⟵ Prev</button>
+          <span id="cbzPageInfo" style="font-weight:600;">Page 1 / 1</span>
+          <button id="cbzNextBtn" title="Next Page">Next ⟶</button>
+        </div>
+        <div id="cbzImageWrap" style="overflow:hidden;display:flex;justify-content:center;align-items:center;">
+          <img id="cbzImage" alt="Comic Page" style="max-height:80vh;max-width:100%;object-fit:contain;border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,0.5);" />
+        </div>
+      </div>
       <div id="placeholderNotice">
         To view this file, please download the respective category from the source and merge with the folders.
       </div>

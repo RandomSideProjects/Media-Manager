@@ -1,9 +1,9 @@
-name: Source index Maintainer (DO NOT TOUCH)
+name: AnimeSourceMaintainer (DO NOT TOUCH)
 
 on:
   push:
     paths:
-      - 'Directorys/Files/**'
+      - 'Directorys/Files/Anime/**'
   workflow_dispatch:
 
 permissions:
@@ -24,12 +24,12 @@ jobs:
       - name: Install image processor (sharp)
         run: npm install sharp@0.33
 
-      - name: Generate Directorys/SourceList.json
+      - name: Generate Directorys/AnimeSourceList.json
         shell: bash
         run: |
           set -euo pipefail
-          FILE_DIR="Directorys/Files"
-          INDEX_FILE="Directorys/SourceList.json"
+          FILE_DIR="Directorys/Files/Anime"
+          INDEX_FILE="Directorys/AnimeSourceList.json"
 
           if [[ ! -d "$FILE_DIR" ]]; then
             echo "Directory '$FILE_DIR' does not exist; nothing to index."
@@ -43,18 +43,18 @@ jobs:
           const https = require('https');
           const sharp = require('sharp');
 
-          const FILE_DIR = 'Directorys/Files';
-          const INDEX_FILE = 'Directorys/SourceList.json';
+          const FILE_DIR = 'Directorys/Files/Anime';
+          const INDEX_FILE = 'Directorys/AnimeSourceList.json';
           const POSTERS_DIR = 'Directorys/Posters';
           if (!fs.existsSync(POSTERS_DIR)) fs.mkdirSync(POSTERS_DIR, { recursive: true });
 
           function safePosterName(title, fallback) {
             const base = String(title || fallback || 'poster')
               .trim()
-              .replace(/[\\/:*?"<>|]+/g, ' ')  // remove illegal filename chars
-              .replace(/\s+/g, ' ')             // collapse spaces
-              .replace(/\./g, '_')              // dots to underscores
-              .replace(/\s/g, '_');             // spaces to underscores
+              .replace(/[\\/:*?"<>|]+/g, ' ')
+              .replace(/\s+/g, ' ')
+              .replace(/\./g, '_')
+              .replace(/\s/g, '_');
             return base || 'poster';
           }
 
@@ -68,7 +68,7 @@ jobs:
                   const lib = target.startsWith('https:') ? https : http;
                   const req = lib.get(target, {
                     headers: {
-                      'User-Agent': 'Mozilla/5.0 (GitHubActions; +https://github.com) RSP-SourceMaintainer',
+                      'User-Agent': 'Mozilla/5.0 (GitHubActions; +https://github.com) RSP-AnimeSourceMaintainer',
                       'Accept': 'image/*,*/*;q=0.8',
                       'Connection': 'close'
                     }
@@ -87,30 +87,16 @@ jobs:
                     res.on('data', d => chunks.push(d));
                     res.on('end', () => {
                       const buf = Buffer.concat(chunks);
-                      const ct = res.headers['content-type'] || '';
-                      resolve({ buf, contentType: ct });
+                      resolve({ buf, contentType: res.headers['content-type'] || '' });
                     });
                   });
                   req.on('error', reject);
                   req.setTimeout(timeoutMs, () => req.destroy(new Error('timeout')));
                 } catch (e) { reject(e); }
               }
-              // normalize protocol-relative URLs
               if (url && url.startsWith('//')) url = 'https:' + url;
               doRequest(url, maxRedirects);
             });
-          }
-
-          function guessMimeFromExt(p) {
-            const ext = path.extname(p).toLowerCase();
-            switch (ext) {
-              case '.jpg':
-              case '.jpeg': return 'image/jpeg';
-              case '.png': return 'image/png';
-              case '.webp': return 'image/webp';
-              case '.gif': return 'image/gif';
-              default: return 'application/octet-stream';
-            }
           }
 
           (async () => {
@@ -129,9 +115,17 @@ jobs:
                 const cats = Array.isArray(json.categories) ? json.categories : [];
                 const categoryCount = cats.length;
                 let episodeCount = 0;
+                let totalFileSizeBytes = 0;
                 for (const c of cats) {
-                  if (Array.isArray(c.episodes)) episodeCount += c.episodes.length;
+                  if (Array.isArray(c.episodes)) {
+                    episodeCount += c.episodes.length;
+                    for (const e of c.episodes) {
+                      const n = Number(e && e.fileSizeBytes);
+                      if (Number.isFinite(n) && n >= 0) totalFileSizeBytes += Math.round(n);
+                    }
+                  }
                 }
+                if (!totalFileSizeBytes && Number.isFinite(Number(json.totalFileSizeBytes))) totalFileSizeBytes = Number(json.totalFileSizeBytes);
 
                 // Build poster file in repo (WebP, height=512) and reference by path
                 let poster = null;
@@ -164,11 +158,12 @@ jobs:
 
                 result.sources.push({
                   file,
-                  path: `./Files/${file}`,
+                  path: `./Files/Anime/${file}`,
                   title,
-                  poster,           // './Posters/Title.webp' or null
+                  poster,
                   categoryCount,
                   episodeCount,
+                  totalFileSizeBytes: Number.isFinite(totalFileSizeBytes) ? totalFileSizeBytes : 0,
                   LatestTime: json.LatestTime || null
                 });
               } catch (e) {
@@ -186,5 +181,5 @@ jobs:
       - name: Commit and push changes
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: 'chore: update Directorys/SourceList.json and posters'
-          file_pattern: 'Directorys/SourceList.json Directorys/Posters/**'
+          commit_message: 'chore: update Directorys/AnimeSourceList.json and posters'
+          file_pattern: 'Directorys/AnimeSourceList.json Directorys/Posters/**'

@@ -1,0 +1,195 @@
+name: MangaSourceMaintainer (DO NOT TOUCH)
+
+on:
+  push:
+    paths:
+      - 'Directorys/Files/Manga/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-index:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install image processor (sharp)
+        run: npm install sharp@0.33
+
+      - name: Generate Directorys/MangaSourceList.json
+        shell: bash
+        run: |
+          set -euo pipefail
+          FILE_DIR="Directorys/Files/Manga"
+          INDEX_FILE="Directorys/MangaSourceList.json"
+
+          if [[ ! -d "$FILE_DIR" ]]; then
+            echo "Directory '$FILE_DIR' does not exist; nothing to index."
+            exit 0
+          fi
+
+          node <<'NODE'
+          const fs = require('fs');
+          const path = require('path');
+          const http = require('http');
+          const https = require('https');
+          const sharp = require('sharp');
+
+          const FILE_DIR = 'Directorys/Files/Manga';
+          const INDEX_FILE = 'Directorys/MangaSourceList.json';
+          const POSTERS_DIR = 'Directorys/Posters';
+          if (!fs.existsSync(POSTERS_DIR)) fs.mkdirSync(POSTERS_DIR, { recursive: true });
+
+          function safePosterName(title, fallback) {
+            const base = String(title || fallback || 'poster')
+              .trim()
+              .replace(/[\\/:*?"<>|]+/g, ' ')
+              .replace(/\s+/g, ' ')
+              .replace(/\./g, '_')
+              .replace(/\s/g, '_');
+            return base || 'poster';
+          }
+
+          function fetchBuffer(url, timeoutMs = 12000, maxRedirects = 4) {
+            return new Promise((resolve, reject) => {
+              const visited = new Set();
+              function doRequest(target, redirectsLeft) {
+                try {
+                  if (visited.has(target)) return reject(new Error('redirect loop'));
+                  visited.add(target);
+                  const lib = target.startsWith('https:') ? https : http;
+                  const req = lib.get(target, {
+                    headers: {
+                      'User-Agent': 'Mozilla/5.0 (GitHubActions; +https://github.com) RSP-MangaSourceMaintainer',
+                      'Accept': 'image/*,*/*;q=0.8',
+                      'Connection': 'close'
+                    }
+                  }, res => {
+                    const status = res.statusCode || 0;
+                    if ([301,302,303,307,308].includes(status) && res.headers.location && redirectsLeft > 0) {
+                      const next = new URL(res.headers.location, target).href;
+                      res.resume();
+                      return doRequest(next, redirectsLeft - 1);
+                    }
+                    if (status !== 200) {
+                      res.resume();
+                      return reject(new Error('HTTP ' + status));
+                    }
+                    const chunks = [];
+                    res.on('data', d => chunks.push(d));
+                    res.on('end', () => {
+                      const buf = Buffer.concat(chunks);
+                      resolve({ buf, contentType: res.headers['content-type'] || '' });
+                    });
+                  });
+                  req.on('error', reject);
+                  req.setTimeout(timeoutMs, () => req.destroy(new Error('timeout')));
+                } catch (e) { reject(e); }
+              }
+              if (url && url.startsWith('//')) url = 'https:' + url;
+              doRequest(url, maxRedirects);
+            });
+          }
+
+          (async () => {
+            const entries = fs.readdirSync(FILE_DIR)
+              .filter(f => f.toLowerCase().endsWith('.json'));
+
+            const result = { sources: [] };
+
+            for (const file of entries) {
+              try {
+                const full = path.join(FILE_DIR, file);
+                const raw = fs.readFileSync(full, 'utf8');
+                const json = JSON.parse(raw);
+
+                const title = json.title || path.parse(file).name;
+
+                // Determine volumes list (manga has no categories)
+                let volumes = [];
+                if (Array.isArray(json.volumes)) volumes = json.volumes;
+                else if (Array.isArray(json.episodes)) volumes = json.episodes; // fallback if named 'episodes'
+                else if (Array.isArray(json.categories)) {
+                  // fallback: flatten categories[].episodes[] just in case
+                  for (const c of json.categories) {
+                    if (Array.isArray(c.episodes)) volumes.push(...c.episodes);
+                  }
+                }
+
+                const volumeCount = Array.isArray(volumes) ? volumes.length : 0;
+                let pageCount = 0;
+                let totalFileSizeBytes = 0;
+                for (const v of volumes) {
+                  const n = Number((v && (v.VolumePageCount ?? v.volumePageCount)) || 0);
+                  if (Number.isFinite(n)) pageCount += n;
+                  const sz = Number(v && v.fileSizeBytes);
+                  if (Number.isFinite(sz) && sz >= 0) totalFileSizeBytes += Math.round(sz);
+                }
+                // Prefer top-level totalPagecount if provided; otherwise use sum
+                const totalPagecount = Number.isFinite(Number(json.totalPagecount)) ? Number(json.totalPagecount) : pageCount;
+                if (!totalFileSizeBytes && Number.isFinite(Number(json.totalFileSizeBytes))) totalFileSizeBytes = Number(json.totalFileSizeBytes);
+
+                // Build poster file in repo (WebP, height=512) and reference by path
+                let poster = null;
+                const imgUrl = (json.Image && json.Image !== 'N/A') ? json.Image : (json.image && json.image !== 'N/A' ? json.image : null);
+                if (imgUrl) {
+                  try {
+                    let sourceBuffer;
+                    if (imgUrl.startsWith('data:')) {
+                      const m = imgUrl.match(/^data:.*?;base64,(.*)$/);
+                      if (!m) throw new Error('Unsupported data URI format');
+                      sourceBuffer = Buffer.from(m[1], 'base64');
+                    } else {
+                      const { buf } = await fetchBuffer(imgUrl);
+                      sourceBuffer = buf;
+                    }
+                    const webpBuf = await sharp(sourceBuffer)
+                      .resize({ height: 512 })
+                      .webp({ quality: 80 })
+                      .toBuffer();
+
+                    const posterName = safePosterName(title, path.parse(file).name) + '.webp';
+                    const posterAbs = path.join(POSTERS_DIR, posterName);
+                    fs.writeFileSync(posterAbs, webpBuf);
+                    console.log('Wrote poster:', posterAbs);
+                    poster = `./Posters/${posterName}`;
+                  } catch (e) {
+                    console.warn('Poster build failed for', file, '-', e.message);
+                  }
+                }
+
+                result.sources.push({
+                  file,
+                  path: `./Files/Manga/${file}`,
+                  title,
+                  poster,
+                  volumeCount,
+                  pageCount,
+                  totalPagecount,
+                  totalFileSizeBytes: Number.isFinite(totalFileSizeBytes) ? totalFileSizeBytes : 0,
+                  LatestTime: json.LatestTime || null
+                });
+              } catch (e) {
+                console.warn('Skipping', file, e.message);
+              }
+            }
+
+            result.sources.sort((a, b) => String(a.title).localeCompare(String(b.title)));
+
+            fs.writeFileSync(INDEX_FILE, JSON.stringify(result, null, 2));
+          })().catch(err => { console.error(err); process.exit(1); });
+          NODE
+
+      - name: Commit and push changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: 'chore: update Directorys/MangaSourceList.json and posters'
+          file_pattern: 'Directorys/MangaSourceList.json Directorys/Posters/**'

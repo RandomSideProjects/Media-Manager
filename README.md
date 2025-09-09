@@ -16,9 +16,10 @@ A lightweight, browser-only video player that loads episode lists from small JSO
 | `style.css` | Global styles and dark/light theme definitions. |
 | `script.js` | Core logic for loading sources, rendering episode menus, playback management, clipping, and downloads. |
 | `creator.html` | Interactive tool for building or editing JSON directory files. |
-| `Directorys/` | Example and public source files plus listing page (`index.html`, `SourceList.json`). |
+| `Directorys/` | Example and public source files plus listing page (`index.html`, `AnimeSourceList.json`, `MangaSourceList.json`). |
 | `Assets/` | Image assets used by the UI. |
-| `.github/workflows/SourceMaintainer.yml` | GitHub Action that keeps `Directorys/SourceList.json` in sync. |
+| `.github/workflows/AnimeSourceMaintainer.yml` | GitHub Action that keeps `Directorys/AnimeSourceList.json` in sync. |
+| `.github/workflows/MangaSourceMaintainer.yml` | GitHub Action that keeps `Directorys/MangaSourceList.json` in sync. |
 
 ## Key Concepts & Features
 
@@ -92,7 +93,7 @@ Offical Host
 3. Look at `localStorage` keys to see how resume data is stored.
 4. Explore the clipping logic near the end of `script.js`.
 5. Review the Catbox upload helpers in `creator.html`.
-6. Check the GitHub Action that maintains `Directorys/SourceList.json`.
+6. Check the GitHub Actions that maintain `Directorys/AnimeSourceList.json` and `Directorys/MangaSourceList.json`.
 
 ## Where to Go Next
 
@@ -105,4 +106,3 @@ Offical Host
 ## Troubleshooting / Known Errors
 
 - **CORS errors**: Ensure your JSON host sends `Access-Control-Allow-Origin: *`.
-

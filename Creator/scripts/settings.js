@@ -12,7 +12,8 @@ function loadUploadSettings(){
     return { 
       anonymous: typeof p.anonymous==='boolean' ? p.anonymous : true,
       userhash: (p.userhash||'').trim(),
-      uploadConcurrency: Number.isFinite(parseInt(p.uploadConcurrency,10)) ? Math.max(1, Math.min(8, parseInt(p.uploadConcurrency,10))) : 2
+      uploadConcurrency: Number.isFinite(parseInt(p.uploadConcurrency,10)) ? Math.max(1, Math.min(8, parseInt(p.uploadConcurrency,10))) : 2,
+      libraryMode: (p.libraryMode === 'manga') ? 'manga' : 'anime'
     };
   } catch { return { anonymous: true, userhash: '' }; }
 }
@@ -20,7 +21,8 @@ function saveUploadSettings(s){
   localStorage.setItem(LS_SETTINGS_KEY, JSON.stringify({ 
     anonymous: !!s.anonymous,
     userhash: (s.userhash||'').trim(),
-    uploadConcurrency: Math.max(1, Math.min(8, parseInt(s.uploadConcurrency||2,10)))
+    uploadConcurrency: Math.max(1, Math.min(8, parseInt(s.uploadConcurrency||2,10))),
+    libraryMode: (s.libraryMode === 'manga') ? 'manga' : 'anime'
   }));
 }
 
@@ -37,12 +39,19 @@ const mmUploadConcRange = document.getElementById('mmUploadConcurrencyRange');
 const mmUploadConcValue = document.getElementById('mmUploadConcurrencyValue');
 const mmSaveBtn = document.getElementById('mmSaveUploadSettings');
 const mmCloseBtn = document.getElementById('mmCloseUploadSettings');
+const mmModeAnime = document.getElementById('mmModeAnime');
+const mmModeManga = document.getElementById('mmModeManga');
 
 if (mmBtn && mmPanel && mmAnonToggle && mmUserhashRow && mmUserhashInput && mmSaveBtn && mmCloseBtn) {
   const st = loadUploadSettings();
   mmAnonToggle.checked = !!st.anonymous;
   mmUserhashInput.value = st.userhash || '';
   mmUserhashRow.style.display = st.anonymous ? 'none' : '';
+  if (mmModeAnime && mmModeManga) {
+    const mode = (st.libraryMode === 'manga') ? 'manga' : 'anime';
+    mmModeAnime.checked = (mode === 'anime');
+    mmModeManga.checked = (mode === 'manga');
+  }
   if (mmUploadConcRange) {
     mmUploadConcRange.value = String(st.uploadConcurrency || 2);
     if (mmUploadConcValue) mmUploadConcValue.textContent = String(st.uploadConcurrency || 2);
@@ -56,11 +65,15 @@ if (mmBtn && mmPanel && mmAnonToggle && mmUserhashRow && mmUserhashInput && mmSa
   mmPanel.addEventListener('click', (e)=>{ if(e.target===mmPanel) mmPanel.style.display='none'; });
   mmAnonToggle.addEventListener('change', () => { mmUserhashRow.style.display = mmAnonToggle.checked ? 'none' : ''; });
   mmSaveBtn.addEventListener('click', () => {
-    saveUploadSettings({
+    const mode = (mmModeManga && mmModeManga.checked) ? 'manga' : 'anime';
+    const saved = {
       anonymous: mmAnonToggle.checked,
       userhash: mmUserhashInput.value.trim(),
-      uploadConcurrency: mmUploadConcRange ? parseInt(mmUploadConcRange.value,10) : 2
-    });
+      uploadConcurrency: mmUploadConcRange ? parseInt(mmUploadConcRange.value,10) : 2,
+      libraryMode: mode
+    };
+    saveUploadSettings(saved);
+    try { window.dispatchEvent(new CustomEvent('mm_settings_saved', { detail: saved })); } catch {}
     mmPanel.style.display = 'none';
   });
 }

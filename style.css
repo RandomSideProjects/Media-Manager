@@ -334,6 +334,26 @@ label[for="downloadConcurrencyRange"] { min-width: 8.5em; }
 #clipProgressMessage { margin-bottom: 1em; }
 #clipProgressBar { width: 100%; }
 
+/* CBZ progress overlay */
+#cbzProgressOverlay {
+  display: none;
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.65);
+  align-items: center; justify-content: center;
+  z-index: 10002; text-align: center;
+}
+#cbzProgressContent {
+  padding: 1em;
+  background: var(--container-bg);
+  border-radius: 8px;
+  max-width: 90%;
+  margin: auto;
+  color: var(--text);
+}
+#cbzProgressMessage { margin-bottom: 1em; }
+#cbzProgressBar { width: 100%; }
+
 /* Clear Storage confirmation overlay */
 #clearStorageOverlay {
   display: none;

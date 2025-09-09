@@ -6,8 +6,11 @@
 // Build a card from manifest/meta entry
 function buildSourceCardFromMeta(meta) {
   const title = meta.title || meta.file || 'Untitled';
-  const categoryCount = typeof meta.categoryCount === 'number' ? meta.categoryCount : 0;
-  const episodeCount  = typeof meta.episodeCount  === 'number' ? meta.episodeCount  : 0;
+  const isManga = (typeof SOURCES_MODE !== 'undefined' && SOURCES_MODE === 'manga');
+  const categoryCount = isManga ? 0 : (typeof meta.categoryCount === 'number' ? meta.categoryCount : 0);
+  const episodeCount  = isManga ? 0 : (typeof meta.episodeCount  === 'number' ? meta.episodeCount  : 0);
+  const volumeCount   = isManga ? (typeof meta.volumeCount === 'number' ? meta.volumeCount : 0) : 0;
+  const pageCountRaw  = isManga ? (Number.isFinite(Number(meta.totalPagecount)) ? Number(meta.totalPagecount) : (typeof meta.pageCount === 'number' ? meta.pageCount : 0)) : 0;
   const openPath = meta.path || `./Files/${meta.file || ''}`;
 
   const card = document.createElement('div');
@@ -35,9 +38,14 @@ function buildSourceCardFromMeta(meta) {
   h3.textContent = title;
 
   const p1 = document.createElement('p');
-  p1.innerHTML = `<strong>${categoryCount}</strong> ${categoryCount === 1 ? 'Season' : 'Seasons'}`;
   const p2 = document.createElement('p');
-  p2.innerHTML = `<strong>${episodeCount}</strong> ${episodeCount === 1 ? 'Episode' : 'Episodes'}`;
+  if (isManga) {
+    p1.innerHTML = `<strong>${volumeCount}</strong> ${volumeCount === 1 ? 'Volume' : 'Volumes'}`;
+    p2.innerHTML = `<strong>${pageCountRaw}</strong> ${pageCountRaw === 1 ? 'Page' : 'Pages'}`;
+  } else {
+    p1.innerHTML = `<strong>${categoryCount}</strong> ${categoryCount === 1 ? 'Season' : 'Seasons'}`;
+    p2.innerHTML = `<strong>${episodeCount}</strong> ${episodeCount === 1 ? 'Episode' : 'Episodes'}`;
+  }
 
   const timeP = document.createElement('p');
   timeP.className = 'source-time';
@@ -87,22 +95,30 @@ function buildSourceCardFromMeta(meta) {
   right.append(h3, p1, p2, timeP, sizeP, durP, btn);
   card.appendChild(right);
 
-  // right-click terminology toggle
+  // Right-click: toggle details. For Anime, also flips labels; for Manga, just shows details.
   card.addEventListener('contextmenu', e => {
     e.preventDefault();
-    const inSeasonMode = p1.textContent.includes('Season');
-    if (inSeasonMode) {
-      p1.innerHTML = `<strong>${categoryCount}</strong> ${categoryCount === 1 ? 'Category' : 'Categories'}`;
-      p2.innerHTML = `<strong>${episodeCount}</strong> ${episodeCount === 1 ? 'Item' : 'Items'}`;
-      timeP.style.display = meta.LatestTime ? 'block' : 'none';
-      sizeP.style.display = (typeof meta.totalFileSizeBytes === 'number') ? 'block' : 'none';
-      durP.style.display = (typeof meta.totalDurationSeconds === 'number') ? 'block' : 'none';
-    } else {
-      p1.innerHTML = `<strong>${categoryCount}</strong> ${categoryCount === 1 ? 'Season' : 'Seasons'}`;
-      p2.innerHTML = `<strong>${episodeCount}</strong> ${episodeCount === 1 ? 'Episode' : 'Episodes'}`;
-      timeP.style.display = 'none';
-      sizeP.style.display = 'none';
+    const showingDetails = timeP.style.display === 'block' || sizeP.style.display === 'block' || durP.style.display === 'block';
+    if (isManga) {
+      // Toggle details only
+      timeP.style.display = showingDetails ? 'none' : (meta.LatestTime ? 'block' : 'none');
+      sizeP.style.display = showingDetails ? 'none' : ((typeof meta.totalFileSizeBytes === 'number') ? 'block' : 'none');
       durP.style.display = 'none';
+    } else {
+      const inSeasonMode = p1.textContent.includes('Season');
+      if (inSeasonMode) {
+        p1.innerHTML = `<strong>${categoryCount}</strong> ${categoryCount === 1 ? 'Category' : 'Categories'}`;
+        p2.innerHTML = `<strong>${episodeCount}</strong> ${episodeCount === 1 ? 'Item' : 'Items'}`;
+        timeP.style.display = meta.LatestTime ? 'block' : 'none';
+        sizeP.style.display = (typeof meta.totalFileSizeBytes === 'number') ? 'block' : 'none';
+        durP.style.display = (typeof meta.totalDurationSeconds === 'number') ? 'block' : 'none';
+      } else {
+        p1.innerHTML = `<strong>${categoryCount}</strong> ${categoryCount === 1 ? 'Season' : 'Seasons'}`;
+        p2.innerHTML = `<strong>${episodeCount}</strong> ${episodeCount === 1 ? 'Episode' : 'Episodes'}`;
+        timeP.style.display = 'none';
+        sizeP.style.display = 'none';
+        durP.style.display = 'none';
+      }
     }
   });
 
