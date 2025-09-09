@@ -22,19 +22,51 @@ function renderEpisodeList() {
       left.textContent = episode.title;
       const right = document.createElement('span');
       right.className = 'episode-meta';
-      let durationSec = Number.isFinite(Number(episode.durationSeconds)) ? Number(episode.durationSeconds) : NaN;
-      if (!Number.isFinite(durationSec)) {
-        const lsDur = parseFloat(localStorage.getItem((episode.src || '') + ':duration'));
-        if (Number.isFinite(lsDur)) durationSec = Math.round(lsDur);
-      }
-      const watched = parseFloat(localStorage.getItem(episode.src || ''));
-      const hasWatched = Number.isFinite(watched) && watched > 0;
-      if (Number.isFinite(durationSec) && durationSec > 0) {
-        right.textContent = hasWatched ? `${formatTime(watched)} / ${formatTime(durationSec)}` : `${formatTime(durationSec)}`;
-      } else if (hasWatched) {
-        right.textContent = `${formatTime(watched)}`;
+      // Decide meta display depending on media type (video vs CBZ)
+      const isCbz = (/\.cbz(?:$|[?#])/i.test(String(episode.src || ''))) || (String(episode.fileName || '').toLowerCase().endsWith('.cbz'));
+      if (isCbz) {
+        let totalPages = Number.isFinite(Number(episode.VolumePageCount)) ? Number(episode.VolumePageCount) : NaN;
+        if (!Number.isFinite(totalPages)) {
+          let lsPages = NaN;
+          if (episode && episode.progressKey) lsPages = parseInt(localStorage.getItem(String(episode.progressKey) + ':cbzPages'), 10);
+          if (!Number.isFinite(lsPages)) lsPages = parseInt(localStorage.getItem((episode.src || '') + ':cbzPages'), 10);
+          if (Number.isFinite(lsPages)) totalPages = lsPages;
+        }
+        let savedPage = NaN;
+        if (episode && episode.progressKey) savedPage = parseInt(localStorage.getItem(String(episode.progressKey) + ':cbzPage'), 10);
+        if (!Number.isFinite(savedPage)) savedPage = parseInt(localStorage.getItem((episode.src || '') + ':cbzPage'), 10);
+        const hasSaved = Number.isFinite(savedPage) && savedPage > 0;
+        if (Number.isFinite(totalPages) && totalPages > 0) {
+          right.textContent = hasSaved ? `${savedPage} / ${totalPages}` : `${totalPages}`;
+        } else if (hasSaved) {
+          right.textContent = `${savedPage}`;
+        } else {
+          right.textContent = '';
+        }
       } else {
-        right.textContent = '';
+        let durationSec = Number.isFinite(Number(episode.durationSeconds)) ? Number(episode.durationSeconds) : NaN;
+        if (!Number.isFinite(durationSec)) {
+          // Prefer progressKey duration for local-folder items
+          let lsDur = NaN;
+          if (episode && episode.progressKey) {
+            lsDur = parseFloat(localStorage.getItem(String(episode.progressKey) + ':duration'));
+          }
+          if (!Number.isFinite(lsDur)) {
+            lsDur = parseFloat(localStorage.getItem((episode.src || '') + ':duration'));
+          }
+          if (Number.isFinite(lsDur)) durationSec = Math.round(lsDur);
+        }
+        let watched = NaN;
+        if (episode && episode.progressKey) watched = parseFloat(localStorage.getItem(String(episode.progressKey)));
+        if (!Number.isFinite(watched)) watched = parseFloat(localStorage.getItem(episode.src || ''));
+        const hasWatched = Number.isFinite(watched) && watched > 0;
+        if (Number.isFinite(durationSec) && durationSec > 0) {
+          right.textContent = hasWatched ? `${formatTime(watched)} / ${formatTime(durationSec)}` : `${formatTime(durationSec)}`;
+        } else if (hasWatched) {
+          right.textContent = `${formatTime(watched)}`;
+        } else {
+          right.textContent = '';
+        }
       }
       button.append(left, right);
       button.addEventListener("click", () => {
@@ -84,4 +116,3 @@ function showResumeMessage() {
     });
   }
 }
-

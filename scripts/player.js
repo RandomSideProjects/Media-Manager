@@ -46,6 +46,15 @@ function updateCbzPageInfo() {
   if (cbzPageInfo) cbzPageInfo.textContent = `Page ${cbzState.index + 1} / ${cbzState.pages.length}`;
   if (cbzImage) cbzImage.src = cbzState.pages[cbzState.index] || '';
   if (nextBtn) nextBtn.style.display = (cbzState.index >= cbzState.pages.length - 1 && flatList && currentIndex < flatList.length - 1) ? 'inline-block' : 'none';
+  // Persist current page and total pages for this CBZ item
+  try {
+    const curItem = (typeof currentIndex === 'number' && flatList && flatList[currentIndex]) ? flatList[currentIndex] : null;
+    const src = curItem && curItem.src ? curItem.src : '';
+    if (src) {
+      localStorage.setItem(src + ':cbzPage', String(cbzState.index + 1));
+      localStorage.setItem(src + ':cbzPages', String(cbzState.pages.length));
+    }
+  } catch {}
 }
 
 function showCbzProgress(message, value) {
@@ -125,6 +134,18 @@ async function loadCbz(item) {
       cbzState.pages = cached.pages.slice();
       cbzObjectUrls = cached.pages; // current reference for convenience
       cbzState.index = 0;
+      // Restore saved page and persist total pages
+      try {
+        const pk = (item && item.progressKey) ? String(item.progressKey) : '';
+        if (item && item.src) localStorage.setItem(item.src + ':cbzPages', String(cbzState.pages.length));
+        if (pk) localStorage.setItem(pk + ':cbzPages', String(cbzState.pages.length));
+        const savedSrc = item && item.src ? parseInt(localStorage.getItem(item.src + ':cbzPage'), 10) : NaN;
+        const savedPk = pk ? parseInt(localStorage.getItem(pk + ':cbzPage'), 10) : NaN;
+        const savedPage = Number.isFinite(savedPk) ? savedPk : savedSrc;
+        if (Number.isFinite(savedPage) && savedPage >= 1 && savedPage <= cbzState.pages.length) {
+          cbzState.index = savedPage - 1;
+        }
+      } catch {}
       updateCbzPageInfo();
       hideCbzProgress();
       return;
@@ -164,6 +185,18 @@ async function loadCbz(item) {
     if (pages.length === 0) throw new Error('No images found in CBZ');
     cbzState.pages = pages;
     cbzState.index = 0;
+    // Save total pages and restore saved page if present
+    try {
+      if (item && item.src) localStorage.setItem(item.src + ':cbzPages', String(pages.length));
+      const pk = (item && item.progressKey) ? String(item.progressKey) : '';
+      if (pk) localStorage.setItem(pk + ':cbzPages', String(pages.length));
+      const savedSrc = item && item.src ? parseInt(localStorage.getItem(item.src + ':cbzPage'), 10) : NaN;
+      const savedPk = pk ? parseInt(localStorage.getItem(pk + ':cbzPage'), 10) : NaN;
+      const savedPage = Number.isFinite(savedPk) ? savedPk : savedSrc;
+      if (Number.isFinite(savedPage) && savedPage >= 1 && savedPage <= pages.length) {
+        cbzState.index = savedPage - 1;
+      }
+    } catch {}
     // Cache the pages for reuse until reload
     cbzCache.set(cacheKey, { pages });
     updateCbzPageInfo();
@@ -248,7 +281,12 @@ function loadVideo(index) {
       video.style.display = '';
       video.src = item.src;
       video.addEventListener('loadedmetadata', function onMeta() {
+        // Persist duration under src and progressKey (for local folders)
         localStorage.setItem(video.src + ':duration', video.duration);
+        try {
+          const pk = (item && item.progressKey) ? String(item.progressKey) : '';
+          if (pk) localStorage.setItem(pk + ':duration', video.duration);
+        } catch {}
         video.removeEventListener('loadedmetadata', onMeta);
       });
       function onVideoError() {
@@ -258,7 +296,8 @@ function loadVideo(index) {
         video.removeEventListener('error', onVideoError);
       }
       video.addEventListener('error', onVideoError);
-      const savedTime = localStorage.getItem(video.src);
+      let savedTime = localStorage.getItem(video.src);
+      if (!savedTime && item && item.progressKey) savedTime = localStorage.getItem(String(item.progressKey));
       if (savedTime) video.currentTime = parseFloat(savedTime);
     }
     if (theaterBtn) theaterBtn.style.display = 'inline-block';
@@ -303,6 +342,11 @@ if (video) {
     if (video.currentTime / video.duration > 0.9 && currentIndex < flatList.length - 1) {
       nextBtn.style.display = "inline-block";
     }
+    try {
+      const curItem = (typeof currentIndex === 'number' && flatList && flatList[currentIndex]) ? flatList[currentIndex] : null;
+      const pk = curItem && curItem.progressKey ? String(curItem.progressKey) : '';
+      if (pk) localStorage.setItem(pk, video.currentTime);
+    } catch {}
     localStorage.setItem(video.src, video.currentTime);
   });
   video.addEventListener("ended", () => {

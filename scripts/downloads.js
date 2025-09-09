@@ -164,16 +164,30 @@ async function downloadSourceFolder(options = {}) {
   const rootFolder = zip.folder(titleText);
   rootFolder.file('PUT THIS FOLDER IN YOUR /DIRECTORYS/ FOLDER.txt', 'https://github.com/RandomSideProjects/Media-Manager/ is the origin of this web app.');
 
-  const manifest = { title: titleText, Image: sourceImageUrl || 'N/A', categories: [] };
+  // Add a LocalID so local-folder progress keys can be stable across sessions
+  let localId;
+  try { const n = Math.floor((Date.now() + Math.random() * 1000000)) % 1000000; localId = `Local${String(n).padStart(6, '0')}`; }
+  catch { localId = 'Local000000'; }
+  const manifest = { title: titleText, Image: sourceImageUrl || 'N/A', categories: [], LocalID: localId };
   const catFolders = []; const catObjs = [];
   const sanitizedCats = videoList.map(cat => safeZipSegment(cat.category));
   videoList.forEach((cat, i) => {
     const catFolder = rootFolder.folder(sanitizedCats[i]); catFolders.push(catFolder);
     const episodesPlaceholders = cat.episodes.map((ep, ei) => {
       let ext = '.mp4';
-      try { const urlParts = new URL(ep.src, window.location.href); const origName = decodeURIComponent(urlParts.pathname.split('/').pop()); if (origName && origName.includes('.')) ext = origName.slice(origName.lastIndexOf('.')); } catch {}
-      const pad = String(ei + 1).padStart(2, '0'); const localPath = `Directorys/${titleText}/${sanitizedCats[i]}/E${pad}${ext}`;
-      return { title: ep.title, src: localPath, fileSizeBytes: (typeof ep.fileSizeBytes === 'number') ? ep.fileSizeBytes : null, durationSeconds: (typeof ep.durationSeconds === 'number') ? ep.durationSeconds : null };
+      try {
+        const urlParts = new URL(ep.src, window.location.href);
+        const origName = decodeURIComponent(urlParts.pathname.split('/').pop());
+        if (origName && origName.includes('.')) ext = origName.slice(origName.lastIndexOf('.')).toLowerCase();
+      } catch {}
+      const pad = String(ei + 1).padStart(2, '0');
+      const isCbz = ext === '.cbz';
+      const prefix = isCbz ? 'V' : 'E';
+      const localPath = `Directorys/${titleText}/${sanitizedCats[i]}/${prefix}${pad}${ext}`;
+      const base = { title: ep.title, src: localPath, fileSizeBytes: (typeof ep.fileSizeBytes === 'number') ? ep.fileSizeBytes : null };
+      if (isCbz) { base.VolumePageCount = (typeof ep.VolumePageCount === 'number') ? ep.VolumePageCount : null; }
+      else { base.durationSeconds = (typeof ep.durationSeconds === 'number') ? ep.durationSeconds : null; }
+      return base;
     });
     const catObj = { category: cat.category, episodes: episodesPlaceholders }; catObjs.push(catObj); manifest.categories.push(catObj);
   });
@@ -184,9 +198,10 @@ async function downloadSourceFolder(options = {}) {
     cat.episodes.forEach((episode, ei) => {
       const urlParts = new URL(episode.src, window.location.href);
       const origName = decodeURIComponent(urlParts.pathname.split('/').pop());
-      const ext = origName.includes('.') ? origName.slice(origName.lastIndexOf('.')) : '';
+      const ext = origName.includes('.') ? origName.slice(origName.lastIndexOf('.')).toLowerCase() : '';
       const pad = String(ei + 1).padStart(2, '0');
-      const fileName = `E${pad}${ext}`; plannedNames[ci][ei] = fileName;
+      const prefix = (ext === '.cbz') ? 'V' : 'E';
+      const fileName = `${prefix}${pad}${ext}`; plannedNames[ci][ei] = fileName;
       let shouldDownload = true;
       if (selectedEpisodesBySeason) {
         const set = selectedEpisodesBySeason[ci];
@@ -227,6 +242,14 @@ async function downloadSourceFolder(options = {}) {
     return new Promise((resolve) => { try { const url = URL.createObjectURL(blob); const v = document.createElement('video'); v.preload = 'metadata'; const done = () => { try { URL.revokeObjectURL(url); } catch {} const d = isFinite(v.duration) ? v.duration : NaN; resolve(d); }; v.onloadedmetadata = done; v.onerror = done; v.src = url; } catch { resolve(NaN); } });
   }
 
+  async function computeBlobPageCount(blob) {
+    try {
+      const zip = await JSZip.loadAsync(blob);
+      const names = Object.keys(zip.files).filter(n => /\.(jpe?g|png|gif|webp|bmp)$/i.test(n));
+      return names.length;
+    } catch { return NaN; }
+  }
+
   const workers = Array.from({ length: concurrency }, async () => {
     while (!cancelRequested && pointer < tasks.length) {
       const idx = pointer++;
@@ -254,7 +277,13 @@ async function downloadSourceFolder(options = {}) {
         catFolders[ci].file(fileName, blob);
         const epObj = catObjs[ci].episodes[ei]; epObj.src = `Directorys/${titleText}/${sanitizedCats[ci]}/${fileName}`;
         try { const sz = Number(blob && blob.size); if (Number.isFinite(sz) && sz >= 0) { epObj.fileSizeBytes = sz; downloadedBytes += sz; } } catch {}
-        try { const d = await computeBlobDurationSeconds(blob); if (Number.isFinite(d) && d > 0) { const sec = Math.round(d); epObj.durationSeconds = sec; } } catch {}
+        // Set per-item metadata by type
+        if (fileName.toLowerCase().endsWith('.cbz')) {
+          try { const pages = await computeBlobPageCount(blob); if (Number.isFinite(pages) && pages >= 0) epObj.VolumePageCount = pages; } catch {}
+          epObj.durationSeconds = null;
+        } else {
+          try { const d = await computeBlobDurationSeconds(blob); if (Number.isFinite(d) && d > 0) { const sec = Math.round(d); epObj.durationSeconds = sec; } } catch {}
+        }
       } catch (err) {
         console.error('Error downloading', episode.src, err);
       }
@@ -263,9 +292,24 @@ async function downloadSourceFolder(options = {}) {
 
   await Promise.all(workers);
   if (cancelRequested) { return; }
-  let totalBytesAll = 0, totalSecsAll = 0;
-  try { for (const c of catObjs) { for (const e of c.episodes) { const b = Number(e.fileSizeBytes); const d = Number(e.durationSeconds); if (Number.isFinite(b) && b >= 0) totalBytesAll += Math.floor(b); if (Number.isFinite(d) && d >= 0) totalSecsAll += Math.floor(d); } } } catch {}
-  manifest.totalFileSizeBytes = totalBytesAll || 0; manifest.totalDurationSeconds = totalSecsAll || 0;
+  let totalBytesAll = 0, totalSecsAll = 0, totalPagesAll = 0;
+  try {
+    for (const c of catObjs) {
+      for (const e of c.episodes) {
+        const b = Number(e.fileSizeBytes);
+        const d = Number(e.durationSeconds);
+        const p = Number(e.VolumePageCount);
+        if (Number.isFinite(b) && b >= 0) totalBytesAll += Math.floor(b);
+        if (Number.isFinite(d) && d >= 0) totalSecsAll += Math.floor(d);
+        if (Number.isFinite(p) && p >= 0) totalPagesAll += Math.floor(p);
+      }
+    }
+  } catch {}
+  manifest.totalFileSizeBytes = totalBytesAll || 0;
+  // Only include duration total when there are non-zero durations
+  if (totalSecsAll > 0) manifest.totalDurationSeconds = totalSecsAll;
+  // Include totalPagecount if there are CBZ volumes
+  if (totalPagesAll > 0) manifest.totalPagecount = totalPagesAll;
 
   async function fetchAsDataURL(url) {
     try { const resp = await fetch(url, { cache: 'no-store' }); if (!resp.ok) throw new Error('image fetch failed'); const blob = await resp.blob(); return await new Promise((resolve, reject) => { const fr = new FileReader(); fr.onload = () => resolve(String(fr.result || '')); fr.onerror = reject; fr.readAsDataURL(blob); }); } catch { return null; }

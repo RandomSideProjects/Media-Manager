@@ -19,6 +19,18 @@ async function handleFolderUpload(event) {
     return;
   }
   const { title: dirTitle, categories: cats } = json;
+  // Derive a stable local source ID from JSON or generate one
+  let localId = json.LocalID || json.localId || json.sourceId || json.id;
+  if (!localId) {
+    try {
+      // Generate 6-digit numeric id and prefix with "Local"
+      const n = Math.floor((Date.now() + Math.random() * 1000000)) % 1000000;
+      localId = `Local${String(n).padStart(6, '0')}`;
+    } catch {
+      localId = 'Local000000';
+    }
+  }
+  try { sourceKey = localId; } catch {}
 
   // Helper to resolve a file for an episode by matching the relative path suffix if possible
   function findEpisodeFile(epSrc) {
@@ -38,16 +50,19 @@ async function handleFolderUpload(event) {
     } catch { return null; }
   }
 
+  let flatCounter = 0;
   videoList = (cats || []).map(cat => ({
     category: cat.category,
     episodes: (cat.episodes || []).map(ep => {
       const fileObj = findEpisodeFile(ep && ep.src);
       const srcUrl = fileObj ? URL.createObjectURL(fileObj) : '';
       const isPlaceholder = !fileObj || (fileObj && fileObj.size === 0);
+      const progressKey = `${localId}:item${flatCounter++}`;
       return {
         title: ep.title,
         src: srcUrl,
         fileName: fileObj ? (fileObj.name || '') : '',
+        progressKey,
         file: fileObj || null,
         isPlaceholder,
         durationSeconds: (typeof ep.durationSeconds === 'number') ? ep.durationSeconds : null,
