@@ -35,8 +35,22 @@
       const defaultCat = isManga() ? 'Volumes' : `Season ${seasonNum}`;
       addCategory({ category: defaultCat, episodes: [] });
     }
-    const catDiv = categoriesEl.lastElementChild;
-    const episodesDiv = catDiv ? catDiv.querySelector('.episodes') : null;
+    let catDiv = categoriesEl.lastElementChild;
+    let episodesDiv = catDiv ? catDiv.querySelector('.episodes') : null;
+    if (!episodesDiv) {
+      // Ensure a category exists (especially in Manga mode where addCategory may be blocked when one exists)
+      if (typeof addCategory === 'function') {
+        const defaultCat = isManga() ? 'Volumes' : `Season ${seasonNum}`;
+        addCategory({ category: defaultCat, episodes: [] });
+        catDiv = categoriesEl.lastElementChild;
+        episodesDiv = catDiv ? catDiv.querySelector('.episodes') : null;
+      }
+    }
+    if (!episodesDiv) {
+      alert('Could not prepare a category for folder upload. Please add one and try again.');
+      try { window.isFolderUploading = false; } catch {}
+      return;
+    }
 
     const filesInSeason = files.map((file, idx) => {
       const name = (file.webkitRelativePath || file.name || '').split('/').pop();
@@ -51,10 +65,14 @@
       return { file, num };
     }).sort((a, b) => a.num - b.num);
 
-    const folderOverlay = document.createElement('div');
-    folderOverlay.id = 'folderUploadOverlay';
+    let folderOverlay = document.getElementById('folderUploadOverlay');
+    if (!folderOverlay) {
+      folderOverlay = document.createElement('div');
+      folderOverlay.id = 'folderUploadOverlay';
+      document.body.appendChild(folderOverlay);
+    }
     Object.assign(folderOverlay.style, {
-      position:'fixed', inset:'0', background:'rgba(0,0,0,0.85)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:'10000'
+      position:'fixed', inset:'0', background:'rgba(0,0,0,0.85)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:'10030'
     });
     folderOverlay.innerHTML = `
       <div style="background:#1a1a1a; padding:1em; border-radius:8px; width:90%; max-width:700px; color:#f1f1f1; font-family:inherit;">
@@ -64,7 +82,7 @@
           <div id="folderUploadSummary" style="font-size:0.9em;">0 / 0 completed</div>
         </div>
       </div>`;
-    document.body.appendChild(folderOverlay);
+    folderOverlay.style.display = 'flex';
     const folderUploadList = folderOverlay.querySelector('#folderUploadList');
     const folderUploadSummary = folderOverlay.querySelector('#folderUploadSummary');
     folderUploadSummary.textContent = `0 / ${filesInSeason.length} completed`;
@@ -85,16 +103,15 @@
       } catch { resolve(NaN); }
     });
 
-    filesInSeason.forEach(async ({ file, num }) => {
+    // Allow browser to paint overlay before heavy work
+    try { await new Promise(r => setTimeout(r, 0)); } catch {}
+
+    for (const { file, num } of filesInSeason) {
       const label = isManga() ? `Volume ${num}` : `Episode ${num}`;
       if (typeof addEpisode === 'function' && episodesDiv) addEpisode(episodesDiv, { title: label, src: '' });
       const epDiv = episodesDiv ? episodesDiv.lastElementChild : null;
       try { if (epDiv) epDiv.dataset.fileSizeBytes = String(file.size); } catch {}
-      if (isManga() && /\.cbz$/i.test(file.name||'')) {
-        try { const ab = await file.arrayBuffer(); const zip = await JSZip.loadAsync(ab); const names = Object.keys(zip.files).filter(n => /\.(jpe?g|png|gif|webp|bmp)$/i.test(n)); if (epDiv) { epDiv.dataset.VolumePageCount = String(names.length); epDiv.dataset.volumePageCount = String(names.length); } } catch {}
-      } else {
-        try { computeLocalFileDurationSeconds(file).then(d => { if (epDiv && !Number.isNaN(d) && d > 0) epDiv.dataset.durationSeconds = String(Math.round(d)); }); } catch {}
-      }
+
       const inputs = epDiv ? epDiv.querySelectorAll('input[type="text"]') : [];
       const epSrcInput = inputs && inputs[1];
       const epError = epDiv ? epDiv.querySelector('.ep-error') : null;
@@ -111,6 +128,19 @@
       folderUploadList.appendChild(row);
 
       const fn = async () => {
+        // Compute metadata per file inside the task so queue builds instantly
+        try {
+          if (isManga() && /\.cbz$/i.test(file.name||'')) {
+            const ab = await file.arrayBuffer();
+            const zip = await JSZip.loadAsync(ab);
+            const names = Object.keys(zip.files).filter(n => /\.(jpe?g|png|gif|webp|bmp)$/i.test(n));
+            if (epDiv) { epDiv.dataset.VolumePageCount = String(names.length); epDiv.dataset.volumePageCount = String(names.length); }
+          } else {
+            const d = await computeLocalFileDurationSeconds(file);
+            if (epDiv && !Number.isNaN(d) && d > 0) epDiv.dataset.durationSeconds = String(Math.round(d));
+          }
+        } catch {}
+
         for (let attempt = 1; attempt <= maxAttempts; attempt++) {
           status.textContent = (attempt === 1) ? 'Uploading' : `Retry ${attempt} of ${maxAttempts}`;
           prog.value = 0;
@@ -133,13 +163,13 @@
             }
             status.textContent = 'Failed';
             status.style.color = '#ff4444';
-            if (epError) epError.innerHTML = '<span style="color:red">Upload failed</span>';
+            if (epError) epError.innerHTML = '<span style=\"color:red\">Upload failed</span>';
             return;
           }
         }
       };
       taskFns.push(fn);
-    });
+    }
 
     const runWithConcurrency = async (fns, limit) => {
       let idx = 0;
