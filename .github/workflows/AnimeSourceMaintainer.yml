@@ -6,6 +6,10 @@ on:
       - 'Directorys/Files/Anime/**'
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: write
 
@@ -15,11 +19,38 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v3
+        with:
+          # Ensure full history so we can rebase cleanly
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+
+      - name: Sync branch with remote (rebase)
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Ensure we are on the branch that triggered the workflow
+          BRANCH="${GITHUB_REF_NAME:-}"
+          if [ -z "$BRANCH" ]; then
+            # Fallback: try to detect current branch
+            BRANCH=$(git rev-parse --abbrev-ref HEAD)
+          fi
+          echo "Syncing branch: $BRANCH"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git fetch origin "$BRANCH"
+          # Ensure we're actually on the branch (not detached)
+          if [ "$(git rev-parse --abbrev-ref HEAD)" != "$BRANCH" ]; then
+            git checkout -B "$BRANCH" "origin/$BRANCH" || git checkout "$BRANCH"
+          fi
+          # Rebase local branch onto the latest remote to avoid non-fast-forward pushes
+          git rebase "origin/$BRANCH" || {
+            echo "Rebase failed; attempting to abort and continue without rebase"
+            git rebase --abort || true
+          }
 
       - name: Install image processor (sharp)
         run: npm install sharp@0.33
@@ -181,5 +212,6 @@ jobs:
       - name: Commit and push changes
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
+          branch: ${{ github.ref_name }}
           commit_message: 'chore: update Directorys/AnimeSourceList.json and posters'
           file_pattern: 'Directorys/AnimeSourceList.json Directorys/Posters/**'
