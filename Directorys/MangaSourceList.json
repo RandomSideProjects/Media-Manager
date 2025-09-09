@@ -1,13 +1,15 @@
 {
   "sources": [
     {
-      "file": "MANGASOURCETEST.json",
-      "path": "./Files/Manga/MANGASOURCETEST.json",
-      "title": "CBZ POC for RSPMM - TEST 1",
+      "file": "My_Dress-Up_Darling.json",
+      "path": "./Files/Manga/My_Dress-Up_Darling.json",
+      "title": "My Dress-Up Darling",
       "poster": null,
-      "volumeCount": 1,
+      "volumeCount": 13,
       "pageCount": 0,
-      "LatestTime": "2025-09-08T17:37:19.046Z"
+      "totalPagecount": 0,
+      "totalFileSizeBytes": 1738126038,
+      "LatestTime": "2025-09-08T23:09:59.472Z"
     }
   ]
 }
