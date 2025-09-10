@@ -10,6 +10,17 @@
       "totalPagecount": 2559,
       "totalFileSizeBytes": 1738126038,
       "LatestTime": "2025-09-09T02:29:06.752Z"
+    },
+    {
+      "file": "One-Punch_Man.json",
+      "path": "./Files/Manga/One-Punch_Man.json",
+      "title": "One-Punch Man",
+      "poster": "./Posters/Manga/One-Punch_Man.webp",
+      "volumeCount": 86,
+      "pageCount": 7736,
+      "totalPagecount": 7736,
+      "totalFileSizeBytes": 2654987303,
+      "LatestTime": "2025-09-09T21:45:25.356Z"
     }
   ]
 }
