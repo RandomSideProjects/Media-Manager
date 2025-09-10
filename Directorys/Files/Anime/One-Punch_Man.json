@@ -1,0 +1,163 @@
+{
+  "title": "One-Punch Man",
+  "Image": "https://files.catbox.moe/8de37g.jpg",
+  "categories": [
+    {
+      "category": "Season 1",
+      "episodes": [
+        {
+          "title": "Episode 1",
+          "src": "https://files.catbox.moe/tailfl.mp4",
+          "fileSizeBytes": 139579129,
+          "durationSeconds": 1461
+        },
+        {
+          "title": "Episode 2",
+          "src": "https://files.catbox.moe/mvi9jk.mp4",
+          "fileSizeBytes": 144779301,
+          "durationSeconds": 1461
+        },
+        {
+          "title": "Episode 3",
+          "src": "https://files.catbox.moe/v6dawe.mp4",
+          "fileSizeBytes": 196115913,
+          "durationSeconds": 1461
+        },
+        {
+          "title": "Episode 4",
+          "src": "https://files.catbox.moe/z9g36l.mp4",
+          "fileSizeBytes": 191103707,
+          "durationSeconds": 1461
+        },
+        {
+          "title": "Episode 5",
+          "src": "https://files.catbox.moe/l47zq1.mp4",
+          "fileSizeBytes": 186768157,
+          "durationSeconds": 1461
+        },
+        {
+          "title": "Episode 6",
+          "src": "https://files.catbox.moe/vdrfb4.mp4",
+          "fileSizeBytes": 178132871,
+          "durationSeconds": 1461
+        },
+        {
+          "title": "Episode 7",
+          "src": "https://files.catbox.moe/f5wmnc.mp4",
+          "fileSizeBytes": 148096975,
+          "durationSeconds": 1461
+        },
+        {
+          "title": "Episode 8",
+          "src": "https://files.catbox.moe/455y4k.mp4",
+          "fileSizeBytes": 152091120,
+          "durationSeconds": 1461
+        },
+        {
+          "title": "Episode 9",
+          "src": "https://files.catbox.moe/m1c3l6.mp4",
+          "fileSizeBytes": 145052168,
+          "durationSeconds": 1461
+        },
+        {
+          "title": "Episode 10",
+          "src": "https://files.catbox.moe/x3jafq.mp4",
+          "fileSizeBytes": 163485793,
+          "durationSeconds": 1461
+        },
+        {
+          "title": "Episode 11",
+          "src": "https://files.catbox.moe/o3ocdj.mp4",
+          "fileSizeBytes": 139273615,
+          "durationSeconds": 1461
+        },
+        {
+          "title": "Episode 12",
+          "src": "https://files.catbox.moe/kyspgz.mp4",
+          "fileSizeBytes": 169220157,
+          "durationSeconds": 1441
+        }
+      ]
+    },
+    {
+      "category": "Season 2",
+      "episodes": [
+        {
+          "title": "Episode 1",
+          "src": "https://files.catbox.moe/auiy8e.mp4",
+          "fileSizeBytes": 179995870,
+          "durationSeconds": 1431
+        },
+        {
+          "title": "Episode 2",
+          "src": "https://files.catbox.moe/93485x.mp4",
+          "fileSizeBytes": 154299044,
+          "durationSeconds": 1431
+        },
+        {
+          "title": "Episode 3",
+          "src": "https://files.catbox.moe/bybhjb.mp4",
+          "fileSizeBytes": 132954406,
+          "durationSeconds": 1431
+        },
+        {
+          "title": "Episode 4",
+          "src": "https://files.catbox.moe/cizrbt.mp4",
+          "fileSizeBytes": 149184911,
+          "durationSeconds": 1431
+        },
+        {
+          "title": "Episode 5",
+          "src": "https://files.catbox.moe/457hgl.mp4",
+          "fileSizeBytes": 163356189,
+          "durationSeconds": 1431
+        },
+        {
+          "title": "Episode 6",
+          "src": "https://files.catbox.moe/uw8kcw.mp4",
+          "fileSizeBytes": 146202529,
+          "durationSeconds": 1431
+        },
+        {
+          "title": "Episode 7",
+          "src": "https://files.catbox.moe/zqmyfb.mp4",
+          "fileSizeBytes": 161037679,
+          "durationSeconds": 1431
+        },
+        {
+          "title": "Episode 8",
+          "src": "https://files.catbox.moe/ymskt5.mp4",
+          "fileSizeBytes": 171460818,
+          "durationSeconds": 1431
+        },
+        {
+          "title": "Episode 9",
+          "src": "https://files.catbox.moe/oaz0iw.mp4",
+          "fileSizeBytes": 168229305,
+          "durationSeconds": 1430
+        },
+        {
+          "title": "Episode 10",
+          "src": "https://files.catbox.moe/o1p55m.mp4",
+          "fileSizeBytes": 141220107,
+          "durationSeconds": 1431
+        },
+        {
+          "title": "Episode 11",
+          "src": "https://files.catbox.moe/uz0iy2.mp4",
+          "fileSizeBytes": 194020786,
+          "durationSeconds": 1431
+        },
+        {
+          "title": "Episode 12",
+          "src": "https://files.catbox.moe/sdmkeb.mp4",
+          "fileSizeBytes": 194029230,
+          "durationSeconds": 1430
+        }
+      ]
+    }
+  ],
+  "LatestTime": "2025-09-10T19:12:40.080Z",
+  "totalFileSizeBytes": 3909689780,
+  "totalDurationSeconds": 34682
+}

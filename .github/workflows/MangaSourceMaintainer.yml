@@ -124,7 +124,16 @@ jobs:
                   }
                 }
 
-                const volumeCount = Array.isArray(volumes) ? volumes.length : 0;
+                // Volume count should exclude entries that are standalone chapters
+                const volumesForCount = Array.isArray(volumes)
+                  ? volumes.filter(v => {
+                      try {
+                        const t = String(v && v.title || '').toLowerCase();
+                        return !/\bchapter\b/i.test(t);
+                      } catch { return true; }
+                    })
+                  : [];
+                const volumeCount = volumesForCount.length;
                 let pageCount = 0;
                 let totalFileSizeBytes = 0;
                 for (const v of volumes) {
