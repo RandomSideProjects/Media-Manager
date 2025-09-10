@@ -30,7 +30,7 @@
     try { window.isFolderUploading = true; } catch {}
     try { folderInput.value = ''; } catch {}
 
-    const seasonNum = Math.min(1, categoriesEl.children.length + 1);
+    const seasonNum = categoriesEl.children.length + 1;
     if (typeof addCategory === 'function') {
       const defaultCat = isManga() ? 'Volumes' : `Season ${seasonNum}`;
       addCategory({ category: defaultCat, episodes: [] });
@@ -55,14 +55,24 @@
     const filesInSeason = files.map((file, idx) => {
       const name = (file.webkitRelativePath || file.name || '').split('/').pop();
       let num = idx + 1;
+      let label = null;
       if (isManga()) {
-        const mv = name.match(/(?:\bvol(?:ume)?\s*|\bv\s*)(\d{1,3})/i);
-        if (mv) num = parseInt(mv[1], 10);
+        // Prefer Chapter detection: matches "Chapter ###", "c###", or a standalone number with a preceding space " ###"
+        const mc = name.match(/\bchapter\s*(\d{1,4})\b/i) || name.match(/\bc\s*0?(\d{1,4})\b/i);
+        if (mc) { num = parseInt(mc[1], 10); label = `Chapter ${num}`; }
+        else {
+          const ms = name.match(/ (0?\d{1,4})\b/);
+          if (ms) { num = parseInt(ms[1], 10); label = `Chapter ${num}`; }
+          else {
+            const mv = name.match(/(?:\bvol(?:ume)?\s*|\bv\s*)(\d{1,3})/i);
+            if (mv) { num = parseInt(mv[1], 10); label = `Volume ${num}`; }
+          }
+        }
       } else {
         const me = name.match(/E0?(\d{1,3})/i);
         if (me) num = parseInt(me[1], 10);
       }
-      return { file, num };
+      return { file, num, label };
     }).sort((a, b) => a.num - b.num);
 
     let folderOverlay = document.getElementById('folderUploadOverlay');
@@ -106,9 +116,9 @@
     // Allow browser to paint overlay before heavy work
     try { await new Promise(r => setTimeout(r, 0)); } catch {}
 
-    for (const { file, num } of filesInSeason) {
-      const label = isManga() ? `Volume ${num}` : `Episode ${num}`;
-      if (typeof addEpisode === 'function' && episodesDiv) addEpisode(episodesDiv, { title: label, src: '' });
+    for (const { file, num, label } of filesInSeason) {
+      const title = label || (isManga() ? `Volume ${num}` : `Episode ${num}`);
+      if (typeof addEpisode === 'function' && episodesDiv) addEpisode(episodesDiv, { title, src: '' });
       const epDiv = episodesDiv ? episodesDiv.lastElementChild : null;
       try { if (epDiv) epDiv.dataset.fileSizeBytes = String(file.size); } catch {}
 
@@ -119,7 +129,7 @@
 
       const row = document.createElement('div');
       Object.assign(row.style, { display:'flex', alignItems:'center', gap:'0.75em', padding:'6px 8px', background:'#222', borderRadius:'6px', fontSize:'0.9em' });
-      const labelEl = document.createElement('div'); labelEl.textContent = label; labelEl.style.flex = '1';
+      const labelEl = document.createElement('div'); labelEl.textContent = title; labelEl.style.flex = '1';
       const status = document.createElement('div'); status.textContent = 'Queued'; status.style.minWidth = '110px';
       const progressWrapper = document.createElement('div'); progressWrapper.style.flex = '2';
       const prog = document.createElement('progress'); prog.max = 100; prog.value = 0; prog.style.width = '100%';

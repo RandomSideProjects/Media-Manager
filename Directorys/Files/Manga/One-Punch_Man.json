@@ -1,0 +1,535 @@
+{
+  "title": "One-Punch Man",
+  "Image": "https://files.catbox.moe/o7tp7t.jpg",
+  "categories": [
+    {
+      "category": "Volumes",
+      "episodes": [
+        {
+          "title": "Volume 1",
+          "src": "https://files.catbox.moe/ql3s60.cbz",
+          "fileSizeBytes": 75178796,
+          "VolumePageCount": 191
+        },
+        {
+          "title": "Volume 2",
+          "src": "https://files.catbox.moe/k5i2p5.cbz",
+          "fileSizeBytes": 75314785,
+          "VolumePageCount": 186
+        },
+        {
+          "title": "Volume 3",
+          "src": "https://files.catbox.moe/bmrhxq.cbz",
+          "fileSizeBytes": 76739873,
+          "VolumePageCount": 196
+        },
+        {
+          "title": "Volume 4",
+          "src": "https://files.catbox.moe/z0lufa.cbz",
+          "fileSizeBytes": 78945284,
+          "VolumePageCount": 184
+        },
+        {
+          "title": "Volume 5",
+          "src": "https://files.catbox.moe/4azjyl.cbz",
+          "fileSizeBytes": 78695971,
+          "VolumePageCount": 192
+        },
+        {
+          "title": "Volume 6",
+          "src": "https://files.catbox.moe/27b52m.cbz",
+          "fileSizeBytes": 84413917,
+          "VolumePageCount": 191
+        },
+        {
+          "title": "Volume 7",
+          "src": "https://files.catbox.moe/7n93bh.cbz",
+          "fileSizeBytes": 85834001,
+          "VolumePageCount": 179
+        },
+        {
+          "title": "Volume 8",
+          "src": "https://files.catbox.moe/uu4r2e.cbz",
+          "fileSizeBytes": 76560213,
+          "VolumePageCount": 181
+        },
+        {
+          "title": "Volume 9",
+          "src": "https://files.catbox.moe/jqmrjy.cbz",
+          "fileSizeBytes": 80562530,
+          "VolumePageCount": 195
+        },
+        {
+          "title": "Volume 10",
+          "src": "https://files.catbox.moe/3w36ee.cbz",
+          "fileSizeBytes": 78042878,
+          "VolumePageCount": 205
+        },
+        {
+          "title": "Volume 11",
+          "src": "https://files.catbox.moe/esywnr.cbz",
+          "fileSizeBytes": 84688545,
+          "VolumePageCount": 198
+        },
+        {
+          "title": "Volume 12",
+          "src": "https://files.catbox.moe/mqthqe.cbz",
+          "fileSizeBytes": 82608165,
+          "VolumePageCount": 206
+        },
+        {
+          "title": "Volume 13",
+          "src": "https://files.catbox.moe/zuo5ma.cbz",
+          "fileSizeBytes": 87473712,
+          "VolumePageCount": 204
+        },
+        {
+          "title": "Volume 14",
+          "src": "https://files.catbox.moe/p8m5md.cbz",
+          "fileSizeBytes": 87313082,
+          "VolumePageCount": 203
+        },
+        {
+          "title": "Volume 15",
+          "src": "https://files.catbox.moe/7eem0x.cbz",
+          "fileSizeBytes": 87796139,
+          "VolumePageCount": 208
+        },
+        {
+          "title": "Volume 16",
+          "src": "https://files.catbox.moe/510hzq.cbz",
+          "fileSizeBytes": 87729837,
+          "VolumePageCount": 205
+        },
+        {
+          "title": "Volume 17",
+          "src": "https://files.catbox.moe/dkkfbs.cbz",
+          "fileSizeBytes": 92433470,
+          "VolumePageCount": 198
+        },
+        {
+          "title": "Volume 18",
+          "src": "https://files.catbox.moe/9095r0.cbz",
+          "fileSizeBytes": 78320438,
+          "VolumePageCount": 189
+        },
+        {
+          "title": "Volume 19",
+          "src": "https://files.catbox.moe/l6fn2k.cbz",
+          "fileSizeBytes": 100694504,
+          "VolumePageCount": 212
+        },
+        {
+          "title": "Volume 20",
+          "src": "https://files.catbox.moe/z4tyzg.cbz",
+          "fileSizeBytes": 87883243,
+          "VolumePageCount": 197
+        },
+        {
+          "title": "Volume 21",
+          "src": "https://files.catbox.moe/vngz8q.cbz",
+          "fileSizeBytes": 108592763,
+          "VolumePageCount": 214
+        },
+        {
+          "title": "Volume 22",
+          "src": "https://files.catbox.moe/z440ni.cbz",
+          "fileSizeBytes": 88695346,
+          "VolumePageCount": 195
+        },
+        {
+          "title": "Volume 23",
+          "src": "https://files.catbox.moe/f5z74a.cbz",
+          "fileSizeBytes": 96150979,
+          "VolumePageCount": 207
+        },
+        {
+          "title": "Volume 24",
+          "src": "https://files.catbox.moe/a6c4sn.cbz",
+          "fileSizeBytes": 91524906,
+          "VolumePageCount": 196
+        },
+        {
+          "title": "Volume 25",
+          "src": "https://files.catbox.moe/064y5y.cbz",
+          "fileSizeBytes": 82179130,
+          "VolumePageCount": 184
+        },
+        {
+          "title": "Volume 26",
+          "src": "https://files.catbox.moe/hszz0r.cbz",
+          "fileSizeBytes": 81076355,
+          "VolumePageCount": 183
+        },
+        {
+          "title": "Volume 27",
+          "src": "https://files.catbox.moe/rrnl0p.cbz",
+          "fileSizeBytes": 86909361,
+          "VolumePageCount": 179
+        },
+        {
+          "title": "Volume 28",
+          "src": "https://files.catbox.moe/q0ulxw.cbz",
+          "fileSizeBytes": 87859492,
+          "VolumePageCount": 196
+        },
+        {
+          "title": "Volume 29",
+          "src": "https://files.catbox.moe/mp0o8b.cbz",
+          "fileSizeBytes": 79173815,
+          "VolumePageCount": 187
+        },
+        {
+          "title": "Volume 30",
+          "src": "https://files.catbox.moe/af3gyw.cbz",
+          "fileSizeBytes": 85669878,
+          "VolumePageCount": 196
+        },
+        {
+          "title": "Volume 31",
+          "src": "https://files.catbox.moe/3hbvrz.cbz",
+          "fileSizeBytes": 99772697,
+          "VolumePageCount": 204
+        }
+      ]
+    },
+    {
+      "category": "Additional Chapters",
+      "episodes": [
+        {
+          "title": "Chapter 155",
+          "src": "https://files.catbox.moe/d5ft19.cbz",
+          "fileSizeBytes": 3742,
+          "VolumePageCount": 41
+        },
+        {
+          "title": "Chapter 156",
+          "src": "https://files.catbox.moe/892bq2.cbz",
+          "fileSizeBytes": 3826,
+          "VolumePageCount": 42
+        },
+        {
+          "title": "Chapter 157",
+          "src": "https://files.catbox.moe/qylzy2.cbz",
+          "fileSizeBytes": 2200,
+          "VolumePageCount": 24
+        },
+        {
+          "title": "Chapter 158",
+          "src": "https://files.catbox.moe/kls6kz.cbz",
+          "fileSizeBytes": 2458,
+          "VolumePageCount": 27
+        },
+        {
+          "title": "Chapter 159",
+          "src": "https://files.catbox.moe/q6vhfd.cbz",
+          "fileSizeBytes": 1930,
+          "VolumePageCount": 21
+        },
+        {
+          "title": "Chapter 160",
+          "src": "https://files.catbox.moe/ysj29a.cbz",
+          "fileSizeBytes": 3730,
+          "VolumePageCount": 41
+        },
+        {
+          "title": "Chapter 161",
+          "src": "https://files.catbox.moe/l4e83g.cbz",
+          "fileSizeBytes": 3550,
+          "VolumePageCount": 39
+        },
+        {
+          "title": "Chapter 162",
+          "src": "https://files.catbox.moe/73ctqc.cbz",
+          "fileSizeBytes": 4390,
+          "VolumePageCount": 48
+        },
+        {
+          "title": "Chapter 163",
+          "src": "https://files.catbox.moe/axlqzs.cbz",
+          "fileSizeBytes": 3868,
+          "VolumePageCount": 42
+        },
+        {
+          "title": "Chapter 164",
+          "src": "https://files.catbox.moe/yafdk4.cbz",
+          "fileSizeBytes": 4036,
+          "VolumePageCount": 44
+        },
+        {
+          "title": "Chapter 165",
+          "src": "https://files.catbox.moe/ngdxt6.cbz",
+          "fileSizeBytes": 4738,
+          "VolumePageCount": 52
+        },
+        {
+          "title": "Chapter 166",
+          "src": "https://files.catbox.moe/kns39f.cbz",
+          "fileSizeBytes": 6550,
+          "VolumePageCount": 72
+        },
+        {
+          "title": "Chapter 167",
+          "src": "https://files.catbox.moe/3raabt.cbz",
+          "fileSizeBytes": 4084,
+          "VolumePageCount": 45
+        },
+        {
+          "title": "Chapter 168",
+          "src": "https://files.catbox.moe/s6q44t.cbz",
+          "fileSizeBytes": 2092,
+          "VolumePageCount": 23
+        },
+        {
+          "title": "Chapter 169",
+          "src": "https://files.catbox.moe/w1i21u.cbz",
+          "fileSizeBytes": 2722,
+          "VolumePageCount": 30
+        },
+        {
+          "title": "Chapter 170",
+          "src": "https://files.catbox.moe/22e14t.cbz",
+          "fileSizeBytes": 3274,
+          "VolumePageCount": 36
+        },
+        {
+          "title": "Chapter 171",
+          "src": "https://files.catbox.moe/n4c42v.cbz",
+          "fileSizeBytes": 3172,
+          "VolumePageCount": 35
+        },
+        {
+          "title": "Chapter 172",
+          "src": "https://files.catbox.moe/onefpb.cbz",
+          "fileSizeBytes": 2542,
+          "VolumePageCount": 28
+        },
+        {
+          "title": "Chapter 173",
+          "src": "https://files.catbox.moe/t57n0c.cbz",
+          "fileSizeBytes": 2722,
+          "VolumePageCount": 30
+        },
+        {
+          "title": "Chapter 174",
+          "src": "https://files.catbox.moe/u7ud51.cbz",
+          "fileSizeBytes": 2458,
+          "VolumePageCount": 27
+        },
+        {
+          "title": "Chapter 175",
+          "src": "https://files.catbox.moe/3m418e.cbz",
+          "fileSizeBytes": 3088,
+          "VolumePageCount": 34
+        },
+        {
+          "title": "Chapter 176",
+          "src": "https://files.catbox.moe/oipnxi.cbz",
+          "fileSizeBytes": 2548,
+          "VolumePageCount": 28
+        },
+        {
+          "title": "Chapter 177",
+          "src": "https://files.catbox.moe/u0wmbj.cbz",
+          "fileSizeBytes": 3178,
+          "VolumePageCount": 35
+        },
+        {
+          "title": "Chapter 178",
+          "src": "https://files.catbox.moe/gp47l3.cbz",
+          "fileSizeBytes": 2998,
+          "VolumePageCount": 33
+        },
+        {
+          "title": "Chapter 179",
+          "src": "https://files.catbox.moe/h16ksm.cbz",
+          "fileSizeBytes": 2638,
+          "VolumePageCount": 29
+        },
+        {
+          "title": "Chapter 180",
+          "src": "https://files.catbox.moe/mnc8el.cbz",
+          "fileSizeBytes": 3448,
+          "VolumePageCount": 38
+        },
+        {
+          "title": "Chapter 181",
+          "src": "https://files.catbox.moe/bci5ed.cbz",
+          "fileSizeBytes": 2452,
+          "VolumePageCount": 27
+        },
+        {
+          "title": "Chapter 182",
+          "src": "https://files.catbox.moe/pfma53.cbz",
+          "fileSizeBytes": 2542,
+          "VolumePageCount": 28
+        },
+        {
+          "title": "Chapter 183",
+          "src": "https://files.catbox.moe/53dw68.cbz",
+          "fileSizeBytes": 2638,
+          "VolumePageCount": 29
+        },
+        {
+          "title": "Chapter 184",
+          "src": "https://files.catbox.moe/d1b76c.cbz",
+          "fileSizeBytes": 2998,
+          "VolumePageCount": 33
+        },
+        {
+          "title": "Chapter 185",
+          "src": "https://files.catbox.moe/8n0455.cbz",
+          "fileSizeBytes": 3718,
+          "VolumePageCount": 41
+        },
+        {
+          "title": "Chapter 186",
+          "src": "https://files.catbox.moe/97inid.cbz",
+          "fileSizeBytes": 2722,
+          "VolumePageCount": 30
+        },
+        {
+          "title": "Chapter 187",
+          "src": "https://files.catbox.moe/7c1n9e.cbz",
+          "fileSizeBytes": 2902,
+          "VolumePageCount": 32
+        },
+        {
+          "title": "Chapter 188",
+          "src": "https://files.catbox.moe/uxo5ri.cbz",
+          "fileSizeBytes": 3178,
+          "VolumePageCount": 35
+        },
+        {
+          "title": "Chapter 189",
+          "src": "https://files.catbox.moe/kj9v9z.cbz",
+          "fileSizeBytes": 3082,
+          "VolumePageCount": 34
+        },
+        {
+          "title": "Chapter 190",
+          "src": "https://files.catbox.moe/h49nhq.cbz",
+          "fileSizeBytes": 3178,
+          "VolumePageCount": 35
+        },
+        {
+          "title": "Chapter 191",
+          "src": "https://files.catbox.moe/s5xc09.cbz",
+          "fileSizeBytes": 2998,
+          "VolumePageCount": 33
+        },
+        {
+          "title": "Chapter 192",
+          "src": "https://files.catbox.moe/7gb747.cbz",
+          "fileSizeBytes": 3358,
+          "VolumePageCount": 37
+        },
+        {
+          "title": "Chapter 193",
+          "src": "https://files.catbox.moe/5rype4.cbz",
+          "fileSizeBytes": 1586,
+          "VolumePageCount": 17
+        },
+        {
+          "title": "Chapter 194",
+          "src": "https://files.catbox.moe/euut44.cbz",
+          "fileSizeBytes": 2422,
+          "VolumePageCount": 26
+        },
+        {
+          "title": "Chapter 195",
+          "src": "https://files.catbox.moe/b6jmyk.cbz",
+          "fileSizeBytes": 2874,
+          "VolumePageCount": 31
+        },
+        {
+          "title": "Chapter 196",
+          "src": "https://files.catbox.moe/rd7spl.cbz",
+          "fileSizeBytes": 2882,
+          "VolumePageCount": 31
+        },
+        {
+          "title": "Chapter 197",
+          "src": "https://files.catbox.moe/jbiz5s.cbz",
+          "fileSizeBytes": 1786,
+          "VolumePageCount": 19
+        },
+        {
+          "title": "Chapter 198",
+          "src": "https://files.catbox.moe/bid6lt.cbz",
+          "fileSizeBytes": 2046,
+          "VolumePageCount": 22
+        },
+        {
+          "title": "Chapter 199",
+          "src": "https://files.catbox.moe/gkmkpo.cbz",
+          "fileSizeBytes": 2062,
+          "VolumePageCount": 22
+        },
+        {
+          "title": "Chapter 200",
+          "src": "https://files.catbox.moe/2ofdpo.cbz",
+          "fileSizeBytes": 1402,
+          "VolumePageCount": 15
+        },
+        {
+          "title": "Chapter 201",
+          "src": "https://files.catbox.moe/56uof5.cbz",
+          "fileSizeBytes": 1586,
+          "VolumePageCount": 17
+        },
+        {
+          "title": "Chapter 202",
+          "src": "https://files.catbox.moe/pgxrqg.cbz",
+          "fileSizeBytes": 1410,
+          "VolumePageCount": 15
+        },
+        {
+          "title": "Chapter 203",
+          "src": "https://files.catbox.moe/ar0w7n.cbz",
+          "fileSizeBytes": 1494,
+          "VolumePageCount": 16
+        },
+        {
+          "title": "Chapter 204",
+          "src": "https://files.catbox.moe/8gl662.cbz",
+          "fileSizeBytes": 1778,
+          "VolumePageCount": 19
+        },
+        {
+          "title": "Chapter 205",
+          "src": "https://files.catbox.moe/snz31t.cbz",
+          "fileSizeBytes": 1594,
+          "VolumePageCount": 17
+        },
+        {
+          "title": "Chapter 206",
+          "src": "https://files.catbox.moe/ar0w7n.cbz",
+          "fileSizeBytes": 1494,
+          "VolumePageCount": 16
+        },
+        {
+          "title": "Chapter 207",
+          "src": "https://files.catbox.moe/um6c8u.cbz",
+          "fileSizeBytes": 2046,
+          "VolumePageCount": 22
+        },
+        {
+          "title": "Chapter 208",
+          "src": "https://files.catbox.moe/ar0w7n.cbz",
+          "fileSizeBytes": 1494,
+          "VolumePageCount": 16
+        },
+        {
+          "title": "Chapter 209",
+          "src": "https://files.catbox.moe/ar0w7n.cbz",
+          "fileSizeBytes": 1494,
+          "VolumePageCount": 16
+        }
+      ]
+    }
+  ],
+  "LatestTime": "2025-09-09T21:45:25.356Z",
+  "totalFileSizeBytes": 2654987303,
+  "totalPagecount": 7736
+}

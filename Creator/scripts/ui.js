@@ -35,8 +35,9 @@ function updateCategoryButtonVisibility(){
   try {
     if (!addCategoryBtn) return;
     addCategoryBtn.textContent = isMangaMode() ? 'Add Volumes' : 'Add Category';
-    if (isMangaMode() && categoriesEl.children.length >= 1) { addCategoryBtn.disabled = true; addCategoryBtn.style.opacity = '0.6'; }
-    else { addCategoryBtn.disabled = false; addCategoryBtn.style.opacity = ''; }
+    // Allow multiple categories in Manga mode as well
+    addCategoryBtn.disabled = false;
+    addCategoryBtn.style.opacity = '';
   } catch {}
 }
 function getUploadConcurrency(){
@@ -97,7 +98,7 @@ folderInput.addEventListener('change', async (e) => {
     if (!files.length) return;
 
     // Prompt for season/collection index or create new
-    const seasonIndex = Math.min(1, categoriesEl.children.length + 1);
+    const seasonIndex = categoriesEl.children.length + 1;
     const categoryDiv = document.createElement('div');
     categoryDiv.className = 'category';
     const titleLabel = document.createElement('label');
@@ -114,19 +115,31 @@ folderInput.addEventListener('change', async (e) => {
     categoryDiv.appendChild(episodesDiv);
     categoriesEl.appendChild(categoryDiv);
 
-    // Derive numbers from filenames
+    // Derive numbers and labels from filenames
     const filesInSeason = files
       .map((file, idx) => {
         const name = (file.webkitRelativePath || file.name || '').split('/').pop();
         let num = idx + 1;
+        let label = null;
         if (isMangaMode()) {
-          const mv = name.match(/(?:\bvol(?:ume)?\s*|\bv\s*)(\d{1,3})/i);
-          if (mv) num = parseInt(mv[1], 10);
+          // Prefer Chapter detection: matches "Chapter ###", "c###", or a standalone number with a preceding space " ###"
+          const mc = name.match(/\bchapter\s*(\d{1,4})\b/i) || name.match(/\bc\s*0?(\d{1,4})\b/i);
+          if (mc) {
+            num = parseInt(mc[1], 10);
+            label = `Chapter ${num}`;
+          } else {
+            const ms = name.match(/ (0?\d{1,4})\b/);
+            if (ms) { num = parseInt(ms[1], 10); label = `Chapter ${num}`; }
+            else {
+              const mv = name.match(/(?:\bvol(?:ume)?\s*|\bv\s*)(\d{1,3})/i);
+              if (mv) { num = parseInt(mv[1], 10); label = `Volume ${num}`; }
+            }
+          }
         } else {
           const me = name.match(/E0?(\d{1,3})/i);
           if (me) num = parseInt(me[1], 10);
         }
-        return { file, num };
+        return { file, num, label };
       })
       .sort((a, b) => a.num - b.num);
 
@@ -159,8 +172,8 @@ folderInput.addEventListener('change', async (e) => {
     const maxAttempts = 5;
     let completedCount = 0;
 
-    filesInSeason.forEach(async ({ file, num }) => {
-      addEpisode(episodesDiv, { title: labelForUnit(num), src: '' });
+    filesInSeason.forEach(async ({ file, num, label }) => {
+      addEpisode(episodesDiv, { title: label || labelForUnit(num), src: '' });
       const epDiv = episodesDiv.lastElementChild;
       try { epDiv.dataset.fileSizeBytes = String(file.size); } catch {}
       if (isMangaMode() && /\.cbz$/i.test(file.name||'')) {
@@ -181,9 +194,9 @@ folderInput.addEventListener('change', async (e) => {
       row.style.background = '#222';
       row.style.borderRadius = '6px';
       row.style.fontSize = '0.9em';
-      const label = document.createElement('div');
-      label.textContent = labelForUnit(num);
-      label.style.flex = '1';
+      const labelEl = document.createElement('div');
+      labelEl.textContent = label || labelForUnit(num);
+      labelEl.style.flex = '1';
       const status = document.createElement('div');
       status.textContent = 'Queued';
       status.style.minWidth = '110px';
@@ -192,7 +205,7 @@ folderInput.addEventListener('change', async (e) => {
       const prog = document.createElement('progress');
       prog.max = 100; prog.value = 0; prog.style.width = '100%';
       progressWrapper.appendChild(prog);
-      row.appendChild(label);
+      row.appendChild(labelEl);
       row.appendChild(progressWrapper);
       row.appendChild(status);
       folderUploadList.appendChild(row);
@@ -252,8 +265,8 @@ folderInput.addEventListener('change', async (e) => {
 
 // Add a new category block
 function addCategory(data) {
-  if (isMangaMode() && categoriesEl.children.length >= 1) { updateCategoryButtonVisibility(); return; }
-  const categoryIndex = Math.min(1, categoriesEl.children.length + 1);
+  // Allow multiple categories in Manga mode
+  const categoryIndex = categoriesEl.children.length + 1;
   const categoryDiv = document.createElement('div');
   categoryDiv.className = 'category';
   categoryDiv.addEventListener('contextmenu', (e) => {
@@ -342,6 +355,31 @@ function addEpisode(container, data) {
       if (!/\.cbz$/i.test(file.name||'')) { epError.innerHTML = '<span style="color:red">Please select a .cbz file in Manga mode.</span>'; return; }
       try { epDiv.dataset.fileSizeBytes = String(file.size); } catch {}
       try { const ab = await file.arrayBuffer(); const zip = await JSZip.loadAsync(ab); const names = Object.keys(zip.files).filter(n => /\.(jpe?g|png|gif|webp|bmp)$/i.test(n)); epDiv.dataset.VolumePageCount = String(names.length); epDiv.dataset.volumePageCount = String(names.length); } catch {}
+
+      // Auto-set title from filename if it contains Chapter/Volume info
+      try {
+        const base = (file.name || '').split('/').pop();
+        let newTitle = null;
+        const mc = base.match(/\bchapter\s*(\d{1,4})\b/i) || base.match(/\bc\s*0?(\d{1,4})\b/i);
+        if (mc) newTitle = `Chapter ${parseInt(mc[1], 10)}`;
+        else {
+          const ms = base.match(/ (0?\d{1,4})\b/);
+          if (ms) newTitle = `Chapter ${parseInt(ms[1], 10)}`;
+          else {
+            const mv = base.match(/(?:\bvol(?:ume)?\s*|\bv\s*)(\d{1,3})/i);
+            if (mv) newTitle = `Volume ${parseInt(mv[1], 10)}`;
+          }
+        }
+        if (newTitle) {
+          const current = (epTitle.value || '').trim();
+          const defaultVol = /^Volume\s+\d+$/i;
+          const defaultEp = /^Episode\s+\d+$/i;
+          const defaultChap = /^Chapter\s+\d+$/i;
+          if (!current || defaultVol.test(current) || defaultEp.test(current) || defaultChap.test(current)) {
+            epTitle.value = newTitle;
+          }
+        }
+      } catch {}
       epSrc.value = '';
       epError.innerHTML = '';
       const uploadingMsg = document.createElement('span'); uploadingMsg.style.color = 'blue'; uploadingMsg.textContent = 'Uploading'; epError.appendChild(uploadingMsg);
@@ -427,6 +465,30 @@ function addEpisode(container, data) {
         const pages = Object.keys(zip.files).filter(n => /\.(jpe?g|png|gif|webp|bmp)$/i.test(n));
         epDiv.dataset.VolumePageCount = String(pages.length);
         epDiv.dataset.volumePageCount = String(pages.length);
+      } catch {}
+      // Attempt to auto-set title from URL filename (Chapter/Volume)
+      try {
+        const last = (() => { try { const u = new URL(url); return decodeURIComponent((u.pathname||'').split('/').pop()||''); } catch { return (url.split('?')[0]||'').split('/').pop()||''; } })();
+        let newTitle = null;
+        const mc = last.match(/\bchapter\s*(\d{1,4})\b/i) || last.match(/\bc\s*0?(\d{1,4})\b/i);
+        if (mc) newTitle = `Chapter ${parseInt(mc[1], 10)}`;
+        else {
+          const ms = last.match(/ (0?\d{1,4})\b/);
+          if (ms) newTitle = `Chapter ${parseInt(ms[1], 10)}`;
+          else {
+            const mv = last.match(/(?:\bvol(?:ume)?\s*|\bv\s*)(\d{1,3})/i);
+            if (mv) newTitle = `Volume ${parseInt(mv[1], 10)}`;
+          }
+        }
+        if (newTitle) {
+          const current = (epTitle.value || '').trim();
+          const defaultVol = /^Volume\s+\d+$/i;
+          const defaultEp = /^Episode\s+\d+$/i;
+          const defaultChap = /^Chapter\s+\d+$/i;
+          if (!current || defaultVol.test(current) || defaultEp.test(current) || defaultChap.test(current)) {
+            epTitle.value = newTitle;
+          }
+        }
       } catch {}
       epError.textContent = '';
     } else {
