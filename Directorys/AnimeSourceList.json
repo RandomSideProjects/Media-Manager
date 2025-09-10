@@ -241,6 +241,16 @@
       "LatestTime": "2025-08-11T12:36:00"
     },
     {
+      "file": "One-Punch_Man.json",
+      "path": "./Files/Anime/One-Punch_Man.json",
+      "title": "One-Punch Man",
+      "poster": "./Posters/Anime/One-Punch_Man.webp",
+      "categoryCount": 2,
+      "episodeCount": 24,
+      "totalFileSizeBytes": 3909689780,
+      "LatestTime": "2025-09-10T19:12:40.080Z"
+    },
+    {
       "file": "Quintuplets.json",
       "path": "./Files/Anime/Quintuplets.json",
       "title": "Quintessential Quintuplets",
