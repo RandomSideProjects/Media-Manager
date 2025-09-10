@@ -219,8 +219,18 @@ jobs:
           elif [ "$REMOTE" = "$BASE" ]; then
             echo "Local branch is ahead, no action needed"
           else
-            echo "Branches have diverged, merging..."
-            git merge origin/main --no-edit -m "Merge remote changes before updating manga index"
+            echo "Branches have diverged, attempting merge..."
+            if git merge origin/main --no-edit -m "Merge remote changes before updating manga index"; then
+              echo "Merge successful"
+            else
+              echo "Merge conflicts detected. Since we only modify generated files, continuing..."
+              # The files we modify (MangaSourceList.json, posters) are generated and should be overwritten
+              # Reset any conflicts in our generated files and continue
+              git checkout --ours Directorys/MangaSourceList.json || true
+              git checkout --ours Directorys/Posters/Manga/ || true
+              git add Directorys/MangaSourceList.json Directorys/Posters/Manga/ || true
+              git commit --no-edit -m "Merge remote changes, keeping generated files" || true
+            fi
           fi
 
       - name: Commit and push changes
