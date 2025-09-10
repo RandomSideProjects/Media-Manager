@@ -197,6 +197,32 @@ jobs:
           })().catch(err => { console.error(err); process.exit(1); });
           NODE
 
+      - name: Handle potential branch divergence
+        run: |
+          # Configure git for the action
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          
+          # Fetch latest changes
+          git fetch origin main
+          
+          # Check if we're behind origin/main
+          LOCAL=$(git rev-parse HEAD)
+          REMOTE=$(git rev-parse origin/main)
+          BASE=$(git merge-base HEAD origin/main)
+          
+          if [ "$LOCAL" = "$REMOTE" ]; then
+            echo "Already up to date"
+          elif [ "$LOCAL" = "$BASE" ]; then
+            echo "Local branch is behind, fast-forwarding..."
+            git merge origin/main --ff-only
+          elif [ "$REMOTE" = "$BASE" ]; then
+            echo "Local branch is ahead, no action needed"
+          else
+            echo "Branches have diverged, merging..."
+            git merge origin/main --no-edit -m "Merge remote changes before updating manga index"
+          fi
+
       - name: Commit and push changes
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
