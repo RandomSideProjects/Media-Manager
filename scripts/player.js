@@ -59,7 +59,15 @@ function updateCbzPageInfo() {
 
 function showCbzProgress(message, value) {
   if (cbzProgressOverlay) cbzProgressOverlay.style.display = 'flex';
-  if (cbzProgressMessage && typeof message === 'string') cbzProgressMessage.textContent = message;
+  // Prefer a unified "Loading... {percent}%" message whenever we have numeric progress
+  let text = 'Loading...';
+  if (typeof value === 'number' && isFinite(value)) {
+    const pct = Math.max(0, Math.min(100, value));
+    text = `Loading... ${Math.round(pct)}%`;
+  } else if (typeof message === 'string' && message) {
+    text = message;
+  }
+  if (cbzProgressMessage) cbzProgressMessage.textContent = text;
   if (cbzProgressBar) {
     if (typeof value === 'number' && isFinite(value)) {
       cbzProgressBar.value = Math.max(0, Math.min(100, value));
@@ -122,7 +130,7 @@ function getCbzCacheKey(item) {
 async function loadCbz(item) {
   cbzState = { active: true, pages: [], index: 0 };
   // Use progress overlay instead of spinner
-  showCbzProgress('Starting download…', 0);
+  showCbzProgress('Loading...', 0);
   try { if (spinner) spinner.style.display = 'none'; } catch {}
   hideVideoShowCbz();
   try {
@@ -155,9 +163,9 @@ async function loadCbz(item) {
     const onNetProgress = (loaded, total) => {
       if (total && isFinite(total) && total > 0) {
         const pct = (loaded / total) * 80; // allocate 80% to download phase
-        showCbzProgress(`Downloading… ${formatMB(loaded)} / ${formatMB(total)}`, pct);
+        showCbzProgress(undefined, pct); // message unified by showCbzProgress
       } else {
-        showCbzProgress('Downloading…', undefined);
+        showCbzProgress('Loading...', undefined);
       }
     };
     if (item.file && typeof item.file.arrayBuffer === 'function') {
@@ -167,7 +175,7 @@ async function loadCbz(item) {
     }
 
     cbzProgressBase = 80; // remaining 20% for extraction
-    showCbzProgress('Parsing archive…', cbzProgressBase);
+    showCbzProgress(undefined, cbzProgressBase);
     const zip = await JSZip.loadAsync(blob);
     const fileNames = Object.keys(zip.files)
       .filter(n => /\.(jpe?g|png|gif|webp|bmp)$/i.test(n))
@@ -175,13 +183,13 @@ async function loadCbz(item) {
     const pages = [];
     for (let i = 0; i < fileNames.length; i++) {
       const name = fileNames[i];
-      showCbzProgress(`Extracting pages… ${i + 1} / ${fileNames.length}`, cbzProgressBase + (20 * ((i) / Math.max(1, fileNames.length))));
+      showCbzProgress(undefined, cbzProgressBase + (20 * ((i) / Math.max(1, fileNames.length))));
       const data = await zip.files[name].async('blob');
       const url = URL.createObjectURL(data);
       cbzObjectUrls.push(url);
       pages.push(url);
     }
-    showCbzProgress('Finalizing…', 99);
+    showCbzProgress(undefined, 99);
     if (pages.length === 0) throw new Error('No images found in CBZ');
     cbzState.pages = pages;
     cbzState.index = 0;

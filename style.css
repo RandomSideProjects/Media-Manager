@@ -351,8 +351,40 @@ label[for="downloadConcurrencyRange"] { min-width: 8.5em; }
   margin: auto;
   color: var(--text);
 }
+#cbzProgressHeader { display:flex; align-items:center; justify-content:space-between; gap:0.5em; }
 #cbzProgressMessage { margin-bottom: 1em; }
 #cbzProgressBar { width: 100%; }
+
+/* CBZ info tooltip */
+.cbz-info-wrap { position: relative; display: inline-block; }
+#cbzInfoBtn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; line-height: 26px;
+  border-radius: 50%; border: 1px solid #444;
+  background: transparent; color: var(--text);
+  font-weight: 700; cursor: help; padding: 0;
+}
+#cbzInfoBtn:hover { background: rgba(255,255,255,0.06); }
+#cbzInfoBtn:focus { outline: 2px solid #5ab8ff; outline-offset: 2px; }
+.cbz-info-tooltip {
+  position: absolute; left: 50%; bottom: calc(100% + 10px);
+  transform: translateX(-50%) translateY(6px);
+  background: var(--container-bg); color: var(--text);
+  border: 1px solid #333; border-radius: 8px;
+  padding: 0.6em 0.75em; max-width: 320px; width: max-content;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.45);
+  opacity: 0; visibility: hidden; pointer-events: none;
+  z-index: 10003; text-align: left; font-size: 0.9rem;
+}
+.cbz-info-wrap:hover .cbz-info-tooltip,
+.cbz-info-wrap:focus-within .cbz-info-tooltip {
+  opacity: 1; visibility: visible; pointer-events: auto; transform: translateX(-50%) translateY(0);
+}
+.cbz-info-tooltip::after {
+  content: ""; position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+  border-width: 7px; border-style: solid;
+  border-color: var(--container-bg) transparent transparent transparent;
+}
 
 /* Clear Storage confirmation overlay */
 #clearStorageOverlay {

@@ -73,7 +73,15 @@
       <!-- CBZ progress overlay -->
       <div id="cbzProgressOverlay">
         <div id="cbzProgressContent">
-          <p id="cbzProgressMessage">Preparing…</p>
+          <div id="cbzProgressHeader">
+            <p id="cbzProgressMessage">Preparing…</p>
+            <div id="cbzInfoWrap" class="cbz-info-wrap" aria-describedby="cbzInfoTooltip">
+              <button id="cbzInfoBtn" type="button" title="Why does this take time?" aria-label="Why does this take time?">i</button>
+              <div id="cbzInfoTooltip" class="cbz-info-tooltip" role="tooltip">
+                Due to the way we store pages (in cbz/zip files), we have to load the entire set at once. we apologize for the inconvenience.
+              </div>
+            </div>
+          </div>
           <progress id="cbzProgressBar" max="100" value="0"></progress>
         </div>
       </div>
