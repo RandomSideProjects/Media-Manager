@@ -1,4 +1,3 @@
-{
   "title": "My Dress-up Darling",
   "Image": "https://files.catbox.moe/zini98.png",
   "categories": [
@@ -129,11 +128,17 @@
           "src": "https://files.catbox.moe/juebnj.mp4",
           "fileSizeBytes": 191929909,
           "durationSeconds": 1420
+        },
+        {
+          "title": "Episode 9",
+          "src": "https://files.catbox.moe/7lwl8i.mp4",
+          "fileSizeBytes": 199444395,
+          "durationSeconds": 1420
         }
       ]
     }
   ],
-  "LatestTime": "2025-09-06T23:00:14.504Z",
-  "totalFileSizeBytes": 2673511733,
-  "totalDurationSeconds": 28411
+  "LatestTime": "2025-09-13T20:33:25.574Z",
+  "totalFileSizeBytes": 2872956128,
+  "totalDurationSeconds": 29831
 }
