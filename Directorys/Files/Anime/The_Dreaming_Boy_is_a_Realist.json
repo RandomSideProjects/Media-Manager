@@ -1,0 +1,86 @@
+{
+  "title": "The Dreaming Boy is a Realist",
+  "Image": "https://files.catbox.moe/y4kkdp.jpg",
+  "categories": [
+    {
+      "category": "Season 1",
+      "episodes": [
+        {
+          "title": "Episode 1",
+          "src": "https://files.catbox.moe/10c4ui.mp4",
+          "fileSizeBytes": 69840421,
+          "durationSeconds": 1422
+        },
+        {
+          "title": "Episode 2",
+          "src": "https://files.catbox.moe/4pb7lw.mp4",
+          "fileSizeBytes": 77695688,
+          "durationSeconds": 1422
+        },
+        {
+          "title": "Episode 3",
+          "src": "https://files.catbox.moe/k6eefi.mp4",
+          "fileSizeBytes": 85780763,
+          "durationSeconds": 1422
+        },
+        {
+          "title": "Episode 4",
+          "src": "https://files.catbox.moe/hea76q.mp4",
+          "fileSizeBytes": 77509394,
+          "durationSeconds": 1422
+        },
+        {
+          "title": "Episode 5",
+          "src": "https://files.catbox.moe/nok23x.mp4",
+          "fileSizeBytes": 83479889,
+          "durationSeconds": 1422
+        },
+        {
+          "title": "Episode 6",
+          "src": "https://files.catbox.moe/k5sea3.mp4",
+          "fileSizeBytes": 88600686,
+          "durationSeconds": 1422
+        },
+        {
+          "title": "Episode 7",
+          "src": "https://files.catbox.moe/09trf0.mp4",
+          "fileSizeBytes": 88242272,
+          "durationSeconds": 1422
+        },
+        {
+          "title": "Episode 8",
+          "src": "https://files.catbox.moe/103fw2.mp4",
+          "fileSizeBytes": 79671343,
+          "durationSeconds": 1422
+        },
+        {
+          "title": "Episode 9",
+          "src": "https://files.catbox.moe/575xqp.mp4",
+          "fileSizeBytes": 82969322,
+          "durationSeconds": 1422
+        },
+        {
+          "title": "Episode 10",
+          "src": "https://files.catbox.moe/dg481w.mp4",
+          "fileSizeBytes": 84726029,
+          "durationSeconds": 1422
+        },
+        {
+          "title": "Episode 11",
+          "src": "https://files.catbox.moe/5ixw29.mp4",
+          "fileSizeBytes": 87963528,
+          "durationSeconds": 1422
+        },
+        {
+          "title": "Episode 12",
+          "src": "https://files.catbox.moe/l927km.mp4",
+          "fileSizeBytes": 94754942,
+          "durationSeconds": 1422
+        }
+      ]
+    }
+  ],
+  "LatestTime": "2025-09-13T17:25:08.637Z",
+  "totalFileSizeBytes": 1001234277,
+  "totalDurationSeconds": 17064
+}
