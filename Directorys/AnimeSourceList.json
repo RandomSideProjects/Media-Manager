@@ -321,6 +321,16 @@
       "LatestTime": "2025-08-11T12:36:00"
     },
     {
+      "file": "The_Dreaming_Boy_is_a_Realist.json",
+      "path": "./Files/Anime/The_Dreaming_Boy_is_a_Realist.json",
+      "title": "The Dreaming Boy is a Realist",
+      "poster": "./Posters/Anime/The_Dreaming_Boy_is_a_Realist.webp",
+      "categoryCount": 1,
+      "episodeCount": 12,
+      "totalFileSizeBytes": 1001234277,
+      "LatestTime": "2025-09-13T17:25:08.637Z"
+    },
+    {
       "file": "IceGuy.json",
       "path": "./Files/Anime/IceGuy.json",
       "title": "The Ice Guy and His Cool Female Colleague",
