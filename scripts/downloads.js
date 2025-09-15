@@ -150,7 +150,7 @@ async function openSeasonSelectionModal() {
 async function downloadSourceFolder(options = {}) {
   const selectedSet = options.selectedCategories instanceof Set ? options.selectedCategories : null;
   // selectedEpisodesBySeason: { [seasonIndex]: Set(episodeIndex) }
-  const selectedEpisodesBySeason = options.selectedEpisodesBySeason && typeof options.selectedEpisodesBySeason === 'object' ? options.selectedEpisodesBySeason : null;
+  const selectedEpisodesBySeason = (options.selectedEpisodesBySeason && typeof options.selectedEpisodesBySeason === 'object') ? options.selectedEpisodesBySeason : null;
   const overlay = document.createElement('div');
   Object.assign(overlay.style, { position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', color: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 9999, fontFamily: 'Segoe UI, sans-serif', textAlign: 'center' });
   document.body.appendChild(overlay);
@@ -203,9 +203,9 @@ async function downloadSourceFolder(options = {}) {
       const prefix = (ext === '.cbz') ? 'V' : 'E';
       const fileName = `${prefix}${pad}${ext}`; plannedNames[ci][ei] = fileName;
       let shouldDownload = true;
-      if (selectedEpisodesBySeason) {
-        const set = selectedEpisodesBySeason[ci];
-        shouldDownload = !!(set && set.has && set.has(ei));
+      const epSet = selectedEpisodesBySeason && selectedEpisodesBySeason[ci];
+      if (epSet instanceof Set) {
+        shouldDownload = epSet.has(ei);
       } else if (selectedSet) {
         shouldDownload = selectedSet.has(ci);
       } else {
