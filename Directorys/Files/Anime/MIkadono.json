@@ -46,11 +46,17 @@
           "src": "https://files.catbox.moe/65hs1l.mp4",
           "fileSizeBytes": 190084534,
           "durationSeconds": 1420
+        },
+        {
+          "title": "Episode 8",
+          "src": "https://files.catbox.moe/1w21ay.mp4",
+          "fileSizeBytes": 199266059,
+          "durationSeconds": 1420
         }
       ]
     }
   ],
-  "LatestTime": "2025-09-07T03:49:41.602Z",
-  "totalFileSizeBytes": 1126303397,
-  "totalDurationSeconds": 9655
+  "totalFileSizeBytes": 1325569456,
+  "totalDurationSeconds": 11075,
+  "LatestTime": "2025-09-15T19:23:29.332Z"
 }
