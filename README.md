@@ -21,15 +21,6 @@ A lightweight, browser-only video player that loads episode lists from small JSO
 | `.github/workflows/AnimeSourceMaintainer.yml` | GitHub Action that keeps `Directorys/AnimeSourceList.json` in sync. |
 | `.github/workflows/MangaSourceMaintainer.yml` | GitHub Action that keeps `Directorys/MangaSourceList.json` in sync. |
 
-## Key Concepts & Features
-
-- **Source JSON format** with `title`, `categories`, and `episodes` entries.
-- **Dynamic loading** of sources from URLs, codes, or local files.
-- **Playback management** with resume data in `localStorage` and next-item auto advance.
-- **Local folder import** and **source download** as a zip via JSZip.
-- **Optional clipping** tool that can upload to Catbox.
-- **Theme toggle** for dark or light mode.
-
 ## Getting Started
 
 ### Installation
@@ -44,7 +35,11 @@ A lightweight, browser-only video player that loads episode lists from small JSO
 
 ## Creating a Source JSON
 
-Use `creator.html` (works best when run locally due to CORS restrictions) or craft the JSON manually using the schema below:
+Use the **creator** tool (found in `/Creator/`)
+
+or 
+
+craft the JSON manually using the schema below:
 
 ```json
 {
@@ -86,23 +81,13 @@ Offical Host
 `randomsideprojects.github.io/Media-Manager/?source=[source]` in your browser.
 
 
-## Tips for Newcomers
 
-1. Inspect the JSON schema to understand how sources are structured.
-2. Follow the flow in `script.js` (`init` → `renderEpisodeList` → `loadVideo`).
-3. Look at `localStorage` keys to see how resume data is stored.
-4. Explore the clipping logic near the end of `script.js`.
-5. Review the Catbox upload helpers in `creator.html`.
-6. Check the GitHub Actions that maintain `Directorys/AnimeSourceList.json` and `Directorys/MangaSourceList.json`.
 
-## Where to Go Next
 
-- Enhance source discovery with search or filters.
-- Improve error handling for network or format issues.
-- Expand clipping/upload options beyond Catbox.
-- Add responsive and accessibility improvements.
-- Modularize JavaScript into smaller components.
 
-## Troubleshooting / Known Errors
+There might be more, but for now, that is all!
+this is still slightly outdated
 
-- **CORS errors**: Ensure your JSON host sends `Access-Control-Allow-Origin: *`.
+CURRENT DATE WHEN EDITTED : 9/15/25
+
+
