@@ -93,8 +93,8 @@ def resize_image_in_place(img_path: Path, scale_percent: int) -> bool:
             # Save using sensible defaults per format while keeping the same filename
             save_kwargs = {}
             if ext in {".jpg", ".jpeg"} or fmt == "JPEG":
-                # Keep subsampling if present, optimize to shrink size
-                save_kwargs.update(dict(quality=85, optimize=True, subsampling="keep"))
+                # Use sensible defaults; avoid subsampling="keep" which fails after transforms
+                save_kwargs.update(dict(quality=85, optimize=True, progressive=True))
                 im = im.convert("RGB")  # ensure no alpha for JPEG
                 im.save(img_path, format="JPEG", **save_kwargs)
             elif ext == ".png" or fmt == "PNG":

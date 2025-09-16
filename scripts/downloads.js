@@ -151,12 +151,60 @@ async function downloadSourceFolder(options = {}) {
   const selectedSet = options.selectedCategories instanceof Set ? options.selectedCategories : null;
   // selectedEpisodesBySeason: { [seasonIndex]: Set(episodeIndex) }
   const selectedEpisodesBySeason = (options.selectedEpisodesBySeason && typeof options.selectedEpisodesBySeason === 'object') ? options.selectedEpisodesBySeason : null;
+  // Build overlay + centered modal similar to upload UI
   const overlay = document.createElement('div');
-  Object.assign(overlay.style, { position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.7)', color: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 9999, fontFamily: 'Segoe UI, sans-serif', textAlign: 'center' });
+  Object.assign(overlay.style, {
+    position: 'fixed', inset: '0', background: 'rgba(0,0,0,0.6)', zIndex: 10030,
+    display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#f1f1f1',
+    fontFamily: 'Segoe UI, sans-serif'
+  });
+  const modal = document.createElement('div');
+  Object.assign(modal.style, {
+    background: '#1a1a1a', color: '#f1f1f1', border: '1px solid #333', borderRadius: '12px',
+    padding: '14px 16px', width: '92%', maxWidth: '720px', boxShadow: '0 14px 28px rgba(0,0,0,0.55)'
+  });
+  const titleEl = document.createElement('h3');
+  titleEl.textContent = 'Downloading source…';
+  titleEl.style.margin = '0 0 8px 0';
+  const summary = document.createElement('div'); summary.style.marginBottom = '8px'; summary.style.opacity = '.9';
+  // Summary line: Speed | Remaining | ETA
+  const speedLabel = document.createElement('span'); speedLabel.style.marginRight = '12px';
+  const remainingLabel = document.createElement('span'); remainingLabel.style.marginRight = '12px';
+  const etaLabel = document.createElement('span');
+  summary.append(speedLabel, remainingLabel, etaLabel);
+  
+  // Completed filter controls
+  let showCompleted = true;
+  let rowEls = [];
+  let rowCompleted = [];
+  function applyVisibilityAll(){
+    try {
+      for (let i = 0; i < rowEls.length; i++) {
+        const el = rowEls[i]; if (!el) continue;
+        el.style.display = (showCompleted || !rowCompleted[i]) ? 'flex' : 'none';
+      }
+    } catch {}
+  }
+  const controlsRow = document.createElement('div');
+  Object.assign(controlsRow.style, { display: 'flex', alignItems: 'center', justifyContent: 'flex-end', margin: '4px 0 8px 0' });
+  const showCompleteLabel = document.createElement('label');
+  showCompleteLabel.style.display = 'flex';
+  showCompleteLabel.style.alignItems = 'center';
+  showCompleteLabel.style.gap = '6px';
+  const showCompleteCb = document.createElement('input'); showCompleteCb.type = 'checkbox'; showCompleteCb.checked = true;
+  const showCompleteText = document.createElement('span'); showCompleteText.textContent = 'Show completed downloads';
+  showCompleteLabel.append(showCompleteCb, showCompleteText);
+  controlsRow.appendChild(showCompleteLabel);
+  showCompleteCb.addEventListener('change', () => { showCompleted = !!showCompleteCb.checked; applyVisibilityAll(); });
+  const rowsContainer = document.createElement('div');
+  Object.assign(rowsContainer.style, { display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '50vh', overflow: 'auto' });
+  const footer = document.createElement('div'); footer.style.display = 'flex'; footer.style.justifyContent = 'center'; footer.style.marginTop = '10px';
+  const cancelBtn = document.createElement('button'); cancelBtn.textContent = 'Cancel'; cancelBtn.className = 'pill-button'; footer.appendChild(cancelBtn);
+  modal.append(titleEl, summary, controlsRow, rowsContainer, footer);
+  overlay.appendChild(modal);
   document.body.appendChild(overlay);
 
   let cancelRequested = false; const xhrs = [];
-  const rowsContainer = document.createElement('div'); rowsContainer.style.width = '80%'; overlay.appendChild(rowsContainer);
 
   const zip = new JSZip();
   const titleText = (directoryTitle.textContent || 'directory').trim() || 'directory';
@@ -221,21 +269,46 @@ async function downloadSourceFolder(options = {}) {
 
   const progressBars = []; const loadedBytes = Array(tasks.length).fill(0); const totalBytes = Array(tasks.length).fill(0);
   const dataLeftLabels = [];
+  rowEls = Array(tasks.length).fill(null);
+  rowCompleted = Array(tasks.length).fill(false);
   tasks.forEach(({ ci, ei }, idx) => {
-    const row = document.createElement('div'); Object.assign(row.style, { display: 'flex', alignItems: 'center', margin: '0.5em 0' });
-    const label = document.createElement('span'); label.textContent = `S${ci+1}E${ei+1}`; label.style.width = '4em';
-    const progress = document.createElement('progress'); progress.max = 100; progress.value = 0; progress.style.flex = '1';
-    row.append(label, progress);
-    const dataLeft = document.createElement('span'); dataLeft.style.marginLeft = '0.5em'; dataLeft.style.color = '#6ec1e4'; dataLeft.textContent = '';
-    row.appendChild(dataLeft); dataLeftLabels[idx] = dataLeft;
-    rowsContainer.appendChild(row); progressBars[idx] = progress;
+    const row = document.createElement('div');
+    row.style.display = 'flex';
+    row.style.alignItems = 'center';
+    row.style.gap = '0.75em';
+    row.style.padding = '6px 8px';
+    row.style.background = '#222';
+    row.style.borderRadius = '6px';
+    row.style.fontSize = '0.9em';
+
+    const labelEl = document.createElement('div');
+    labelEl.textContent = `S${ci+1}E${ei+1}`;
+    labelEl.style.flex = '1';
+
+    const progressWrapper = document.createElement('div');
+    progressWrapper.style.flex = '2';
+    const progress = document.createElement('progress');
+    progress.max = 100; progress.value = 0; progress.style.width = '100%';
+    progressWrapper.appendChild(progress);
+
+    const statusEl = document.createElement('div');
+    statusEl.textContent = 'Queued';
+    statusEl.style.minWidth = '110px';
+    statusEl.style.color = '#6ec1e4';
+
+    row.appendChild(labelEl);
+    row.appendChild(progressWrapper);
+    row.appendChild(statusEl);
+
+    dataLeftLabels[idx] = statusEl;
+    rowsContainer.appendChild(row);
+    progressBars[idx] = progress;
+    rowEls[idx] = row;
   });
+  applyVisibilityAll();
 
   let plannedTotalBytes = 0; try { for (const { episode } of tasks) { const v = Number(episode && episode.fileSizeBytes); if (Number.isFinite(v) && v >= 0) plannedTotalBytes += v; } } catch {}
-  const etaLabel = document.createElement('div'); etaLabel.style.margin = '0.5em'; etaLabel.style.color = '#6ec1e4'; overlay.insertBefore(etaLabel, rowsContainer);
-  const speedLabel = document.createElement('div'); speedLabel.style.margin = '0.5em'; speedLabel.style.color = '#6ec1e4'; overlay.insertBefore(speedLabel, etaLabel);
-  const remainingLabel = document.createElement('div'); remainingLabel.style.margin = '0.5em'; remainingLabel.style.color = '#6ec1e4'; remainingLabel.textContent = 'Remaining: ' + formatBytes(plannedTotalBytes); overlay.insertBefore(remainingLabel, etaLabel);
-  const cancelBtn = document.createElement('button'); cancelBtn.textContent = 'Cancel'; cancelBtn.className = 'pill-button'; cancelBtn.style.marginTop = '1em'; overlay.appendChild(cancelBtn);
+  remainingLabel.textContent = 'Remaining: ' + formatBytes(plannedTotalBytes);
   cancelBtn.addEventListener('click', () => { cancelRequested = true; xhrs.forEach(x => x.abort()); overlay.remove(); });
 
   const DEFAULT_DL_CONCURRENCY = 2; const storedDlConc = parseInt(localStorage.getItem('downloadConcurrency') || '', 10);
@@ -407,6 +480,9 @@ async function downloadSourceFolder(options = {}) {
           try { const sz = new TextEncoder().encode(outText).length; epObj.fileSizeBytes = bytesSum + sz; downloadedBytes += (bytesSum + sz); } catch { epObj.fileSizeBytes = bytesSum; }
           epObj.VolumePageCount = pageList.length;
           epObj.durationSeconds = null;
+
+          // Mark row completed
+          try { progressBars[idx].value = 100; dataLeftLabels[idx].textContent = 'Done'; rowCompleted[idx] = true; applyVisibilityAll(); } catch {}
         } else {
           // Regular path: download blob directly
           let blob = await new Promise((resolve, reject) => {
@@ -455,6 +531,9 @@ async function downloadSourceFolder(options = {}) {
           } else {
             try { const d = await computeBlobDurationSeconds(blob); if (Number.isFinite(d) && d > 0) { const sec = Math.round(d); epObj.durationSeconds = sec; } } catch {}
           }
+
+          // Mark row completed
+          try { progressBars[idx].value = 100; dataLeftLabels[idx].textContent = 'Done'; rowCompleted[idx] = true; applyVisibilityAll(); } catch {}
         }
       } catch (err) {
         console.error('Error downloading', episode.src, err);
