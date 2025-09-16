@@ -30,12 +30,21 @@
     }
 
     async function init(){
-      // Attempt to fetch the date file; fall back to current date if unavailable
+      // Attempt to fetch the date file; fall back to document metadata if unavailable
       try {
-        const resp = await fetch('Assets/LastUpdated.txt', { cache: 'no-store' });
+        const resp = await fetch(`./Assets/LastUpdated.txt?t=${Date.now()}`, { cache: 'no-store' });
         if (resp && resp.ok) {
-          const text = (await resp.text()).trim();
-          // Accept ISO or any Date-parsable string
+          const raw = (await resp.text()).trim();
+          // Normalize common formats to ISO for reliable parsing
+          let text = raw;
+          // e.g. "YYYY-MM-DD HH:mm:ss UTC" -> "YYYY-MM-DDTHH:mm:ssZ"
+          if (/UTC$/i.test(text)) {
+            text = text.replace(/\sUTC$/i, 'Z').replace(' ', 'T');
+          }
+          // If just a date, treat it as UTC midnight
+          if (/^\d{4}-\d{2}-\d{2}$/.test(text)) {
+            text = text + 'T00:00:00Z';
+          }
           const d = new Date(text);
           if (!isNaN(d.getTime())) { setBadgeFromDate(d); return; }
         }
@@ -52,4 +61,3 @@
     }
   } catch {}
 })();
-
