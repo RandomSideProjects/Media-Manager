@@ -1,6 +1,6 @@
 "use strict";
 
-// --- CBZ viewer state and helpers ---
+// --- Manga (CBZ/JSON) viewer state and helpers ---
 let cbzState = {
   active: false,
   pages: [],
@@ -11,14 +11,16 @@ let cbzCache = new Map(); // key -> { pages: string[] }
 let cbzCurrentKey = '';
 let cbzProgressBase = 0; // base percent before extraction phase
 
-function isCbzItem(item) {
+function isMangaVolumeItem(item) {
   if (!item) return false;
   const nameFromSrc = (typeof item.src === 'string') ? item.src : '';
   const fileName = (item.fileName || '').toLowerCase();
   const lowerSrc = nameFromSrc.toLowerCase();
-  const hasCbzInSrc = /\.cbz(?:$|[?#])/i.test(lowerSrc);
+  const hasCbzInSrc = /\.(cbz)(?:$|[?#])/i.test(lowerSrc);
   const hasCbzInName = fileName.endsWith('.cbz');
-  return hasCbzInSrc || hasCbzInName;
+  const hasJsonInSrc = /\.(json)(?:$|[?#])/i.test(lowerSrc);
+  const hasJsonInName = fileName.endsWith('.json');
+  return hasCbzInSrc || hasCbzInName || hasJsonInSrc || hasJsonInName;
 }
 
 function clearCbzUrls() {
@@ -127,7 +129,41 @@ function getCbzCacheKey(item) {
   return `url:${item && item.src ? item.src : ''}`;
 }
 
-async function loadCbz(item) {
+function parseMangaJsonToPages(json) {
+  try {
+    if (!json || typeof json !== 'object') return [];
+    // Prefer explicit array fields
+    if (Array.isArray(json.pages)) {
+      return json.pages.map(p => {
+        if (typeof p === 'string') return p;
+        if (p && typeof p === 'object') return p.src || p.url || p.data || '';
+        return '';
+      }).filter(Boolean);
+    }
+    if (Array.isArray(json.images)) {
+      return json.images.map(p => (typeof p === 'string') ? p : (p && (p.src || p.url || p.data) || '')).filter(Boolean);
+    }
+    // Fallback: object mapping like { "Page 1": "1.png", ... } or { "1": "..." }
+    const candidates = json.pages && typeof json.pages === 'object' ? json.pages : json;
+    const entries = Object.entries(candidates)
+      .map(([k, v]) => {
+        let n = NaN;
+        try {
+          const m = String(k).match(/(\d+)/);
+          if (m) n = parseInt(m[1], 10);
+        } catch {}
+        let url = '';
+        if (typeof v === 'string') url = v;
+        else if (v && typeof v === 'object') url = v.src || v.url || v.data || '';
+        return { n, url };
+      })
+      .filter(e => Number.isFinite(e.n) && e.n >= 1 && e.url);
+    entries.sort((a, b) => a.n - b.n);
+    return entries.map(e => e.url);
+  } catch { return []; }
+}
+
+async function loadMangaVolume(item) {
   cbzState = { active: true, pages: [], index: 0 };
   // Use progress overlay instead of spinner
   showCbzProgress('Loading...', 0);
@@ -168,29 +204,118 @@ async function loadCbz(item) {
         showCbzProgress('Loading...', undefined);
       }
     };
+    let isJson = false;
+    try {
+      const srcLower = (item && item.src ? String(item.src) : '').toLowerCase();
+      const nameLower = (item && item.fileName ? String(item.fileName) : '').toLowerCase();
+      isJson = /\.json(?:$|[?#])/.test(srcLower) || nameLower.endsWith('.json');
+    } catch {}
+
     if (item.file && typeof item.file.arrayBuffer === 'function') {
       blob = await readFileWithProgress(item.file, onNetProgress);
     } else {
       blob = await fetchBlobWithProgress(item.src, onNetProgress);
     }
 
-    cbzProgressBase = 80; // remaining 20% for extraction
-    showCbzProgress(undefined, cbzProgressBase);
-    const zip = await JSZip.loadAsync(blob);
-    const fileNames = Object.keys(zip.files)
-      .filter(n => /\.(jpe?g|png|gif|webp|bmp)$/i.test(n))
-      .sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
-    const pages = [];
-    for (let i = 0; i < fileNames.length; i++) {
-      const name = fileNames[i];
-      showCbzProgress(undefined, cbzProgressBase + (20 * ((i) / Math.max(1, fileNames.length))));
-      const data = await zip.files[name].async('blob');
-      const url = URL.createObjectURL(data);
-      cbzObjectUrls.push(url);
-      pages.push(url);
+    let pages = [];
+    if (isJson) {
+      cbzProgressBase = 80;
+      showCbzProgress(undefined, cbzProgressBase);
+      // Parse JSON and extract page list
+      const text = await blob.text();
+      let json;
+      try { json = JSON.parse(text); } catch (e) { throw new Error('Invalid volume JSON'); }
+      pages = parseMangaJsonToPages(json);
+      if (!pages || pages.length === 0) throw new Error('No pages found in volume JSON');
+      // Resolve local-relative paths when using local folder selections
+      try {
+        const isLocal = !!(item && item.file);
+        const filesIndex = item && item.filesIndex ? item.filesIndex : null;
+        const baseDir = item && typeof item.fileBaseDirRel === 'string' ? item.fileBaseDirRel : '';
+        if (isLocal && filesIndex && baseDir) {
+          const resolved = [];
+          const lowerIndex = filesIndex; // object mapping lowercased relative path -> File
+          function joinRel(base, rel) {
+            const a = String(base || '').replace(/\\/g, '/');
+            const b = String(rel || '').replace(/\\/g, '/');
+            if (!a) return b;
+            if (!b) return a;
+            let out = a.endsWith('/') ? (a + b) : (a + '/' + b);
+            // normalize a/./b and a//b
+            out = out.replace(/\/+\./g, '/').replace(/\/{2,}/g, '/');
+            // resolve a/../b conservatively (single pass is fine for shallow paths)
+            const parts = out.split('/');
+            const stack = [];
+            for (const part of parts) {
+              if (part === '..') stack.pop();
+              else if (part !== '.') stack.push(part);
+            }
+            return stack.join('/');
+          }
+          for (let i = 0; i < pages.length; i++) {
+            const p = String(pages[i] || '');
+            const lower = p.toLowerCase();
+            const isAbs = /^https?:\/\//.test(p) || /^data:/.test(p);
+            if (isAbs) { resolved.push(p); continue; }
+            const relPath = joinRel(baseDir, p).toLowerCase();
+            const f = lowerIndex[relPath] || null;
+            if (f) {
+              const url = URL.createObjectURL(f);
+              cbzObjectUrls.push(url);
+              resolved.push(url);
+            } else {
+              // Also try without first folder segment (in case of differing roots)
+              const idx = relPath.indexOf('/');
+              const alt = idx > 0 ? relPath.slice(idx + 1) : relPath;
+              const f2 = lowerIndex[alt] || null;
+              if (f2) {
+                const url = URL.createObjectURL(f2);
+                cbzObjectUrls.push(url);
+                resolved.push(url);
+              } else {
+                resolved.push(p);
+              }
+            }
+          }
+          pages = resolved;
+        }
+      } catch {}
+      // For non-local JSON, resolve relative paths against the JSON's directory
+      try {
+        const isLocal = !!(item && item.file);
+        if (!isLocal && item && item.src) {
+          const base = new URL('.', new URL(String(item.src), window.location.href)).href;
+          pages = pages.map(p => {
+            try {
+              if (typeof p !== 'string') return '';
+              if (/^data:/i.test(p)) return p;
+              return new URL(p, base).href;
+            } catch { return p; }
+          }).filter(Boolean);
+        }
+      } catch {}
+      // If not local, pages should be direct URLs or data URIs
+      showCbzProgress(undefined, 99);
+    } else {
+      cbzProgressBase = 80; // remaining 20% for extraction
+      showCbzProgress(undefined, cbzProgressBase);
+      const zip = await JSZip.loadAsync(blob);
+      const fileNames = Object.keys(zip.files)
+        .filter(n => /\.(jpe?g|png|gif|webp|bmp)$/i.test(n))
+        .sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+      pages = [];
+      for (let i = 0; i < fileNames.length; i++) {
+        const name = fileNames[i];
+        showCbzProgress(undefined, cbzProgressBase + (20 * ((i) / Math.max(1, fileNames.length))));
+        const data = await zip.files[name].async('blob');
+        const url = URL.createObjectURL(data);
+        cbzObjectUrls.push(url);
+        pages.push(url);
+      }
+      showCbzProgress(undefined, 99);
+      if (pages.length === 0) throw new Error('No images found in CBZ');
     }
-    showCbzProgress(undefined, 99);
-    if (pages.length === 0) throw new Error('No images found in CBZ');
+
     cbzState.pages = pages;
     cbzState.index = 0;
     // Save total pages and restore saved page if present
@@ -212,7 +337,7 @@ async function loadCbz(item) {
     cbzState.active = false;
     clearCbzUrls();
     if (cbzViewer) cbzViewer.style.display = 'none';
-    showPlayerAlert((e && e.message) ? e.message : 'Failed to load CBZ file');
+    showPlayerAlert((e && e.message) ? e.message : 'Failed to load volume');
   } finally {
     hideCbzProgress();
   }
@@ -275,11 +400,11 @@ function loadVideo(index) {
     if (theaterBtn) theaterBtn.style.display = 'none';
     unloadCbz();
     showPlayerAlert("Unfortunatly, this file in unavalible at this moment, please try again later.\n If this is a local source, please download the remaining files to continue");
-  } else if (isCbzItem(item)) {
+  } else if (isMangaVolumeItem(item)) {
     // Load CBZ instead of video
     if (placeholderNotice) placeholderNotice.style.display = 'none';
     unloadCbz();
-    loadCbz(item);
+    loadMangaVolume(item);
   } else {
     if (placeholderNotice) placeholderNotice.style.display = 'none';
     // Ensure CBZ viewer is disabled when playing video
@@ -312,7 +437,7 @@ function loadVideo(index) {
   }
   title.textContent = item.title;
   nextBtn.style.display = "none";
-  if (!item.isPlaceholder && !isCbzItem(item)) { video.load(); video.play(); }
+  if (!item.isPlaceholder && !isMangaVolumeItem(item)) { video.load(); video.play(); }
   const params = new URLSearchParams(window.location.search);
   params.set('item', index + 1);
   window.history.replaceState(null, '', `${window.location.pathname}?${params.toString()}`);

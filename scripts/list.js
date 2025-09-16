@@ -22,9 +22,11 @@ function renderEpisodeList() {
       left.textContent = episode.title;
       const right = document.createElement('span');
       right.className = 'episode-meta';
-      // Decide meta display depending on media type (video vs CBZ)
-      const isCbz = (/\.cbz(?:$|[?#])/i.test(String(episode.src || ''))) || (String(episode.fileName || '').toLowerCase().endsWith('.cbz'));
-      if (isCbz) {
+      // Decide meta display depending on media type (video vs Manga volume)
+      const lowerSrc = String(episode.src || '').toLowerCase();
+      const lowerName = String(episode.fileName || '').toLowerCase();
+      const isManga = (/\.(cbz|json)(?:$|[?#])/i.test(lowerSrc)) || lowerName.endsWith('.cbz') || lowerName.endsWith('.json') || (typeof episode.VolumePageCount === 'number');
+      if (isManga) {
         let totalPages = Number.isFinite(Number(episode.VolumePageCount)) ? Number(episode.VolumePageCount) : NaN;
         if (!Number.isFinite(totalPages)) {
           let lsPages = NaN;

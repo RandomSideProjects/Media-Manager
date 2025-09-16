@@ -182,10 +182,14 @@ async function downloadSourceFolder(options = {}) {
       } catch {}
       const pad = String(ei + 1).padStart(2, '0');
       const isCbz = ext === '.cbz';
-      const prefix = isCbz ? 'V' : 'E';
-      const localPath = `Directorys/${titleText}/${sanitizedCats[i]}/${prefix}${pad}${ext}`;
+      const isJsonVolume = ext === '.json';
+      const prefix = (isCbz || isJsonVolume) ? 'V' : 'E';
+      // For JSON volumes, store an index.json within a V##/ subfolder
+      const localPath = isJsonVolume
+        ? `Directorys/${titleText}/${sanitizedCats[i]}/${prefix}${pad}/index.json`
+        : `Directorys/${titleText}/${sanitizedCats[i]}/${prefix}${pad}${ext}`;
       const base = { title: ep.title, src: localPath, fileSizeBytes: (typeof ep.fileSizeBytes === 'number') ? ep.fileSizeBytes : null };
-      if (isCbz) { base.VolumePageCount = (typeof ep.VolumePageCount === 'number') ? ep.VolumePageCount : null; }
+      if (isCbz || isJsonVolume) { base.VolumePageCount = (typeof ep.VolumePageCount === 'number') ? ep.VolumePageCount : null; }
       else { base.durationSeconds = (typeof ep.durationSeconds === 'number') ? ep.durationSeconds : null; }
       return base;
     });
@@ -200,7 +204,7 @@ async function downloadSourceFolder(options = {}) {
       const origName = decodeURIComponent(urlParts.pathname.split('/').pop());
       const ext = origName.includes('.') ? origName.slice(origName.lastIndexOf('.')).toLowerCase() : '';
       const pad = String(ei + 1).padStart(2, '0');
-      const prefix = (ext === '.cbz') ? 'V' : 'E';
+      const prefix = (ext === '.cbz' || ext === '.json') ? 'V' : 'E';
       const fileName = `${prefix}${pad}${ext}`; plannedNames[ci][ei] = fileName;
       let shouldDownload = true;
       const epSet = selectedEpisodesBySeason && selectedEpisodesBySeason[ci];
@@ -255,34 +259,202 @@ async function downloadSourceFolder(options = {}) {
       const idx = pointer++;
       const { ci, ei, episode, fileName } = tasks[idx];
       try {
-        const blob = await new Promise((resolve, reject) => {
-          const xhr = new XMLHttpRequest(); xhrs.push(xhr);
-          xhr.addEventListener('loadend', () => { const i = xhrs.indexOf(xhr); if (i >= 0) xhrs.splice(i, 1); });
-          xhr.open('GET', episode.src); xhr.responseType = 'blob';
-          xhr.addEventListener('progress', e => {
-            if (e.lengthComputable) {
-              progressBars[idx].value = (e.loaded / e.total) * 100; loadedBytes[idx] = e.loaded; totalBytes[idx] = e.total;
-              const totalLoaded = loadedBytes.reduce((a, b) => a + b, 0); const totalTotal = totalBytes.reduce((a, b) => a + b, 0);
-              const now = Date.now(); const dt = (now - lastTime) / 1000; let speed = 0; if (dt > 0) { speed = (totalLoaded - lastLoaded) / dt; avgSpeed = avgSpeed * 0.8 + speed * 0.2; lastTime = now; lastLoaded = totalLoaded; }
-              const remaining = totalTotal - totalLoaded; let eta = ''; if (avgSpeed > 0 && remaining > 0) { const seconds = remaining / avgSpeed; const min = Math.floor(seconds / 60); const sec = Math.round(seconds % 60); eta = `ETA: ${min}m ${sec}s`; }
-              etaLabel.textContent = eta; const speedMBps = (speed / (1024 * 1024)).toFixed(2); speedLabel.textContent = `Speed: ${speedMBps} MB/s`;
-              const remainingBytes = totalBytes[idx] - loadedBytes[idx]; const remainingMB = (remainingBytes / (1024 * 1024)).toFixed(2); dataLeftLabels[idx].textContent = `${remainingMB} MB left`;
-              const loadedSum = loadedBytes.reduce((a, b) => a + b, 0); const remainFromSource = Math.max(0, plannedTotalBytes - loadedSum); remainingLabel.textContent = 'Remaining: ' + formatBytes(remainFromSource);
+        const isJson = fileName.toLowerCase().endsWith('.json');
+        if (isJson) {
+          // JSON volume: fetch JSON, inline remote links as base64 data URIs, save JSON
+          const epObj = catObjs[ci].episodes[ei];
+          const folderPath = `Directorys/${titleText}/${sanitizedCats[ci]}/`;
+          const pad = String(ei + 1).padStart(2, '0');
+          const volFolderName = `V${pad}`;
+          const volFolder = catFolders[ci].folder(volFolderName);
+          // Point to the nested index.json
+          epObj.src = `${folderPath}${volFolderName}/index.json`;
+
+          // Helper to fetch a URL to Blob and detect extension
+          function mimeToExt(mime) {
+            const m = String(mime || '').toLowerCase();
+            if (m.includes('jpeg')) return '.jpg';
+            if (m.includes('jpg')) return '.jpg';
+            if (m.includes('png')) return '.png';
+            if (m.includes('webp')) return '.webp';
+            if (m.includes('gif')) return '.gif';
+            if (m.includes('bmp')) return '.bmp';
+            if (m.includes('svg')) return '.svg';
+            return '';
+          }
+          async function fetchImage(u) {
+            // Try XHR first to get progress
+            try {
+              const blob = await new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest(); xhrs.push(xhr);
+                xhr.addEventListener('loadend', () => { const i = xhrs.indexOf(xhr); if (i >= 0) xhrs.splice(i, 1); });
+                xhr.open('GET', u); xhr.responseType = 'blob';
+                xhr.onload = () => ((xhr.status >= 200 && xhr.status < 300) || xhr.status === 0) ? resolve(xhr.response) : reject(new Error('HTTP ' + xhr.status));
+                xhr.onerror = () => reject(new Error('Network error'));
+                xhr.send();
+              });
+              const type = (blob && blob.type) || '';
+              let ext = mimeToExt(type);
+              if (!ext) {
+                try { const urlParts = new URL(u, window.location.href); const name = decodeURIComponent(urlParts.pathname.split('/').pop()); if (name && name.includes('.')) ext = name.slice(name.lastIndexOf('.')).toLowerCase(); } catch {}
+              }
+              return { blob, ext: ext || '.jpg' };
+            } catch {
+              const resp = await fetch(u, { cache: 'no-store', credentials: 'omit', referrerPolicy: 'no-referrer' });
+              if (!resp || (!resp.ok && resp.status !== 0)) throw new Error('fetch failed');
+              const blob = await resp.blob();
+              const type = (blob && blob.type) || '';
+              let ext = mimeToExt(type);
+              if (!ext) {
+                try { const urlParts = new URL(u, window.location.href); const name = decodeURIComponent(urlParts.pathname.split('/').pop()); if (name && name.includes('.')) ext = name.slice(name.lastIndexOf('.')).toLowerCase(); } catch {}
+              }
+              return { blob, ext: ext || '.jpg' };
             }
-          });
-          xhr.onload = () => xhr.status >= 200 && xhr.status < 300 ? resolve(xhr.response) : reject(new Error('Download failed: ' + xhr.status));
-          xhr.onerror = () => reject(new Error('Network error'));
-          xhr.send();
-        });
-        catFolders[ci].file(fileName, blob);
-        const epObj = catObjs[ci].episodes[ei]; epObj.src = `Directorys/${titleText}/${sanitizedCats[ci]}/${fileName}`;
-        try { const sz = Number(blob && blob.size); if (Number.isFinite(sz) && sz >= 0) { epObj.fileSizeBytes = sz; downloadedBytes += sz; } } catch {}
-        // Set per-item metadata by type
-        if (fileName.toLowerCase().endsWith('.cbz')) {
-          try { const pages = await computeBlobPageCount(blob); if (Number.isFinite(pages) && pages >= 0) epObj.VolumePageCount = pages; } catch {}
+          }
+
+          // Fetch the JSON text (try XHR first to match cross-origin behavior of other downloads)
+          let jsonText = '';
+          try {
+            const blob = await new Promise((resolve, reject) => {
+              const xhr = new XMLHttpRequest(); xhrs.push(xhr);
+              xhr.addEventListener('loadend', () => { const i = xhrs.indexOf(xhr); if (i >= 0) xhrs.splice(i, 1); });
+              xhr.open('GET', episode.src); xhr.responseType = 'blob';
+              xhr.onprogress = (e) => {
+                if (e.lengthComputable) {
+                  // Map network progress to a small early bump (0-10%)
+                  const pct = Math.min(10, (e.loaded / Math.max(1, e.total)) * 10);
+                  try { progressBars[idx].value = pct; } catch {}
+                }
+              };
+              xhr.onload = () => ((xhr.status >= 200 && xhr.status < 300) || xhr.status === 0)
+                ? resolve(xhr.response)
+                : reject(new Error('Download failed: ' + xhr.status));
+              xhr.onerror = () => reject(new Error('Network error'));
+              xhr.send();
+            });
+            jsonText = await blob.text();
+          } catch {
+            const resp = await fetch(episode.src, { cache: 'no-store', credentials: 'omit', referrerPolicy: 'no-referrer' });
+            if (!resp || (!resp.ok && resp.status !== 0)) throw new Error('Download failed');
+            jsonText = await resp.text();
+          }
+          let json;
+          try { json = JSON.parse(jsonText); } catch { throw new Error('Invalid JSON'); }
+          // Extract page URLs from JSON (supports array or object mapping form)
+          function parsePages(j) {
+            try {
+              if (!j || typeof j !== 'object') return [];
+              if (Array.isArray(j.pages)) {
+                return j.pages.map(p => {
+                  if (typeof p === 'string') return p; if (p && typeof p === 'object') return p.src || p.url || p.data || ''; return '';
+                }).filter(Boolean);
+              }
+              if (Array.isArray(j.images)) {
+                return j.images.map(p => (typeof p === 'string') ? p : (p && (p.src || p.url || p.data) || '')).filter(Boolean);
+              }
+              const candidates = j.pages && typeof j.pages === 'object' ? j.pages : j;
+              const entries = Object.entries(candidates).map(([k, v]) => {
+                let n = NaN; try { const m = String(k).match(/(\d+)/); if (m) n = parseInt(m[1], 10); } catch {}
+                let url = ''; if (typeof v === 'string') url = v; else if (v && typeof v === 'object') url = v.src || v.url || v.data || '';
+                return { n, url };
+              }).filter(e => Number.isFinite(e.n) && e.n >= 1 && e.url);
+              entries.sort((a, b) => a.n - b.n);
+              return entries.map(e => e.url);
+            } catch { return []; }
+          }
+          const pageUrls = parsePages(json);
+          const totalLinks = pageUrls.length;
+          let completed = 0;
+          function updateProgress() {
+            try {
+              const pct = totalLinks > 0 ? (completed / totalLinks) * 100 : 100;
+              progressBars[idx].value = pct;
+              dataLeftLabels[idx].textContent = totalLinks > 0 ? `${completed}/${totalLinks} files` : '';
+            } catch {}
+          }
+          updateProgress();
+
+          const perItemConcurrency = Math.min(4, Math.max(1, concurrency));
+          let linkPtr = 0;
+          const filesOut = Array(totalLinks).fill(null);
+          let bytesSum = 0;
+          async function workerDl() {
+            while (linkPtr < totalLinks) {
+              const i = linkPtr++;
+              const { blob, ext } = await fetchImage(pageUrls[i]);
+              filesOut[i] = { blob, ext };
+              try { if (blob && typeof blob.size === 'number') bytesSum += blob.size; } catch {}
+              completed++;
+              updateProgress();
+            }
+          }
+          await Promise.all(Array.from({ length: perItemConcurrency }, workerDl));
+
+          // Write files and index.json
+          const pageList = [];
+          for (let i = 0; i < filesOut.length; i++) {
+            const f = filesOut[i]; if (!f) continue; const name = `${String(i+1).padStart(3,'0')}${f.ext}`;
+            volFolder.file(name, f.blob);
+            pageList.push(name);
+          }
+          const pagesObj = {};
+          for (let i = 0; i < pageList.length; i++) pagesObj[`Page ${i+1}`] = pageList[i];
+          const outJson = { pagecount: pageList.length, pages: pagesObj };
+          const outText = JSON.stringify(outJson, null, 2);
+          volFolder.file('index.json', outText);
+
+          // Update manifest ep
+          try { const sz = new TextEncoder().encode(outText).length; epObj.fileSizeBytes = bytesSum + sz; downloadedBytes += (bytesSum + sz); } catch { epObj.fileSizeBytes = bytesSum; }
+          epObj.VolumePageCount = pageList.length;
           epObj.durationSeconds = null;
         } else {
-          try { const d = await computeBlobDurationSeconds(blob); if (Number.isFinite(d) && d > 0) { const sec = Math.round(d); epObj.durationSeconds = sec; } } catch {}
+          // Regular path: download blob directly
+          let blob = await new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest(); xhrs.push(xhr);
+            xhr.addEventListener('loadend', () => { const i = xhrs.indexOf(xhr); if (i >= 0) xhrs.splice(i, 1); });
+            xhr.open('GET', episode.src); xhr.responseType = 'blob';
+            xhr.addEventListener('progress', e => {
+              if (e.lengthComputable) {
+                progressBars[idx].value = (e.loaded / e.total) * 100; loadedBytes[idx] = e.loaded; totalBytes[idx] = e.total;
+                const totalLoaded = loadedBytes.reduce((a, b) => a + b, 0); const totalTotal = totalBytes.reduce((a, b) => a + b, 0);
+                const now = Date.now(); const dt = (now - lastTime) / 1000; let speed = 0; if (dt > 0) { speed = (totalLoaded - lastLoaded) / dt; avgSpeed = avgSpeed * 0.8 + speed * 0.2; lastTime = now; lastLoaded = totalLoaded; }
+                const remaining = totalTotal - totalLoaded; let eta = ''; if (avgSpeed > 0 && remaining > 0) { const seconds = remaining / avgSpeed; const min = Math.floor(seconds / 60); const sec = Math.round(seconds % 60); eta = `ETA: ${min}m ${sec}s`; }
+                etaLabel.textContent = eta; const speedMBps = (speed / (1024 * 1024)).toFixed(2); speedLabel.textContent = `Speed: ${speedMBps} MB/s`;
+                const remainingBytes = totalBytes[idx] - loadedBytes[idx]; const remainingMB = (remainingBytes / (1024 * 1024)).toFixed(2); dataLeftLabels[idx].textContent = `${remainingMB} MB left`;
+                const loadedSum = loadedBytes.reduce((a, b) => a + b, 0); const remainFromSource = Math.max(0, plannedTotalBytes - loadedSum); remainingLabel.textContent = 'Remaining: ' + formatBytes(remainFromSource);
+              }
+            });
+            // Treat status 0 as success for opaque/file responses (matches player.js behavior)
+            xhr.onload = () => ((xhr.status >= 200 && xhr.status < 300) || xhr.status === 0)
+              ? resolve(xhr.response)
+              : reject(new Error('Download failed: ' + xhr.status));
+            xhr.onerror = () => reject(new Error('Network error'));
+            xhr.send();
+          }).catch(() => null);
+
+          // Fallback to fetch if XHR fails (some hosts behave better with fetch)
+          if (!blob) {
+            try {
+              const resp = await fetch(episode.src, { cache: 'no-store', credentials: 'omit', referrerPolicy: 'no-referrer' });
+              if (resp && (resp.ok || resp.status === 0)) {
+                blob = await resp.blob();
+              }
+            } catch {
+              // ignore; will throw below if blob still null
+            }
+          }
+
+          if (!blob) throw new Error('Download failed');
+          catFolders[ci].file(fileName, blob);
+          const epObj = catObjs[ci].episodes[ei]; epObj.src = `Directorys/${titleText}/${sanitizedCats[ci]}/${fileName}`;
+          try { const sz = Number(blob && blob.size); if (Number.isFinite(sz) && sz >= 0) { epObj.fileSizeBytes = sz; downloadedBytes += sz; } } catch {}
+          // Set per-item metadata by type
+          if (fileName.toLowerCase().endsWith('.cbz')) {
+            try { const pages = await computeBlobPageCount(blob); if (Number.isFinite(pages) && pages >= 0) epObj.VolumePageCount = pages; } catch {}
+            epObj.durationSeconds = null;
+          } else {
+            try { const d = await computeBlobDurationSeconds(blob); if (Number.isFinite(d) && d > 0) { const sec = Math.round(d); epObj.durationSeconds = sec; } } catch {}
+          }
         }
       } catch (err) {
         console.error('Error downloading', episode.src, err);

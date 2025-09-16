@@ -2,19 +2,44 @@
 
 async function handleFolderUpload(event) {
   const files = Array.from(event.target.files || []);
-  // Find index.json anywhere in the selected directory tree
-  const indexFile = files.find(f => (f.name || '').toLowerCase() === 'index.json');
-  if (!indexFile) {
+  // Build index of all selected files by relative path (lowercased)
+  const filesIndex = {};
+  let rootPrefix = '';
+  try {
+    files.forEach(f => {
+      const rp = String((f.webkitRelativePath || f.relativePath || f.name || '')).replace(/\\/g, '/');
+      const lower = rp.toLowerCase();
+      filesIndex[lower] = f;
+      if (!rootPrefix) {
+        const i = rp.indexOf('/');
+        rootPrefix = (i > 0) ? rp.slice(0, i + 1) : '';
+      }
+    });
+  } catch {}
+  // Find all index.json files; prefer the shallowest that has a source manifest (with categories)
+  const allIndexFiles = files.filter(f => (f.name || '').toLowerCase() === 'index.json');
+  if (!allIndexFiles.length) {
     errorMessage.textContent = "Selected folder must contain index.json";
     errorMessage.style.display = "block";
     return;
   }
-  let json;
-  try {
-    const text = await indexFile.text();
-    json = JSON.parse(text);
-  } catch (e) {
-    errorMessage.textContent = "Failed to read or parse index.json";
+  allIndexFiles.sort((a, b) => {
+    const pa = String((a.webkitRelativePath || a.relativePath || a.name || '')).split(/[\\\/]+/).length;
+    const pb = String((b.webkitRelativePath || b.relativePath || b.name || '')).split(/[\\\/]+/).length;
+    return pa - pb;
+  });
+  let indexFile = null;
+  let json = null;
+  for (const f of allIndexFiles) {
+    try {
+      const text = await f.text();
+      const candidate = JSON.parse(text);
+      if (candidate && Array.isArray(candidate.categories)) { indexFile = f; json = candidate; break; }
+      if (!indexFile) { indexFile = f; json = candidate; }
+    } catch {}
+  }
+  if (!json || !indexFile || !Array.isArray(json.categories)) {
+    errorMessage.textContent = "Selected folder's root index.json is missing or invalid (no categories). Select the folder that contains the source index.json.";
     errorMessage.style.display = "block";
     return;
   }
@@ -58,12 +83,23 @@ async function handleFolderUpload(event) {
       const srcUrl = fileObj ? URL.createObjectURL(fileObj) : '';
       const isPlaceholder = !fileObj || (fileObj && fileObj.size === 0);
       const progressKey = `${localId}:item${flatCounter++}`;
+      let filePathRel = '';
+      let fileBaseDirRel = '';
+      try {
+        const rp = fileObj ? String((fileObj.webkitRelativePath || fileObj.relativePath || fileObj.name || '')).replace(/\\/g, '/') : '';
+        filePathRel = rp;
+        fileBaseDirRel = rp ? rp.slice(0, rp.lastIndexOf('/') + 1) : '';
+      } catch {}
       return {
         title: ep.title,
         src: srcUrl,
         fileName: fileObj ? (fileObj.name || '') : '',
         progressKey,
         file: fileObj || null,
+        filePathRel,
+        fileBaseDirRel,
+        filesIndex,
+        rootPrefix,
         isPlaceholder,
         durationSeconds: (typeof ep.durationSeconds === 'number') ? ep.durationSeconds : null,
         fileSizeBytes: (typeof ep.fileSizeBytes === 'number') ? ep.fileSizeBytes : null
