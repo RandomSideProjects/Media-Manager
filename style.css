@@ -428,6 +428,25 @@ label[for="downloadConcurrencyRange"] { min-width: 8.5em; }
 }
 #githubLink img { height: 1em; width: 1em; }
 
+/* Version badge (bottom-right) */
+#versionBadge {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  background: #16a34a; /* default green, JS updates with age */
+  color: var(--button-text);
+  text-decoration: none;
+  padding: 0.6em 1em;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  font-size: 1rem;
+  font-family: inherit;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  z-index: 10000;
+}
+
 #themeToggle {
   position: fixed;
   top: 1rem;

@@ -210,7 +210,7 @@ async function downloadSourceFolder(options = {}) {
   const titleText = (directoryTitle.textContent || 'directory').trim() || 'directory';
   const safeZipSegment = (name) => { try { return String(name || '').replace(/[\\/]+/g, ' - ').replace(/[<>:"|?*]+/g, '').replace(/\s{2,}/g, ' ').trim(); } catch { return 'untitled'; } };
   const rootFolder = zip.folder(titleText);
-  rootFolder.file('PUT THIS FOLDER IN YOUR /DIRECTORYS/ FOLDER.txt', 'https://github.com/RandomSideProjects/Media-Manager/ is the origin of this web app.');
+  rootFolder.file('Media-Manager-source.txt', 'https://github.com/RandomSideProjects/Media-Manager/ is the origin of this web app.');
 
   // Add a LocalID so local-folder progress keys can be stable across sessions
   let localId;
