@@ -9,6 +9,30 @@
   }
   function isManga(){ return getMode() === 'manga'; }
 
+  function getCbzExpandSettings(){
+    // Prefer live UI state if settings panel is present
+    try {
+      const toggle = document.getElementById('mmCbzExpandToggle');
+      const batch = document.getElementById('mmCbzExpandBatch');
+      const manual = document.getElementById('mmCbzExpandManual');
+      if (toggle) {
+        return {
+          expand: !!toggle.checked,
+          batch: batch ? !!batch.checked : true,
+          manual: manual ? !!manual.checked : true
+        };
+      }
+    } catch {}
+    try {
+      const p = JSON.parse(localStorage.getItem('mm_upload_settings')||'{}');
+      return {
+        expand: !!p.cbzExpand,
+        batch: (typeof p.cbzExpandBatch === 'boolean') ? p.cbzExpandBatch : true,
+        manual: (typeof p.cbzExpandManual === 'boolean') ? p.cbzExpandManual : true
+      };
+    } catch { return { expand: false, batch: true, manual: true }; }
+  }
+
   function getUploadConcurrency(){
     try {
       const p = JSON.parse(localStorage.getItem('mm_upload_settings')||'{}');
@@ -151,11 +175,58 @@
           }
         } catch {}
 
+        // Manga CBZ → optionally expand per settings
+        const cbzSet = getCbzExpandSettings();
+        if (isManga() && /\.cbz$/i.test(file.name||'') && cbzSet.expand && cbzSet.batch) {
+          try {
+            status.textContent = 'Processing';
+            prog.value = 0;
+            const ab = await file.arrayBuffer();
+            const zip = await JSZip.loadAsync(ab);
+            const names = Object.keys(zip.files)
+              .filter(n => /\.(jpe?g|png|gif|webp|bmp)$/i.test(n))
+              .sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+            const pageUrls = [];
+            const totalSteps = names.length + 1; // +1 for JSON upload
+            for (let i = 0; i < names.length; i++) {
+              const name = names[i];
+              const imgBlob = await zip.files[name].async('blob');
+              const ext = (() => { const m = name.toLowerCase().match(/\.(jpe?g|png|gif|webp|bmp)$/); return m ? m[0] : '.png'; })();
+              const pageFile = new File([imgBlob], `${i + 1}${ext}`, { type: imgBlob.type || 'application/octet-stream' });
+              const base = (i / totalSteps) * 100;
+              const url = await uploadToCatboxWithProgress(pageFile, pct => { const adj = Math.max(0, Math.min(100, base + pct / totalSteps)); prog.value = adj; }, { context: 'batch' });
+              pageUrls.push(url);
+            }
+            // Build volume JSON with pagecount and mapping { "Page 1": url }
+            const pagesMap = {};
+            for (let i = 0; i < pageUrls.length; i++) pagesMap[`Page ${i + 1}`] = pageUrls[i];
+            const volumeJson = { pagecount: pageUrls.length, pages: pagesMap };
+            const volBlob = new Blob([JSON.stringify(volumeJson, null, 2)], { type: 'application/json' });
+            const volNum = num || 1;
+            const volFile = new File([volBlob], `${volNum}.json`, { type: 'application/json' });
+            const url = await uploadToCatboxWithProgress(volFile, pct => { const base = ((names.length) / totalSteps) * 100; const adj = Math.max(0, Math.min(100, base + pct / totalSteps)); prog.value = adj; }, { context: 'batch' });
+            if (epSrcInput) epSrcInput.value = url;
+            if (epError) epError.textContent = '';
+            status.textContent = 'Done';
+            status.style.color = '#6ec1e4';
+            prog.value = 100;
+            completedCount++;
+            folderUploadSummary.textContent = `${completedCount} / ${filesInSeason.length} completed`;
+            return;
+          } catch (err) {
+            status.textContent = 'Failed';
+            status.style.color = '#ff4444';
+            if (epError) epError.innerHTML = '<span style=\"color:red\">Upload failed</span>';
+            return;
+          }
+        }
+
+        // Default path (videos or non-CBZ files)
         for (let attempt = 1; attempt <= maxAttempts; attempt++) {
           status.textContent = (attempt === 1) ? 'Uploading' : `Retry ${attempt} of ${maxAttempts}`;
           prog.value = 0;
           try {
-            const url = await uploadToCatboxWithProgress(file, pct => { prog.value = pct; });
+            const url = await uploadToCatboxWithProgress(file, pct => { prog.value = pct; }, { context: 'batch' });
             if (epSrcInput) epSrcInput.value = url;
             if (epError) epError.textContent = '';
             status.textContent = 'Done';

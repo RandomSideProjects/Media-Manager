@@ -3,7 +3,8 @@
 // Variables (top)
 // none
 
-async function uploadToCatbox(file) {
+// opts: { context?: 'batch'|'manual' }
+async function uploadToCatbox(file, opts) {
   const form = new FormData();
   form.append('reqtype', 'fileupload');
   form.append('fileToUpload', file);
@@ -11,7 +12,13 @@ async function uploadToCatbox(file) {
   // Pull current settings; anonymous defaults to true
   let st = { anonymous: true, userhash: '' };
   try { st = JSON.parse(localStorage.getItem('mm_upload_settings')||'{}') || st; } catch {}
-  const isAnon = (typeof st.anonymous === 'boolean') ? st.anonymous : true;
+  let isAnon = (typeof st.anonymous === 'boolean') ? st.anonymous : true;
+  // Per-flow overrides when master anonymous is enabled
+  try {
+    const ctx = opts && opts.context;
+    if (isAnon && ctx === 'batch' && typeof st.anonymousBatch === 'boolean') isAnon = !!st.anonymousBatch;
+    if (isAnon && ctx === 'manual' && typeof st.anonymousManual === 'boolean') isAnon = !!st.anonymousManual;
+  } catch {}
   const effectiveUserhash = ((st.userhash || '').trim()) || '2cdcc7754c86c2871ed2bde9d';
   if (!isAnon) {
     form.append('userhash', effectiveUserhash);
@@ -25,7 +32,8 @@ async function uploadToCatbox(file) {
   return await res.text();
 }
 
-function uploadToCatboxWithProgress(file, onProgress) {
+// opts: { context?: 'batch'|'manual' }
+function uploadToCatboxWithProgress(file, onProgress, opts) {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open('POST', 'https://catbox.moe/user/api.php');
@@ -35,7 +43,12 @@ function uploadToCatboxWithProgress(file, onProgress) {
     // Pull current settings; anonymous defaults to true
     let st = { anonymous: true, userhash: '' };
     try { st = JSON.parse(localStorage.getItem('mm_upload_settings')||'{}') || st; } catch {}
-    const isAnon = (typeof st.anonymous === 'boolean') ? st.anonymous : true;
+    let isAnon = (typeof st.anonymous === 'boolean') ? st.anonymous : true;
+    try {
+      const ctx = opts && opts.context;
+      if (isAnon && ctx === 'batch' && typeof st.anonymousBatch === 'boolean') isAnon = !!st.anonymousBatch;
+      if (isAnon && ctx === 'manual' && typeof st.anonymousManual === 'boolean') isAnon = !!st.anonymousManual;
+    } catch {}
     const effectiveUserhash = ((st.userhash || '').trim()) || '2cdcc7754c86c2871ed2bde9d';
     if (!isAnon) {
       form.append('userhash', effectiveUserhash);
@@ -69,4 +82,3 @@ function uploadToCatboxWithProgress(file, onProgress) {
     xhr.send(form);
   });
 }
-

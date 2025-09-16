@@ -2,12 +2,13 @@
 """
 CBZ compressor / CBR converter
 ------------------------------
-Given a directory, finds all .cbz and .cbr files and for each:
+Given a directory, finds all .cbz, .cbr, and top-level .png/.jpg/.jpeg image files and for each:
 1) Extracts archive contents to a temp folder (.cbr via rarfile if available)
 2) Resizes every image by a user-provided percentage (default 50%) while respecting EXIF orientation
 3) Saves over the original filenames
 4) Re-zips contents as .cbz (CBR inputs are converted to CBZ output)
 5) Optionally deletes the original .cbr if --delete-cbr provided (or GUI checkbox)
+6) Stand-alone images (.png/.jpg/.jpeg) are resized in-place (filename preserved)
 
 CLI Usage:
     python CBZcompress.py /path/to/folder --percent 50
@@ -18,7 +19,7 @@ GUI Usage:
     python CBZcompress.py --gui   # Launch simple Tkinter GUI
 
 Arguments:
-    folder          Path containing .cbz/.cbr files (optional in GUI mode)
+    folder          Path containing .cbz/.cbr and/or image files (optional in GUI mode)
     --percent/-p    Resize percentage (1-1000). If omitted you'll be prompted in CLI mode.
     --delete-cbr    After successful conversion, delete original .cbr file(s).
     --gui           Launch GUI. Other CLI options are ignored except --percent/--delete-cbr which can pre-fill the GUI.
@@ -53,6 +54,7 @@ except Exception:  # pragma: no cover - Tk may not be available
 
 IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
 ARCHIVE_EXTS = {".cbz", ".cbr"}
+STANDALONE_IMAGE_EXTS = {".png", ".jpg", ".jpeg"}
 
 def is_animated_gif(img: Image.Image) -> bool:
     try:
@@ -222,19 +224,37 @@ def main_cli(args):
         print("Percent must be > 0", file=sys.stderr)
         sys.exit(1)
 
-    archives = sorted([p for p in root.iterdir() if p.is_file() and p.suffix.lower() in ARCHIVE_EXTS])
-    if not archives:
-        print("No .cbz or .cbr files found in the given folder.")
+    entries = sorted([p for p in root.iterdir() if p.is_file()])
+    archives = [p for p in entries if p.suffix.lower() in ARCHIVE_EXTS]
+    images = [p for p in entries if p.suffix.lower() in STANDALONE_IMAGE_EXTS]
+
+    if not archives and not images:
+        print("No archives or supported images found in the given folder.")
         sys.exit(0)
 
-    print(f"Found {len(archives)} archive(s) in: {root} | Scale: {percent}%")
+    print(f"Found {len(archives)} archive(s) and {len(images)} image(s) in: {root} | Scale: {percent}%")
     for arc in archives:
         try:
             process_archive(arc, percent, delete_cbr=args.delete_cbr)
         except Exception as e:
             print(f"[!] Error processing {arc.name}: {e}", file=sys.stderr)
 
+    for img in images:
+        process_image_file(img, percent, logger=print)
+
     print("Done.")
+
+def process_image_file(img_path: Path, scale_percent: int, logger=print):
+    """Resize a standalone image file in-place."""
+    if img_path.suffix.lower() not in STANDALONE_IMAGE_EXTS:
+        return
+    try:
+        if resize_image_in_place(img_path, scale_percent):
+            logger(f"[+] Resized image: {img_path.name}")
+        else:
+            logger(f"[=] Skipped image (no change or unsupported): {img_path.name}")
+    except Exception as e:  # noqa
+        logger(f"[!] Error processing image {img_path.name}: {e}")
 
 def build_arg_parser():
     ap = argparse.ArgumentParser(description="CBZ compressor: batch shrink images inside CBZ by a percentage.")
@@ -311,19 +331,21 @@ def launch_gui(prefill_percent=None, prefill_delete_cbr=False):  # pragma: no co
         if not cbz_dir.exists() or not cbz_dir.is_dir():
             messagebox.showerror("Error", "Folder does not exist or is not a directory")
             return
-        archives = sorted([p for p in cbz_dir.iterdir() if p.is_file() and p.suffix.lower() in ARCHIVE_EXTS])
-        if not archives:
-            messagebox.showinfo("Info", "No .cbz or .cbr files found in the selected folder")
+        entries = sorted([p for p in cbz_dir.iterdir() if p.is_file()])
+        archives = [p for p in entries if p.suffix.lower() in ARCHIVE_EXTS]
+        images = [p for p in entries if p.suffix.lower() in STANDALONE_IMAGE_EXTS]
+        if not archives and not images:
+            messagebox.showinfo("Info", "No archives or supported images found in the selected folder")
             return
 
         state["processing"] = True
         state["stop"] = False
-        state["total"] = len(archives)
+        state["total"] = len(archives) + len(images)
         state["done"] = 0
         progress.configure(maximum=state["total"], value=0)
         start_btn.configure(state="disabled")
         cancel_btn.configure(state="normal")
-        log(f"Found {state['total']} archive(s). Starting with scale {percent}% ...")
+        log(f"Found {len(archives)} archive(s) and {len(images)} image(s). Starting with scale {percent}% ...")
 
         def worker():
             for arc in archives:
@@ -336,6 +358,13 @@ def launch_gui(prefill_percent=None, prefill_delete_cbr=False):  # pragma: no co
                     log(f"[!] Error processing {arc.name}: {e}")
                 state["done"] += 1
                 progress.configure(value=state["done"])
+            if not state["stop"]:
+                for img in images:
+                    if state["stop"]:
+                        break
+                    process_image_file(img, percent, logger=log)
+                    state["done"] += 1
+                    progress.configure(value=state["done"])
             log("Done." if not state["stop"] else "Stopped.")
             start_btn.configure(state="normal")
             cancel_btn.configure(state="disabled")

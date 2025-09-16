@@ -215,7 +215,7 @@ folderInput.addEventListener('change', async (e) => {
           status.textContent = (attempt === 1) ? 'Uploading' : `Retry ${attempt} of ${maxAttempts}`;
           prog.value = 0;
           try {
-            const url = await uploadToCatboxWithProgress(file, pct => { prog.value = pct; });
+            const url = await uploadToCatboxWithProgress(file, pct => { prog.value = pct; }, { context: 'batch' });
             epSrcInput.value = url;
             epError.textContent = '';
             status.textContent = 'Done';
@@ -313,6 +313,10 @@ function addEpisode(container, data) {
   try {
     if (data && typeof data.fileSizeBytes === 'number') epDiv.dataset.fileSizeBytes = String(data.fileSizeBytes);
     if (data && typeof data.durationSeconds === 'number') epDiv.dataset.durationSeconds = String(data.durationSeconds);
+    if (data && typeof data.VolumePageCount === 'number' && Number.isFinite(data.VolumePageCount)) {
+      epDiv.dataset.VolumePageCount = String(data.VolumePageCount);
+      epDiv.dataset.volumePageCount = String(data.VolumePageCount);
+    }
   } catch {}
   epDiv.addEventListener('contextmenu', (e) => { e.preventDefault(); epDiv.remove(); });
 
@@ -323,7 +327,7 @@ function addEpisode(container, data) {
 
   const epSrc = document.createElement('input');
   epSrc.type = 'text';
-  epSrc.placeholder = isMangaMode() ? 'CBZ URL' : 'MP4 or WebM URL';
+  epSrc.placeholder = isMangaMode() ? 'CBZ URL or Volume Index URL' : 'MP4 or WebM URL';
   if (data && data.src) epSrc.value = data.src;
 
   const epFile = document.createElement('input');
@@ -384,8 +388,61 @@ function addEpisode(container, data) {
       epError.innerHTML = '';
       const uploadingMsg = document.createElement('span'); uploadingMsg.style.color = 'blue'; uploadingMsg.textContent = 'Uploading'; epError.appendChild(uploadingMsg);
       const progressBar = document.createElement('progress'); progressBar.max = 100; progressBar.value = 0; progressBar.style.marginLeft = '0.5em'; epError.appendChild(progressBar);
-      try { const url = await uploadToCatboxWithProgress(file, (percent) => { progressBar.value = percent; }); epSrc.value = url; epError.textContent = ''; }
-      catch (err) { epError.innerHTML = '<span style="color:red">Upload failed</span>'; epSrc.value = ''; }
+
+      // Read expansion settings (prefer live UI state if panel is open)
+      let expand = false, expandManual = true;
+      try {
+        const liveToggle = document.getElementById('mmCbzExpandToggle');
+        const liveManual = document.getElementById('mmCbzExpandManual');
+        if (liveToggle) expand = !!liveToggle.checked;
+        if (liveManual) expandManual = !!liveManual.checked;
+        if (!liveToggle) {
+          const p = JSON.parse(localStorage.getItem('mm_upload_settings')||'{}');
+          expand = !!p.cbzExpand;
+          expandManual = (typeof p.cbzExpandManual === 'boolean') ? p.cbzExpandManual : true;
+        }
+      } catch {}
+      // Reflect action in message
+      try { uploadingMsg.textContent = (expand && expandManual) ? 'Processing 0%' : 'Uploading 0%'; } catch {}
+      if (expand && expandManual) {
+        try {
+          // Expand CBZ -> upload pages -> build/upload JSON
+          const ab = await file.arrayBuffer();
+          const zip = await JSZip.loadAsync(ab);
+          const names = Object.keys(zip.files)
+            .filter(n => /\.(jpe?g|png|gif|webp|bmp)$/i.test(n))
+            .sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+          const totalSteps = names.length + 1; // +1 for JSON upload
+          const pageUrls = [];
+          for (let i = 0; i < names.length; i++) {
+            const name = names[i];
+            const imgBlob = await zip.files[name].async('blob');
+            const ext = (() => { const m = name.toLowerCase().match(/\.(jpe?g|png|gif|webp|bmp)$/); return m ? m[0] : '.png'; })();
+            const pageFile = new File([imgBlob], `${i + 1}${ext}`, { type: imgBlob.type || 'application/octet-stream' });
+            const base = (i / totalSteps) * 100;
+            const url = await uploadToCatboxWithProgress(pageFile, pct => { const adj = Math.max(0, Math.min(100, base + pct / totalSteps)); progressBar.value = adj; try { uploadingMsg.textContent = `Processing ${Math.round(adj)}%`; } catch {} }, { context: 'manual' });
+            pageUrls.push(url);
+          }
+          const pagesMap = {};
+          for (let i = 0; i < pageUrls.length; i++) pagesMap[`Page ${i + 1}`] = pageUrls[i];
+          const volumeJson = { pagecount: pageUrls.length, pages: pagesMap };
+          const volBlob = new Blob([JSON.stringify(volumeJson, null, 2)], { type: 'application/json' });
+          // Try to extract volume number from title; fallback to 1
+          let volNum = 1;
+          try { const m = (epTitle.value||'').match(/(\d+)/); if (m) volNum = parseInt(m[1], 10) || 1; } catch {}
+          const volFile = new File([volBlob], `${volNum}.json`, { type: 'application/json' });
+          const url = await uploadToCatboxWithProgress(volFile, pct => { const base = ((names.length) / totalSteps) * 100; const adj = Math.max(0, Math.min(100, base + pct / totalSteps)); progressBar.value = adj; try { uploadingMsg.textContent = `Processing ${Math.round(adj)}%`; } catch {} }, { context: 'manual' });
+          epSrc.value = url;
+          try { epDiv.dataset.VolumePageCount = String(pageUrls.length); epDiv.dataset.volumePageCount = String(pageUrls.length); } catch {}
+          epError.textContent = '';
+        } catch (err) {
+          epError.innerHTML = '<span style="color:red">Upload failed</span>';
+          epSrc.value = '';
+        }
+      } else {
+        try { const url = await uploadToCatboxWithProgress(file, (percent) => { progressBar.value = percent; try { uploadingMsg.textContent = `Uploading ${Math.round(percent)}%`; } catch {} }, { context: 'manual' }); epSrc.value = url; epError.textContent = ''; }
+        catch (err) { epError.innerHTML = '<span style="color:red">Upload failed</span>'; epSrc.value = ''; }
+      }
     } else {
     if (isMangaMode()) {
       if (!/\.cbz$/i.test(file.name||'')) { epError.innerHTML = '<span style="color:red">Please select a .cbz file in Manga mode.</span>'; return; }
@@ -406,7 +463,7 @@ function addEpisode(container, data) {
       epError.innerHTML = '';
       const uploadingMsg = document.createElement('span'); uploadingMsg.style.color = 'blue'; uploadingMsg.textContent = 'Uploading'; epError.appendChild(uploadingMsg);
       const progressBar = document.createElement('progress'); progressBar.max = 100; progressBar.value = 0; progressBar.style.marginLeft = '0.5em'; epError.appendChild(progressBar);
-      try { const url = await uploadToCatboxWithProgress(file, (percent) => { progressBar.value = percent; }); epSrc.value = url; epError.textContent = ''; }
+      try { const url = await uploadToCatboxWithProgress(file, (percent) => { progressBar.value = percent; try { uploadingMsg.textContent = `Uploading ${Math.round(percent)}%`; } catch {} }, { context: 'manual' }); epSrc.value = url; epError.textContent = ''; }
       catch (err) { epError.innerHTML = '<span style="color:red">Upload failed</span>'; epSrc.value = ''; }
     }
   });
@@ -455,17 +512,38 @@ function addEpisode(container, data) {
     const url = (epSrc.value || '').trim();
     if (!/^https?:\/\//i.test(url)) return;
     if (isMangaMode()) {
-      if (epDiv.dataset && epDiv.dataset.volumePageCount) return;
-      if (!/\.cbz(?:$|[?#])/i.test(url)) return;
-      try { epError.style.color = '#9ecbff'; epError.textContent = 'Fetching CBZ…'; } catch {}
-      try {
-        const resp = await fetch(url, { cache: 'no-store' });
-        const blob = await resp.blob();
-        const zip = await JSZip.loadAsync(blob);
-        const pages = Object.keys(zip.files).filter(n => /\.(jpe?g|png|gif|webp|bmp)$/i.test(n));
-        epDiv.dataset.VolumePageCount = String(pages.length);
-        epDiv.dataset.volumePageCount = String(pages.length);
-      } catch {}
+      const lower = url.toLowerCase();
+      if (/\.json(?:$|[?#])/i.test(lower)) {
+        try { epError.style.color = '#9ecbff'; epError.textContent = 'Fetching volume JSON…'; } catch {}
+        try {
+          const resp = await fetch(url, { cache: 'no-store' });
+          const text = await resp.text();
+          let json; try { json = JSON.parse(text); } catch { json = null; }
+          let count = 0;
+          if (json && Array.isArray(json.pages)) count = json.pages.length;
+          else if (json && Array.isArray(json.images)) count = json.images.length;
+          else if (json && typeof json === 'object') {
+            const obj = json.pages && typeof json.pages === 'object' ? json.pages : json;
+            try { count = Object.values(obj).filter(Boolean).length; } catch { count = 0; }
+          }
+          if (Number.isFinite(count) && count > 0) {
+            epDiv.dataset.VolumePageCount = String(count);
+            epDiv.dataset.volumePageCount = String(count);
+          }
+        } catch {}
+      } else if (/\.cbz(?:$|[?#])/i.test(lower)) {
+        try { epError.style.color = '#9ecbff'; epError.textContent = 'Fetching CBZ…'; } catch {}
+        try {
+          const resp = await fetch(url, { cache: 'no-store' });
+          const blob = await resp.blob();
+          const zip = await JSZip.loadAsync(blob);
+          const pages = Object.keys(zip.files).filter(n => /\.(jpe?g|png|gif|webp|bmp)$/i.test(n));
+          epDiv.dataset.VolumePageCount = String(pages.length);
+          epDiv.dataset.volumePageCount = String(pages.length);
+        } catch {}
+      } else {
+        return;
+      }
       // Attempt to auto-set title from URL filename (Chapter/Volume)
       try {
         const last = (() => { try { const u = new URL(url); return decodeURIComponent((u.pathname||'').split('/').pop()||''); } catch { return (url.split('?')[0]||'').split('/').pop()||''; } })();

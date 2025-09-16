@@ -13,7 +13,10 @@ function loadUploadSettings(){
       anonymous: typeof p.anonymous==='boolean' ? p.anonymous : true,
       userhash: (p.userhash||'').trim(),
       uploadConcurrency: Number.isFinite(parseInt(p.uploadConcurrency,10)) ? Math.max(1, Math.min(8, parseInt(p.uploadConcurrency,10))) : 2,
-      libraryMode: (p.libraryMode === 'manga') ? 'manga' : 'anime'
+      libraryMode: (p.libraryMode === 'manga') ? 'manga' : 'anime',
+      cbzExpand: !!p.cbzExpand,
+      cbzExpandBatch: (typeof p.cbzExpandBatch === 'boolean') ? p.cbzExpandBatch : true,
+      cbzExpandManual: (typeof p.cbzExpandManual === 'boolean') ? p.cbzExpandManual : true
     };
   } catch { return { anonymous: true, userhash: '' }; }
 }
@@ -22,7 +25,10 @@ function saveUploadSettings(s){
     anonymous: !!s.anonymous,
     userhash: (s.userhash||'').trim(),
     uploadConcurrency: Math.max(1, Math.min(8, parseInt(s.uploadConcurrency||2,10))),
-    libraryMode: (s.libraryMode === 'manga') ? 'manga' : 'anime'
+    libraryMode: (s.libraryMode === 'manga') ? 'manga' : 'anime',
+    cbzExpand: !!s.cbzExpand,
+    cbzExpandBatch: !!s.cbzExpandBatch,
+    cbzExpandManual: !!s.cbzExpandManual
   }));
 }
 
@@ -41,6 +47,13 @@ const mmSaveBtn = document.getElementById('mmSaveUploadSettings');
 const mmCloseBtn = document.getElementById('mmCloseUploadSettings');
 const mmModeAnime = document.getElementById('mmModeAnime');
 const mmModeManga = document.getElementById('mmModeManga');
+// CBZ expansion controls
+const mmCbzSection = document.getElementById('mmCbzSection');
+const mmCbzExpandToggle = document.getElementById('mmCbzExpandToggle');
+const mmCbzExpandSubrows = document.getElementById('mmCbzExpandSubrows');
+const mmCbzExpandBatch = document.getElementById('mmCbzExpandBatch');
+const mmCbzExpandManual = document.getElementById('mmCbzExpandManual');
+// No per-flow anon controls; only userhash visibility when anonymous is off
 
 if (mmBtn && mmPanel && mmAnonToggle && mmUserhashRow && mmUserhashInput && mmSaveBtn && mmCloseBtn) {
   const st = loadUploadSettings();
@@ -60,17 +73,42 @@ if (mmBtn && mmPanel && mmAnonToggle && mmUserhashRow && mmUserhashInput && mmSa
     });
   }
 
+  // Initialize CBZ section visibility and values
+  function updateCbzSectionVisibility() {
+    const mode = (mmModeManga && mmModeManga.checked) ? 'manga' : 'anime';
+    if (mmCbzSection) mmCbzSection.style.display = (mode === 'manga') ? '' : 'none';
+  }
+  function updateCbzSubrowsVisibility() {
+    if (!mmCbzExpandToggle || !mmCbzExpandSubrows) return;
+    mmCbzExpandSubrows.style.display = mmCbzExpandToggle.checked ? '' : 'none';
+  }
+  if (mmCbzExpandToggle) mmCbzExpandToggle.checked = !!st.cbzExpand;
+  if (mmCbzExpandBatch) mmCbzExpandBatch.checked = (typeof st.cbzExpandBatch === 'boolean') ? st.cbzExpandBatch : true;
+  if (mmCbzExpandManual) mmCbzExpandManual.checked = (typeof st.cbzExpandManual === 'boolean') ? st.cbzExpandManual : true;
+  updateCbzSectionVisibility();
+  updateCbzSubrowsVisibility();
+  if (mmModeAnime) mmModeAnime.addEventListener('change', updateCbzSectionVisibility);
+  if (mmModeManga) mmModeManga.addEventListener('change', updateCbzSectionVisibility);
+  if (mmCbzExpandToggle) mmCbzExpandToggle.addEventListener('change', updateCbzSubrowsVisibility);
+
   mmBtn.addEventListener('click', () => { mmPanel.style.display = 'flex'; });
   mmCloseBtn.addEventListener('click', () => { mmPanel.style.display = 'none'; });
   mmPanel.addEventListener('click', (e)=>{ if(e.target===mmPanel) mmPanel.style.display='none'; });
-  mmAnonToggle.addEventListener('change', () => { mmUserhashRow.style.display = mmAnonToggle.checked ? 'none' : ''; });
+  function updateAnonFields() {
+    try { mmUserhashRow.style.display = mmAnonToggle.checked ? 'none' : ''; } catch {}
+  }
+  updateAnonFields();
+  mmAnonToggle.addEventListener('change', updateAnonFields);
   mmSaveBtn.addEventListener('click', () => {
     const mode = (mmModeManga && mmModeManga.checked) ? 'manga' : 'anime';
     const saved = {
       anonymous: mmAnonToggle.checked,
       userhash: mmUserhashInput.value.trim(),
       uploadConcurrency: mmUploadConcRange ? parseInt(mmUploadConcRange.value,10) : 2,
-      libraryMode: mode
+      libraryMode: mode,
+      cbzExpand: mmCbzExpandToggle ? !!mmCbzExpandToggle.checked : false,
+      cbzExpandBatch: mmCbzExpandBatch ? !!mmCbzExpandBatch.checked : true,
+      cbzExpandManual: mmCbzExpandManual ? !!mmCbzExpandManual.checked : true
     };
     saveUploadSettings(saved);
     try { window.dispatchEvent(new CustomEvent('mm_settings_saved', { detail: saved })); } catch {}
