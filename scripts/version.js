@@ -30,14 +30,39 @@
     }
 
     async function init(){
-      // Attempt to fetch the date file; fall back to document metadata if unavailable
+      // Helper: try fetch, then XHR fallback (to support file:// in some browsers)
+      async function readTxt(){
+        const url = `./Assets/LastUpdated.txt?t=${Date.now()}`;
+        try {
+          const resp = await fetch(url, { cache: 'no-store' });
+          if (resp && (resp.ok || resp.status === 0)) {
+            return (await resp.text());
+          }
+        } catch {}
+        // XHR fallback — treat status 0 (file://) as success
+        try {
+          return await new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open('GET', url, true);
+            xhr.onreadystatechange = () => {
+              if (xhr.readyState === 4) {
+                if (xhr.status === 200 || xhr.status === 0) resolve(xhr.responseText);
+                else reject(new Error('xhr ' + xhr.status));
+              }
+            };
+            xhr.onerror = () => reject(new Error('xhr error'));
+            xhr.send();
+          });
+        } catch {}
+        return null;
+      }
+
+      // Attempt to read and parse the text file
       try {
-        const resp = await fetch(`./Assets/LastUpdated.txt?t=${Date.now()}`, { cache: 'no-store' });
-        if (resp && resp.ok) {
-          const raw = (await resp.text()).trim();
+        const raw = (await readTxt());
+        if (raw) {
+          let text = String(raw).trim();
           // Normalize common formats to ISO for reliable parsing
-          let text = raw;
-          // e.g. "YYYY-MM-DD HH:mm:ss UTC" -> "YYYY-MM-DDTHH:mm:ssZ"
           if (/UTC$/i.test(text)) {
             text = text.replace(/\sUTC$/i, 'Z').replace(' ', 'T');
           }
@@ -49,9 +74,13 @@
           if (!isNaN(d.getTime())) { setBadgeFromDate(d); return; }
         }
       } catch {}
-      // Fallback: use document last modified or now
-      const fallback = new Date(document.lastModified || Date.now());
-      setBadgeFromDate(fallback);
+      // If we couldn't read the TXT, do not guess with local system time.
+      // Show an explicit placeholder so it's clear the date wasn't loaded.
+      try {
+        badge.textContent = 'Version unavailable';
+        badge.style.background = 'hsl(0, 0%, 40%)';
+        badge.title = 'Could not load Assets/LastUpdated.txt';
+      } catch {}
     }
     // Defer to ensure body exists in rare cases
     if (document.readyState === 'loading') {
