@@ -3,6 +3,8 @@ name: Update LastUpdated.txt
 on:
   push:
     branches: ['**']
+    paths-ignore:
+      - '/Assets/**'
   workflow_dispatch:
 
 permissions:
@@ -23,7 +25,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          FILE="Assets/LastUpdated.txt"
+          FILE="/Assets/LastUpdated.txt"
           DATE_STR=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
           echo "$DATE_STR" > "$FILE"
           if git diff --quiet -- "$FILE"; then
