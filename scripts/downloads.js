@@ -167,11 +167,12 @@ async function downloadSourceFolder(options = {}) {
   titleEl.textContent = 'Downloading source…';
   titleEl.style.margin = '0 0 8px 0';
   const summary = document.createElement('div'); summary.style.marginBottom = '8px'; summary.style.opacity = '.9';
-  // Summary line: Speed | Remaining | ETA
+  // Summary line: Speed | Remaining | Failures | ETA
   const speedLabel = document.createElement('span'); speedLabel.style.marginRight = '12px';
   const remainingLabel = document.createElement('span'); remainingLabel.style.marginRight = '12px';
+  const failureLabel = document.createElement('span'); failureLabel.style.marginRight = '12px'; failureLabel.style.color = '#ff9b9b';
   const etaLabel = document.createElement('span');
-  summary.append(speedLabel, remainingLabel, etaLabel);
+  summary.append(speedLabel, remainingLabel, failureLabel, etaLabel);
   
   // Completed filter controls
   let showCompleted = true;
@@ -271,6 +272,150 @@ async function downloadSourceFolder(options = {}) {
   const dataLeftLabels = [];
   rowEls = Array(tasks.length).fill(null);
   rowCompleted = Array(tasks.length).fill(false);
+  const REQUEST_IDLE_TIMEOUT_MS = 90000;
+  const FETCH_TOTAL_TIMEOUT_MS = 300000;
+
+  function createXhrInactivityWatchdog(xhr, rejectWithCleanup) {
+    let finished = false;
+    let timerId = null;
+
+    const cancel = () => {
+      if (finished) return;
+      finished = true;
+      if (timerId !== null) { clearTimeout(timerId); timerId = null; }
+    };
+
+    const onTimeout = () => {
+      if (finished) return;
+      finished = true;
+      if (timerId !== null) { clearTimeout(timerId); timerId = null; }
+      try { xhr.abort(); } catch {}
+      rejectWithCleanup(new Error('Timeout'));
+    };
+
+    const restart = () => {
+      if (finished) return;
+      if (timerId !== null) clearTimeout(timerId);
+      timerId = setTimeout(onTimeout, REQUEST_IDLE_TIMEOUT_MS);
+    };
+
+    xhr.addEventListener('loadstart', restart);
+    xhr.addEventListener('progress', restart);
+    xhr.addEventListener('readystatechange', () => {
+      try { if (xhr.readyState === XMLHttpRequest.HEADERS_RECEIVED) restart(); }
+      catch {}
+    });
+    xhr.addEventListener('load', cancel);
+    xhr.addEventListener('error', cancel);
+    xhr.addEventListener('abort', cancel);
+    xhr.addEventListener('loadend', cancel);
+    xhr.addEventListener('timeout', onTimeout);
+    restart();
+    return { cancel };
+  }
+
+  async function fetchWithTimeout(resource, options = {}, timeoutMs = REQUEST_IDLE_TIMEOUT_MS) {
+    const controller = new AbortController();
+    const opts = { ...options, signal: controller.signal };
+    let timedOut = false;
+    const timeoutId = setTimeout(() => {
+      timedOut = true;
+      controller.abort();
+    }, timeoutMs);
+    try {
+      const response = await fetch(resource, opts);
+      clearTimeout(timeoutId);
+      return response;
+    } catch (err) {
+      clearTimeout(timeoutId);
+      if (timedOut || (err && err.name === 'AbortError')) {
+        const e = new Error('Timeout');
+        e.code = 'timeout';
+        throw e;
+      }
+      throw err;
+    }
+  }
+  let plannedTotalBytes = 0;
+  let failureCount = 0;
+  let totalFailedBytes = 0;
+
+  function updateFailureSummary() {
+    failureLabel.textContent = failureCount > 0 ? `Failed: ${failureCount}` : '';
+  }
+
+  function updateRemainingLabel() {
+    try {
+      const loadedSum = loadedBytes.reduce((a, b) => a + b, 0);
+      const remainingBytes = Math.max(0, plannedTotalBytes - (loadedSum + totalFailedBytes));
+      remainingLabel.textContent = 'Remaining: ' + formatBytes(remainingBytes);
+    } catch {
+      remainingLabel.textContent = 'Remaining: --';
+    }
+  }
+
+  function normalizeDownloadError(err, wasCancelled) {
+    if (wasCancelled) return 'Cancelled';
+    try {
+      if (!err) return 'Unknown error';
+      if (typeof err === 'string') return err;
+      if (err && typeof err === 'object') {
+        if (typeof err.message === 'string' && err.message) return err.message;
+        const fallback = JSON.stringify(err);
+        if (fallback && fallback !== '{}') return fallback;
+        if (typeof err.statusText === 'string' && err.statusText) return err.statusText;
+      }
+      const str = String(err);
+      return str && str !== '[object Object]' ? str : 'Unknown error';
+    } catch {
+      return 'Unknown error';
+    }
+  }
+
+  function markDownloadFailed(idx, err, ci, ei, episode, { cancelled = false } = {}) {
+    const rawMessage = normalizeDownloadError(err, cancelled);
+    const friendly = rawMessage.replace(/^Download failed:\s*/i, 'HTTP ').trim();
+    const displayMessage = friendly || (cancelled ? 'Cancelled' : 'Unknown error');
+    const epObj = (catObjs[ci] && catObjs[ci].episodes) ? catObjs[ci].episodes[ei] : null;
+    if (epObj && typeof epObj === 'object') {
+      epObj.downloadFailed = true;
+      epObj.downloadError = displayMessage;
+      if (!epObj.src && episode && episode.src) epObj.src = episode.src;
+    }
+
+    if (!cancelled) {
+      failureCount += 1;
+      updateFailureSummary();
+    }
+
+    let plannedBytes = Number(totalBytes[idx]);
+    if (!Number.isFinite(plannedBytes) || plannedBytes <= 0) {
+      plannedBytes = Number(episode && episode.fileSizeBytes);
+    }
+    if (!cancelled && Number.isFinite(plannedBytes) && plannedBytes > 0) {
+      totalFailedBytes += plannedBytes;
+    }
+
+    totalBytes[idx] = 0;
+    loadedBytes[idx] = 0;
+
+    if (progressBars[idx]) {
+      try { progressBars[idx].style.accentColor = '#ff6b6b'; } catch {}
+      progressBars[idx].value = 0;
+    }
+    if (dataLeftLabels[idx]) {
+      const needsPrefix = !/^failed/i.test(displayMessage) && !/^cancelled/i.test(displayMessage);
+      const text = cancelled ? displayMessage : (needsPrefix ? `Failed – ${displayMessage}` : displayMessage);
+      dataLeftLabels[idx].textContent = text;
+      dataLeftLabels[idx].style.color = cancelled ? '#e0c063' : '#ff6b6b';
+      if (episode && episode.src) dataLeftLabels[idx].title = `${text}\n${episode.src}`;
+    }
+    if (rowEls[idx]) {
+      rowEls[idx].style.outline = cancelled ? '1px solid rgba(224,192,99,0.6)' : '1px solid rgba(255,102,102,0.7)';
+    }
+
+    updateRemainingLabel();
+  }
   tasks.forEach(({ ci, ei }, idx) => {
     const row = document.createElement('div');
     row.style.display = 'flex';
@@ -307,13 +452,25 @@ async function downloadSourceFolder(options = {}) {
   });
   applyVisibilityAll();
 
-  let plannedTotalBytes = 0; try { for (const { episode } of tasks) { const v = Number(episode && episode.fileSizeBytes); if (Number.isFinite(v) && v >= 0) plannedTotalBytes += v; } } catch {}
-  remainingLabel.textContent = 'Remaining: ' + formatBytes(plannedTotalBytes);
+  plannedTotalBytes = 0; try { for (const { episode } of tasks) { const v = Number(episode && episode.fileSizeBytes); if (Number.isFinite(v) && v >= 0) plannedTotalBytes += v; } } catch {}
+  updateRemainingLabel();
+  updateFailureSummary();
+  speedLabel.textContent = 'Speed: 0.00 MB/s';
   cancelBtn.addEventListener('click', () => { cancelRequested = true; xhrs.forEach(x => x.abort()); overlay.remove(); });
 
-  const DEFAULT_DL_CONCURRENCY = 2; const storedDlConc = parseInt(localStorage.getItem('downloadConcurrency') || '', 10);
-  const concurrency = (Number.isFinite(storedDlConc) && storedDlConc > 0) ? Math.max(1, Math.min(8, storedDlConc)) : DEFAULT_DL_CONCURRENCY;
-  let pointer = 0; let lastTime = Date.now(); let lastLoaded = 0; let avgSpeed = 0; let downloadedBytes = 0;
+  const devModeEnabled = typeof window !== 'undefined' && window.DevMode === true;
+  const DEFAULT_DL_CONCURRENCY = 2;
+  const STANDARD_MAX_CONCURRENCY = 8;
+  const storedDlConc = parseInt(localStorage.getItem('downloadConcurrency') || '', 10);
+  const desiredConcurrency = (Number.isFinite(storedDlConc) && storedDlConc > 0)
+    ? Math.floor(storedDlConc)
+    : DEFAULT_DL_CONCURRENCY;
+  const concurrency = Math.max(1, devModeEnabled ? desiredConcurrency : Math.min(STANDARD_MAX_CONCURRENCY, desiredConcurrency));
+  try { speedLabel.title = `Concurrency: ${concurrency}${devModeEnabled ? ' (dev)' : ''}`; }
+  catch {}
+  let pointer = 0;
+  let downloadedBytes = 0;
+  const downloadStartTime = Date.now();
 
   async function computeBlobDurationSeconds(blob) {
     return new Promise((resolve) => { try { const url = URL.createObjectURL(blob); const v = document.createElement('video'); v.preload = 'metadata'; const done = () => { try { URL.revokeObjectURL(url); } catch {} const d = isFinite(v.duration) ? v.duration : NaN; resolve(d); }; v.onloadedmetadata = done; v.onerror = done; v.src = url; } catch { resolve(NaN); } });
@@ -333,6 +490,10 @@ async function downloadSourceFolder(options = {}) {
       const { ci, ei, episode, fileName } = tasks[idx];
       try {
         const isJson = fileName.toLowerCase().endsWith('.json');
+        if (dataLeftLabels[idx]) {
+          dataLeftLabels[idx].textContent = 'Starting…';
+          dataLeftLabels[idx].style.color = '#6ec1e4';
+        }
         if (isJson) {
           // JSON volume: fetch JSON, inline remote links as base64 data URIs, save JSON
           const epObj = catObjs[ci].episodes[ei];
@@ -360,10 +521,24 @@ async function downloadSourceFolder(options = {}) {
             try {
               const blob = await new Promise((resolve, reject) => {
                 const xhr = new XMLHttpRequest(); xhrs.push(xhr);
-                xhr.addEventListener('loadend', () => { const i = xhrs.indexOf(xhr); if (i >= 0) xhrs.splice(i, 1); });
+                let cleaned = false;
+                let watchdog;
+                const cleanup = () => {
+                  if (cleaned) return;
+                  cleaned = true;
+                  if (watchdog) watchdog.cancel();
+                  const i = xhrs.indexOf(xhr); if (i >= 0) xhrs.splice(i, 1);
+                };
+                const rejectWithCleanup = (err) => { cleanup(); reject(err); };
+                watchdog = createXhrInactivityWatchdog(xhr, rejectWithCleanup);
+                xhr.addEventListener('loadend', cleanup);
                 xhr.open('GET', u); xhr.responseType = 'blob';
-                xhr.onload = () => ((xhr.status >= 200 && xhr.status < 300) || xhr.status === 0) ? resolve(xhr.response) : reject(new Error('HTTP ' + xhr.status));
-                xhr.onerror = () => reject(new Error('Network error'));
+                xhr.onload = () => {
+                  const ok = (xhr.status >= 200 && xhr.status < 300) || xhr.status === 0;
+                  if (ok) { cleanup(); resolve(xhr.response); }
+                  else { rejectWithCleanup(new Error('HTTP ' + xhr.status)); }
+                };
+                xhr.onerror = () => rejectWithCleanup(new Error('Network error'));
                 xhr.send();
               });
               const type = (blob && blob.type) || '';
@@ -373,7 +548,7 @@ async function downloadSourceFolder(options = {}) {
               }
               return { blob, ext: ext || '.jpg' };
             } catch {
-              const resp = await fetch(u, { cache: 'no-store', credentials: 'omit', referrerPolicy: 'no-referrer' });
+              const resp = await fetchWithTimeout(u, { cache: 'no-store', credentials: 'omit', referrerPolicy: 'no-referrer' }, REQUEST_IDLE_TIMEOUT_MS);
               if (!resp || (!resp.ok && resp.status !== 0)) throw new Error('fetch failed');
               const blob = await resp.blob();
               const type = (blob && blob.type) || '';
@@ -390,7 +565,17 @@ async function downloadSourceFolder(options = {}) {
           try {
             const blob = await new Promise((resolve, reject) => {
               const xhr = new XMLHttpRequest(); xhrs.push(xhr);
-              xhr.addEventListener('loadend', () => { const i = xhrs.indexOf(xhr); if (i >= 0) xhrs.splice(i, 1); });
+              let cleaned = false;
+              let watchdog;
+              const cleanup = () => {
+                if (cleaned) return;
+                cleaned = true;
+                if (watchdog) watchdog.cancel();
+                const i = xhrs.indexOf(xhr); if (i >= 0) xhrs.splice(i, 1);
+              };
+              const rejectWithCleanup = (err) => { cleanup(); reject(err); };
+              watchdog = createXhrInactivityWatchdog(xhr, rejectWithCleanup);
+              xhr.addEventListener('loadend', cleanup);
               xhr.open('GET', episode.src); xhr.responseType = 'blob';
               xhr.onprogress = (e) => {
                 if (e.lengthComputable) {
@@ -399,15 +584,17 @@ async function downloadSourceFolder(options = {}) {
                   try { progressBars[idx].value = pct; } catch {}
                 }
               };
-              xhr.onload = () => ((xhr.status >= 200 && xhr.status < 300) || xhr.status === 0)
-                ? resolve(xhr.response)
-                : reject(new Error('Download failed: ' + xhr.status));
-              xhr.onerror = () => reject(new Error('Network error'));
+              xhr.onload = () => {
+                const ok = (xhr.status >= 200 && xhr.status < 300) || xhr.status === 0;
+                if (ok) { cleanup(); resolve(xhr.response); }
+                else { rejectWithCleanup(new Error('Download failed: ' + xhr.status)); }
+              };
+              xhr.onerror = () => rejectWithCleanup(new Error('Network error'));
               xhr.send();
             });
             jsonText = await blob.text();
           } catch {
-            const resp = await fetch(episode.src, { cache: 'no-store', credentials: 'omit', referrerPolicy: 'no-referrer' });
+            const resp = await fetchWithTimeout(episode.src, { cache: 'no-store', credentials: 'omit', referrerPolicy: 'no-referrer' }, FETCH_TOTAL_TIMEOUT_MS);
             if (!resp || (!resp.ok && resp.status !== 0)) throw new Error('Download failed');
             jsonText = await resp.text();
           }
@@ -477,7 +664,18 @@ async function downloadSourceFolder(options = {}) {
           volFolder.file('index.json', outText);
 
           // Update manifest ep
-          try { const sz = new TextEncoder().encode(outText).length; epObj.fileSizeBytes = bytesSum + sz; downloadedBytes += (bytesSum + sz); } catch { epObj.fileSizeBytes = bytesSum; }
+          let measuredSize = bytesSum;
+          try {
+            const sz = new TextEncoder().encode(outText).length;
+            measuredSize = bytesSum + sz;
+          } catch {}
+          epObj.fileSizeBytes = measuredSize;
+          if (Number.isFinite(measuredSize) && measuredSize >= 0) {
+            downloadedBytes += measuredSize;
+            loadedBytes[idx] = measuredSize;
+            totalBytes[idx] = measuredSize;
+            updateRemainingLabel();
+          }
           epObj.VolumePageCount = pageList.length;
           epObj.durationSeconds = null;
 
@@ -487,31 +685,56 @@ async function downloadSourceFolder(options = {}) {
           // Regular path: download blob directly
           let blob = await new Promise((resolve, reject) => {
             const xhr = new XMLHttpRequest(); xhrs.push(xhr);
-            xhr.addEventListener('loadend', () => { const i = xhrs.indexOf(xhr); if (i >= 0) xhrs.splice(i, 1); });
+            let cleaned = false;
+            let watchdog;
+            const cleanup = () => {
+              if (cleaned) return;
+              cleaned = true;
+              if (watchdog) watchdog.cancel();
+              const i = xhrs.indexOf(xhr); if (i >= 0) xhrs.splice(i, 1);
+            };
+            const rejectWithCleanup = (err) => { cleanup(); reject(err); };
+            watchdog = createXhrInactivityWatchdog(xhr, rejectWithCleanup);
+            xhr.addEventListener('loadend', cleanup);
             xhr.open('GET', episode.src); xhr.responseType = 'blob';
             xhr.addEventListener('progress', e => {
               if (e.lengthComputable) {
                 progressBars[idx].value = (e.loaded / e.total) * 100; loadedBytes[idx] = e.loaded; totalBytes[idx] = e.total;
-                const totalLoaded = loadedBytes.reduce((a, b) => a + b, 0); const totalTotal = totalBytes.reduce((a, b) => a + b, 0);
-                const now = Date.now(); const dt = (now - lastTime) / 1000; let speed = 0; if (dt > 0) { speed = (totalLoaded - lastLoaded) / dt; avgSpeed = avgSpeed * 0.8 + speed * 0.2; lastTime = now; lastLoaded = totalLoaded; }
-                const remaining = totalTotal - totalLoaded; let eta = ''; if (avgSpeed > 0 && remaining > 0) { const seconds = remaining / avgSpeed; const min = Math.floor(seconds / 60); const sec = Math.round(seconds % 60); eta = `ETA: ${min}m ${sec}s`; }
-                etaLabel.textContent = eta; const speedMBps = (speed / (1024 * 1024)).toFixed(2); speedLabel.textContent = `Speed: ${speedMBps} MB/s`;
+                const totalLoaded = loadedBytes.reduce((a, b) => a + b, 0);
+                const totalTotal = totalBytes.reduce((a, b) => a + b, 0);
+                const elapsedSeconds = Math.max(0.001, (Date.now() - downloadStartTime) / 1000);
+                const averageSpeedBytes = downloadedBytes / elapsedSeconds;
+                const remaining = totalTotal - totalLoaded;
+                let eta = '';
+                if (averageSpeedBytes > 0 && remaining > 0) {
+                  const seconds = remaining / averageSpeedBytes;
+                  const min = Math.floor(seconds / 60);
+                  const sec = Math.round(seconds % 60);
+                  eta = `ETA: ${min}m ${sec}s`;
+                }
+                etaLabel.textContent = eta;
+                const speedMBps = (averageSpeedBytes / (1024 * 1024)).toFixed(2);
+                speedLabel.textContent = `Speed: ${speedMBps} MB/s`;
                 const remainingBytes = totalBytes[idx] - loadedBytes[idx]; const remainingMB = (remainingBytes / (1024 * 1024)).toFixed(2); dataLeftLabels[idx].textContent = `${remainingMB} MB left`;
-                const loadedSum = loadedBytes.reduce((a, b) => a + b, 0); const remainFromSource = Math.max(0, plannedTotalBytes - loadedSum); remainingLabel.textContent = 'Remaining: ' + formatBytes(remainFromSource);
+                updateRemainingLabel();
+              } else if (dataLeftLabels[idx]) {
+                dataLeftLabels[idx].textContent = `${formatBytes(e.loaded)} downloaded`;
               }
             });
             // Treat status 0 as success for opaque/file responses (matches player.js behavior)
-            xhr.onload = () => ((xhr.status >= 200 && xhr.status < 300) || xhr.status === 0)
-              ? resolve(xhr.response)
-              : reject(new Error('Download failed: ' + xhr.status));
-            xhr.onerror = () => reject(new Error('Network error'));
+            xhr.onload = () => {
+              const ok = (xhr.status >= 200 && xhr.status < 300) || xhr.status === 0;
+              if (ok) { cleanup(); resolve(xhr.response); }
+              else { rejectWithCleanup(new Error('Download failed: ' + xhr.status)); }
+            };
+            xhr.onerror = () => rejectWithCleanup(new Error('Network error'));
             xhr.send();
           }).catch(() => null);
 
           // Fallback to fetch if XHR fails (some hosts behave better with fetch)
           if (!blob) {
             try {
-              const resp = await fetch(episode.src, { cache: 'no-store', credentials: 'omit', referrerPolicy: 'no-referrer' });
+              const resp = await fetchWithTimeout(episode.src, { cache: 'no-store', credentials: 'omit', referrerPolicy: 'no-referrer' }, FETCH_TOTAL_TIMEOUT_MS);
               if (resp && (resp.ok || resp.status === 0)) {
                 blob = await resp.blob();
               }
@@ -523,7 +746,16 @@ async function downloadSourceFolder(options = {}) {
           if (!blob) throw new Error('Download failed');
           catFolders[ci].file(fileName, blob);
           const epObj = catObjs[ci].episodes[ei]; epObj.src = `Directorys/${titleText}/${sanitizedCats[ci]}/${fileName}`;
-          try { const sz = Number(blob && blob.size); if (Number.isFinite(sz) && sz >= 0) { epObj.fileSizeBytes = sz; downloadedBytes += sz; } } catch {}
+          try {
+            const sz = Number(blob && blob.size);
+            if (Number.isFinite(sz) && sz >= 0) {
+              epObj.fileSizeBytes = sz;
+              downloadedBytes += sz;
+              loadedBytes[idx] = sz;
+              totalBytes[idx] = sz;
+              updateRemainingLabel();
+            }
+          } catch {}
           // Set per-item metadata by type
           if (fileName.toLowerCase().endsWith('.cbz')) {
             try { const pages = await computeBlobPageCount(blob); if (Number.isFinite(pages) && pages >= 0) epObj.VolumePageCount = pages; } catch {}
@@ -537,6 +769,7 @@ async function downloadSourceFolder(options = {}) {
         }
       } catch (err) {
         console.error('Error downloading', episode.src, err);
+        markDownloadFailed(idx, err, ci, ei, episode, { cancelled: cancelRequested });
       }
     }
   });
@@ -563,18 +796,68 @@ async function downloadSourceFolder(options = {}) {
   if (totalPagesAll > 0) manifest.totalPagecount = totalPagesAll;
 
   async function fetchAsDataURL(url) {
-    try { const resp = await fetch(url, { cache: 'no-store' }); if (!resp.ok) throw new Error('image fetch failed'); const blob = await resp.blob(); return await new Promise((resolve, reject) => { const fr = new FileReader(); fr.onload = () => resolve(String(fr.result || '')); fr.onerror = reject; fr.readAsDataURL(blob); }); } catch { return null; }
+    try {
+      const resp = await fetchWithTimeout(url, { cache: 'no-store' }, REQUEST_IDLE_TIMEOUT_MS);
+      if (!resp.ok) throw new Error('image fetch failed');
+      const blob = await resp.blob();
+      return await new Promise((resolve, reject) => {
+        const fr = new FileReader();
+        fr.onload = () => resolve(String(fr.result || ''));
+        fr.onerror = reject;
+        fr.readAsDataURL(blob);
+      });
+    } catch { return null; }
   }
   if (sourceImageUrl) { try { const dataUrl = await fetchAsDataURL(sourceImageUrl); if (dataUrl) manifest.Image = dataUrl; } catch {} }
   rootFolder.file('index.json', JSON.stringify(manifest, null, 2));
-  const content = await zip.generateAsync({ type: 'blob' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(content);
-  const zipBase = String(titleText || 'download').trim().replace(/ /g, '_');
-  a.download = `${zipBase}.zip`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
+  // Update summary to reflect completed transfers before packaging
+  try { speedLabel.textContent = 'Speed: 0.00 MB/s'; } catch {}
+  updateRemainingLabel();
+  updateFailureSummary();
+  try { etaLabel.textContent = failureCount > 0 ? 'Downloads complete (with failures).' : 'Downloads complete.'; } catch {}
+
+  // Package ZIP with visible progress. Disable cancellation to avoid corrupt archive while packaging.
+  cancelBtn.disabled = true;
+  let objectUrl = null;
+  try {
+    speedLabel.textContent = 'Packaging…';
+    remainingLabel.textContent = 'Packaging files…';
+    etaLabel.textContent = 'Packaging: 0%';
+    const content = await zip.generateAsync({ type: 'blob' }, (metadata) => {
+      try {
+        const pct = Number(metadata && metadata.percent);
+        if (Number.isFinite(pct)) etaLabel.textContent = `Packaging: ${pct.toFixed(1)}%`;
+      } catch {}
+    });
+    objectUrl = URL.createObjectURL(content);
+    const a = document.createElement('a');
+    a.href = objectUrl;
+    const zipBase = String(titleText || 'download').trim().replace(/ /g, '_');
+    a.download = `${zipBase}.zip`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    try { etaLabel.textContent = 'Packaging complete.'; } catch {}
+    // Announce completion
+    try { speak('Download Complete'); } catch {}
+  } catch (err) {
+    console.error('Zip packaging failed', err);
+    try { etaLabel.textContent = 'Packaging failed. See console for details.'; } catch {}
+    try {
+      failureLabel.textContent = failureCount > 0 ? `Failed: ${failureCount}` : 'Packaging failed';
+      failureLabel.style.color = '#ff9b9b';
+    } catch {}
+    cancelBtn.disabled = false;
+    cancelBtn.textContent = 'Close';
+    cancelBtn.addEventListener('click', () => { try { overlay.remove(); } catch {}; }, { once: true });
+    return;
+  } finally {
+    cancelBtn.disabled = false;
+    if (objectUrl) {
+      setTimeout(() => { try { URL.revokeObjectURL(objectUrl); } catch {} }, 60000);
+    }
+  }
+
   overlay.remove();
 }
 
@@ -588,3 +871,10 @@ if (downloadBtn) {
     downloadSourceFolder({ selectedCategories: selected.selectedCategories, selectedEpisodesBySeason: selected.selectedEpisodesBySeason });
   });
 }
+  function speak(TTSMSG) {
+        const msg = new SpeechSynthesisUtterance(TTSMSG);
+        msg.lang = "en-US";
+        msg.rate = 1;
+        msg.pitch = 1;
+        window.speechSynthesis.speak(msg);
+      } 
