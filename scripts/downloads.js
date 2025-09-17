@@ -1,5 +1,42 @@
 "use strict";
 
+const activeDownloadObjectUrls = new Set();
+try {
+  if (typeof window !== 'undefined') {
+    const cleanupAllObjectUrls = () => {
+      try {
+        activeDownloadObjectUrls.forEach((url) => {
+          try { URL.revokeObjectURL(url); } catch {}
+        });
+      } catch {}
+      activeDownloadObjectUrls.clear();
+    };
+    window.addEventListener('pagehide', cleanupAllObjectUrls);
+    window.addEventListener('beforeunload', cleanupAllObjectUrls);
+  }
+} catch {}
+
+let streamSaverLoadPromise = null;
+function loadStreamSaver() {
+  if (typeof window === 'undefined') return Promise.resolve(null);
+  if (window.streamSaver) return Promise.resolve(window.streamSaver);
+  if (!streamSaverLoadPromise) {
+    streamSaverLoadPromise = new Promise((resolve, reject) => {
+      try {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/streamsaver@2.0.6/StreamSaver.min.js';
+        script.async = true;
+        script.onload = () => resolve(window.streamSaver || null);
+        script.onerror = (err) => reject(err || new Error('StreamSaver failed to load'));
+        document.head.appendChild(script);
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+  return streamSaverLoadPromise.catch(() => null);
+}
+
 async function openSeasonSelectionModal() {
   return new Promise((resolve) => {
     const backdrop = document.createElement('div');
@@ -151,6 +188,15 @@ async function downloadSourceFolder(options = {}) {
   const selectedSet = options.selectedCategories instanceof Set ? options.selectedCategories : null;
   // selectedEpisodesBySeason: { [seasonIndex]: Set(episodeIndex) }
   const selectedEpisodesBySeason = (options.selectedEpisodesBySeason && typeof options.selectedEpisodesBySeason === 'object') ? options.selectedEpisodesBySeason : null;
+  function scheduleObjectUrlCleanup(url) {
+    if (!url) return null;
+    activeDownloadObjectUrls.add(url);
+    const CLEANUP_DELAY_MS = 2 * 60 * 60 * 1000; // keep URL alive for up to 2 hours for very large downloads
+    return setTimeout(() => {
+      activeDownloadObjectUrls.delete(url);
+      try { URL.revokeObjectURL(url); } catch {}
+    }, CLEANUP_DELAY_MS);
+  }
   // Build overlay + centered modal similar to upload UI
   const overlay = document.createElement('div');
   Object.assign(overlay.style, {
@@ -816,13 +862,100 @@ async function downloadSourceFolder(options = {}) {
   updateFailureSummary();
   try { etaLabel.textContent = failureCount > 0 ? 'Downloads complete (with failures).' : 'Downloads complete.'; } catch {}
 
-  // Package ZIP with visible progress. Disable cancellation to avoid corrupt archive while packaging.
+  const zipBase = String(titleText || 'download').trim().replace(/ /g, '_') || 'download';
+  let streamingSucceeded = false;
+  let streamingAttempted = false;
+
+  async function attemptStreamSaverDownload() {
+    if (typeof ReadableStream !== 'function' || typeof WritableStream !== 'function') return false;
+    let streamSaverInstance = null;
+    try {
+      streamSaverInstance = await loadStreamSaver();
+    } catch (err) {
+      console.warn('StreamSaver load failed', err);
+      return false;
+    }
+    if (!streamSaverInstance || typeof streamSaverInstance.createWriteStream !== 'function') return false;
+    try {
+      if (!streamSaverInstance.mitm) {
+        streamSaverInstance.mitm = 'https://jimmywarting.github.io/StreamSaver.js/mitm.html?version=2.0.6';
+      }
+    } catch {}
+
+    streamingAttempted = true;
+    cancelBtn.disabled = true;
+    try {
+      speedLabel.textContent = 'Streaming zip…';
+      remainingLabel.textContent = 'Writing directly to disk…';
+      etaLabel.textContent = 'Packaging: 0%';
+      const startTime = Date.now();
+      let emittedBytes = 0;
+      const helper = zip.generateInternalStream({
+        type: 'uint8array',
+        streamFiles: true,
+        compression: 'DEFLATE'
+      });
+      const readableStream = new ReadableStream({
+        start(controller) {
+          helper.on('data', (chunk, metadata) => {
+            try {
+              controller.enqueue(chunk);
+            } catch (err) {
+              controller.error(err);
+              return;
+            }
+            emittedBytes += chunk.length || 0;
+            const elapsedSeconds = Math.max(0.001, (Date.now() - startTime) / 1000);
+            const speedMBps = (emittedBytes / elapsedSeconds) / (1024 * 1024);
+            try { speedLabel.textContent = `Stream: ${speedMBps.toFixed(2)} MB/s`; } catch {}
+            const pct = Number(metadata && metadata.percent);
+            if (Number.isFinite(pct)) {
+              try { etaLabel.textContent = `Packaging: ${pct.toFixed(1)}%`; } catch {}
+            }
+          });
+          helper.on('error', (err) => controller.error(err));
+          helper.on('end', () => controller.close());
+          helper.resume();
+        }
+      });
+
+      const fileStream = streamSaverInstance.createWriteStream(`${zipBase}.zip`);
+      await readableStream.pipeTo(fileStream);
+      try {
+        etaLabel.textContent = 'Streaming complete.';
+        remainingLabel.textContent = 'Archive saved to disk.';
+      } catch {}
+      try { speak('Download Complete'); } catch {}
+      return true;
+    } catch (err) {
+      console.error('Streamed download failed', err);
+      try { etaLabel.textContent = 'Streaming failed – retrying with in-memory packaging…'; } catch {}
+      return false;
+    } finally {
+      cancelBtn.disabled = false;
+    }
+  }
+
+  streamingSucceeded = await attemptStreamSaverDownload();
+
+  if (streamingSucceeded) {
+    overlay.remove();
+    return;
+  }
+
+  // Fallback: package into a Blob and trigger a standard download.
   cancelBtn.disabled = true;
   let objectUrl = null;
+  let objectUrlCleanupTimer = null;
+  let downloadTriggered = false;
   try {
-    speedLabel.textContent = 'Packaging…';
-    remainingLabel.textContent = 'Packaging files…';
-    etaLabel.textContent = 'Packaging: 0%';
+    if (streamingAttempted) {
+      try { remainingLabel.textContent = 'Fallback to standard zip packaging…'; } catch {}
+    } else {
+      try { remainingLabel.textContent = 'Packaging files…'; } catch {}
+    }
+    try { speedLabel.textContent = 'Packaging…'; } catch {}
+    try { etaLabel.textContent = 'Packaging: 0%'; } catch {}
     const content = await zip.generateAsync({ type: 'blob' }, (metadata) => {
       try {
         const pct = Number(metadata && metadata.percent);
@@ -830,15 +963,15 @@ async function downloadSourceFolder(options = {}) {
       } catch {}
     });
     objectUrl = URL.createObjectURL(content);
+    objectUrlCleanupTimer = scheduleObjectUrlCleanup(objectUrl);
     const a = document.createElement('a');
     a.href = objectUrl;
-    const zipBase = String(titleText || 'download').trim().replace(/ /g, '_');
     a.download = `${zipBase}.zip`;
     document.body.appendChild(a);
     a.click();
     a.remove();
+    downloadTriggered = true;
     try { etaLabel.textContent = 'Packaging complete.'; } catch {}
-    // Announce completion
     try { speak('Download Complete'); } catch {}
   } catch (err) {
     console.error('Zip packaging failed', err);
@@ -850,11 +983,20 @@ async function downloadSourceFolder(options = {}) {
     cancelBtn.disabled = false;
     cancelBtn.textContent = 'Close';
     cancelBtn.addEventListener('click', () => { try { overlay.remove(); } catch {}; }, { once: true });
+    if (objectUrlCleanupTimer !== null) { try { clearTimeout(objectUrlCleanupTimer); } catch {} }
+    if (objectUrl) {
+      activeDownloadObjectUrls.delete(objectUrl);
+      try { URL.revokeObjectURL(objectUrl); } catch {}
+    }
     return;
   } finally {
     cancelBtn.disabled = false;
-    if (objectUrl) {
-      setTimeout(() => { try { URL.revokeObjectURL(objectUrl); } catch {} }, 60000);
+    if (!downloadTriggered && objectUrlCleanupTimer !== null) {
+      try { clearTimeout(objectUrlCleanupTimer); } catch {}
+      if (objectUrl) {
+        activeDownloadObjectUrls.delete(objectUrl);
+        try { URL.revokeObjectURL(objectUrl); } catch {}
+      }
     }
   }
 
