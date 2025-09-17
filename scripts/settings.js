@@ -151,6 +151,30 @@ if (typeof window !== 'undefined') {
   rspDevModeFlag = false;
 }
 
+if (typeof window !== 'undefined') {
+  // Toggle dev mode when the O+P key combo is pressed.
+  const devModeCombo = new Set(['o', 'p']);
+  let devModeSequence = [];
+  const resetSequence = () => { devModeSequence = []; };
+  window.addEventListener('keydown', (event) => {
+    if (event.repeat) return;
+    const key = (event.key || '').toLowerCase();
+    if (!devModeCombo.has(key)) {
+      resetSequence();
+      return;
+    }
+    if (devModeSequence.length && devModeSequence[devModeSequence.length - 1] === key) return;
+    devModeSequence.push(key);
+    if (devModeSequence.length > devModeCombo.size) devModeSequence.shift();
+    const unique = new Set(devModeSequence);
+    if (unique.size === devModeCombo.size && devModeSequence.length === devModeCombo.size) {
+      window.DevMode = !(window.DevMode === true);
+      resetSequence();
+    }
+  });
+  window.addEventListener('blur', resetSequence);
+}
+
 applyDownloadConcurrencyUI();
 
 if (clipPreviewToggle) {
