@@ -408,43 +408,41 @@ label[for="downloadConcurrencyRange"] { min-width: 8.5em; }
 #clearStoragePanel h3 { margin: 0 0 0.5rem 0; }
 #clearStoragePanel p { margin-top: 0; margin-bottom: 0.75rem; }
 
-/* GitHub link */
-#githubLink {
-  position: fixed;
-  bottom: 1rem;
-  left: 1rem;
-  background: var(--button-bg);
-  color: var(--button-text);
-  text-decoration: none;
-  padding: 0.6em 1em;
-  border-radius: 8px;
+/* GitHub and version badges */
+#githubLink,
+#versionBadge {
   display: flex;
   align-items: center;
-  gap: 0.5em;
-  font-size: 1rem;
+  text-decoration: none;
   font-family: inherit;
+  font-size: clamp(0.75rem, 0.65rem + 0.7vw, 1.2rem);
+  padding: clamp(0.45rem, 0.35rem + 0.4vw, 0.85rem) clamp(0.75rem, 0.6rem + 0.7vw, 1.35rem);
+  border-radius: clamp(0.45rem, 0.4rem + 0.4vw, 0.8rem);
+  gap: clamp(0.35rem, 0.25rem + 0.3vw, 0.6rem);
   box-shadow: 0 2px 6px rgba(0,0,0,0.3);
   z-index: 10000;
 }
-#githubLink img { height: 1em; width: 1em; }
+
+#githubLink {
+  position: fixed;
+  bottom: clamp(0.75rem, 0.55rem + 0.9vw, 1.5rem);
+  left: clamp(0.75rem, 0.55rem + 0.9vw, 1.5rem);
+  background: var(--button-bg);
+  color: var(--button-text);
+}
+
+#githubLink img {
+  height: 1em;
+  width: 1em;
+}
 
 /* Version badge (bottom-right) */
 #versionBadge {
   position: fixed;
-  bottom: 1rem;
-  right: 1rem;
+  bottom: clamp(0.75rem, 0.55rem + 0.9vw, 1.5rem);
+  right: clamp(0.75rem, 0.55rem + 0.9vw, 1.5rem);
   background: #16a34a; /* default green, JS updates with age */
   color: var(--button-text);
-  text-decoration: none;
-  padding: 0.6em 1em;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  gap: 0.5em;
-  font-size: 1rem;
-  font-family: inherit;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-  z-index: 10000;
 }
 
 #themeToggle {
