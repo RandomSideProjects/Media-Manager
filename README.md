@@ -25,8 +25,13 @@ A lightweight, browser-only video player that loads episode lists from small JSO
 
 ### Installation
 
-1. Download the project files (`index.html`, `style.css`, `script.js`, and any JSON directory files`).
-2. Open `index.html` directly in your browser or host it via GitHub Pages.
+1. Clone the repository: `git clone https://github.com/randomsideprojects/Media-Manager.git`
+2. Change into the project directory: `cd Media-Manager`
+3. Open `index.html` directly in your browser or host it via GitHub Pages.
+
+### Updating
+
+Run `git pull` inside your local clone to sync with the latest changes.
 
 ### Loading a Source
 
@@ -88,6 +93,4 @@ Offical Host
 There might be more, but for now, that is all!
 this is still slightly outdated
 
-CURRENT DATE WHEN EDITTED : 9/15/25
-
-
+CURRENT DATE WHEN EDITTED : 9/20/25
