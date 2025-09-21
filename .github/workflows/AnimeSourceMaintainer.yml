@@ -209,6 +209,14 @@ jobs:
           })().catch(err => { console.error(err); process.exit(1); });
           NODE
 
+      - name: Pull latest changes from main
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git pull --rebase origin main
+
       - name: Commit and push changes
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
