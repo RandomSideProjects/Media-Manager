@@ -51,6 +51,16 @@
       "LatestTime": "2025-09-10T02:01:39.815Z"
     },
     {
+      "file": "Call_Of_The_Night.json",
+      "path": "./Files/Anime/Call_Of_The_Night.json",
+      "title": "Call Of The Night",
+      "poster": "./Posters/Anime/Call_Of_The_Night.webp",
+      "categoryCount": 1,
+      "episodeCount": 13,
+      "totalFileSizeBytes": 1429889589,
+      "LatestTime": "2025-09-21T16:14:38.359Z"
+    },
+    {
       "file": "ChillinLvl2SCP.json",
       "path": "./Files/Anime/ChillinLvl2SCP.json",
       "title": "Chillin' In A World With Level 2 Super Powers",
