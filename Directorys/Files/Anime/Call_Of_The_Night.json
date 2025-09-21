@@ -1,0 +1,92 @@
+{
+  "title": "Call Of The Night",
+  "Image": "https://files.catbox.moe/xctgbl.webp",
+  "categories": [
+    {
+      "category": "Season 1",
+      "episodes": [
+        {
+          "title": "Episode 1",
+          "src": "https://files.catbox.moe/6czzk1.mp4",
+          "fileSizeBytes": 127385770,
+          "durationSeconds": 1403
+        },
+        {
+          "title": "Episode 2",
+          "src": "https://files.catbox.moe/y4i4ka.mp4",
+          "fileSizeBytes": 111851173,
+          "durationSeconds": 1402
+        },
+        {
+          "title": "Episode 3",
+          "src": "https://files.catbox.moe/6ytfzy.mp4",
+          "fileSizeBytes": 96930883,
+          "durationSeconds": 1402
+        },
+        {
+          "title": "Episode 4",
+          "src": "https://files.catbox.moe/8kl8rg.mp4",
+          "fileSizeBytes": 105355069,
+          "durationSeconds": 1402
+        },
+        {
+          "title": "Episode 5",
+          "src": "https://files.catbox.moe/m6130l.mp4",
+          "fileSizeBytes": 97423919,
+          "durationSeconds": 1389
+        },
+        {
+          "title": "Episode 6",
+          "src": "https://files.catbox.moe/xzl8ax.mp4",
+          "fileSizeBytes": 121558535,
+          "durationSeconds": 1402
+        },
+        {
+          "title": "Episode 7",
+          "src": "https://files.catbox.moe/fq30ju.mp4",
+          "fileSizeBytes": 110769011,
+          "durationSeconds": 1402
+        },
+        {
+          "title": "Episode 8",
+          "src": "https://files.catbox.moe/yqp7gd.mp4",
+          "fileSizeBytes": 113790916,
+          "durationSeconds": 1402
+        },
+        {
+          "title": "Episode 9",
+          "src": "https://files.catbox.moe/2ppjcu.mp4",
+          "fileSizeBytes": 106774695,
+          "durationSeconds": 1402
+        },
+        {
+          "title": "Episode 10",
+          "src": "https://files.catbox.moe/xw6u2m.mp4",
+          "fileSizeBytes": 107790848,
+          "durationSeconds": 1402
+        },
+        {
+          "title": "Episode 11",
+          "src": "https://files.catbox.moe/abzt7h.mp4",
+          "fileSizeBytes": 108029044,
+          "durationSeconds": 1402
+        },
+        {
+          "title": "Episode 12",
+          "src": "https://files.catbox.moe/hom1xy.mp4",
+          "fileSizeBytes": 106012308,
+          "durationSeconds": 1403
+        },
+        {
+          "title": "Episode 13",
+          "src": "https://files.catbox.moe/5bhwag.mp4",
+          "fileSizeBytes": 116217418,
+          "durationSeconds": 1372
+        }
+      ]
+    }
+  ],
+  "LatestTime": "2025-09-21T16:14:38.359Z",
+  "totalFileSizeBytes": 1429889589,
+  "totalDurationSeconds": 18185
+}

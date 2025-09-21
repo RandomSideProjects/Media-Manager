@@ -51,40 +51,167 @@ function getUploadConcurrency(){
 const outputLink = document.getElementById('outputLink');
 let isFullUrl = false;
 let directoryCode = '';
+let posterPreviewObjectUrl = '';
 
 // Helpers
 const sleep = (ms) => new Promise(res => setTimeout(res, ms));
 
+function setPosterPreviewSource(src, { isBlob } = {}) {
+  if (posterPreview) posterPreview.src = src || '';
+  if (isBlob) {
+    if (posterPreviewObjectUrl && posterPreviewObjectUrl !== src) {
+      try { URL.revokeObjectURL(posterPreviewObjectUrl); } catch {}
+    }
+    posterPreviewObjectUrl = src || '';
+  } else if (posterPreviewObjectUrl) {
+    try { URL.revokeObjectURL(posterPreviewObjectUrl); } catch {}
+    posterPreviewObjectUrl = '';
+  }
+}
+
+function clearPosterPreviewUI() {
+  setPosterPreviewSource('', { isBlob: false });
+  if (posterWrapper) posterWrapper.style.display = 'none';
+  if (posterInput) posterInput.style.display = 'inline-block';
+}
+
+function getUploadSettingsSafe() {
+  try {
+    const raw = localStorage.getItem('mm_upload_settings') || '{}';
+    const parsed = JSON.parse(raw);
+    return (parsed && typeof parsed === 'object') ? parsed : {};
+  } catch { return {}; }
+}
+
+function isPosterCompressionEnabled() {
+  const settings = getUploadSettingsSafe();
+  if (typeof settings.compressPosters === 'boolean') return settings.compressPosters;
+  if (typeof settings.posterCompress === 'boolean') return settings.posterCompress;
+  return true;
+}
+
+function makeWebpName(name) {
+  const base = (typeof name === 'string' && name.trim()) ? name.trim() : 'poster';
+  const withoutExt = base.includes('.') ? base.slice(0, base.lastIndexOf('.')) : base;
+  const clean = withoutExt || 'poster';
+  return `${clean}.webp`;
+}
+
+function dataUrlToBlob(dataUrl) {
+  if (typeof dataUrl !== 'string') return null;
+  const match = dataUrl.match(/^data:(.+);base64,(.*)$/);
+  if (!match) return null;
+  const mime = match[1];
+  const binary = atob(match[2]);
+  const len = binary.length;
+  const buffer = new Uint8Array(len);
+  for (let i = 0; i < len; i++) buffer[i] = binary.charCodeAt(i);
+  return new Blob([buffer], { type: mime });
+}
+
+async function preparePosterForUpload(file) {
+  const compress = isPosterCompressionEnabled();
+  if (!compress) {
+    const previewUrl = URL.createObjectURL(file);
+    return { uploadFile: file, previewUrl, isBlob: true, compressed: false };
+  }
+
+  return new Promise((resolve) => {
+    let done = false;
+    const finalizeWithOriginal = () => {
+      if (done) return;
+      done = true;
+      const previewUrl = URL.createObjectURL(file);
+      resolve({ uploadFile: file, previewUrl, isBlob: true, compressed: false });
+    };
+
+    try {
+      const tempUrl = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        try { URL.revokeObjectURL(tempUrl); } catch {}
+        try {
+          const naturalWidth = img.naturalWidth || img.width || 1;
+          const naturalHeight = img.naturalHeight || img.height || 1;
+          const aspect = naturalWidth / Math.max(1, naturalHeight);
+          const targetHeight = 512;
+          const targetWidth = Math.max(1, Math.round(targetHeight * (Number.isFinite(aspect) && aspect > 0 ? aspect : 1)));
+          const canvas = document.createElement('canvas');
+          canvas.width = targetWidth;
+          canvas.height = targetHeight;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) throw new Error('Canvas not supported');
+          ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+
+          const handleBlob = (blob) => {
+            if (done) return;
+            if (!blob) return finalizeWithOriginal();
+            done = true;
+            const webpFile = new File([blob], makeWebpName(file.name), { type: 'image/webp', lastModified: file.lastModified });
+            const previewUrl = URL.createObjectURL(webpFile);
+            resolve({ uploadFile: webpFile, previewUrl, isBlob: true, compressed: true });
+          };
+
+          if (typeof canvas.toBlob === 'function') {
+            canvas.toBlob(handleBlob, 'image/webp', 0.8);
+          } else {
+            const dataUrl = canvas.toDataURL('image/webp', 0.8);
+            const blob = dataUrlToBlob(dataUrl);
+            handleBlob(blob);
+          }
+        } catch (err) {
+          console.warn('[MM] Poster compression failed, using original file.', err);
+          finalizeWithOriginal();
+        }
+      };
+      img.onerror = () => {
+        try { URL.revokeObjectURL(tempUrl); } catch {}
+        finalizeWithOriginal();
+      };
+      img.src = tempUrl;
+    } catch (err) {
+      console.warn('[MM] Poster compression setup failed, using original file.', err);
+      finalizeWithOriginal();
+    }
+  });
+}
+
 // Poster selection and upload
 if (posterInput) {
   posterInput.addEventListener('change', async (e) => {
-    const file = e.target.files[0];
+    const file = (e && e.target && e.target.files && e.target.files[0]) || null;
     if (!file) return;
-    try {
-      const localUrl = URL.createObjectURL(file);
-      posterPreview.src = localUrl;
-      if (posterWrapper) posterWrapper.style.display = 'inline-block';
-      if (posterInput) posterInput.style.display = 'none';
-    } catch {}
     if (posterChangeBtn) posterChangeBtn.style.display = 'inline-block';
-    if (posterStatus) posterStatus.style.display = 'inline-block';
+    if (posterStatus) {
+      posterStatus.style.display = 'inline-block';
+      posterStatus.style.color = '#9ecbff';
+      posterStatus.textContent = isPosterCompressionEnabled() ? 'Preparing poster…' : 'Uploading image…';
+    }
     if (posterProgress) posterProgress.value = 0;
     try {
-      const url = await uploadToCatboxWithProgress(file, pct => { if (posterProgress) posterProgress.value = pct; });
+      const prepared = await preparePosterForUpload(file);
+      setPosterPreviewSource(prepared.previewUrl, { isBlob: prepared.isBlob });
+      if (posterWrapper) posterWrapper.style.display = 'inline-block';
+      if (posterInput) posterInput.style.display = 'none';
+      if (posterStatus) posterStatus.textContent = 'Uploading image…';
+      const url = await uploadToCatboxWithProgress(prepared.uploadFile, pct => { if (posterProgress) posterProgress.value = pct; });
       posterImageUrl = (url || '').trim();
       if (posterStatus) posterStatus.style.display = 'none';
     } catch (err) {
-      if (posterStatus) { posterStatus.style.display = 'inline-block'; posterStatus.style.color = '#ff6b6b'; posterStatus.textContent = 'Failed to upload poster.'; }
+      console.error('[MM] Poster upload failed.', err);
+      if (posterStatus) {
+        posterStatus.style.display = 'inline-block';
+        posterStatus.style.color = '#ff6b6b';
+        posterStatus.textContent = 'Failed to upload poster.';
+      }
     }
   });
 }
 if (posterChangeBtn) posterChangeBtn.addEventListener('click', () => {
   try { posterInput.value = ''; } catch {}
   posterImageUrl = '';
-  if (posterPreview) posterPreview.src = '';
-  if (posterWrapper) posterWrapper.style.display = 'none';
+  clearPosterPreviewUI();
   if (posterStatus) { posterStatus.style.display = 'none'; posterStatus.style.color = '#9ecbff'; posterStatus.textContent = 'Uploading image…'; }
-  if (posterInput) posterInput.style.display = 'inline-block';
   if (posterChangeBtn) posterChangeBtn.style.display = 'none';
 });
 
@@ -602,11 +729,11 @@ async function loadDirectory() {
     const json = await res.json();
     posterImageUrl = (json.Image && json.Image !== 'N/A') ? json.Image : '';
     if (posterImageUrl) {
-      posterPreview.src = posterImageUrl;
+      setPosterPreviewSource(posterImageUrl, { isBlob: false });
       if (posterWrapper) posterWrapper.style.display = 'inline-block';
       if (posterInput) posterInput.style.display = 'none';
     } else {
-      posterPreview.src = '';
+      setPosterPreviewSource('', { isBlob: false });
       if (posterWrapper) posterWrapper.style.display = 'none';
       if (posterInput) posterInput.style.display = 'inline-block';
     }
@@ -641,9 +768,8 @@ window.addEventListener('mm_settings_saved', (e) => {
       directoryCode = '';
       updateOutput();
       posterImageUrl = '';
-      if (posterPreview) { posterPreview.src = ''; }
-      if (posterWrapper) posterWrapper.style.display = 'none';
-      if (posterInput) { posterInput.value = ''; posterInput.style.display = 'inline-block'; }
+      clearPosterPreviewUI();
+      if (posterInput) { posterInput.value = ''; }
       if (posterStatus) { posterStatus.style.display = 'none'; posterStatus.style.color = '#9ecbff'; posterStatus.textContent = 'Uploading image…'; }
       if (posterChangeBtn) posterChangeBtn.style.display = 'none';
     } catch {}
@@ -672,9 +798,8 @@ createTabBtn.addEventListener('click', () => {
   directoryCode = '';
   updateOutput();
   posterImageUrl = '';
-  if (posterPreview) { posterPreview.src = ''; }
-  if (posterWrapper) posterWrapper.style.display = 'none';
-  if (posterInput) { posterInput.value = ''; posterInput.style.display = 'inline-block'; }
+  clearPosterPreviewUI();
+  if (posterInput) { posterInput.value = ''; }
   if (posterStatus) { posterStatus.style.display = 'none'; posterStatus.style.color = '#9ecbff'; posterStatus.textContent = 'Uploading image…'; }
   if (posterChangeBtn) posterChangeBtn.style.display = 'none';
 });
@@ -687,9 +812,8 @@ editTabBtn.addEventListener('click', () => {
   directoryCode = '';
   updateOutput();
   posterImageUrl = '';
-  if (posterPreview) { posterPreview.src = ''; }
-  if (posterWrapper) posterWrapper.style.display = 'none';
-  if (posterInput) { posterInput.value = ''; posterInput.style.display = 'inline-block'; }
+  clearPosterPreviewUI();
+  if (posterInput) { posterInput.value = ''; }
   if (posterStatus) { posterStatus.style.display = 'none'; posterStatus.style.color = '#9ecbff'; posterStatus.textContent = 'Uploading image…'; }
   if (posterChangeBtn) posterChangeBtn.style.display = 'none';
 });

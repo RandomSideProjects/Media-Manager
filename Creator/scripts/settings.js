@@ -9,6 +9,7 @@ function loadUploadSettings(){
     const raw = localStorage.getItem(LS_SETTINGS_KEY);
     if (!raw) return { anonymous: true, userhash: '' };
     const p = JSON.parse(raw);
+    const compress = (typeof p.compressPosters === 'boolean') ? p.compressPosters : (typeof p.posterCompress === 'boolean' ? p.posterCompress : true);
     return { 
       anonymous: typeof p.anonymous==='boolean' ? p.anonymous : true,
       userhash: (p.userhash||'').trim(),
@@ -16,7 +17,8 @@ function loadUploadSettings(){
       libraryMode: (p.libraryMode === 'manga') ? 'manga' : 'anime',
       cbzExpand: !!p.cbzExpand,
       cbzExpandBatch: (typeof p.cbzExpandBatch === 'boolean') ? p.cbzExpandBatch : true,
-      cbzExpandManual: (typeof p.cbzExpandManual === 'boolean') ? p.cbzExpandManual : true
+      cbzExpandManual: (typeof p.cbzExpandManual === 'boolean') ? p.cbzExpandManual : true,
+      compressPosters: compress
     };
   } catch { return { anonymous: true, userhash: '' }; }
 }
@@ -28,7 +30,8 @@ function saveUploadSettings(s){
     libraryMode: (s.libraryMode === 'manga') ? 'manga' : 'anime',
     cbzExpand: !!s.cbzExpand,
     cbzExpandBatch: !!s.cbzExpandBatch,
-    cbzExpandManual: !!s.cbzExpandManual
+    cbzExpandManual: !!s.cbzExpandManual,
+    compressPosters: (typeof s.compressPosters === 'boolean') ? s.compressPosters : true
   }));
 }
 
@@ -53,6 +56,7 @@ const mmCbzExpandToggle = document.getElementById('mmCbzExpandToggle');
 const mmCbzExpandSubrows = document.getElementById('mmCbzExpandSubrows');
 const mmCbzExpandBatch = document.getElementById('mmCbzExpandBatch');
 const mmCbzExpandManual = document.getElementById('mmCbzExpandManual');
+const mmPosterCompressToggle = document.getElementById('mmPosterCompressToggle');
 // No per-flow anon controls; only userhash visibility when anonymous is off
 
 if (mmBtn && mmPanel && mmAnonToggle && mmUserhashRow && mmUserhashInput && mmSaveBtn && mmCloseBtn) {
@@ -65,6 +69,7 @@ if (mmBtn && mmPanel && mmAnonToggle && mmUserhashRow && mmUserhashInput && mmSa
     mmModeAnime.checked = (mode === 'anime');
     mmModeManga.checked = (mode === 'manga');
   }
+  if (mmPosterCompressToggle) mmPosterCompressToggle.checked = (typeof st.compressPosters === 'boolean') ? st.compressPosters : true;
   if (mmUploadConcRange) {
     mmUploadConcRange.value = String(st.uploadConcurrency || 2);
     if (mmUploadConcValue) mmUploadConcValue.textContent = String(st.uploadConcurrency || 2);
@@ -108,7 +113,8 @@ if (mmBtn && mmPanel && mmAnonToggle && mmUserhashRow && mmUserhashInput && mmSa
       libraryMode: mode,
       cbzExpand: mmCbzExpandToggle ? !!mmCbzExpandToggle.checked : false,
       cbzExpandBatch: mmCbzExpandBatch ? !!mmCbzExpandBatch.checked : true,
-      cbzExpandManual: mmCbzExpandManual ? !!mmCbzExpandManual.checked : true
+      cbzExpandManual: mmCbzExpandManual ? !!mmCbzExpandManual.checked : true,
+      compressPosters: mmPosterCompressToggle ? !!mmPosterCompressToggle.checked : true
     };
     saveUploadSettings(saved);
     try { window.dispatchEvent(new CustomEvent('mm_settings_saved', { detail: saved })); } catch {}
