@@ -15,7 +15,12 @@ async function loadSource(rawInput) {
   let srcUrl = '';
   let directJson = null;
   // Allow encoded sources (we previously encoded in URL param) – decode once.
-  const decodedRaw = decodeURIComponent(rawSrc);
+  let decodedRaw = rawSrc;
+  try {
+    decodedRaw = decodeURIComponent(rawSrc);
+  } catch {
+    decodedRaw = rawSrc;
+  }
   // New: allow pasting raw JSON or data: URIs directly
   try {
     if (decodedRaw.startsWith('{') || decodedRaw.startsWith('[')) {
@@ -157,3 +162,18 @@ async function init() {
 }
 
 init();
+
+function registerServiceWorker() {
+  if (!('serviceWorker' in navigator)) return;
+  const protocol = (window.location && window.location.protocol) || '';
+  if (protocol !== 'https:' && protocol !== 'http:') {
+    return;
+  }
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./service-worker.js').catch((err) => {
+      console.error('[RSP][SW] registration failed', err);
+    });
+  });
+}
+
+registerServiceWorker();

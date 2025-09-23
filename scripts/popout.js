@@ -6,6 +6,18 @@ if (theaterBtn && video) {
     const src = video.src;
     const currentTime = video.currentTime || 0;
     const pop = window.open('', '_blank', 'width=800,height=450');
+    if (!pop || pop.closed || typeof pop.document === 'undefined') {
+      const msg = 'Pop-out blocked by your browser. Please allow pop-ups for this site to enable the theater window.';
+      try { video.play(); } catch {}
+      try {
+        if (typeof showPlayerAlert === 'function') {
+          showPlayerAlert(msg);
+        } else {
+          alert(msg);
+        }
+      } catch {}
+      return;
+    }
     pop.document.write(`
       <!DOCTYPE html>
       <html lang="en">
@@ -53,4 +65,3 @@ if (theaterBtn && video) {
     `);
   });
 }
-

@@ -256,7 +256,8 @@ async function downloadSourceFolder(options = {}) {
   const zip = new JSZip();
   const titleText = (directoryTitle.textContent || 'directory').trim() || 'directory';
   const safeZipSegment = (name) => { try { return String(name || '').replace(/[\\/]+/g, ' - ').replace(/[<>:"|?*]+/g, '').replace(/\s{2,}/g, ' ').trim(); } catch { return 'untitled'; } };
-  const rootFolder = zip.folder(titleText);
+  const zipRootName = safeZipSegment(titleText) || 'directory';
+  const rootFolder = zip.folder(zipRootName);
   rootFolder.file('Media-Manager-source.txt', 'https://github.com/RandomSideProjects/Media-Manager/ is the origin of this web app.');
 
   // Add a LocalID so local-folder progress keys can be stable across sessions
@@ -281,8 +282,8 @@ async function downloadSourceFolder(options = {}) {
       const prefix = (isCbz || isJsonVolume) ? 'V' : 'E';
       // For JSON volumes, store an index.json within a V##/ subfolder
       const localPath = isJsonVolume
-        ? `Directorys/${titleText}/${sanitizedCats[i]}/${prefix}${pad}/index.json`
-        : `Directorys/${titleText}/${sanitizedCats[i]}/${prefix}${pad}${ext}`;
+        ? `Directorys/${zipRootName}/${sanitizedCats[i]}/${prefix}${pad}/index.json`
+        : `Directorys/${zipRootName}/${sanitizedCats[i]}/${prefix}${pad}${ext}`;
       const base = { title: ep.title, src: localPath, fileSizeBytes: (typeof ep.fileSizeBytes === 'number') ? ep.fileSizeBytes : null };
       if (isCbz || isJsonVolume) { base.VolumePageCount = (typeof ep.VolumePageCount === 'number') ? ep.VolumePageCount : null; }
       else { base.durationSeconds = (typeof ep.durationSeconds === 'number') ? ep.durationSeconds : null; }
@@ -293,26 +294,71 @@ async function downloadSourceFolder(options = {}) {
 
   const plannedNames = videoList.map(() => []);
   const tasks = [];
+  const skippedEpisodes = [];
+  const missingEpisodes = [];
   videoList.forEach((cat, ci) => {
     cat.episodes.forEach((episode, ei) => {
-      const urlParts = new URL(episode.src, window.location.href);
-      const origName = decodeURIComponent(urlParts.pathname.split('/').pop());
-      const ext = origName.includes('.') ? origName.slice(origName.lastIndexOf('.')).toLowerCase() : '';
-      const pad = String(ei + 1).padStart(2, '0');
-      const prefix = (ext === '.cbz' || ext === '.json') ? 'V' : 'E';
-      const fileName = `${prefix}${pad}${ext}`; plannedNames[ci][ei] = fileName;
       let shouldDownload = true;
       const epSet = selectedEpisodesBySeason && selectedEpisodesBySeason[ci];
       if (epSet instanceof Set) {
         shouldDownload = epSet.has(ei);
       } else if (selectedSet) {
         shouldDownload = selectedSet.has(ci);
-      } else {
-        shouldDownload = true;
       }
+
+      const epObj = catObjs[ci].episodes[ei];
+      const srcString = episode && typeof episode.src === 'string' ? episode.src.trim() : '';
+      const isPlaceholder = !!(episode && episode.isPlaceholder);
+      const hasSrc = srcString.length > 0;
+      if (isPlaceholder || !hasSrc) {
+        if (epObj) {
+          epObj.downloadFailed = true;
+          epObj.downloadError = isPlaceholder ? 'Placeholder item – skipped' : 'Missing source URL';
+        }
+        if (isPlaceholder) skippedEpisodes.push(episode.title || `Episode ${ei + 1}`);
+        else missingEpisodes.push(episode.title || `Episode ${ei + 1}`);
+        return;
+      }
+
+      let origName = '';
+      let ext = '';
+      try {
+        const urlParts = new URL(srcString, window.location.href);
+        origName = decodeURIComponent(urlParts.pathname.split('/').pop() || '');
+        ext = origName.includes('.') ? origName.slice(origName.lastIndexOf('.')).toLowerCase() : '';
+      } catch {
+        if (epObj) {
+          epObj.downloadFailed = true;
+          epObj.downloadError = 'Invalid URL';
+        }
+        missingEpisodes.push(episode.title || `Episode ${ei + 1}`);
+        return;
+      }
+
+      const pad = String(ei + 1).padStart(2, '0');
+      const isJsonVolume = ext === '.json';
+      const isCbz = ext === '.cbz';
+      const prefix = (isCbz || isJsonVolume) ? 'V' : 'E';
+      const fileName = `${prefix}${pad}${ext}`;
+      plannedNames[ci][ei] = fileName;
       if (shouldDownload) tasks.push({ ci, ei, episode, fileName });
     });
   });
+
+  if (tasks.length === 0) {
+    try { speedLabel.textContent = 'No downloads started'; } catch {}
+    try {
+      const messages = [];
+      if (skippedEpisodes.length) messages.push(`Skipped placeholders: ${skippedEpisodes.length}`);
+      if (missingEpisodes.length) messages.push(`Missing URLs: ${missingEpisodes.length}`);
+      remainingLabel.textContent = messages.length ? messages.join(' • ') : 'Nothing eligible to download.';
+      failureLabel.textContent = '';
+      etaLabel.textContent = '';
+    } catch {}
+    cancelBtn.textContent = 'Close';
+    cancelBtn.addEventListener('click', () => { try { overlay.remove(); } catch {}; }, { once: true });
+    return;
+  }
 
   const progressBars = []; const loadedBytes = Array(tasks.length).fill(0); const totalBytes = Array(tasks.length).fill(0);
   const dataLeftLabels = [];
@@ -543,7 +589,7 @@ async function downloadSourceFolder(options = {}) {
         if (isJson) {
           // JSON volume: fetch JSON, inline remote links as base64 data URIs, save JSON
           const epObj = catObjs[ci].episodes[ei];
-          const folderPath = `Directorys/${titleText}/${sanitizedCats[ci]}/`;
+          const folderPath = `Directorys/${zipRootName}/${sanitizedCats[ci]}/`;
           const pad = String(ei + 1).padStart(2, '0');
           const volFolderName = `V${pad}`;
           const volFolder = catFolders[ci].folder(volFolderName);
@@ -791,7 +837,7 @@ async function downloadSourceFolder(options = {}) {
 
           if (!blob) throw new Error('Download failed');
           catFolders[ci].file(fileName, blob);
-          const epObj = catObjs[ci].episodes[ei]; epObj.src = `Directorys/${titleText}/${sanitizedCats[ci]}/${fileName}`;
+          const epObj = catObjs[ci].episodes[ei]; epObj.src = `Directorys/${zipRootName}/${sanitizedCats[ci]}/${fileName}`;
           try {
             const sz = Number(blob && blob.size);
             if (Number.isFinite(sz) && sz >= 0) {

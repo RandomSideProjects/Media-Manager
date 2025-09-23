@@ -45,6 +45,23 @@ const clipProgressOverlay = document.getElementById('clipProgressOverlay');
 const clipProgressMessage = document.getElementById('clipProgressMessage');
 const clipProgressBar = document.getElementById('clipProgressBar');
 
+// Clip preset/history elements
+const clipPresetOverlay = document.getElementById('clipPresetOverlay');
+const clipPresetButtons = document.getElementById('clipPresetButtons');
+const clipCustomStartBtn = document.getElementById('clipCustomStartBtn');
+const clipRememberPreset = document.getElementById('clipRememberPreset');
+const clipPresetCloseBtn = document.getElementById('clipPresetCloseBtn');
+const clipHistoryList = document.getElementById('clipHistoryList');
+const clipHistoryClearBtn = document.getElementById('clipHistoryClearBtn');
+const trimSlider = document.getElementById('trimSlider');
+const trimRange = document.getElementById('trimRange');
+const trimHandleStart = document.getElementById('trimHandleStart');
+const trimHandleEnd = document.getElementById('trimHandleEnd');
+const trimPreviewMarker = document.getElementById('trimPreviewMarker');
+const clipDisplayStart = document.getElementById('clipDisplayStart');
+const clipDisplayEnd = document.getElementById('clipDisplayEnd');
+const clipDisplayLength = document.getElementById('clipDisplayLength');
+
 // Settings elements
 const settingsBtn = document.getElementById('settingsBtn');
 const settingsOverlay = document.getElementById('settingsOverlay');

@@ -1,0 +1,20 @@
+{
+  "name": "RSP Media Manager",
+  "short_name": "MediaManager",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#111111",
+  "theme_color": "#111111",
+  "icons": [
+    {
+      "src": "Assets/Favicon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "Assets/Favicon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

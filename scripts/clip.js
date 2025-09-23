@@ -2,6 +2,188 @@
 
 let lastClipBlob = null;
 let lastPreviewObjectURL = null;
+let clipPresetsCache = loadClipPresets();
+let clipPreferredLength = loadClipPreferredLength();
+let currentClipContext = null;
+
+const TRIM_WINDOW_DURATION = 90; // seconds
+
+let trimWindowBase = 0;
+let trimScaleDuration = TRIM_WINDOW_DURATION;
+let trimState = { start: 0, end: 20 };
+let trimDragHandle = null;
+let trimMarkerActive = false;
+let lastPointerId = null;
+
+const CLIP_HISTORY_KEY = 'clipHistory';
+const MAX_CLIP_HISTORY = 6;
+
+function loadClipPresets() {
+  try {
+    const stored = JSON.parse(localStorage.getItem('clipPresets') || 'null');
+    if (Array.isArray(stored)) {
+      const cleaned = stored.map(n => parseInt(n, 10)).filter(n => Number.isFinite(n) && n >= 2 && n <= 1800);
+      if (cleaned.length) return Array.from(new Set(cleaned));
+    }
+  } catch {}
+  return [10, 20, 30];
+}
+
+function loadClipPreferredLength() {
+  const raw = localStorage.getItem('clipPreferredLength');
+  const parsed = parseInt(raw || '', 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
+function saveClipPreferredLength(seconds) {
+  try {
+    if (Number.isFinite(seconds) && seconds > 0) localStorage.setItem('clipPreferredLength', String(Math.round(seconds)));
+    else localStorage.removeItem('clipPreferredLength');
+  } catch {}
+  clipPreferredLength = loadClipPreferredLength();
+}
+
+function formatTimeForInput(value) {
+  const total = Math.max(0, Math.floor(Number(value) || 0));
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  if (h > 0) {
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  }
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
+
+function setTrimState(start, end) {
+  const minGap = 0.5;
+  const windowDuration = Math.max(minGap, trimScaleDuration);
+  let newStart = Math.max(trimWindowBase, Math.min(start, trimWindowBase + windowDuration - minGap));
+  let newEnd = Math.max(newStart + minGap, Math.min(end, trimWindowBase + windowDuration));
+  if (video && Number.isFinite(video.duration) && video.duration > 0) {
+    const duration = video.duration;
+    newStart = Math.min(newStart, Math.max(0, duration - minGap));
+    newEnd = Math.min(newEnd, duration);
+    if (newEnd - newStart < minGap) {
+      newEnd = Math.min(duration, newStart + minGap);
+    }
+  }
+  trimState = { start: newStart, end: newEnd };
+  updateTrimUI();
+}
+
+function isPrimaryPointer(event) {
+  if (!event) return false;
+  if (typeof event.button === 'number' && event.button !== 0) return false;
+  return true;
+}
+
+function updateTrimUI() {
+  const windowDuration = Math.max(0.1, trimScaleDuration);
+  let startPct = ((trimState.start - trimWindowBase) / windowDuration) * 100;
+  let endPct = ((trimState.end - trimWindowBase) / windowDuration) * 100;
+  startPct = Math.max(0, Math.min(100, startPct));
+  endPct = Math.max(0, Math.min(100, endPct));
+  if (trimRange) {
+    trimRange.style.left = `${startPct}%`;
+    trimRange.style.width = `${Math.max(0, endPct - startPct)}%`;
+  }
+  if (trimHandleStart) trimHandleStart.style.left = `${startPct}%`;
+  if (trimHandleEnd) trimHandleEnd.style.left = `${endPct}%`;
+  if (clipDisplayStart) clipDisplayStart.textContent = formatTimeForInput(trimState.start);
+  if (clipDisplayEnd) clipDisplayEnd.textContent = formatTimeForInput(trimState.end);
+  if (clipDisplayLength) clipDisplayLength.textContent = formatTimeForInput(trimState.end - trimState.start);
+}
+
+function updateTrimPreviewMarker() {
+  if (!trimPreviewMarker || !video) return;
+  const duration = Number.isFinite(video.duration) && video.duration > 0 ? video.duration : null;
+  if (!duration) {
+    trimPreviewMarker.style.display = 'none';
+    return;
+  }
+  const windowDuration = Math.max(0.1, trimScaleDuration);
+  if (video.currentTime < trimWindowBase || video.currentTime > trimWindowBase + windowDuration) {
+    trimPreviewMarker.style.display = 'none';
+    return;
+  }
+  const pct = ((video.currentTime - trimWindowBase) / windowDuration) * 100;
+  trimPreviewMarker.style.display = 'block';
+  trimPreviewMarker.style.left = `${Math.max(0, Math.min(100, pct))}%`;
+}
+
+function stopTrimPreviewMarker() {
+  if (!video || !trimMarkerActive) return;
+  video.removeEventListener('timeupdate', updateTrimPreviewMarker);
+  trimMarkerActive = false;
+  if (trimPreviewMarker) trimPreviewMarker.style.display = 'none';
+}
+
+function startTrimPreviewMarker() {
+  if (!video || trimMarkerActive) return;
+  video.addEventListener('timeupdate', updateTrimPreviewMarker);
+  trimMarkerActive = true;
+  updateTrimPreviewMarker();
+}
+
+function secondsFromPointerEvent(e) {
+  if (!trimSlider) return trimWindowBase;
+  const rect = trimSlider.getBoundingClientRect();
+  const ratio = rect.width > 0 ? (e.clientX - rect.left) / rect.width : 0;
+  const clamped = Math.max(0, Math.min(1, ratio));
+  return trimWindowBase + clamped * trimScaleDuration;
+}
+
+function applyTrimPointer(handle, seconds) {
+  if (handle === 'start') {
+    setTrimState(seconds, trimState.end);
+  } else {
+    setTrimState(trimState.start, seconds);
+  }
+}
+
+function onTrimPointerMove(e) {
+  if (!trimDragHandle) return;
+  e.preventDefault();
+  const seconds = secondsFromPointerEvent(e);
+  applyTrimPointer(trimDragHandle, seconds);
+}
+
+function endTrimDrag() {
+  if (!trimDragHandle) return;
+  trimDragHandle = null;
+  window.removeEventListener('pointermove', onTrimPointerMove);
+  window.removeEventListener('pointerup', endTrimDrag);
+  window.removeEventListener('pointercancel', endTrimDrag);
+  if (trimSlider && lastPointerId !== null && typeof trimSlider.releasePointerCapture === 'function') {
+    try { trimSlider.releasePointerCapture(lastPointerId); } catch {}
+  }
+  lastPointerId = null;
+}
+
+function beginTrimDrag(handle, event) {
+  if (event && typeof event.preventDefault === 'function') {
+    event.preventDefault();
+  }
+  trimDragHandle = handle;
+  lastPointerId = event && event.pointerId !== undefined ? event.pointerId : null;
+  if (trimSlider && lastPointerId !== null && typeof trimSlider.setPointerCapture === 'function') {
+    try { trimSlider.setPointerCapture(lastPointerId); } catch {}
+  }
+  window.addEventListener('pointermove', onTrimPointerMove);
+  window.addEventListener('pointerup', endTrimDrag);
+  window.addEventListener('pointercancel', endTrimDrag);
+  onTrimPointerMove(event);
+}
+
+function jumpTrimToPosition(event) {
+  if (!trimSlider) return null;
+  const seconds = secondsFromPointerEvent(event);
+  const distStart = Math.abs(seconds - trimState.start);
+  const distEnd = Math.abs(seconds - trimState.end);
+  const handle = distStart <= distEnd ? 'start' : 'end';
+  applyTrimPointer(handle, seconds);
+  return handle;
+}
 
 function ensureClipDownloadButton() {
   let btn = document.getElementById('clipDownloadBtn');
@@ -40,9 +222,24 @@ function ensureClipDownloadButton() {
   }
 }
 
+function buildHistoryPreviewHtml() {
+  const history = loadClipHistory();
+  if (!history.length) return '';
+  const items = history.slice(0, 3).map(entry => {
+    const time = entry.createdAt ? new Date(entry.createdAt).toLocaleString() : '';
+    const length = Number.isFinite(entry.lengthSeconds) ? `${entry.lengthSeconds}s` : '';
+    const title = entry.itemTitle || 'Clip';
+    const meta = [length, time].filter(Boolean).join(' • ');
+    return `<li><a href="${entry.url}" target="_blank" rel="noopener noreferrer">${title}</a>${meta ? ` <span style="opacity:0.7">(${meta})</span>` : ''}</li>`;
+  }).join('');
+  return `<div class="clip-history-preview"><div style="font-weight:600; margin-top:0.6em;">Recent clips</div><ul>${items}</ul></div>`;
+}
+
 function displayClipResult(html, isError = false) {
+  const historyHtml = buildHistoryPreviewHtml();
+  const content = html + historyHtml;
   if (clipMessage) {
-    clipMessage.innerHTML = html;
+    clipMessage.innerHTML = content;
     if (clipOverlay) { clipOverlay.style.display = 'flex'; }
   } else {
     const tmp = document.createElement('div');
@@ -51,7 +248,7 @@ function displayClipResult(html, isError = false) {
     });
     const box = document.createElement('div');
     Object.assign(box.style, { background: isError ? 'rgba(80,0,0,0.95)' : 'rgba(20,20,20,0.95)', padding: '1em 1.25em', borderRadius: '12px', maxWidth: '540px', boxShadow: '0 20px 40px -10px rgba(0,0,0,0.6)' });
-    box.innerHTML = html;
+    box.innerHTML = content;
     const done = document.createElement('button'); done.textContent = 'Done'; Object.assign(done.style, { marginTop: '1em', padding: '0.5em 1em', cursor: 'pointer' });
     done.addEventListener('click', () => tmp.remove()); box.appendChild(done); tmp.appendChild(box); document.body.appendChild(tmp);
   }
@@ -71,102 +268,440 @@ async function uploadClipToCatboxWithProgress(blob, onProgress) {
   });
 }
 
-if (clipBtn) {
-  clipBtn.addEventListener('click', async () => {
-    const x = video.currentTime; video.pause();
-    const y = parseFloat(prompt('Enter half-length in seconds:', '10'));
-    if (isNaN(y) || y <= 0) return;
-    const start = Math.max(0, x - y); const end = Math.min(video.duration, x + y);
+function getCurrentMediaItem() {
+  if (!Array.isArray(flatList)) return null;
+  if (typeof currentIndex !== 'number' || currentIndex < 0 || currentIndex >= flatList.length) return null;
+  return flatList[currentIndex];
+}
 
-    const overlay = clipProgressOverlay; const msg = clipProgressMessage; const bar = clipProgressBar;
-    overlay.style.display = 'flex'; msg.textContent = 'Preparing clip...'; bar.value = 0;
+function recordClipHistory(entry) {
+  if (!entry || !entry.url) return;
+  const history = loadClipHistory();
+  history.unshift(entry);
+  saveClipHistory(history.slice(0, MAX_CLIP_HISTORY));
+  renderClipHistoryList();
+}
 
-    let hiddenVideo = document.createElement('video');
-    hiddenVideo.muted = false; hiddenVideo.preload = 'auto'; hiddenVideo.crossOrigin = 'anonymous';
-    hiddenVideo.style.position = 'absolute'; hiddenVideo.style.left = '-9999px'; hiddenVideo.style.width = '1px'; hiddenVideo.style.height = '1px'; hiddenVideo.style.opacity = '0'; hiddenVideo.setAttribute('playsinline', ''); document.body.appendChild(hiddenVideo);
+function loadClipHistory() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(CLIP_HISTORY_KEY) || '[]');
+    return Array.isArray(raw) ? raw : [];
+  } catch { return []; }
+}
+
+function saveClipHistory(list) {
+  try { localStorage.setItem(CLIP_HISTORY_KEY, JSON.stringify(list)); }
+  catch {}
+}
+
+function renderClipHistoryList() {
+  if (!clipHistoryList) return;
+  clipHistoryList.innerHTML = '';
+  const history = loadClipHistory();
+  if (!history.length) {
+    const empty = document.createElement('div');
+    empty.textContent = 'No clips recorded yet.';
+    clipHistoryList.appendChild(empty);
+    return;
+  }
+  history.forEach(entry => {
+    const row = document.createElement('div');
+    row.style.display = 'flex';
+    row.style.flexDirection = 'column';
+    row.style.gap = '0.15rem';
+    const link = document.createElement('a');
+    link.href = entry.url;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.textContent = entry.itemTitle || 'Clip';
+    const meta = document.createElement('span');
+    meta.style.opacity = '0.7';
+    const bits = [];
+    if (entry.lengthSeconds) bits.push(`${entry.lengthSeconds}s`);
+    if (entry.sourceTitle) bits.push(entry.sourceTitle);
+    if (entry.createdAt) bits.push(new Date(entry.createdAt).toLocaleString());
+    meta.textContent = bits.join(' • ');
+    row.append(link, meta);
+    clipHistoryList.appendChild(row);
+  });
+}
+
+function clearClipHistory() {
+  saveClipHistory([]);
+  renderClipHistoryList();
+}
+
+function renderClipPresetButtons() {
+  if (!clipPresetButtons) return;
+  clipPresetButtons.innerHTML = '';
+  clipPresetsCache.forEach(seconds => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.textContent = `${seconds}s`;
+    btn.addEventListener('click', () => {
+      const remember = clipRememberPreset && clipRememberPreset.checked;
+      if (remember) saveClipPreferredLength(seconds);
+      else saveClipPreferredLength(null);
+      closeClipPresetOverlay();
+      startClipCapture(seconds);
+    });
+    clipPresetButtons.appendChild(btn);
+  });
+}
+
+function openClipPresetOverlay() {
+  if (!clipPresetOverlay) return;
+  clipPresetsCache = loadClipPresets();
+  clipPreferredLength = loadClipPreferredLength();
+  renderClipPresetButtons();
+  renderClipHistoryList();
+  if (clipRememberPreset) clipRememberPreset.checked = Number.isFinite(clipPreferredLength);
+
+  const fallbackLength = Math.max(1, clipPreferredLength || 20);
+  const hasVideo = video && Number.isFinite(video.currentTime);
+  const duration = video && Number.isFinite(video.duration) && video.duration > 0 ? video.duration : null;
+  trimScaleDuration = duration ? Math.min(TRIM_WINDOW_DURATION, duration) : TRIM_WINDOW_DURATION;
+  if (!Number.isFinite(trimScaleDuration) || trimScaleDuration <= 0) {
+    trimScaleDuration = TRIM_WINDOW_DURATION;
+  }
+  const current = hasVideo ? video.currentTime : 0;
+  if (duration) {
+    if (duration <= trimScaleDuration) {
+      trimWindowBase = 0;
+      trimScaleDuration = duration;
+    } else {
+      const halfWindow = trimScaleDuration / 2;
+      trimWindowBase = Math.max(0, Math.min(current - halfWindow, duration - trimScaleDuration));
+    }
+  } else {
+    trimWindowBase = Math.max(0, current - trimScaleDuration / 2);
+  }
+
+  let startDefault = Math.max(trimWindowBase, current - fallbackLength / 2);
+  let endDefault = Math.min(trimWindowBase + trimScaleDuration, startDefault + fallbackLength);
+  if (endDefault - startDefault < 0.5) {
+    endDefault = Math.min(trimWindowBase + trimScaleDuration, startDefault + Math.max(0.5, fallbackLength));
+  }
+  if (startDefault < trimWindowBase) startDefault = trimWindowBase;
+  if (endDefault > trimWindowBase + trimScaleDuration) endDefault = trimWindowBase + trimScaleDuration;
+  setTrimState(startDefault, endDefault);
+
+  if (duration) startTrimPreviewMarker();
+  else if (trimPreviewMarker) trimPreviewMarker.style.display = 'none';
+
+  clipPresetOverlay.style.display = 'flex';
+  updateTrimPreviewMarker();
+  if (trimHandleStart) {
+    try { trimHandleStart.focus(); } catch {}
+  }
+}
+
+function closeClipPresetOverlay() {
+  if (clipPresetOverlay) clipPresetOverlay.style.display = 'none';
+  stopTrimPreviewMarker();
+  if (trimPreviewMarker) trimPreviewMarker.style.display = 'none';
+  endTrimDrag();
+}
+
+async function startClipCapture(lengthSeconds) {
+  if (!video) return;
+  const total = Math.max(2, Number(lengthSeconds) || 20);
+  const currentTime = Number.isFinite(video.currentTime) ? video.currentTime : 0;
+  const duration = Number.isFinite(video.duration) ? video.duration : NaN;
+  let start = Math.max(0, currentTime - total / 2);
+  let end = currentTime + total / 2;
+  if (Number.isFinite(duration) && duration > 0) {
+    if (end > duration) {
+      const overflow = end - duration;
+      start = Math.max(0, start - overflow);
+      end = duration;
+    }
+    if (start < 0) {
+      const under = -start;
+      start = 0;
+      end = Math.min(duration, end + under);
+    }
+    if (end - start < total) {
+      end = Math.min(duration, start + total);
+    }
+  }
+  const actualDuration = Math.max(1, end - start);
+  video.pause();
+  await executeClipCapture(start, end, actualDuration);
+}
+
+async function startClipRange(rangeStart, rangeEnd) {
+  if (!video) return;
+  let start = Number(rangeStart);
+  let end = Number(rangeEnd);
+  if (!Number.isFinite(start) || !Number.isFinite(end)) return;
+  start = Math.max(trimWindowBase, start);
+  end = Math.min(trimWindowBase + trimScaleDuration, end);
+  const duration = Number.isFinite(video.duration) ? video.duration : NaN;
+  start = Math.max(0, start);
+  if (Number.isFinite(duration)) {
+    end = Math.min(end, duration);
+    start = Math.min(start, Math.max(0, duration - 0.5));
+  }
+  if (end <= start) return;
+  const actualDuration = Math.max(0.5, end - start);
+  video.pause();
+  await executeClipCapture(start, end, actualDuration);
+}
+
+async function executeClipCapture(start, end, durationSeconds) {
+  const overlay = clipProgressOverlay;
+  const msg = clipProgressMessage;
+  const bar = clipProgressBar;
+  if (!overlay || !msg || !bar) return;
+  overlay.style.display = 'flex';
+  msg.textContent = 'Preparing clip...';
+  bar.value = 0;
+
+  const hiddenVideo = document.createElement('video');
+  hiddenVideo.muted = false;
+  hiddenVideo.preload = 'auto';
+  hiddenVideo.crossOrigin = 'anonymous';
+  hiddenVideo.style.position = 'absolute';
+  hiddenVideo.style.left = '-9999px';
+  hiddenVideo.style.width = '1px';
+  hiddenVideo.style.height = '1px';
+  hiddenVideo.style.opacity = '0';
+  hiddenVideo.setAttribute('playsinline', '');
+  document.body.appendChild(hiddenVideo);
+
+  try {
+    hiddenVideo.src = video.src;
+    await new Promise(resolve => {
+      const onMeta = () => { hiddenVideo.removeEventListener('loadedmetadata', onMeta); resolve(); };
+      hiddenVideo.addEventListener('loadedmetadata', onMeta);
+    });
+    await new Promise(resolve => {
+      const onSeeked = () => { hiddenVideo.removeEventListener('seeked', onSeeked); resolve(); };
+      hiddenVideo.addEventListener('seeked', onSeeked);
+      hiddenVideo.currentTime = start;
+    });
+    hiddenVideo.play();
+    await new Promise(resolve => {
+      const onPlaying = () => { hiddenVideo.removeEventListener('playing', onPlaying); resolve(); };
+      hiddenVideo.addEventListener('playing', onPlaying);
+    });
+    await new Promise(r => setTimeout(r, 100));
+
+    let stream;
+    let canvas;
+    let canvasDrawLoop;
+    if (typeof hiddenVideo.captureStream === 'function') {
+      stream = hiddenVideo.captureStream();
+      if (stream.getAudioTracks().length === 0) {
+        try {
+          const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+          await audioCtx.resume().catch(() => {});
+          const sourceNode = audioCtx.createMediaElementSource(hiddenVideo);
+          const dest = audioCtx.createMediaStreamDestination();
+          sourceNode.connect(dest);
+          stream = new MediaStream([ ...stream.getVideoTracks(), ...dest.stream.getAudioTracks() ]);
+        } catch (err) { console.warn('Supplementing audio failed, proceeding with original stream.', err); }
+      }
+    } else {
+      canvas = document.createElement('canvas');
+      canvas.width = hiddenVideo.videoWidth || 640;
+      canvas.height = hiddenVideo.videoHeight || 360;
+      const ctx = canvas.getContext('2d');
+      canvasDrawLoop = () => {
+        ctx.drawImage(hiddenVideo, 0, 0, canvas.width, canvas.height);
+        if (recorder && recorder.state === 'recording') requestAnimationFrame(canvasDrawLoop);
+      };
+      const canvasStream = canvas.captureStream(30);
+      let audioStream = null;
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        await audioCtx.resume().catch(() => {});
+        const sourceNode = audioCtx.createMediaElementSource(hiddenVideo);
+        const dest = audioCtx.createMediaStreamDestination();
+        sourceNode.connect(dest);
+        sourceNode.connect(audioCtx.destination);
+        audioStream = dest.stream;
+      } catch (e) { console.warn('Audio capture fallback failed, proceeding without audio.', e); }
+      stream = audioStream ? new MediaStream([ ...canvasStream.getVideoTracks(), ...audioStream.getAudioTracks() ]) : canvasStream;
+    }
+
+    let mimeType = 'video/webm;codecs=vp9,opus';
+    if (!MediaRecorder.isTypeSupported(mimeType)) {
+      mimeType = 'video/webm;codecs=vp8,opus';
+      if (!MediaRecorder.isTypeSupported(mimeType)) mimeType = 'video/webm';
+    }
+    let recorder;
+    const recordedChunks = [];
+    try { recorder = new MediaRecorder(stream, { mimeType }); }
+    catch { recorder = new MediaRecorder(stream); }
+    recorder.ondataavailable = e => { if (e.data && e.data.size > 0) recordedChunks.push(e.data); };
+
+    const durationMs = durationSeconds * 1000;
+    const recordStart = Date.now();
+    const progressInterval = setInterval(() => {
+      const elapsed = Date.now() - recordStart;
+      bar.value = Math.min(100, (elapsed / durationMs) * 100);
+    }, 100);
+
+    recorder.start();
+    if (canvasDrawLoop) requestAnimationFrame(canvasDrawLoop);
+    await new Promise(resolve => setTimeout(resolve, durationMs));
+    recorder.stop();
+    await new Promise(resolve => { recorder.onstop = () => resolve(); });
+    clearInterval(progressInterval);
+
+    const blob = new Blob(recordedChunks, { type: recordedChunks[0] ? recordedChunks[0].type : 'video/webm' });
+    lastClipBlob = blob;
+    bar.value = 100;
+    overlay.style.display = 'none';
+
+    const previewEnabled = (localStorage.getItem('clipPreviewEnabled') === 'true');
+    let previewHTML = '';
+    if (previewEnabled) {
+      try {
+        if (lastPreviewObjectURL) { URL.revokeObjectURL(lastPreviewObjectURL); lastPreviewObjectURL = null; }
+        lastPreviewObjectURL = URL.createObjectURL(blob);
+        previewHTML = `<video src="${lastPreviewObjectURL}" controls style="max-width:100%; width:480px; margin-top:10px;"></video>`;
+      } catch {}
+    }
+
+    const item = getCurrentMediaItem();
+    currentClipContext = {
+      lengthSeconds: Math.round(durationSeconds),
+      itemTitle: item && item.title ? item.title : 'Clip',
+      sourceTitle: directoryTitle && directoryTitle.textContent ? directoryTitle.textContent : '',
+      createdAt: new Date().toISOString()
+    };
 
     try {
-      hiddenVideo.src = video.src;
-      await new Promise(r => { function onMeta() { hiddenVideo.removeEventListener('loadedmetadata', onMeta); r(); } hiddenVideo.addEventListener('loadedmetadata', onMeta); });
-      await new Promise(r => { function onSeeked() { hiddenVideo.removeEventListener('seeked', onSeeked); r(); } hiddenVideo.addEventListener('seeked', onSeeked); hiddenVideo.currentTime = start; });
-      hiddenVideo.play(); await new Promise(resolve => { function onPlaying() { hiddenVideo.removeEventListener('playing', onPlaying); resolve(); } hiddenVideo.addEventListener('playing', onPlaying); }); await new Promise(r => setTimeout(r, 100));
+      if (clipButtonsRow) clipButtonsRow.style.display = 'none';
+      msg.textContent = 'Uploading clip...';
+      bar.value = 0;
+      overlay.style.display = 'flex';
+      const url = await uploadClipToCatboxWithProgress(blob, p => { bar.value = p; });
+      overlay.style.display = 'none';
+      displayClipResult(`
+        <div style="font-weight:700;">Clip uploaded!</div>
+        <p style="margin:0;">URL: <a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a></p>
+        ${previewHTML}
+      `);
+      recordClipHistory({ ...currentClipContext, url });
+      ensureClipDownloadButton();
+    } catch (err) {
+      overlay.style.display = 'none';
+      const localUrl = (() => { try { return URL.createObjectURL(blob); } catch { return ''; } })();
+      displayClipResult(`
+        <div style="font-weight:700;">Upload failed</div>
+        <p style="margin:0;">${err.message}</p>
+        <small>Would you like to <span style="color:#5ab8ff;"><a href="${localUrl}" download="clip.webm" style="color:inherit; text-decoration:none;">download</a></span> the clip instead?</small>
+        ${previewHTML}
+      `, true);
+      ensureClipDownloadButton();
+    }
+  } finally {
+    if (hiddenVideo && hiddenVideo.parentElement) hiddenVideo.remove();
+    currentClipContext = null;
+  }
+}
 
-      let stream; let canvas; let canvasDrawLoop;
-      if (typeof hiddenVideo.captureStream === 'function') {
-        stream = hiddenVideo.captureStream();
-        if (stream.getAudioTracks().length === 0) {
-          try {
-            const audioCtx = new (window.AudioContext || window.webkitAudioContext)(); await audioCtx.resume().catch(() => {});
-            const sourceNode = audioCtx.createMediaElementSource(hiddenVideo); const dest = audioCtx.createMediaStreamDestination(); sourceNode.connect(dest);
-            stream = new MediaStream([ ...stream.getVideoTracks(), ...dest.stream.getAudioTracks() ]);
-          } catch (err) { console.warn('Supplementing audio failed, proceeding with original stream.', err); }
-        }
-      } else {
-        canvas = document.createElement('canvas'); canvas.width = hiddenVideo.videoWidth || 640; canvas.height = hiddenVideo.videoHeight || 360; const ctx = canvas.getContext('2d');
-        canvasDrawLoop = () => { ctx.drawImage(hiddenVideo, 0, 0, canvas.width, canvas.height); if (recorder && recorder.state === 'recording') { requestAnimationFrame(canvasDrawLoop); } };
-        const canvasStream = canvas.captureStream(30);
-        let audioStream = null; try { const audioCtx = new (window.AudioContext || window.webkitAudioContext)(); await audioCtx.resume().catch(() => {}); const sourceNode = audioCtx.createMediaElementSource(hiddenVideo); const dest = audioCtx.createMediaStreamDestination(); sourceNode.connect(dest); sourceNode.connect(audioCtx.destination); audioStream = dest.stream; } catch (e) { console.warn('Audio capture fallback failed, proceeding without audio.', e); }
-        stream = audioStream ? new MediaStream([ ...canvasStream.getVideoTracks(), ...audioStream.getAudioTracks() ]) : canvasStream;
-      }
-
-      let mimeType = 'video/webm;codecs=vp9,opus'; if (!MediaRecorder.isTypeSupported(mimeType)) { mimeType = 'video/webm;codecs=vp8,opus'; if (!MediaRecorder.isTypeSupported(mimeType)) { mimeType = 'video/webm'; } }
-      let recorder; const recordedChunks = []; try { recorder = new MediaRecorder(stream, { mimeType }); } catch { recorder = new MediaRecorder(stream); }
-      recorder.ondataavailable = e => { if (e.data && e.data.size > 0) recordedChunks.push(e.data); };
-
-      const durationMs = (end - start) * 1000; const recordStart = Date.now();
-      const progressInterval = setInterval(() => { const elapsed = Date.now() - recordStart; bar.value = Math.min(100, (elapsed / durationMs) * 100); }, 100);
-
-      recorder.start(); if (canvasDrawLoop) requestAnimationFrame(canvasDrawLoop);
-      await new Promise(r => setTimeout(r, durationMs));
-      recorder.stop(); await new Promise(r => { recorder.onstop = () => r(); }); clearInterval(progressInterval);
-
-      const blob = new Blob(recordedChunks, { type: recordedChunks[0] ? recordedChunks[0].type : 'video/webm' }); lastClipBlob = blob;
-      bar.value = 100; overlay.style.display = 'none';
-
-      const previewEnabled = (localStorage.getItem('clipPreviewEnabled') === 'true');
-      let previewHTML = '';
-      if (previewEnabled) {
-        try { if (lastPreviewObjectURL) { URL.revokeObjectURL(lastPreviewObjectURL); lastPreviewObjectURL = null; } lastPreviewObjectURL = URL.createObjectURL(blob); previewHTML = `<video src="${lastPreviewObjectURL}" controls style="max-width:100%; width:480px; margin-top:10px;"></video>`; } catch {}
-      }
-
-      try {
-        clipButtonsRow.style.display = 'none'; msg.textContent = 'Uploading clip...'; bar.value = 0; overlay.style.display = 'flex';
-        const url = await uploadClipToCatboxWithProgress(blob, p => { bar.value = p; });
-        overlay.style.display = 'none';
-        displayClipResult(`
-          <div style="font-weight:700;">Clip uploaded!</div>
-          <p style="margin:0;">URL: <a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a></p>
-          ${previewHTML}
-        `);
-        ensureClipDownloadButton();
-      } catch (err) {
-        overlay.style.display = 'none'; const localUrl = (function() { try { return URL.createObjectURL(blob); } catch { return ''; } })();
-        displayClipResult(`
-          <div style="font-weight:700;">Upload failed</div>
-          <p style="margin:0;">${err.message}</p>
-          <small>Would you like to <span style="color:#5ab8ff;"><a href="${localUrl}" download="clip.webm" style="color:inherit; text-decoration:none;">download</a></span> the clip instead?</small>
-          ${previewHTML}
-        `, true);
-        ensureClipDownloadButton();
-      }
-    } finally {
-      if (hiddenVideo && hiddenVideo.parentElement) { hiddenVideo.remove(); }
+if (clipBtn) {
+  clipBtn.addEventListener('click', (event) => {
+    event.preventDefault();
+    clipPreferredLength = loadClipPreferredLength();
+    clipPresetsCache = loadClipPresets();
+    if (clipPreferredLength && !event.shiftKey && !event.altKey) {
+      startClipCapture(clipPreferredLength);
+    } else {
+      openClipPresetOverlay();
     }
   });
 }
 
+if (clipPresetCloseBtn) clipPresetCloseBtn.addEventListener('click', closeClipPresetOverlay);
+if (clipPresetOverlay) {
+  clipPresetOverlay.addEventListener('click', (e) => { if (e.target === clipPresetOverlay) closeClipPresetOverlay(); });
+}
+
+if (clipCustomStartBtn) {
+  clipCustomStartBtn.addEventListener('click', () => {
+    if (!video) {
+      alert('Clip playback is not ready yet.');
+      return;
+    }
+    const clampedStart = trimState.start;
+    const clampedEnd = trimState.end;
+    if (clampedEnd - clampedStart < 0.5) {
+      alert('Clip length must be at least half a second.');
+      return;
+    }
+    const remember = clipRememberPreset && clipRememberPreset.checked;
+    if (remember) saveClipPreferredLength(clampedEnd - clampedStart);
+    else saveClipPreferredLength(null);
+    closeClipPresetOverlay();
+    startClipRange(clampedStart, clampedEnd);
+  });
+}
+
+if (trimHandleStart) {
+  trimHandleStart.addEventListener('pointerdown', (e) => {
+    if (!isPrimaryPointer(e)) return;
+    beginTrimDrag('start', e);
+  });
+}
+if (trimHandleEnd) {
+  trimHandleEnd.addEventListener('pointerdown', (e) => {
+    if (!isPrimaryPointer(e)) return;
+    beginTrimDrag('end', e);
+  });
+}
+if (trimSlider) {
+  trimSlider.addEventListener('pointerdown', (e) => {
+    if (!isPrimaryPointer(e)) return;
+    if (e.target === trimHandleStart || e.target === trimHandleEnd) return;
+    const handle = jumpTrimToPosition(e);
+    if (handle) beginTrimDrag(handle, e);
+  });
+}
+
+if (clipHistoryClearBtn) clipHistoryClearBtn.addEventListener('click', () => { clearClipHistory(); });
+
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    if (clipPresetOverlay && clipPresetOverlay.style.display === 'flex') {
+      e.preventDefault();
+      closeClipPresetOverlay();
+      return;
+    }
+    if (clipOverlay && clipOverlay.style.display === 'flex') {
+      clipOverlay.style.display = 'none';
+      if (clipButtonsRow) clipButtonsRow.style.display = 'flex';
+    }
+  }
+});
+
 if (clipDoneBtn && clipOverlay) {
   clipDoneBtn.addEventListener('click', () => {
     if (lastPreviewObjectURL) { try { URL.revokeObjectURL(lastPreviewObjectURL); } catch {} lastPreviewObjectURL = null; }
-    clipOverlay.style.display = 'none'; if (clipButtonsRow) clipButtonsRow.style.display = 'flex';
+    clipOverlay.style.display = 'none';
+    if (clipButtonsRow) clipButtonsRow.style.display = 'flex';
   });
 }
 
 if (clipDownloadBtn) {
   clipDownloadBtn.addEventListener('click', () => {
-    if (!lastClipBlob) return; const url = URL.createObjectURL(lastClipBlob);
-    const a = document.createElement('a'); a.href = url; a.download = 'clip.webm'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+    if (!lastClipBlob) return;
+    const url = URL.createObjectURL(lastClipBlob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'clip.webm';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   });
 }
-ensureClipDownloadButton();
 
+updateTrimUI();
+ensureClipDownloadButton();
+renderClipHistoryList();

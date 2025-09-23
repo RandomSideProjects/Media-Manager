@@ -4,25 +4,27 @@ function renderEpisodeList() {
   episodeList.innerHTML = '';
   flatList = [];
   const showCategoryTitle = Array.isArray(videoList) && videoList.length > 1;
+
   videoList.forEach(category => {
     if (showCategoryTitle) {
-      const catTitle = document.createElement("div");
-      catTitle.className = "category-title";
+      const catTitle = document.createElement('div');
+      catTitle.className = 'category-title';
       catTitle.textContent = category.category;
       episodeList.appendChild(catTitle);
     }
 
-    category.episodes.forEach(episode => {
+    (category.episodes || []).forEach(episode => {
       const index = flatList.length;
       flatList.push(episode);
 
-      const button = document.createElement("button");
-      button.className = "episode-button";
+      const button = document.createElement('button');
+      button.className = 'episode-button';
+
       const left = document.createElement('span');
       left.textContent = episode.title;
       const right = document.createElement('span');
       right.className = 'episode-meta';
-      // Decide meta display depending on media type (video vs Manga volume)
+
       const lowerSrc = String(episode.src || '').toLowerCase();
       const lowerName = String(episode.fileName || '').toLowerCase();
       const isManga = (/\.(cbz|json)(?:$|[?#])/i.test(lowerSrc)) || lowerName.endsWith('.cbz') || lowerName.endsWith('.json') || (typeof episode.VolumePageCount === 'number');
@@ -48,7 +50,6 @@ function renderEpisodeList() {
       } else {
         let durationSec = Number.isFinite(Number(episode.durationSeconds)) ? Number(episode.durationSeconds) : NaN;
         if (!Number.isFinite(durationSec)) {
-          // Prefer progressKey duration for local-folder items
           let lsDur = NaN;
           if (episode && episode.progressKey) {
             lsDur = parseFloat(localStorage.getItem(String(episode.progressKey) + ':duration'));
@@ -70,20 +71,28 @@ function renderEpisodeList() {
           right.textContent = '';
         }
       }
+
       button.append(left, right);
-      button.addEventListener("click", () => {
+      button.addEventListener('click', () => {
         localStorage.setItem('lastEpSrc', episode.src);
         localStorage.setItem(`${sourceKey}:SavedItem`, index);
         currentIndex = index;
-        selectorScreen.style.display = "none";
-        playerScreen.style.display = "block";
-        backBtn.style.display = "inline-block";
-        theaterBtn.style.display = "inline-block";
+        selectorScreen.style.display = 'none';
+        playerScreen.style.display = 'block';
+        backBtn.style.display = 'inline-block';
+        theaterBtn.style.display = 'inline-block';
         loadVideo(currentIndex);
       });
       episodeList.appendChild(button);
     });
   });
+
+  if (flatList.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'empty-state';
+    empty.textContent = 'No items available in this source yet.';
+    episodeList.appendChild(empty);
+  }
 }
 
 function showResumeMessage() {

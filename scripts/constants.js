@@ -37,4 +37,3 @@ function formatBytesDecimalMaxUnit(n) {
   if (v < 1 && i > 0) { v *= base; i -= 1; }
   return `${v.toFixed(v >= 100 ? 0 : v >= 10 ? 1 : 2)} ${units[i]}`;
 }
-

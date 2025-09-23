@@ -718,6 +718,10 @@ function addEpisode(container, data) {
   inputGroup.appendChild(epFile);
   epDiv.appendChild(inputGroup);
   epDiv.appendChild(epError);
+  epDiv._titleInput = epTitle;
+  epDiv._srcInput = epSrc;
+  epDiv._errorEl = epError;
+  epDiv._fetchMeta = maybeFetchUrlMetadata;
   container.appendChild(epDiv);
 }
 
@@ -725,8 +729,17 @@ async function loadDirectory() {
   const url = loadUrlInput.value.trim();
   if (!url) return;
   try {
-    const res = await fetch(url);
-    const json = await res.json();
+    const res = await fetch(url, { cache: 'no-store' });
+    if (!res || (!res.ok && res.status !== 0)) {
+      const statusText = res ? `${res.status} ${res.statusText || ''}`.trim() : 'Network error';
+      throw new Error(statusText);
+    }
+    let json;
+    try {
+      json = await res.json();
+    } catch (err) {
+      throw new Error(`Failed to parse JSON (${err && err.message ? err.message : err})`);
+    }
     posterImageUrl = (json.Image && json.Image !== 'N/A') ? json.Image : '';
     if (posterImageUrl) {
       setPosterPreviewSource(posterImageUrl, { isBlob: false });
@@ -831,6 +844,53 @@ confirmYes.addEventListener('click', () => {
 });
 confirmNo.addEventListener('click', () => { confirmModal.style.display = 'none'; pendingRemoval = null; });
 
+function normalizeEpisodeTitles() {
+  const mangaMode = isMangaMode();
+  document.querySelectorAll('.category').forEach(cat => {
+    const episodes = cat.querySelectorAll('.episode');
+    episodes.forEach((epDiv, idx) => {
+      const input = epDiv && epDiv._titleInput ? epDiv._titleInput : null;
+      if (!input) return;
+      const current = (input.value || '').trim();
+      const defaultPattern = mangaMode ? /^Volume\s+\d+$/i : /^Episode\s+\d+$/i;
+      const chapterPattern = /^Chapter\s+\d+$/i;
+      if (current && !defaultPattern.test(current) && !chapterPattern.test(current)) return;
+      const label = mangaMode ? 'Volume' : 'Episode';
+      const number = String(idx + 1).padStart(2, '0');
+      input.value = `${label} ${number}`;
+    });
+  });
+}
+
+async function refreshAllEpisodeMetadata() {
+  const episodes = Array.from(document.querySelectorAll('.episode'));
+  const tasks = [];
+  const mangaMode = isMangaMode();
+  episodes.forEach(epDiv => {
+    if (!epDiv || typeof epDiv._fetchMeta !== 'function') return;
+    const needsSize = !epDiv.dataset || !epDiv.dataset.fileSizeBytes;
+    const needsDuration = !mangaMode && (!epDiv.dataset || !epDiv.dataset.durationSeconds);
+    const needsPages = mangaMode && (!epDiv.dataset || (!epDiv.dataset.volumePageCount && !epDiv.dataset.VolumePageCount));
+    if (needsSize || needsDuration || needsPages) {
+      tasks.push(() => epDiv._fetchMeta());
+    }
+  });
+  if (!tasks.length) {
+    alert('No missing metadata detected.');
+    return;
+  }
+  let successCount = 0;
+  for (const task of tasks) {
+    try {
+      await task();
+      successCount++;
+    } catch (err) {
+      console.warn('[Creator] Metadata fetch failed for an item', err);
+    }
+  }
+  alert(`Metadata refreshed for ${successCount} item(s).`);
+}
+
 // Local JSON download on A/Z keypress
 function buildLocalDirectoryJSON() {
   const title = document.getElementById('dirTitle').value.trim();
@@ -869,8 +929,25 @@ function buildLocalDirectoryJSON() {
   return base;
 }
 document.addEventListener('keydown', (e) => {
-  if (['a', 'z'].includes((e.key||'').toLowerCase())) {
-    if (['INPUT', 'TEXTAREA'].includes((e.target&&e.target.tagName)||'')) return;
+  const key = (e.key || '').toLowerCase();
+  const tag = ((e.target && e.target.tagName) || '').toUpperCase();
+  const isTyping = ['INPUT', 'TEXTAREA'].includes(tag);
+
+  if ((e.ctrlKey || e.metaKey) && e.shiftKey && key === 'n') {
+    if (isTyping) return;
+    e.preventDefault();
+    normalizeEpisodeTitles();
+    return;
+  }
+  if ((e.ctrlKey || e.metaKey) && e.shiftKey && key === 'm') {
+    if (isTyping) return;
+    e.preventDefault();
+    refreshAllEpisodeMetadata();
+    return;
+  }
+
+  if (['a', 'z'].includes(key)) {
+    if (isTyping) return;
     const result = buildLocalDirectoryJSON();
     const jsonString = JSON.stringify(result, null, 2);
     const blob = new Blob([jsonString], { type: 'application/json' });

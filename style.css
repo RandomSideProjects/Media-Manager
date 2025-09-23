@@ -95,6 +95,11 @@ button:hover {
   top: 50%;
   transform: translateY(-50%);
 }
+#episodeList .empty-state {
+  padding: 1em;
+  text-align: center;
+  opacity: 0.7;
+}
 #urlInputContainer {
   display: none;
   flex-direction: column;
@@ -259,6 +264,17 @@ label[for="downloadConcurrencyRange"] { min-width: 8.5em; }
 #downloadBtn:hover { background: #0056b3; }
 #downloadBtn:active { transform: scale(0.98); }
 
+.pill-button {
+  padding: 0.6em 1.4em;
+  border-radius: 999px;
+  border: none;
+  background: var(--button-bg);
+  color: var(--button-text);
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+.pill-button:hover { background: #0056b3; }
+
 /* Back and Clip buttons */
 #backBtn { margin-bottom: 1em; display: none; }
 #clipBtn {
@@ -300,6 +316,198 @@ label[for="downloadConcurrencyRange"] { min-width: 8.5em; }
   border-radius: 8px;
   max-width: 90%;
   margin: auto;
+}
+.clip-history-preview {
+  margin-top: 0.75em;
+  text-align: left;
+}
+.clip-history-preview ul {
+  list-style: none;
+  padding: 0;
+  margin: 0.35em 0 0 0;
+}
+.clip-history-preview li {
+  margin: 0.25em 0;
+}
+#clipPresetOverlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.7);
+  align-items: center; justify-content: center;
+  z-index: 10003;
+}
+#clipPresetContent {
+  width: min(460px, 90%);
+  background: #1b1b1b;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.1);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  box-shadow: 0 18px 40px rgba(0,0,0,0.6);
+}
+#clipPresetButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+#clipPresetButtons button {
+  flex: 1 1 30%;
+  min-width: 100px;
+  padding: 0.5em 0.8em;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(45,45,45,0.8);
+  color: inherit;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+#clipPresetButtons button:hover {
+  background: rgba(70,70,70,0.85);
+}
+.clip-custom-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4em;
+}
+.trim-slider {
+  position: relative;
+  height: 26px;
+  margin-top: 0.6em;
+  touch-action: none;
+  cursor: pointer;
+}
+.trim-track {
+  position: absolute;
+  inset: 50% 0 0;
+  height: 4px;
+  transform: translateY(-50%);
+  background: rgba(255,255,255,0.18);
+  border-radius: 2px;
+}
+.trim-range {
+  position: absolute;
+  height: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0,123,255,0.45);
+  border-radius: 2px;
+  z-index: 1;
+  pointer-events: none;
+}
+.trim-handle {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 18px;
+  height: 24px;
+  border-radius: 2px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+  z-index: 2;
+}
+.trim-handle:active {
+  transform: translate(-50%, -50%) scaleY(1.05);
+}
+.trim-handle:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0,123,255,0.45);
+}
+.trim-handle::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 2px;
+  height: 100%;
+  transform: translateX(-50%);
+  background: rgba(255,255,255,0.95);
+  border-radius: 1px;
+}
+.trim-mark {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: rgba(255,255,255,0.75);
+  transform: translateX(-50%);
+  display: none;
+  pointer-events: none;
+}
+.clip-custom-controls {
+  display: flex;
+  gap: 0.5em;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.trim-display {
+  display: flex;
+  gap: 1.2em;
+  font-size: 0.85em;
+  opacity: 0.85;
+}
+.trim-display span {
+  white-space: nowrap;
+}
+.clip-custom-controls button,
+#clipPresetCloseBtn {
+  padding: 0.5em 1.1em;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(35,35,35,0.85);
+  color: inherit;
+  cursor: pointer;
+}
+.clip-custom-controls button:hover,
+#clipPresetCloseBtn:hover {
+  background: rgba(60,60,60,0.9);
+}
+.clip-custom-hint {
+  opacity: 0.65;
+  font-size: 0.8em;
+}
+.clip-remember-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+}
+#clipHistorySection {
+  margin-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.clip-history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+#clipHistoryList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  max-height: 30vh;
+  overflow: auto;
+}
+#clipHistoryList a {
+  color: #69c4ff;
+}
+#clipHistoryClearBtn {
+  padding: 0.35em 0.9em;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(35,35,35,0.85);
+  color: inherit;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+#clipHistoryClearBtn:hover {
+  background: rgba(60,60,60,0.9);
 }
 #clipMessage { margin-bottom: 1em; word-break: break-all; color: var(--text); }
 #clipButtonsRow { display: flex; gap: 0.5em; justify-content: center; }

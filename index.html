@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="theme-color" content="#111111"/>
   <title>Media Manager</title>
+  <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -141,6 +143,42 @@
         <button id="clipDoneBtn">Done</button>
         <button id="clipDownloadBtn">Download</button>
       </div>
+    </div>
+  </div>
+  <div id="clipPresetOverlay">
+    <div id="clipPresetContent">
+      <h3>Select Clip Length</h3>
+      <div id="clipPresetButtons"></div>
+      <div class="clip-custom-row">
+        <div class="trim-slider" id="trimSlider">
+          <div class="trim-track"></div>
+          <div class="trim-range" id="trimRange"></div>
+          <button class="trim-handle" id="trimHandleStart" type="button" aria-label="Clip start"></button>
+          <button class="trim-handle" id="trimHandleEnd" type="button" aria-label="Clip end"></button>
+          <div class="trim-mark" id="trimPreviewMarker"></div>
+        </div>
+        <div class="clip-custom-controls">
+          <div class="trim-display">
+            <span>Start: <span id="clipDisplayStart">00:00</span></span>
+            <span>End: <span id="clipDisplayEnd">00:20</span></span>
+            <span>Length: <span id="clipDisplayLength">00:20</span></span>
+          </div>
+          <button id="clipCustomStartBtn" type="button">Start</button>
+        </div>
+        <small class="clip-custom-hint">Drag handles to choose the clip window.</small>
+      </div>
+      <label class="clip-remember-row">
+        <input type="checkbox" id="clipRememberPreset">
+        <span>Remember last selection</span>
+      </label>
+      <div id="clipHistorySection">
+        <div class="clip-history-header">
+          <h4>Recent Clips</h4>
+          <button id="clipHistoryClearBtn" type="button">Clear</button>
+        </div>
+        <div id="clipHistoryList"></div>
+      </div>
+      <button id="clipPresetCloseBtn" type="button">Close</button>
     </div>
   </div>
   <!-- Clip progress overlay -->
