@@ -251,6 +251,16 @@
       "LatestTime": "2025-08-11T12:36:00"
     },
     {
+      "file": "Nyaight_Of_The_Living_Cat.json",
+      "path": "./Files/Anime/Nyaight_Of_The_Living_Cat.json",
+      "title": "Nyaight Of The Living Cat",
+      "poster": "./Posters/Anime/Nyaight_Of_The_Living_Cat.webp",
+      "categoryCount": 1,
+      "episodeCount": 10,
+      "totalFileSizeBytes": 1199631782,
+      "LatestTime": "2025-09-23T16:01:35.140Z"
+    },
+    {
       "file": "One-Punch_Man.json",
       "path": "./Files/Anime/One-Punch_Man.json",
       "title": "One-Punch Man",
