@@ -32,25 +32,21 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          # Ensure we are on the branch that triggered the workflow
           BRANCH="${GITHUB_REF_NAME:-}"
           if [ -z "$BRANCH" ]; then
-            # Fallback: try to detect current branch
             BRANCH=$(git rev-parse --abbrev-ref HEAD)
           fi
           echo "Syncing branch: $BRANCH"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
           git fetch origin "$BRANCH"
-          # Ensure we're actually on the branch (not detached)
           if [ "$(git rev-parse --abbrev-ref HEAD)" != "$BRANCH" ]; then
             git checkout -B "$BRANCH" "origin/$BRANCH" || git checkout "$BRANCH"
           fi
-          # Rebase local branch onto the latest remote to avoid non-fast-forward pushes
-          git rebase "origin/$BRANCH" || {
-            echo "Rebase failed; attempting to abort and continue without rebase"
-            git rebase --abort || true
-          }
+          if ! git pull --rebase origin "$BRANCH"; then
+            echo "Rebase failed. Please resolve conflicts manually."
+            exit 1
+          fi
 
       - name: Install image processor (sharp)
         run: npm install sharp@0.33
