@@ -1,0 +1,86 @@
+{
+  "title": "Farming Life In Another World",
+  "Image": "https://files.catbox.moe/q28pze.webp",
+  "categories": [
+    {
+      "category": "Season 1",
+      "episodes": [
+        {
+          "title": "Episode 1",
+          "src": "https://files.catbox.moe/tjld1c.mp4",
+          "fileSizeBytes": 185523803,
+          "durationSeconds": 1431
+        },
+        {
+          "title": "Episode 2",
+          "src": "https://files.catbox.moe/6r729r.mp4",
+          "fileSizeBytes": 149168825,
+          "durationSeconds": 1431
+        },
+        {
+          "title": "Episode 3",
+          "src": "https://files.catbox.moe/k5v1mw.mp4",
+          "fileSizeBytes": 152777245,
+          "durationSeconds": 1432
+        },
+        {
+          "title": "Episode 4",
+          "src": "https://files.catbox.moe/43b84h.mp4",
+          "fileSizeBytes": 165254972,
+          "durationSeconds": 1432
+        },
+        {
+          "title": "Episode 5",
+          "src": "https://files.catbox.moe/a8au3g.mp4",
+          "fileSizeBytes": 165412810,
+          "durationSeconds": 1432
+        },
+        {
+          "title": "Episode 6",
+          "src": "https://files.catbox.moe/gf3xsy.mp4",
+          "fileSizeBytes": 159933334,
+          "durationSeconds": 1432
+        },
+        {
+          "title": "Episode 7",
+          "src": "https://files.catbox.moe/brclxu.mp4",
+          "fileSizeBytes": 155910462,
+          "durationSeconds": 1432
+        },
+        {
+          "title": "Episode 8",
+          "src": "https://files.catbox.moe/b2yf1h.mp4",
+          "fileSizeBytes": 142208287,
+          "durationSeconds": 1432
+        },
+        {
+          "title": "Episode 9",
+          "src": "https://files.catbox.moe/1ad5mg.mp4",
+          "fileSizeBytes": 149719557,
+          "durationSeconds": 1432
+        },
+        {
+          "title": "Episode 10",
+          "src": "https://files.catbox.moe/k3sfg6.mp4",
+          "fileSizeBytes": 146143221,
+          "durationSeconds": 1431
+        },
+        {
+          "title": "Episode 11",
+          "src": "https://files.catbox.moe/gswv5v.mp4",
+          "fileSizeBytes": 176975030,
+          "durationSeconds": 1432
+        },
+        {
+          "title": "Episode 12",
+          "src": "https://files.catbox.moe/qfu36h.mp4",
+          "fileSizeBytes": 130701997,
+          "durationSeconds": 1432
+        }
+      ]
+    }
+  ],
+  "LatestTime": "2025-09-24T12:49:34.195Z",
+  "totalFileSizeBytes": 1879729543,
+  "totalDurationSeconds": 17181
+}

@@ -40,6 +40,83 @@ function updateCategoryButtonVisibility(){
     addCategoryBtn.style.opacity = '';
   } catch {}
 }
+
+function createDragHandle(kind) {
+  const handle = document.createElement('button');
+  handle.type = 'button';
+  handle.className = 'drag-handle';
+  handle.setAttribute('aria-label', `Drag ${kind || 'item'} to reorder`);
+  handle.draggable = true;
+  const grip = document.createElement('span');
+  grip.className = 'drag-grip';
+  handle.appendChild(grip);
+  return handle;
+}
+
+function getDirectChildren(container, selector) {
+  return Array.from(container.children).filter(child => child.matches(selector));
+}
+
+function getDragAfterElement(container, y, selector, draggedItem) {
+  const items = getDirectChildren(container, selector).filter(item => item !== draggedItem);
+  let closest = { offset: Number.NEGATIVE_INFINITY, element: null };
+  for (const child of items) {
+    const box = child.getBoundingClientRect();
+    const offset = y - (box.top + box.height / 2);
+    if (offset < 0 && offset > closest.offset) {
+      closest = { offset, element: child };
+    }
+  }
+  return closest.element;
+}
+
+function makeSortable(container, options) {
+  const { itemSelector, handleSelector } = options || {};
+  if (!container || container.__mmSortableAttached) return;
+  container.__mmSortableAttached = true;
+  const state = { draggedItem: null };
+
+  container.addEventListener('dragstart', (event) => {
+    if (!itemSelector) return;
+    const handle = handleSelector ? event.target.closest(handleSelector) : event.target.closest(itemSelector);
+    if (handleSelector && !handle) return;
+    const item = event.target.closest(itemSelector);
+    if (!item || (handle && handle.closest(itemSelector) !== item)) return;
+    state.draggedItem = item;
+    item.classList.add('is-dragging');
+    try {
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('text/plain', 'drag');
+    } catch {}
+  });
+
+  container.addEventListener('dragover', (event) => {
+    if (!state.draggedItem) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+    const afterElement = getDragAfterElement(container, event.clientY, itemSelector, state.draggedItem);
+    if (!afterElement) {
+      container.appendChild(state.draggedItem);
+    } else if (afterElement !== state.draggedItem) {
+      container.insertBefore(state.draggedItem, afterElement);
+    }
+  });
+
+  container.addEventListener('drop', (event) => {
+    if (!state.draggedItem) return;
+    event.preventDefault();
+  });
+
+  container.addEventListener('dragend', () => {
+    if (!state.draggedItem) return;
+    state.draggedItem.classList.remove('is-dragging');
+    state.draggedItem = null;
+  });
+}
+
+if (categoriesEl) {
+  makeSortable(categoriesEl, { itemSelector: '.category', handleSelector: '.category-header .drag-handle' });
+}
 function getUploadConcurrency(){
   try {
     const raw = localStorage.getItem('mm_upload_settings') || '{}';
@@ -402,6 +479,10 @@ function addCategory(data) {
     pendingRemoval = { type: 'category', elem: categoryDiv };
   });
 
+  const categoryHeader = document.createElement('div');
+  categoryHeader.className = 'category-header';
+  const categoryHandle = createDragHandle('category');
+
   const titleLabel = document.createElement('label');
   titleLabel.textContent = 'Category Title:';
   const titleInput = document.createElement('input');
@@ -416,6 +497,9 @@ function addCategory(data) {
   titleLabel.appendChild(document.createElement('br'));
   titleLabel.appendChild(titleInput);
 
+  categoryHeader.appendChild(categoryHandle);
+  categoryHeader.appendChild(titleLabel);
+
   const episodesDiv = document.createElement('div');
   episodesDiv.className = 'episodes';
   const addEpBtn = document.createElement('button');
@@ -423,10 +507,12 @@ function addCategory(data) {
   addEpBtn.textContent = isMangaMode() ? 'Add Volume' : 'Add Episode';
   addEpBtn.addEventListener('click', () => addEpisode(episodesDiv));
 
-  categoryDiv.appendChild(titleLabel);
+  categoryDiv.appendChild(categoryHeader);
   categoryDiv.appendChild(episodesDiv);
   categoryDiv.appendChild(addEpBtn);
   categoriesEl.appendChild(categoryDiv);
+
+  makeSortable(episodesDiv, { itemSelector: '.episode', handleSelector: '.episode-top-row .drag-handle' });
 
   if (data && data.episodes) { data.episodes.forEach(ep => addEpisode(episodesDiv, ep)); }
   updateCategoryButtonVisibility();
@@ -463,6 +549,12 @@ function addEpisode(container, data) {
 
   const epError = document.createElement('div');
   epError.className = 'ep-error';
+
+  const episodeTopRow = document.createElement('div');
+  episodeTopRow.className = 'episode-top-row';
+  const episodeHandle = createDragHandle('episode');
+  episodeTopRow.appendChild(episodeHandle);
+  episodeTopRow.appendChild(epTitle);
 
   async function computeLocalFileDurationSeconds(file) {
     return new Promise((resolve) => {
@@ -710,7 +802,7 @@ function addEpisode(container, data) {
   epSrc.addEventListener('change', maybeFetchUrlMetadata);
   epSrc.addEventListener('blur', maybeFetchUrlMetadata);
 
-  epDiv.appendChild(epTitle);
+  epDiv.appendChild(episodeTopRow);
   const inputGroup = document.createElement('div');
   inputGroup.className = 'input-group';
   inputGroup.appendChild(epSrc);
