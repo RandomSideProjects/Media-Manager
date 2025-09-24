@@ -54,7 +54,7 @@
       "file": "Call_Of_The_Night.json",
       "path": "./Files/Anime/Call_Of_The_Night.json",
       "title": "Call Of The Night",
-      "poster": null,
+      "poster": "./Posters/Anime/Call_Of_The_Night.webp",
       "categoryCount": 1,
       "episodeCount": 13,
       "totalFileSizeBytes": 1429889589,
@@ -96,9 +96,9 @@
       "title": "Dealing With Mikadono Sisters Is A Breeze",
       "poster": "./Posters/Anime/Dealing_With_Mikadono_Sisters_Is_A_Breeze.webp",
       "categoryCount": 1,
-      "episodeCount": 9,
-      "totalFileSizeBytes": 1508404646,
-      "LatestTime": "2025-09-18T02:32:08.869Z"
+      "episodeCount": 10,
+      "totalFileSizeBytes": 1671113997,
+      "LatestTime": "2025-09-24T21:40:43.000Z"
     },
     {
       "file": "Failure_Frame.json",
