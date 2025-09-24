@@ -54,7 +54,7 @@
       "file": "Call_Of_The_Night.json",
       "path": "./Files/Anime/Call_Of_The_Night.json",
       "title": "Call Of The Night",
-      "poster": "./Posters/Anime/Call_Of_The_Night.webp",
+      "poster": null,
       "categoryCount": 1,
       "episodeCount": 13,
       "totalFileSizeBytes": 1429889589,
@@ -109,6 +109,16 @@
       "episodeCount": 12,
       "totalFileSizeBytes": 1904872376,
       "LatestTime": "2025-08-15T00:33:47.052Z"
+    },
+    {
+      "file": "Farming_Life_In_Another_World.json",
+      "path": "./Files/Anime/Farming_Life_In_Another_World.json",
+      "title": "Farming Life In Another World",
+      "poster": "./Posters/Anime/Farming_Life_In_Another_World.webp",
+      "categoryCount": 1,
+      "episodeCount": 12,
+      "totalFileSizeBytes": 1879729543,
+      "LatestTime": "2025-09-24T12:49:34.195Z"
     },
     {
       "file": "Frieren.json",
