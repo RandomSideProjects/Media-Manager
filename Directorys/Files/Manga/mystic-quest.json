@@ -1,0 +1,32 @@
+{
+  "title": "Mystic Quest",
+  "Image": "https://cdn.example.com/posters/mystic-quest.jpg",
+  "LatestTime": "2025-06-01T09:00:00.000Z",
+  "categories": [
+    {
+      "category": "Volumes",
+      "episodes": [
+        {
+          "title": "Volume 1",
+          "src": "https://cdn.example.com/mystic-quest/vol01.cbz",
+          "fileSizeBytes": 345000000,
+          "VolumePageCount": 210
+        },
+        {
+          "title": "Volume 2",
+          "src": "https://cdn.example.com/mystic-quest/vol02.cbz",
+          "fileSizeBytes": 321000000,
+          "VolumePageCount": 200
+        },
+        {
+          "title": "Volume 3",
+          "src": "https://cdn.example.com/mystic-quest/vol03.cbz",
+          "fileSizeBytes": 321654321,
+          "VolumePageCount": 210
+        }
+      ]
+    }
+  ],
+  "totalFileSizeBytes": 987654321,
+  "totalPagecount": 620
+}
