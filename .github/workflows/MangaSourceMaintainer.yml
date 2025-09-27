@@ -197,6 +197,9 @@ jobs:
           })().catch(err => { console.error(err); process.exit(1); });
           NODE
 
+      - name: Pull latest changes
+        run: git pull origin main --rebase
+
       - name: Commit and push changes
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
