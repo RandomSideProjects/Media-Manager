@@ -3,11 +3,12 @@
 // Variables (top)
 const DEFAULT_USERHASH = '2cdcc7754c86c2871ed2bde9d';
 const LS_SETTINGS_KEY = 'mm_upload_settings';
+const SETTINGS_DEFAULT_GITHUB_WORKER_URL = (typeof window !== 'undefined' && typeof window.MM_DEFAULT_GITHUB_WORKER_URL === 'string') ? window.MM_DEFAULT_GITHUB_WORKER_URL : '';
 
 function loadUploadSettings(){
   try {
     const raw = localStorage.getItem(LS_SETTINGS_KEY);
-    if (!raw) return { anonymous: true, userhash: '' };
+    if (!raw) return { anonymous: true, userhash: '', githubWorkerUrl: SETTINGS_DEFAULT_GITHUB_WORKER_URL };
     const p = JSON.parse(raw);
     const compress = (typeof p.compressPosters === 'boolean') ? p.compressPosters : (typeof p.posterCompress === 'boolean' ? p.posterCompress : true);
     return { 
@@ -18,9 +19,10 @@ function loadUploadSettings(){
       cbzExpand: !!p.cbzExpand,
       cbzExpandBatch: (typeof p.cbzExpandBatch === 'boolean') ? p.cbzExpandBatch : true,
       cbzExpandManual: (typeof p.cbzExpandManual === 'boolean') ? p.cbzExpandManual : true,
-      compressPosters: compress
+      compressPosters: compress,
+      githubWorkerUrl: (typeof p.githubWorkerUrl === 'string' && p.githubWorkerUrl.trim()) ? p.githubWorkerUrl.trim() : SETTINGS_DEFAULT_GITHUB_WORKER_URL
     };
-  } catch { return { anonymous: true, userhash: '' }; }
+  } catch { return { anonymous: true, userhash: '', githubWorkerUrl: SETTINGS_DEFAULT_GITHUB_WORKER_URL }; }
 }
 function saveUploadSettings(s){
   localStorage.setItem(LS_SETTINGS_KEY, JSON.stringify({ 
@@ -31,7 +33,8 @@ function saveUploadSettings(s){
     cbzExpand: !!s.cbzExpand,
     cbzExpandBatch: !!s.cbzExpandBatch,
     cbzExpandManual: !!s.cbzExpandManual,
-    compressPosters: (typeof s.compressPosters === 'boolean') ? s.compressPosters : true
+    compressPosters: (typeof s.compressPosters === 'boolean') ? s.compressPosters : true,
+    githubWorkerUrl: (typeof s.githubWorkerUrl === 'string') ? s.githubWorkerUrl.trim() : ''
   }));
 }
 
@@ -50,6 +53,8 @@ const mmSaveBtn = document.getElementById('mmSaveUploadSettings');
 const mmCloseBtn = document.getElementById('mmCloseUploadSettings');
 const mmModeAnime = document.getElementById('mmModeAnime');
 const mmModeManga = document.getElementById('mmModeManga');
+const mmGithubWorkerRow = document.getElementById('mmGithubWorkerRow');
+const mmGithubWorkerUrlInput = document.getElementById('mmGithubWorkerUrl');
 // CBZ expansion controls
 const mmCbzSection = document.getElementById('mmCbzSection');
 const mmCbzExpandToggle = document.getElementById('mmCbzExpandToggle');
@@ -59,11 +64,21 @@ const mmCbzExpandManual = document.getElementById('mmCbzExpandManual');
 const mmPosterCompressToggle = document.getElementById('mmPosterCompressToggle');
 // No per-flow anon controls; only userhash visibility when anonymous is off
 
+function updateGithubWorkerRowVisibility(force) {
+  if (!mmGithubWorkerRow) return;
+  const enabled = typeof force === 'boolean'
+    ? force
+    : (typeof window !== 'undefined' && window.DevMode === true);
+  mmGithubWorkerRow.style.display = enabled ? '' : 'none';
+}
+
 if (mmBtn && mmPanel && mmAnonToggle && mmUserhashRow && mmUserhashInput && mmSaveBtn && mmCloseBtn) {
   const st = loadUploadSettings();
   mmAnonToggle.checked = !!st.anonymous;
   mmUserhashInput.value = st.userhash || '';
   mmUserhashRow.style.display = st.anonymous ? 'none' : '';
+  if (mmGithubWorkerUrlInput) mmGithubWorkerUrlInput.value = st.githubWorkerUrl || SETTINGS_DEFAULT_GITHUB_WORKER_URL;
+  updateGithubWorkerRowVisibility();
   if (mmModeAnime && mmModeManga) {
     const mode = (st.libraryMode === 'manga') ? 'manga' : 'anime';
     mmModeAnime.checked = (mode === 'anime');
@@ -96,7 +111,10 @@ if (mmBtn && mmPanel && mmAnonToggle && mmUserhashRow && mmUserhashInput && mmSa
   if (mmModeManga) mmModeManga.addEventListener('change', updateCbzSectionVisibility);
   if (mmCbzExpandToggle) mmCbzExpandToggle.addEventListener('change', updateCbzSubrowsVisibility);
 
-  mmBtn.addEventListener('click', () => { mmPanel.style.display = 'flex'; });
+  mmBtn.addEventListener('click', () => {
+    mmPanel.style.display = 'flex';
+    updateGithubWorkerRowVisibility();
+  });
   mmCloseBtn.addEventListener('click', () => { mmPanel.style.display = 'none'; });
   mmPanel.addEventListener('click', (e)=>{ if(e.target===mmPanel) mmPanel.style.display='none'; });
   function updateAnonFields() {
@@ -114,11 +132,21 @@ if (mmBtn && mmPanel && mmAnonToggle && mmUserhashRow && mmUserhashInput && mmSa
       cbzExpand: mmCbzExpandToggle ? !!mmCbzExpandToggle.checked : false,
       cbzExpandBatch: mmCbzExpandBatch ? !!mmCbzExpandBatch.checked : true,
       cbzExpandManual: mmCbzExpandManual ? !!mmCbzExpandManual.checked : true,
-      compressPosters: mmPosterCompressToggle ? !!mmPosterCompressToggle.checked : true
+      compressPosters: mmPosterCompressToggle ? !!mmPosterCompressToggle.checked : true,
+      githubWorkerUrl: mmGithubWorkerUrlInput ? mmGithubWorkerUrlInput.value.trim() : ''
     };
     saveUploadSettings(saved);
     try { window.dispatchEvent(new CustomEvent('mm_settings_saved', { detail: saved })); } catch {}
     mmPanel.style.display = 'none';
+  });
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('rsp:dev-mode-changed', (event) => {
+    const next = event && event.detail && typeof event.detail.enabled === 'boolean'
+      ? event.detail.enabled
+      : undefined;
+    updateGithubWorkerRowVisibility(next);
   });
 }
 

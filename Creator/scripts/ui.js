@@ -18,6 +18,9 @@ const loadUrlContainer = document.getElementById('loadUrlContainer');
 const homeTabBtn = document.getElementById('homeTabBtn');
 const folderInput = document.getElementById('folderInput');
 let isFolderUploading = false;
+if (typeof window !== 'undefined') {
+  window.isFolderUploading = false;
+}
 let __currentCreatorMode = (function(){ try { const p = JSON.parse(localStorage.getItem('mm_upload_settings')||'{}'); return (p.libraryMode === 'manga') ? 'manga' : 'anime'; } catch { return 'anime'; } })();
 function getCreatorMode(){
   try { const p = JSON.parse(localStorage.getItem('mm_upload_settings')||'{}'); return (p.libraryMode === 'manga') ? 'manga' : 'anime'; } catch { return 'anime'; }
@@ -128,7 +131,16 @@ function getUploadConcurrency(){
 const outputLink = document.getElementById('outputLink');
 let isFullUrl = false;
 let directoryCode = '';
+let githubUploadUrl = '';
+let isGithubUploadInFlight = false;
 let posterPreviewObjectUrl = '';
+const UI_DEFAULT_GITHUB_WORKER_URL = (typeof window !== 'undefined' && typeof window.MM_DEFAULT_GITHUB_WORKER_URL === 'string') ? window.MM_DEFAULT_GITHUB_WORKER_URL : '';
+const githubUploadComboKeys = new Set(['g', 'h']);
+let githubUploadSequence = [];
+const resetGithubUploadSequence = () => { githubUploadSequence = []; };
+if (typeof window !== 'undefined') {
+  window.addEventListener('rsp:dev-mode-changed', resetGithubUploadSequence);
+}
 
 // Helpers
 const sleep = (ms) => new Promise(res => setTimeout(res, ms));
@@ -158,6 +170,27 @@ function getUploadSettingsSafe() {
     const parsed = JSON.parse(raw);
     return (parsed && typeof parsed === 'object') ? parsed : {};
   } catch { return {}; }
+}
+
+function getGithubWorkerUrl() {
+  try {
+    const settings = getUploadSettingsSafe();
+    const raw = settings.githubWorkerUrl;
+    const trimmed = (typeof raw === 'string') ? raw.trim() : '';
+    return trimmed || UI_DEFAULT_GITHUB_WORKER_URL;
+  } catch { return UI_DEFAULT_GITHUB_WORKER_URL; }
+}
+
+function sanitizeWorkerFileName(input) {
+  const base = typeof input === 'string' ? input : '';
+  const normalized = typeof base.normalize === 'function' ? base.normalize('NFKD') : base;
+  const filtered = normalized.replace(/[^A-Za-z0-9]+/g, ' ').trim();
+  if (!filtered) return 'Untitled_Directory';
+  const words = filtered.split(/\s+/).map((word) => {
+    if (!word) return '';
+    return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+  }).filter(Boolean);
+  return words.length ? words.join('_') : 'Untitled_Directory';
 }
 
 function isPosterCompressionEnabled() {
@@ -296,6 +329,9 @@ if (posterChangeBtn) posterChangeBtn.addEventListener('click', () => {
 folderInput.addEventListener('change', async (e) => {
   try {
     isFolderUploading = true;
+    if (typeof window !== 'undefined') {
+      window.isFolderUploading = true;
+    }
     folderInput.value = '';
 
     const files = Array.from(e.target.files || []);
@@ -460,10 +496,16 @@ folderInput.addEventListener('change', async (e) => {
       await runWithConcurrency(taskFns, getUploadConcurrency());
     } finally {
       isFolderUploading = false;
+      if (typeof window !== 'undefined') {
+        window.isFolderUploading = false;
+      }
       if (folderOverlay) folderOverlay.remove();
     }
   } finally {
     isFolderUploading = false;
+    if (typeof window !== 'undefined') {
+      window.isFolderUploading = false;
+    }
   }
 });
 
@@ -847,6 +889,8 @@ async function loadDirectory() {
     document.getElementById('dirTitle').value = json.title || '';
     categoriesEl.innerHTML = '';
     json.categories.forEach(cat => addCategory(cat));
+    githubUploadUrl = '';
+    updateOutput();
     const contentOnly = { title: json.title || '', Image: posterImageUrl || 'N/A', categories: json.categories || [] };
     try { window.lastContent = JSON.stringify(contentOnly); } catch {}
   } catch (err) {
@@ -871,6 +915,7 @@ window.addEventListener('mm_settings_saved', (e) => {
       document.getElementById('dirTitle').value = '';
       categoriesEl.innerHTML = '';
       directoryCode = '';
+      githubUploadUrl = '';
       updateOutput();
       posterImageUrl = '';
       clearPosterPreviewUI();
@@ -882,7 +927,16 @@ window.addEventListener('mm_settings_saved', (e) => {
 });
 
 function updateOutput() {
-  if (!directoryCode) { outputLink.textContent = ''; outputLink.href = '#'; return; }
+  if (!directoryCode) {
+    if (githubUploadUrl) {
+      outputLink.textContent = githubUploadUrl;
+      outputLink.href = githubUploadUrl;
+    } else {
+      outputLink.textContent = '';
+      outputLink.href = '#';
+    }
+    return;
+  }
   if (isFullUrl) {
     const full = `https://files.catbox.moe/${directoryCode}.json`;
     outputLink.textContent = full; outputLink.href = full;
@@ -901,6 +955,7 @@ createTabBtn.addEventListener('click', () => {
   document.getElementById('dirTitle').value = '';
   categoriesEl.innerHTML = '';
   directoryCode = '';
+  githubUploadUrl = '';
   updateOutput();
   posterImageUrl = '';
   clearPosterPreviewUI();
@@ -915,6 +970,7 @@ editTabBtn.addEventListener('click', () => {
   document.getElementById('dirTitle').value = '';
   categoriesEl.innerHTML = '';
   directoryCode = '';
+  githubUploadUrl = '';
   updateOutput();
   posterImageUrl = '';
   clearPosterPreviewUI();
@@ -1020,6 +1076,60 @@ function buildLocalDirectoryJSON() {
   if (!isMangaMode()) base.totalDurationSeconds = totalSecs || 0; else base.totalPagecount = totalPages || 0;
   return base;
 }
+
+async function uploadDirectoryToGithub() {
+  if (isGithubUploadInFlight) return;
+  if (typeof window !== 'undefined' && window.DevMode !== true) return;
+  const workerUrlRaw = getGithubWorkerUrl();
+  if (!workerUrlRaw) {
+    alert('Set the GitHub Worker URL in Upload Settings before uploading to GitHub.');
+    return;
+  }
+  let workerUrl;
+  try {
+    workerUrl = new URL(workerUrlRaw);
+  } catch (err) {
+    alert('GitHub Worker URL is not a valid URL.');
+    return;
+  }
+
+  const directoryJson = buildLocalDirectoryJSON();
+  const title = directoryJson.title || '';
+  const fileName = sanitizeWorkerFileName(title || `directory-${Date.now()}`);
+  const body = {
+    mode: isMangaMode() ? 'manga' : 'anime',
+    title,
+    fileName,
+    directory: directoryJson
+  };
+
+  isGithubUploadInFlight = true;
+  try {
+    const response = await fetch(workerUrl.toString(), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const data = await response.json().catch(() => null);
+    if (!response.ok || !data || data.ok !== true) {
+      const message = data && data.error ? data.error : `HTTP ${response.status}`;
+      const details = data && data.details ? `\n${data.details}` : '';
+      alert(`GitHub upload failed: ${message}${details}`);
+      return;
+    }
+    githubUploadUrl = data.fileUrl || data.rawUrl || '';
+    directoryCode = '';
+    isFullUrl = true;
+    updateOutput();
+    if (data.commitUrl) console.info('[Creator] GitHub upload commit:', data.commitUrl);
+    alert(`Uploaded to GitHub: ${data.path || 'success'}`);
+  } catch (err) {
+    console.error('[Creator] GitHub upload error', err);
+    alert(`GitHub upload failed: ${err && err.message ? err.message : err}`);
+  } finally {
+    isGithubUploadInFlight = false;
+  }
+}
 document.addEventListener('keydown', (e) => {
   const key = (e.key || '').toLowerCase();
   const tag = ((e.target && e.target.tagName) || '').toUpperCase();
@@ -1038,6 +1148,22 @@ document.addEventListener('keydown', (e) => {
     return;
   }
 
+  if (!isTyping && typeof window !== 'undefined' && window.DevMode === true) {
+    if (githubUploadComboKeys.has(key)) {
+      if (githubUploadSequence.length && githubUploadSequence[githubUploadSequence.length - 1] === key) return;
+      githubUploadSequence.push(key);
+      if (githubUploadSequence.length > githubUploadComboKeys.size) githubUploadSequence.shift();
+      const unique = new Set(githubUploadSequence);
+      if (unique.size === githubUploadComboKeys.size && githubUploadSequence.length === githubUploadComboKeys.size) {
+        e.preventDefault();
+        resetGithubUploadSequence();
+        void uploadDirectoryToGithub();
+      }
+      return;
+    }
+    resetGithubUploadSequence();
+  }
+
   if (['a', 'z'].includes(key)) {
     if (isTyping) return;
     const result = buildLocalDirectoryJSON();
@@ -1052,3 +1178,12 @@ document.addEventListener('keydown', (e) => {
     a.remove();
   }
 });
+
+document.addEventListener('keyup', (e) => {
+  const key = (e.key || '').toLowerCase();
+  if (githubUploadComboKeys.has(key)) {
+    resetGithubUploadSequence();
+  }
+});
+
+window.addEventListener('blur', resetGithubUploadSequence);

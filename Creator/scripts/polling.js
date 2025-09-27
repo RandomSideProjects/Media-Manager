@@ -10,10 +10,24 @@ async function autoUploadFromContent(contentObj) {
     const blob = new Blob([jsonString], { type: 'application/json' });
     const file = new File([blob], 'directory.json', { type: 'application/json' });
     const url = await uploadToCatbox(file);
-    directoryCode = url.replace(/^https:\/\/files\.catbox\.moe\//, '').replace(/\.json$/, '').trim();
-    updateOutput();
+    const code = url.replace(/^https:\/\/files\.catbox\.moe\//, '').replace(/\.json$/, '').trim();
+    if (typeof directoryCode !== 'undefined') {
+      directoryCode = code;
+    } else if (typeof window !== 'undefined') {
+      window.directoryCode = code;
+    }
+    if (typeof updateOutput === 'function') {
+      updateOutput();
+    }
   } catch (err) {
-    outputEl.textContent = 'Failed to auto-upload: ' + err.message;
+    try {
+      if (typeof outputEl !== 'undefined') {
+        outputEl.textContent = 'Failed to auto-upload: ' + err.message;
+      } else if (typeof window !== 'undefined') {
+        const el = window.document && window.document.getElementById('output');
+        if (el) el.textContent = 'Failed to auto-upload: ' + err.message;
+      }
+    } catch {}
   }
 }
 
@@ -22,7 +36,10 @@ function startAutoUploadPolling() {
   if (window.MM_BLOCKED) return;    // don't start when blocked
   window.MM_POLL_TIMER = setInterval(async () => {
     if (window.MM_BLOCKED) return; // hard stop while blocked
-    if (isFolderUploading) return;
+    const folderUploading = (
+      typeof isFolderUploading !== 'undefined' && isFolderUploading
+    ) || (typeof window !== 'undefined' && window.isFolderUploading);
+    if (folderUploading) return;
     const titleEl = document.getElementById('dirTitle');
     if (!titleEl) return;
     const titleVal = titleEl.value.trim();
@@ -48,7 +65,10 @@ function startAutoUploadPolling() {
       });
       if (catTitle) cats.push({ category: catTitle, episodes: eps });
     });
-    const imageField = posterImageUrl || 'N/A';
+    const posterValue = (typeof posterImageUrl !== 'undefined')
+      ? posterImageUrl
+      : ((typeof window !== 'undefined' && typeof window.posterImageUrl !== 'undefined') ? window.posterImageUrl : '');
+    const imageField = posterValue || 'N/A';
     let totalFileSizeBytes = 0;
     let totalDurationSeconds = 0;
     let totalPagecount = 0;
