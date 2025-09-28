@@ -1,3 +1,8 @@
+html {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 /* Settings button (top-right) */
 #sourcesSettingsBtn {
   position: fixed;
@@ -45,6 +50,8 @@
 .settings-radio label { display: flex; align-items: center; gap: 6px; }
 .source-time { font-size: 0.8em; opacity: 0.85; }
 body {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
   background: #121212;
   color: #f1f1f1;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -180,3 +187,7 @@ body {
   flex: 0 0 24px;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;
+}

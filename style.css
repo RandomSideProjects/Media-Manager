@@ -1,3 +1,8 @@
+html {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 :root {
   --bg: #0e0e0e;
   --text: #f1f1f1;
@@ -13,6 +18,8 @@ body.light-mode {
   /* Keep button colors the same or adjust if desired */
 }
 body {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background: var(--bg);
   color: var(--text);
@@ -734,4 +741,8 @@ label[for="downloadConcurrencyRange"] { min-width: 8.5em; }
   color: #6ec1e4;
   text-decoration: underline;
   cursor: pointer;
+}
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;
 }

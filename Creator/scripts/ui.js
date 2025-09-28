@@ -181,6 +181,14 @@ function getGithubWorkerUrl() {
   } catch { return UI_DEFAULT_GITHUB_WORKER_URL; }
 }
 
+function getGithubToken() {
+  try {
+    const settings = getUploadSettingsSafe();
+    const raw = settings.githubToken;
+    return (typeof raw === 'string') ? raw.trim() : '';
+  } catch { return ''; }
+}
+
 function sanitizeWorkerFileName(input) {
   const base = typeof input === 'string' ? input : '';
   const normalized = typeof base.normalize === 'function' ? base.normalize('NFKD') : base;
@@ -1085,6 +1093,11 @@ async function uploadDirectoryToGithub() {
     alert('Set the GitHub Worker URL in Upload Settings before uploading to GitHub.');
     return;
   }
+  const githubToken = getGithubToken();
+  if (!githubToken) {
+    alert('Set the GitHub token in Upload Settings before uploading to GitHub.');
+    return;
+  }
   let workerUrl;
   try {
     workerUrl = new URL(workerUrlRaw);
@@ -1096,19 +1109,20 @@ async function uploadDirectoryToGithub() {
   const directoryJson = buildLocalDirectoryJSON();
   const title = directoryJson.title || '';
   const fileName = sanitizeWorkerFileName(title || `directory-${Date.now()}`);
-  const body = {
-    mode: isMangaMode() ? 'manga' : 'anime',
-    title,
-    fileName,
-    directory: directoryJson
-  };
+  const jsonString = JSON.stringify(directoryJson, null, 2);
+  const formData = new FormData();
+  formData.append('ghtoken', githubToken);
+  formData.append('mode', isMangaMode() ? 'manga' : 'anime');
+  formData.append('fileName', fileName);
+  if (title) formData.append('title', title);
+  const jsonBlob = new Blob([jsonString], { type: 'application/json' });
+  formData.append('upload', jsonBlob, `${fileName}.json`);
 
   isGithubUploadInFlight = true;
   try {
     const response = await fetch(workerUrl.toString(), {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
+      body: formData
     });
     const data = await response.json().catch(() => null);
     if (!response.ok || !data || data.ok !== true) {
@@ -1117,12 +1131,17 @@ async function uploadDirectoryToGithub() {
       alert(`GitHub upload failed: ${message}${details}`);
       return;
     }
-    githubUploadUrl = data.fileUrl || data.rawUrl || '';
+    githubUploadUrl = data.pullRequestUrl || data.fileUrl || data.rawUrl || '';
     directoryCode = '';
     isFullUrl = true;
     updateOutput();
     if (data.commitUrl) console.info('[Creator] GitHub upload commit:', data.commitUrl);
-    alert(`Uploaded to GitHub: ${data.path || 'success'}`);
+    if (data.commitType === 'pull_request' && data.pullRequestUrl) {
+      console.info('[Creator] GitHub upload pull request:', data.pullRequestUrl);
+      alert(`Pull request created: ${data.pullRequestUrl}`);
+    } else {
+      alert(`Uploaded to GitHub: ${data.path || 'success'}`);
+    }
   } catch (err) {
     console.error('[Creator] GitHub upload error', err);
     alert(`GitHub upload failed: ${err && err.message ? err.message : err}`);

@@ -33,7 +33,27 @@ if (selectiveDownloadToggle) selectiveDownloadToggle.checked = selectiveDownload
 
 const MAX_UI_DL_CONCURRENCY = 8;
 const DEFAULT_DL_CONCURRENCY = 2;
+const DEV_MODE_LS_KEY = 'rsp_dev_mode';
 let rspDevModeFlag = false;
+
+function readStoredDevMode() {
+  try {
+    const raw = localStorage.getItem(DEV_MODE_LS_KEY);
+    return raw === 'true';
+  } catch {
+    return false;
+  }
+}
+
+function persistDevMode(value) {
+  try {
+    if (value) {
+      localStorage.setItem(DEV_MODE_LS_KEY, 'true');
+    } else {
+      localStorage.removeItem(DEV_MODE_LS_KEY);
+    }
+  } catch {}
+}
 
 function isDevModeEnabled() {
   return rspDevModeFlag;
@@ -98,7 +118,7 @@ if (downloadConcurrencyRange && !downloadConcurrencyRange.dataset.bound) {
 
 if (typeof window !== 'undefined') {
   const descriptor = Object.getOwnPropertyDescriptor(window, 'DevMode');
-  let initial = false;
+  let initial = readStoredDevMode();
   if (descriptor) {
     try {
       initial = descriptor.get ? descriptor.get.call(window) === true : descriptor.value === true;
@@ -116,6 +136,7 @@ if (typeof window !== 'undefined') {
           const next = value === true;
           const changed = next !== rspDevModeFlag;
           rspDevModeFlag = next;
+          persistDevMode(next);
           try {
             applyDownloadConcurrencyUI();
             if (changed && typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
@@ -136,6 +157,7 @@ if (typeof window !== 'undefined') {
         const next = value === true;
         const changed = next !== rspDevModeFlag;
         rspDevModeFlag = next;
+        persistDevMode(next);
         try {
           applyDownloadConcurrencyUI();
           if (changed && typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
@@ -145,10 +167,10 @@ if (typeof window !== 'undefined') {
         catch (err) { console.error('[RSP] DevMode update failed', err); }
       }
     });
-    rspDevModeFlag = false;
+    rspDevModeFlag = readStoredDevMode();
   }
 } else {
-  rspDevModeFlag = false;
+  rspDevModeFlag = readStoredDevMode();
 }
 
 if (typeof window !== 'undefined') {

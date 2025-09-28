@@ -20,9 +20,10 @@ function loadUploadSettings(){
       cbzExpandBatch: (typeof p.cbzExpandBatch === 'boolean') ? p.cbzExpandBatch : true,
       cbzExpandManual: (typeof p.cbzExpandManual === 'boolean') ? p.cbzExpandManual : true,
       compressPosters: compress,
-      githubWorkerUrl: (typeof p.githubWorkerUrl === 'string' && p.githubWorkerUrl.trim()) ? p.githubWorkerUrl.trim() : SETTINGS_DEFAULT_GITHUB_WORKER_URL
+      githubWorkerUrl: (typeof p.githubWorkerUrl === 'string' && p.githubWorkerUrl.trim()) ? p.githubWorkerUrl.trim() : SETTINGS_DEFAULT_GITHUB_WORKER_URL,
+      githubToken: (typeof p.githubToken === 'string') ? p.githubToken : ''
     };
-  } catch { return { anonymous: true, userhash: '', githubWorkerUrl: SETTINGS_DEFAULT_GITHUB_WORKER_URL }; }
+  } catch { return { anonymous: true, userhash: '', githubWorkerUrl: SETTINGS_DEFAULT_GITHUB_WORKER_URL, githubToken: '' }; }
 }
 function saveUploadSettings(s){
   localStorage.setItem(LS_SETTINGS_KEY, JSON.stringify({ 
@@ -34,8 +35,16 @@ function saveUploadSettings(s){
     cbzExpandBatch: !!s.cbzExpandBatch,
     cbzExpandManual: !!s.cbzExpandManual,
     compressPosters: (typeof s.compressPosters === 'boolean') ? s.compressPosters : true,
-    githubWorkerUrl: (typeof s.githubWorkerUrl === 'string') ? s.githubWorkerUrl.trim() : ''
+    githubWorkerUrl: (typeof s.githubWorkerUrl === 'string') ? s.githubWorkerUrl.trim() : '',
+    githubToken: (typeof s.githubToken === 'string') ? s.githubToken.trim() : ''
   }));
+}
+
+function saveSettingsPartial(partial) {
+  const current = loadUploadSettings();
+  const next = Object.assign({}, current, partial);
+  saveUploadSettings(next);
+  try { window.dispatchEvent(new CustomEvent('mm_settings_saved', { detail: next })); } catch {}
 }
 
 // Expose globals
@@ -55,6 +64,7 @@ const mmModeAnime = document.getElementById('mmModeAnime');
 const mmModeManga = document.getElementById('mmModeManga');
 const mmGithubWorkerRow = document.getElementById('mmGithubWorkerRow');
 const mmGithubWorkerUrlInput = document.getElementById('mmGithubWorkerUrl');
+const mmGithubTokenInput = document.getElementById('mmGithubToken');
 // CBZ expansion controls
 const mmCbzSection = document.getElementById('mmCbzSection');
 const mmCbzExpandToggle = document.getElementById('mmCbzExpandToggle');
@@ -72,12 +82,20 @@ function updateGithubWorkerRowVisibility(force) {
   mmGithubWorkerRow.style.display = enabled ? '' : 'none';
 }
 
+if (typeof window !== 'undefined') {
+  window.addEventListener('rsp:dev-mode-changed', (event) => {
+    const enabled = event && event.detail && event.detail.enabled === true;
+    updateGithubWorkerRowVisibility(enabled);
+  });
+}
+
 if (mmBtn && mmPanel && mmAnonToggle && mmUserhashRow && mmUserhashInput && mmSaveBtn && mmCloseBtn) {
   const st = loadUploadSettings();
   mmAnonToggle.checked = !!st.anonymous;
   mmUserhashInput.value = st.userhash || '';
   mmUserhashRow.style.display = st.anonymous ? 'none' : '';
   if (mmGithubWorkerUrlInput) mmGithubWorkerUrlInput.value = st.githubWorkerUrl || SETTINGS_DEFAULT_GITHUB_WORKER_URL;
+  if (mmGithubTokenInput) mmGithubTokenInput.value = st.githubToken || '';
   updateGithubWorkerRowVisibility();
   if (mmModeAnime && mmModeManga) {
     const mode = (st.libraryMode === 'manga') ? 'manga' : 'anime';
@@ -133,7 +151,8 @@ if (mmBtn && mmPanel && mmAnonToggle && mmUserhashRow && mmUserhashInput && mmSa
       cbzExpandBatch: mmCbzExpandBatch ? !!mmCbzExpandBatch.checked : true,
       cbzExpandManual: mmCbzExpandManual ? !!mmCbzExpandManual.checked : true,
       compressPosters: mmPosterCompressToggle ? !!mmPosterCompressToggle.checked : true,
-      githubWorkerUrl: mmGithubWorkerUrlInput ? mmGithubWorkerUrlInput.value.trim() : ''
+      githubWorkerUrl: mmGithubWorkerUrlInput ? mmGithubWorkerUrlInput.value.trim() : '',
+      githubToken: mmGithubTokenInput ? mmGithubTokenInput.value.trim() : ''
     };
     saveUploadSettings(saved);
     try { window.dispatchEvent(new CustomEvent('mm_settings_saved', { detail: saved })); } catch {}
@@ -141,13 +160,10 @@ if (mmBtn && mmPanel && mmAnonToggle && mmUserhashRow && mmUserhashInput && mmSa
   });
 }
 
-if (typeof window !== 'undefined') {
-  window.addEventListener('rsp:dev-mode-changed', (event) => {
-    const next = event && event.detail && typeof event.detail.enabled === 'boolean'
-      ? event.detail.enabled
-      : undefined;
-    updateGithubWorkerRowVisibility(next);
-  });
+if (mmGithubTokenInput) {
+  const commitToken = () => { saveSettingsPartial({ githubToken: mmGithubTokenInput.value.trim() }); };
+  mmGithubTokenInput.addEventListener('change', commitToken);
+  mmGithubTokenInput.addEventListener('blur', commitToken);
 }
 
 // Test JSON sender + 'Q' hotkey
