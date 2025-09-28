@@ -1,0 +1,86 @@
+{
+  "title": "Wise Man's Grandchild",
+  "Image": "https://files.catbox.moe/v24fha.webp",
+  "LatestTime": "2025-09-28T04:27:33.010Z",
+  "categories": [
+    {
+      "category": "Season 1",
+      "episodes": [
+        {
+          "title": "Episode 1",
+          "src": "https://files.catbox.moe/zkxp51.mp4",
+          "fileSizeBytes": 154447757,
+          "durationSeconds": 1422
+        },
+        {
+          "title": "Episode 2",
+          "src": "https://files.catbox.moe/oixt3c.mp4",
+          "fileSizeBytes": 105845129,
+          "durationSeconds": 1421
+        },
+        {
+          "title": "Episode 3",
+          "src": "https://files.catbox.moe/bqtcbh.mp4",
+          "fileSizeBytes": 151785636,
+          "durationSeconds": 1421
+        },
+        {
+          "title": "Episode 4",
+          "src": "https://files.catbox.moe/3bro39.mp4",
+          "fileSizeBytes": 137874259,
+          "durationSeconds": 1421
+        },
+        {
+          "title": "Episode 5",
+          "src": "https://files.catbox.moe/l7n220.mp4",
+          "fileSizeBytes": 116273127,
+          "durationSeconds": 1422
+        },
+        {
+          "title": "Episode 6",
+          "src": "https://files.catbox.moe/3qj84i.mp4",
+          "fileSizeBytes": 137207125,
+          "durationSeconds": 1421
+        },
+        {
+          "title": "Episode 7",
+          "src": "https://files.catbox.moe/hceolk.mp4",
+          "fileSizeBytes": 129599248,
+          "durationSeconds": 1421
+        },
+        {
+          "title": "Episode 8",
+          "src": "https://files.catbox.moe/x6jng0.mp4",
+          "fileSizeBytes": 135982078,
+          "durationSeconds": 1421
+        },
+        {
+          "title": "Episode 9",
+          "src": "https://files.catbox.moe/grw8z7.mp4",
+          "fileSizeBytes": 114346644,
+          "durationSeconds": 1422
+        },
+        {
+          "title": "Episode 10",
+          "src": "https://files.catbox.moe/il5z8u.mp4",
+          "fileSizeBytes": 122836575,
+          "durationSeconds": 1421
+        },
+        {
+          "title": "Episode 11",
+          "src": "https://files.catbox.moe/kwwu55.mp4",
+          "fileSizeBytes": 179799852,
+          "durationSeconds": 1421
+        },
+        {
+          "title": "Episode 12",
+          "src": "https://files.catbox.moe/l4lciu.mp4",
+          "fileSizeBytes": 177741292,
+          "durationSeconds": 1511
+        }
+      ]
+    }
+  ],
+  "totalFileSizeBytes": 1663738722,
+  "totalDurationSeconds": 17145
+}
