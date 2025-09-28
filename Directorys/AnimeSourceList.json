@@ -411,6 +411,16 @@
       "LatestTime": "2025-09-06T05:24:17.927Z"
     },
     {
+      "file": "Wise_Man_S_Grandchild.json",
+      "path": "./Files/Anime/Wise_Man_S_Grandchild.json",
+      "title": "Wise Man's Grandchild",
+      "poster": "./Posters/Anime/Wise_Man's_Grandchild.webp",
+      "categoryCount": 1,
+      "episodeCount": 12,
+      "totalFileSizeBytes": 1663738722,
+      "LatestTime": "2025-09-28T04:27:33.010Z"
+    },
+    {
       "file": "MeidoSama.json",
       "path": "./Files/Anime/MeidoSama.json",
       "title": "You are Ms. Servent (Kimi-wa Meido sama)",
