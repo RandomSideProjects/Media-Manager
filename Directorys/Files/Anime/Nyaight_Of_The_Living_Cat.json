@@ -1,6 +1,7 @@
 {
   "title": "Nyaight Of The Living Cat",
   "Image": "https://files.catbox.moe/2qknnj.webp",
+  "LatestTime": "2025-09-28T20:24:41.494Z",
   "categories": [
     {
       "category": "Season 1",
@@ -64,11 +65,16 @@
           "src": "https://files.catbox.moe/qe0su0.mp4",
           "fileSizeBytes": 114157686,
           "durationSeconds": 1430
+        },
+        {
+          "title": "Episode 11",
+          "src": "https://files.catbox.moe/1u0bic.mp4",
+          "fileSizeBytes": 161178694,
+          "durationSeconds": 1430
         }
       ]
     }
   ],
-  "LatestTime": "2025-09-23T16:01:35.140Z",
-  "totalFileSizeBytes": 1199631782,
-  "totalDurationSeconds": 14390
+  "totalFileSizeBytes": 1360810476,
+  "totalDurationSeconds": 15820
 }
