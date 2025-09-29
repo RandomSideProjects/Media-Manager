@@ -1,4 +1,5 @@
-# [RSP Media Manager](https://randomsideprojects.github.io/Media-Manager/) \n ![img](https://github.com/RandomSideProjects/Media-Manager/blob/main/Assets/Favicon.png?raw=true)
+# [RSP Media Manager](https://randomsideprojects.github.io/Media-Manager/)
+## ![img](https://github.com/RandomSideProjects/Media-Manager/blob/main/Assets/Favicon.png?raw=true)
 
 RSP Media Manager is a browser-only library viewer for video and manga catalogs. Load a JSON directory from Catbox, GitHub Pages, or your own filesystem and the app handles playback, progress tracking, downloads, clipping, and a CBZ reader—no server required.
 
