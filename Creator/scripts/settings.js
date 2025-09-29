@@ -11,7 +11,7 @@ function loadUploadSettings(){
     if (!raw) return { anonymous: true, userhash: '', githubWorkerUrl: SETTINGS_DEFAULT_GITHUB_WORKER_URL };
     const p = JSON.parse(raw);
     const compress = (typeof p.compressPosters === 'boolean') ? p.compressPosters : (typeof p.posterCompress === 'boolean' ? p.posterCompress : true);
-    return { 
+    return {
       anonymous: typeof p.anonymous==='boolean' ? p.anonymous : true,
       userhash: (p.userhash||'').trim(),
       uploadConcurrency: Number.isFinite(parseInt(p.uploadConcurrency,10)) ? Math.max(1, Math.min(8, parseInt(p.uploadConcurrency,10))) : 2,
@@ -26,7 +26,7 @@ function loadUploadSettings(){
   } catch { return { anonymous: true, userhash: '', githubWorkerUrl: SETTINGS_DEFAULT_GITHUB_WORKER_URL, githubToken: '' }; }
 }
 function saveUploadSettings(s){
-  localStorage.setItem(LS_SETTINGS_KEY, JSON.stringify({ 
+  localStorage.setItem(LS_SETTINGS_KEY, JSON.stringify({
     anonymous: !!s.anonymous,
     userhash: (s.userhash||'').trim(),
     uploadConcurrency: Math.max(1, Math.min(8, parseInt(s.uploadConcurrency||2,10))),
