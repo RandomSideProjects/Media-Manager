@@ -1,6 +1,7 @@
 {
   "title": "Call Of The Night",
   "Image": "https://files.catbox.moe/xctgbl.webp",
+  "LatestTime": "2025-09-29T23:41:08.034Z",
   "categories": [
     {
       "category": "Season 1",
@@ -84,9 +85,19 @@
           "durationSeconds": 1372
         }
       ]
+    },
+    {
+      "category": "Season 2",
+      "episodes": [
+        {
+          "title": "Episode 1",
+          "src": "https://files.catbox.moe/2860j7.mp4",
+          "fileSizeBytes": 185684171,
+          "durationSeconds": 1377
+        }
+      ]
     }
   ],
-  "LatestTime": "2025-09-21T16:14:38.359Z",
-  "totalFileSizeBytes": 1429889589,
-  "totalDurationSeconds": 18185
+  "totalFileSizeBytes": 1615573760,
+  "totalDurationSeconds": 19562
 }
