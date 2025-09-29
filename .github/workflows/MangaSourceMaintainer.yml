@@ -15,6 +15,18 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Sync branch with remote
+        shell: bash
+        run: |
+          set -euo pipefail
+          BRANCH="${GITHUB_REF_NAME:-$(git rev-parse --abbrev-ref HEAD)}"
+          echo "Resetting local branch '$BRANCH' to match origin/$BRANCH"
+          git fetch --no-tags --prune origin "$BRANCH"
+          git checkout "$BRANCH"
+          git reset --hard "origin/$BRANCH"
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -196,12 +208,9 @@ jobs:
             fs.writeFileSync(INDEX_FILE, JSON.stringify(result, null, 2));
           })().catch(err => { console.error(err); process.exit(1); });
           NODE
-
-      - name: Pull latest changes
-        run: git pull origin main --rebase
-
       - name: Commit and push changes
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
+          branch: ${{ github.ref_name }}
           commit_message: 'chore: update Directorys/MangaSourceList.json and manga posters'
           file_pattern: 'Directorys/MangaSourceList.json Directorys/Posters/Manga/**'

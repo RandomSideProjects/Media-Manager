@@ -28,25 +28,15 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Sync branch with remote (rebase)
+      - name: Sync branch with remote
         shell: bash
         run: |
           set -euo pipefail
-          BRANCH="${GITHUB_REF_NAME:-}"
-          if [ -z "$BRANCH" ]; then
-            BRANCH=$(git rev-parse --abbrev-ref HEAD)
-          fi
-          echo "Syncing branch: $BRANCH"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git config user.name "github-actions[bot]"
-          git fetch origin "$BRANCH"
-          if [ "$(git rev-parse --abbrev-ref HEAD)" != "$BRANCH" ]; then
-            git checkout -B "$BRANCH" "origin/$BRANCH" || git checkout "$BRANCH"
-          fi
-          if ! git pull --rebase origin "$BRANCH"; then
-            echo "Rebase failed. Please resolve conflicts manually."
-            exit 1
-          fi
+          BRANCH="${GITHUB_REF_NAME:-$(git rev-parse --abbrev-ref HEAD)}"
+          echo "Resetting local branch '$BRANCH' to match origin/$BRANCH"
+          git fetch --no-tags --prune origin "$BRANCH"
+          git checkout "$BRANCH"
+          git reset --hard "origin/$BRANCH"
 
       - name: Install image processor (sharp)
         run: npm install sharp@0.33
