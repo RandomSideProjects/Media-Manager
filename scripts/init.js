@@ -14,6 +14,7 @@ async function loadSource(rawInput) {
 
   let srcUrl = '';
   let directJson = null;
+  let keyPrefix = 'remote';
   // Allow encoded sources (we previously encoded in URL param) – decode once.
   let decodedRaw = rawSrc;
   try {
@@ -37,21 +38,26 @@ async function loadSource(rawInput) {
 
   if (directJson) {
     srcUrl = '';
-    sourceKey = 'inline';
+    keyPrefix = 'inline';
+    setSourceKey(decodedRaw || 'inline', { prefix: 'inline', aliases: ['inline'] });
   }
   if (!directJson && /^https?:\/\//i.test(decodedRaw)) {
     srcUrl = decodedRaw;
+    keyPrefix = 'url';
   } else if (!directJson && (/\.(json)(?:$|[?#])/i.test(decodedRaw) || decodedRaw.toLowerCase().endsWith('.json'))) {
     // Relative json path support
     if (decodedRaw.startsWith('./') || decodedRaw.startsWith('/')) srcUrl = decodedRaw; else srcUrl = `./${decodedRaw}`;
+    keyPrefix = 'path';
   } else if (!directJson && /^[A-Za-z0-9]{6}$/.test(decodedRaw)) {
     // Catbox 6-char ID
     srcUrl = `https://files.catbox.moe/${decodedRaw}.json`;
+    keyPrefix = 'catbox';
   } else if (!directJson) {
     // Fallback – treat as relative json if missing extension
     srcUrl = decodedRaw.endsWith('.json') ? decodedRaw : `./${decodedRaw}.json`;
+    keyPrefix = 'path';
   }
-  if (!directJson) sourceKey = decodedRaw;
+  if (!directJson) setSourceKey(decodedRaw, { prefix: keyPrefix });
 
   try {
     let json = directJson;

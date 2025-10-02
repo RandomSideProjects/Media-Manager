@@ -37,6 +37,7 @@ const cbzProgressMessage = document.getElementById('cbzProgressMessage');
 // Clip overlay
 const clipBtn = document.getElementById('clipBtn');
 const clipOverlay = document.getElementById('clipOverlay');
+const clipOverlayCloseBtn = document.getElementById('clipOverlayCloseBtn');
 const clipMessage = document.getElementById('clipMessage');
 const clipDoneBtn = document.getElementById('clipDoneBtn');
 const clipDownloadBtn = document.getElementById('clipDownloadBtn');

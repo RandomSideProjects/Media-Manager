@@ -55,7 +55,7 @@ async function handleFolderUpload(event) {
       localId = 'Local000000';
     }
   }
-  try { sourceKey = localId; } catch {}
+  try { setSourceKey(localId || 'local', { prefix: 'local' }); } catch {}
 
   // Helper to resolve a file for an episode by matching the relative path suffix if possible
   function findEpisodeFile(epSrc) {

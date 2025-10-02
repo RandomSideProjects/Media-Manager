@@ -75,7 +75,7 @@ function renderEpisodeList() {
       button.append(left, right);
       button.addEventListener('click', () => {
         localStorage.setItem('lastEpSrc', episode.src);
-        localStorage.setItem(`${sourceKey}:SavedItem`, index);
+        writeSourceScopedValue('SavedItem', String(index));
         currentIndex = index;
         selectorScreen.style.display = 'none';
         playerScreen.style.display = 'block';
@@ -102,7 +102,8 @@ function showResumeMessage() {
   const savedTime = parseFloat(localStorage.getItem(lastSrc));
   const duration = parseFloat(localStorage.getItem(lastSrc + ':duration'));
   if (isNaN(savedTime) || isNaN(duration)) { resumeEl.style.display = 'none'; return; }
-  const savedIdx = parseInt(localStorage.getItem(`${sourceKey}:SavedItem`), 10);
+  const savedIdxRaw = readSourceScopedValue('SavedItem');
+  const savedIdx = parseInt(savedIdxRaw, 10);
   const idx = flatList.findIndex(ep => ep.src === lastSrc);
   if (idx < 0) { resumeEl.style.display = 'none'; return; }
   const epNum = idx + 1;

@@ -6,6 +6,7 @@
     const overlay = document.getElementById('clearStorageOverlay');
     const confirmBtn = document.getElementById('clearStorageConfirmBtn');
     const cancelBtn = document.getElementById('clearStorageCancelBtn');
+    const closeBtn = document.getElementById('clearStorageCloseBtn');
 
     if (!openBtn || !overlay || !confirmBtn || !cancelBtn) return false;
 
@@ -14,6 +15,7 @@
 
     openBtn.addEventListener('click', openOverlay);
     cancelBtn.addEventListener('click', closeOverlay);
+    if (closeBtn) closeBtn.addEventListener('click', closeOverlay);
 
     // Close if clicking outside the panel
     overlay.addEventListener('click', (e) => {

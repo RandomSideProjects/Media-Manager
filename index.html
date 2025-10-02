@@ -124,6 +124,7 @@
   <!-- Clear Storage Confirm Overlay moved outside nav for full-screen coverage -->
   <div id="clearStorageOverlay">
     <div id="clearStoragePanel">
+      <button id="clearStorageCloseBtn" class="overlay-close" type="button" aria-label="Close clear storage dialog">✕</button>
       <div class="setting-row">
         <h3>Confirm Clear Storage</h3>
       </div>
@@ -136,7 +137,8 @@
   </div>
   <div id="clipOverlay">
     <div id="clipOverlayContent">
-      <p id="clipMessage"></p>
+      <button id="clipOverlayCloseBtn" class="overlay-close" type="button" aria-label="Close clip dialog">✕</button>
+      <div id="clipMessage"></div>
       <div id="clipButtonsRow">
         <button id="clipDoneBtn">Done</button>
         <button id="clipDownloadBtn">Download</button>
@@ -176,7 +178,7 @@
         </div>
         <div id="clipHistoryList"></div>
       </div>
-      <button id="clipPresetCloseBtn" type="button">Close</button>
+      <button id="clipPresetCloseBtn" type="button" class="overlay-close" aria-label="Close clip presets">✕</button>
     </div>
   </div>
   <!-- Clip progress overlay -->

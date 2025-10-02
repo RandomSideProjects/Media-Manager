@@ -28,12 +28,6 @@ function getCreatorMode(){
 function isMangaMode(){ return getCreatorMode() === 'manga'; }
 function labelForUnit(n){ return isMangaMode() ? `Volume ${n}` : `Episode ${n}`; }
 function unitTitlePlaceholder(){ return isMangaMode() ? 'Volume Title' : 'Episode Title'; }
-function getCreatorMode(){
-  try { const p = JSON.parse(localStorage.getItem('mm_upload_settings')||'{}'); return (p.libraryMode === 'manga') ? 'manga' : 'anime'; } catch { return 'anime'; }
-}
-function isMangaMode(){ return getCreatorMode() === 'manga'; }
-function labelForUnit(n){ return isMangaMode() ? `Volume ${n}` : `Episode ${n}`; }
-function unitTitlePlaceholder(){ return isMangaMode() ? 'Volume Title' : 'Episode Title'; }
 function updateCategoryButtonVisibility(){
   try {
     if (!addCategoryBtn) return;

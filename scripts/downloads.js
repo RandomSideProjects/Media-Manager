@@ -17,6 +17,15 @@ try {
 } catch {}
 
 let streamSaverLoadPromise = null;
+function resolveStreamSaverAsset(file) {
+  try {
+    if (typeof window !== 'undefined' && window.location && typeof window.location.href === 'string') {
+      return new URL(`scripts/streamsaver/${file}`, window.location.href).toString();
+    }
+  } catch {}
+  return `scripts/streamsaver/${file}`;
+}
+
 function loadStreamSaver() {
   if (typeof window === 'undefined') return Promise.resolve(null);
   if (window.streamSaver) return Promise.resolve(window.streamSaver);
@@ -24,9 +33,16 @@ function loadStreamSaver() {
     streamSaverLoadPromise = new Promise((resolve, reject) => {
       try {
         const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/streamsaver@2.0.6/StreamSaver.min.js';
+        script.src = resolveStreamSaverAsset('StreamSaver.min.js');
         script.async = true;
-        script.onload = () => resolve(window.streamSaver || null);
+        script.onload = () => {
+          try {
+            if (window.streamSaver && !window.streamSaver.mitm) {
+              window.streamSaver.mitm = resolveStreamSaverAsset('mitm.html?version=2.0.6');
+            }
+          } catch {}
+          resolve(window.streamSaver || null);
+        };
         script.onerror = (err) => reject(err || new Error('StreamSaver failed to load'));
         document.head.appendChild(script);
       } catch (err) {
@@ -40,12 +56,74 @@ function loadStreamSaver() {
 async function openSeasonSelectionModal() {
   return new Promise((resolve) => {
     const backdrop = document.createElement('div');
-    Object.assign(backdrop.style, { position: 'fixed', inset: '0', background: 'transparent', zIndex: 9998 });
+    Object.assign(backdrop.style, { position: 'fixed', inset: '0', background: 'rgba(0,0,0,0.45)', zIndex: 9998 });
+    backdrop.setAttribute('role', 'presentation');
     const panel = document.createElement('div');
     Object.assign(panel.style, {
       position: 'fixed', background: '#1a1a1a', color: '#f1f1f1', border: '1px solid #444',
       borderRadius: '10px', padding: '12px', width: '380px', boxShadow: '0 10px 24px rgba(0,0,0,0.55)', zIndex: 9999
     });
+    const dialogTitleId = `download-selection-${Date.now().toString(36)}`;
+    panel.setAttribute('role', 'dialog');
+    panel.setAttribute('aria-modal', 'true');
+    panel.setAttribute('aria-labelledby', dialogTitleId);
+    panel.tabIndex = -1;
+    const previouslyFocused = (typeof document !== 'undefined' && document.activeElement && typeof document.activeElement.focus === 'function')
+      ? document.activeElement
+      : null;
+    const focusableSelectors = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+    const getFocusableElements = () => {
+      try {
+        return Array.from(panel.querySelectorAll(focusableSelectors)).filter((el) => {
+          if (!el || typeof el.disabled === 'boolean' && el.disabled) return false;
+          if (el.getAttribute && el.getAttribute('aria-hidden') === 'true') return false;
+          const tabIndex = typeof el.tabIndex === 'number' ? el.tabIndex : 0;
+          if (tabIndex < 0) return false;
+          const rect = (typeof el.getBoundingClientRect === 'function') ? el.getBoundingClientRect() : null;
+          return !!rect && (rect.width > 0 || rect.height > 0);
+        });
+      } catch { return []; }
+    };
+    let resolved = false;
+    function cleanupAndResolve(result) {
+      if (resolved) return;
+      resolved = true;
+      panel.removeEventListener('keydown', onKeyDown);
+      try { panel.remove(); } catch {}
+      try { backdrop.remove(); } catch {}
+      if (previouslyFocused && typeof previouslyFocused.focus === 'function') {
+        try { previouslyFocused.focus(); } catch {}
+      }
+      resolve(result);
+    }
+    function onKeyDown(event) {
+      if (!event) return;
+      const key = event.key || event.code;
+      if (key === 'Escape' || key === 'Esc') {
+        event.preventDefault();
+        cleanupAndResolve(null);
+        return;
+      }
+      if (key === 'Tab') {
+        const focusable = getFocusableElements();
+        if (!focusable.length) {
+          event.preventDefault();
+          try { panel.focus(); } catch {}
+          return;
+        }
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        const active = (typeof document !== 'undefined') ? document.activeElement : null;
+        if (!event.shiftKey && active === last) {
+          event.preventDefault();
+          try { first.focus(); } catch {}
+        } else if (event.shiftKey && active === first) {
+          event.preventDefault();
+          try { last.focus(); } catch {}
+        }
+      }
+    }
+    panel.addEventListener('keydown', onKeyDown);
     try {
       const btn = document.getElementById('settingsBtn');
       const r = btn ? btn.getBoundingClientRect() : { top: 16, right: window.innerWidth - 16, bottom: 16 };
@@ -53,11 +131,19 @@ async function openSeasonSelectionModal() {
       panel.style.right = Math.round(Math.max(8, window.innerWidth - (r.right || (window.innerWidth - 16)))) + 'px';
     } catch {}
 
-    const h = document.createElement('div'); h.textContent = 'Download Selection'; h.style.fontWeight = '700'; h.style.margin = '0 0 6px 0';
+    const closeBtn = document.createElement('button');
+    closeBtn.type = 'button';
+    closeBtn.className = 'overlay-close';
+    closeBtn.setAttribute('aria-label', 'Close download selection');
+    closeBtn.textContent = '✕';
+    closeBtn.addEventListener('click', () => cleanupAndResolve(null));
+    panel.appendChild(closeBtn);
+
+    const h = document.createElement('div'); h.id = dialogTitleId; h.textContent = 'Download Selection'; h.style.fontWeight = '700'; h.style.margin = '0 0 6px 0';
     const list = document.createElement('div'); list.style.maxHeight = '50vh'; list.style.overflow = 'auto'; list.style.padding = '4px 0';
     const footer = document.createElement('div');
     Object.assign(footer.style, { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginTop: '8px' });
-    const btnOk = document.createElement('button'); btnOk.textContent = 'Download'; btnOk.className = 'pill-button';
+    const btnOk = document.createElement('button'); btnOk.type = 'button'; btnOk.textContent = 'Download'; btnOk.className = 'pill-button';
     const totalSpan = document.createElement('span'); totalSpan.style.color = '#b6b6b6'; totalSpan.style.whiteSpace = 'nowrap';
 
     // State
@@ -161,7 +247,7 @@ async function openSeasonSelectionModal() {
     videoList.forEach((_, idx) => updateSeasonIndeterminate(idx));
     computeTotal(); footer.append(btnOk, totalSpan); panel.append(h, list, footer); document.body.append(backdrop, panel);
 
-    function closeMenu(result) { try { panel.remove(); } catch {} try { backdrop.remove(); } catch {} resolve(result); }
+    function closeMenu(result) { cleanupAndResolve(result); }
     backdrop.addEventListener('click', () => closeMenu(null));
 
     btnOk.addEventListener('click', () => {
@@ -180,6 +266,13 @@ async function openSeasonSelectionModal() {
         }
       }
       closeMenu({ selectedCategories, selectedEpisodesBySeason });
+    });
+
+    requestAnimationFrame(() => {
+      const focusable = getFocusableElements();
+      const target = focusable.find((el) => el === btnOk) || focusable[0] || panel;
+      try { target.focus(); }
+      catch {}
     });
   });
 }
@@ -923,8 +1016,9 @@ async function downloadSourceFolder(options = {}) {
     }
     if (!streamSaverInstance || typeof streamSaverInstance.createWriteStream !== 'function') return false;
     try {
-      if (!streamSaverInstance.mitm) {
-        streamSaverInstance.mitm = 'https://jimmywarting.github.io/StreamSaver.js/mitm.html?version=2.0.6';
+      const mitmUrl = resolveStreamSaverAsset('mitm.html?version=2.0.6');
+      if (!streamSaverInstance.mitm || streamSaverInstance.mitm === 'https://jimmywarting.github.io/StreamSaver.js/mitm.html?version=2.0.6') {
+        streamSaverInstance.mitm = mitmUrl;
       }
     } catch {}
 

@@ -1,6 +1,7 @@
 "use strict";
 
 let lastClipBlob = null;
+let lastClipFileName = 'clip.webm';
 let lastPreviewObjectURL = null;
 let clipPresetsCache = loadClipPresets();
 let clipPreferredLength = loadClipPreferredLength();
@@ -213,7 +214,7 @@ function ensureClipDownloadButton() {
       const url = URL.createObjectURL(lastClipBlob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'clip.webm';
+      a.download = lastClipFileName || 'clip.webm';
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -230,16 +231,32 @@ function buildHistoryPreviewHtml() {
     const length = Number.isFinite(entry.lengthSeconds) ? `${entry.lengthSeconds}s` : '';
     const title = entry.itemTitle || 'Clip';
     const meta = [length, time].filter(Boolean).join(' • ');
-    return `<li><a href="${entry.url}" target="_blank" rel="noopener noreferrer">${title}</a>${meta ? ` <span style="opacity:0.7">(${meta})</span>` : ''}</li>`;
+    return `<li><a href="${entry.url}" target="_blank" rel="noopener noreferrer">${title}</a>${meta ? ` <span class="clip-history-preview__meta">(${meta})</span>` : ''}</li>`;
   }).join('');
-  return `<div class="clip-history-preview"><div style="font-weight:600; margin-top:0.6em;">Recent clips</div><ul>${items}</ul></div>`;
+  return `<div class="clip-history-preview"><div class="clip-history-preview__title">Recent clips</div><ul>${items}</ul></div>`;
 }
 
 function displayClipResult(html, isError = false) {
   const historyHtml = buildHistoryPreviewHtml();
-  const content = html + historyHtml;
   if (clipMessage) {
-    clipMessage.innerHTML = content;
+    clipMessage.innerHTML = '';
+    if (Array.isArray(html)) {
+      html.forEach((fragment) => {
+        const wrapper = document.createElement('div');
+        wrapper.className = `clip-result${isError ? ' clip-result--error' : ''}`;
+        wrapper.innerHTML = fragment;
+        clipMessage.appendChild(wrapper);
+      });
+    } else {
+      const wrapper = document.createElement('div');
+      wrapper.className = `clip-result${isError ? ' clip-result--error' : ''}`;
+      wrapper.innerHTML = html;
+      clipMessage.appendChild(wrapper);
+    }
+    if (historyHtml) {
+      clipMessage.insertAdjacentHTML('beforeend', historyHtml);
+    }
+    if (clipButtonsRow) clipButtonsRow.style.display = 'flex';
     if (clipOverlay) { clipOverlay.style.display = 'flex'; }
   } else {
     const tmp = document.createElement('div');
@@ -248,19 +265,32 @@ function displayClipResult(html, isError = false) {
     });
     const box = document.createElement('div');
     Object.assign(box.style, { background: isError ? 'rgba(80,0,0,0.95)' : 'rgba(20,20,20,0.95)', padding: '1em 1.25em', borderRadius: '12px', maxWidth: '540px', boxShadow: '0 20px 40px -10px rgba(0,0,0,0.6)' });
-    box.innerHTML = content;
+    box.innerHTML = `<div class="clip-result${isError ? ' clip-result--error' : ''}">${html}</div>${historyHtml}`;
     const done = document.createElement('button'); done.textContent = 'Done'; Object.assign(done.style, { marginTop: '1em', padding: '0.5em 1em', cursor: 'pointer' });
     done.addEventListener('click', () => tmp.remove()); box.appendChild(done); tmp.appendChild(box); document.body.appendChild(tmp);
   }
 }
 
-async function uploadClipToCatboxWithProgress(blob, onProgress) {
+function hideClipOverlay() {
+  if (!clipOverlay) return;
+  clipOverlay.style.display = 'none';
+  if (clipButtonsRow) clipButtonsRow.style.display = 'flex';
+  if (clipMessage) clipMessage.innerHTML = '';
+  if (lastPreviewObjectURL) {
+    try { URL.revokeObjectURL(lastPreviewObjectURL); }
+    catch {}
+    lastPreviewObjectURL = null;
+  }
+}
+
+async function uploadClipToCatboxWithProgress(blob, onProgress, fileName) {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open('POST', 'https://catbox.moe/user/api.php');
     const form = new FormData();
     form.append('reqtype', 'fileupload');
-    form.append('fileToUpload', blob, 'clip.webm');
+    const uploadName = (typeof fileName === 'string' && fileName.trim()) ? fileName.trim() : 'clip.webm';
+    form.append('fileToUpload', blob, uploadName);
     xhr.upload.onprogress = e => { if (e.lengthComputable && typeof onProgress === 'function') { onProgress(e.loaded / e.total * 100); } };
     xhr.onload = () => { if (xhr.status >= 200 && xhr.status < 300) { resolve((xhr.responseText || '').trim()); } else { reject(new Error('Upload failed: ' + xhr.status)); } };
     xhr.onerror = () => reject(new Error('Network error'));
@@ -308,14 +338,14 @@ function renderClipHistoryList() {
     const row = document.createElement('div');
     row.style.display = 'flex';
     row.style.flexDirection = 'column';
-    row.style.gap = '0.15rem';
+    row.style.gap = '0.25rem';
     const link = document.createElement('a');
     link.href = entry.url;
     link.target = '_blank';
     link.rel = 'noopener noreferrer';
     link.textContent = entry.itemTitle || 'Clip';
     const meta = document.createElement('span');
-    meta.style.opacity = '0.7';
+    meta.className = 'clip-history-preview__meta';
     const bits = [];
     if (entry.lengthSeconds) bits.push(`${entry.lengthSeconds}s`);
     if (entry.sourceTitle) bits.push(entry.sourceTitle);
@@ -526,15 +556,36 @@ async function executeClipCapture(start, end, durationSeconds) {
       stream = audioStream ? new MediaStream([ ...canvasStream.getVideoTracks(), ...audioStream.getAudioTracks() ]) : canvasStream;
     }
 
-    let mimeType = 'video/webm;codecs=vp9,opus';
-    if (!MediaRecorder.isTypeSupported(mimeType)) {
-      mimeType = 'video/webm;codecs=vp8,opus';
-      if (!MediaRecorder.isTypeSupported(mimeType)) mimeType = 'video/webm';
+    const preferredMimeTypes = [
+      'video/mp4;codecs=avc1.4D401E,mp4a.40.2',
+      'video/mp4;codecs=avc1.42E01E,mp4a.40.2',
+      'video/mp4',
+      'video/webm;codecs=vp9,opus',
+      'video/webm;codecs=vp8,opus',
+      'video/webm'
+    ];
+    let chosenMime = '';
+    if (typeof MediaRecorder !== 'undefined' && typeof MediaRecorder.isTypeSupported === 'function') {
+      for (const candidate of preferredMimeTypes) {
+        try {
+          if (MediaRecorder.isTypeSupported(candidate)) {
+            chosenMime = candidate;
+            break;
+          }
+        } catch {}
+      }
     }
     let recorder;
     const recordedChunks = [];
-    try { recorder = new MediaRecorder(stream, { mimeType }); }
-    catch { recorder = new MediaRecorder(stream); }
+    try {
+      recorder = chosenMime ? new MediaRecorder(stream, { mimeType: chosenMime }) : new MediaRecorder(stream);
+    } catch {
+      recorder = new MediaRecorder(stream);
+      chosenMime = recorder && recorder.mimeType ? recorder.mimeType : chosenMime;
+    }
+    const effectiveMime = (recorder && recorder.mimeType) ? recorder.mimeType : (chosenMime || 'video/webm');
+    const clipExtension = /mp4/i.test(effectiveMime) ? 'mp4' : 'webm';
+    lastClipFileName = `clip.${clipExtension}`;
     recorder.ondataavailable = e => { if (e.data && e.data.size > 0) recordedChunks.push(e.data); };
 
     const durationMs = durationSeconds * 1000;
@@ -551,7 +602,8 @@ async function executeClipCapture(start, end, durationSeconds) {
     await new Promise(resolve => { recorder.onstop = () => resolve(); });
     clearInterval(progressInterval);
 
-    const blob = new Blob(recordedChunks, { type: recordedChunks[0] ? recordedChunks[0].type : 'video/webm' });
+    const blobType = effectiveMime || (recordedChunks[0] ? recordedChunks[0].type : 'video/webm');
+    const blob = new Blob(recordedChunks, { type: blobType });
     lastClipBlob = blob;
     bar.value = 100;
     overlay.style.display = 'none';
@@ -562,7 +614,7 @@ async function executeClipCapture(start, end, durationSeconds) {
       try {
         if (lastPreviewObjectURL) { URL.revokeObjectURL(lastPreviewObjectURL); lastPreviewObjectURL = null; }
         lastPreviewObjectURL = URL.createObjectURL(blob);
-        previewHTML = `<video src="${lastPreviewObjectURL}" controls style="max-width:100%; width:480px; margin-top:10px;"></video>`;
+        previewHTML = `<video class="clip-preview-video" src="${lastPreviewObjectURL}" controls playsinline></video>`;
       } catch {}
     }
 
@@ -579,24 +631,32 @@ async function executeClipCapture(start, end, durationSeconds) {
       msg.textContent = 'Uploading clip...';
       bar.value = 0;
       overlay.style.display = 'flex';
-      const url = await uploadClipToCatboxWithProgress(blob, p => { bar.value = p; });
+      const url = await uploadClipToCatboxWithProgress(blob, p => { bar.value = p; }, lastClipFileName);
       overlay.style.display = 'none';
-      displayClipResult(`
-        <div style="font-weight:700;">Clip uploaded!</div>
-        <p style="margin:0;">URL: <a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a></p>
+      const fragments = [`
+        <div class="clip-result__title">Clip uploaded!</div>
         ${previewHTML}
-      `);
+        <p class="clip-result__detail clip-result__detail--muted">Saved as ${lastClipFileName || 'clip.webm'}</p>
+        <p class="clip-result__detail clip-result__detail--muted">URL copied below:</p>
+      `,
+      `<div class="clip-result__detail clip-result__detail--link">` +
+        `<a class="clip-result__link" href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>` +
+      `</div>`];
+      displayClipResult(fragments);
       recordClipHistory({ ...currentClipContext, url });
       ensureClipDownloadButton();
     } catch (err) {
       overlay.style.display = 'none';
       const localUrl = (() => { try { return URL.createObjectURL(blob); } catch { return ''; } })();
-      displayClipResult(`
-        <div style="font-weight:700;">Upload failed</div>
-        <p style="margin:0;">${err.message}</p>
-        <small>Would you like to <span style="color:#5ab8ff;"><a href="${localUrl}" download="clip.webm" style="color:inherit; text-decoration:none;">download</a></span> the clip instead?</small>
+      const fragments = [`
+        <div class="clip-result__title">Upload failed</div>
+        <p class="clip-result__detail">${err.message}</p>
         ${previewHTML}
-      `, true);
+      `,
+      `<p class="clip-result__detail clip-result__detail--muted">` +
+        `Would you like to <a class="clip-result__link" href="${localUrl}" download="${lastClipFileName || 'clip.webm'}">download</a> the clip instead?` +
+      `</p>`];
+      displayClipResult(fragments, true);
       ensureClipDownloadButton();
     }
   } finally {
@@ -674,17 +734,24 @@ window.addEventListener('keydown', (e) => {
       return;
     }
     if (clipOverlay && clipOverlay.style.display === 'flex') {
-      clipOverlay.style.display = 'none';
-      if (clipButtonsRow) clipButtonsRow.style.display = 'flex';
+      hideClipOverlay();
     }
   }
 });
 
 if (clipDoneBtn && clipOverlay) {
   clipDoneBtn.addEventListener('click', () => {
-    if (lastPreviewObjectURL) { try { URL.revokeObjectURL(lastPreviewObjectURL); } catch {} lastPreviewObjectURL = null; }
-    clipOverlay.style.display = 'none';
-    if (clipButtonsRow) clipButtonsRow.style.display = 'flex';
+    hideClipOverlay();
+  });
+}
+
+if (clipOverlayCloseBtn) {
+  clipOverlayCloseBtn.addEventListener('click', () => { hideClipOverlay(); });
+}
+
+if (clipOverlay) {
+  clipOverlay.addEventListener('click', (event) => {
+    if (event.target === clipOverlay) hideClipOverlay();
   });
 }
 
@@ -694,7 +761,7 @@ if (clipDownloadBtn) {
     const url = URL.createObjectURL(lastClipBlob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'clip.webm';
+    a.download = lastClipFileName || 'clip.webm';
     document.body.appendChild(a);
     a.click();
     a.remove();

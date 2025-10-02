@@ -3,9 +3,81 @@
 // Globals
 let videoList = [];
 let sourceKey = '';
+let sourceKeyHistory = [];
 let flatList = [];
 let currentIndex = 0;
 let sourceImageUrl = '';
+
+function hashStringToKey(value) {
+  const str = String(value || '');
+  if (!str) return '0';
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash) + str.charCodeAt(i);
+    hash |= 0;
+  }
+  return (hash >>> 0).toString(36);
+}
+
+function deriveSourceKey(rawValue, options) {
+  const opts = options || {};
+  const prefix = typeof opts.prefix === 'string' && opts.prefix.trim() ? opts.prefix.trim().toLowerCase() : 'source';
+  const raw = typeof rawValue === 'string' ? rawValue.trim() : String(rawValue || '').trim();
+  if (!raw) return `${prefix}-anon`;
+
+  const cleaned = raw.replace(/[^A-Za-z0-9._-]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').toLowerCase();
+  const maxLen = 48;
+  if (cleaned && cleaned.length <= maxLen) {
+    return `${prefix}-${cleaned}`;
+  }
+
+  const slug = cleaned ? cleaned.slice(0, Math.max(8, Math.min(24, cleaned.length))) : 'src';
+  const hash = hashStringToKey(raw);
+  return `${prefix}-${slug}-${hash}`;
+}
+
+function setSourceKey(rawValue, options) {
+  const primary = deriveSourceKey(rawValue, options);
+  sourceKey = primary;
+  const history = [primary];
+  const raw = typeof rawValue === 'string' ? rawValue.trim() : String(rawValue || '').trim();
+  if (raw && raw !== primary) history.push(raw);
+  const extra = (options && Array.isArray(options.aliases)) ? options.aliases : [];
+  extra.forEach((alias) => {
+    if (typeof alias === 'string' && alias && alias !== primary) history.push(alias);
+  });
+  sourceKeyHistory = history.filter((key, idx) => history.indexOf(key) === idx);
+  return primary;
+}
+
+function getSourceKeyCandidates(includeLegacy = true) {
+  if (!includeLegacy) return sourceKey ? [sourceKey] : [];
+  if (Array.isArray(sourceKeyHistory) && sourceKeyHistory.length) return sourceKeyHistory.slice();
+  return sourceKey ? [sourceKey] : [];
+}
+
+function readSourceScopedValue(suffix) {
+  if (!suffix) return null;
+  const parts = getSourceKeyCandidates(true);
+  for (let i = 0; i < parts.length; i++) {
+    try {
+      const value = localStorage.getItem(`${parts[i]}:${suffix}`);
+      if (value !== null && value !== undefined) return value;
+    } catch {}
+  }
+  return null;
+}
+
+function writeSourceScopedValue(suffix, value) {
+  if (!suffix) return;
+  const key = `${sourceKey}:${suffix}`;
+  try { localStorage.setItem(key, value); }
+  catch {}
+  const legacyKeys = getSourceKeyCandidates(true).filter((candidate) => candidate && candidate !== sourceKey);
+  legacyKeys.forEach((candidate) => {
+    try { localStorage.removeItem(`${candidate}:${suffix}`); } catch {}
+  });
+}
 
 // Utils
 function formatTime(totalSeconds) {
