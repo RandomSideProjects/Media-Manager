@@ -10,7 +10,13 @@ async function autoUploadFromContent(contentObj) {
     const blob = new Blob([jsonString], { type: 'application/json' });
     const file = new File([blob], 'directory.json', { type: 'application/json' });
     const url = await uploadToCatbox(file);
-    const code = url.replace(/^https:\/\/files\.catbox\.moe\//, '').replace(/\.json$/, '').trim();
+    const normalizer = (typeof window !== 'undefined' && typeof window.mm_normalizeCatboxUrl === 'function')
+      ? window.mm_normalizeCatboxUrl
+      : null;
+    const normalized = normalizer ? normalizer(url) : { url, code: '' };
+    const code = (normalized && normalized.code)
+      ? normalized.code
+      : (url.replace(/^https:\/\/files\.catbox\.moe\//, '').replace(/\.json$/, '').trim());
     if (typeof directoryCode !== 'undefined') {
       directoryCode = code;
     } else if (typeof window !== 'undefined') {

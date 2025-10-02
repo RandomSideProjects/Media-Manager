@@ -5,10 +5,25 @@ const DEFAULT_USERHASH = '2cdcc7754c86c2871ed2bde9d';
 const LS_SETTINGS_KEY = 'mm_upload_settings';
 const SETTINGS_DEFAULT_GITHUB_WORKER_URL = (typeof window !== 'undefined' && typeof window.MM_DEFAULT_GITHUB_WORKER_URL === 'string') ? window.MM_DEFAULT_GITHUB_WORKER_URL : '';
 
+function defaultCatboxUploadUrl() {
+  if (typeof window !== 'undefined' && typeof window.MM_DEFAULT_CATBOX_UPLOAD_URL === 'string') {
+    const trimmed = window.MM_DEFAULT_CATBOX_UPLOAD_URL.trim();
+    if (trimmed) return trimmed;
+  }
+  return 'https://catbox.moe/user/api.php';
+}
+
 function loadUploadSettings(){
   try {
     const raw = localStorage.getItem(LS_SETTINGS_KEY);
-    if (!raw) return { anonymous: true, userhash: '', githubWorkerUrl: SETTINGS_DEFAULT_GITHUB_WORKER_URL };
+    if (!raw) {
+      return {
+        anonymous: true,
+        userhash: '',
+        githubWorkerUrl: SETTINGS_DEFAULT_GITHUB_WORKER_URL,
+        catboxUploadUrl: defaultCatboxUploadUrl()
+      };
+    }
     const p = JSON.parse(raw);
     const compress = (typeof p.compressPosters === 'boolean') ? p.compressPosters : (typeof p.posterCompress === 'boolean' ? p.posterCompress : true);
     return {
@@ -21,9 +36,18 @@ function loadUploadSettings(){
       cbzExpandManual: (typeof p.cbzExpandManual === 'boolean') ? p.cbzExpandManual : true,
       compressPosters: compress,
       githubWorkerUrl: (typeof p.githubWorkerUrl === 'string' && p.githubWorkerUrl.trim()) ? p.githubWorkerUrl.trim() : SETTINGS_DEFAULT_GITHUB_WORKER_URL,
-      githubToken: (typeof p.githubToken === 'string') ? p.githubToken : ''
+      githubToken: (typeof p.githubToken === 'string') ? p.githubToken : '',
+      catboxUploadUrl: (typeof p.catboxUploadUrl === 'string' && p.catboxUploadUrl.trim()) ? p.catboxUploadUrl.trim() : defaultCatboxUploadUrl()
     };
-  } catch { return { anonymous: true, userhash: '', githubWorkerUrl: SETTINGS_DEFAULT_GITHUB_WORKER_URL, githubToken: '' }; }
+  } catch {
+    return {
+      anonymous: true,
+      userhash: '',
+      githubWorkerUrl: SETTINGS_DEFAULT_GITHUB_WORKER_URL,
+      githubToken: '',
+      catboxUploadUrl: defaultCatboxUploadUrl()
+    };
+  }
 }
 function saveUploadSettings(s){
   localStorage.setItem(LS_SETTINGS_KEY, JSON.stringify({
@@ -36,7 +60,8 @@ function saveUploadSettings(s){
     cbzExpandManual: !!s.cbzExpandManual,
     compressPosters: (typeof s.compressPosters === 'boolean') ? s.compressPosters : true,
     githubWorkerUrl: (typeof s.githubWorkerUrl === 'string') ? s.githubWorkerUrl.trim() : '',
-    githubToken: (typeof s.githubToken === 'string') ? s.githubToken.trim() : ''
+    githubToken: (typeof s.githubToken === 'string') ? s.githubToken.trim() : '',
+    catboxUploadUrl: (typeof s.catboxUploadUrl === 'string') ? s.catboxUploadUrl.trim() : ''
   }));
 }
 
@@ -45,6 +70,16 @@ function saveSettingsPartial(partial) {
   const next = Object.assign({}, current, partial);
   saveUploadSettings(next);
   try { window.dispatchEvent(new CustomEvent('mm_settings_saved', { detail: next })); } catch {}
+}
+
+function getCatboxUploadUrl() {
+  const settings = loadUploadSettings();
+  const raw = settings && typeof settings.catboxUploadUrl === 'string' ? settings.catboxUploadUrl.trim() : '';
+  return raw || defaultCatboxUploadUrl();
+}
+
+if (typeof window !== 'undefined') {
+  window.mm_getCatboxUploadUrl = getCatboxUploadUrl;
 }
 
 // Expose globals
@@ -65,6 +100,8 @@ const mmModeManga = document.getElementById('mmModeManga');
 const mmGithubWorkerRow = document.getElementById('mmGithubWorkerRow');
 const mmGithubWorkerUrlInput = document.getElementById('mmGithubWorkerUrl');
 const mmGithubTokenInput = document.getElementById('mmGithubToken');
+const mmCatboxRow = document.getElementById('mmCatboxRow');
+const mmCatboxUrlInput = document.getElementById('mmCatboxUploadUrl');
 // CBZ expansion controls
 const mmCbzSection = document.getElementById('mmCbzSection');
 const mmCbzExpandToggle = document.getElementById('mmCbzExpandToggle');
@@ -74,18 +111,43 @@ const mmCbzExpandManual = document.getElementById('mmCbzExpandManual');
 const mmPosterCompressToggle = document.getElementById('mmPosterCompressToggle');
 // No per-flow anon controls; only userhash visibility when anonymous is off
 
-function updateGithubWorkerRowVisibility(force) {
-  if (!mmGithubWorkerRow) return;
+function updateDevModeRowsVisibility(force) {
   const enabled = typeof force === 'boolean'
     ? force
     : (typeof window !== 'undefined' && window.DevMode === true);
-  mmGithubWorkerRow.style.display = enabled ? '' : 'none';
+  if (mmGithubWorkerRow) mmGithubWorkerRow.style.display = enabled ? '' : 'none';
+  if (mmCatboxRow) mmCatboxRow.style.display = enabled ? '' : 'none';
 }
 
 if (typeof window !== 'undefined') {
   window.addEventListener('rsp:dev-mode-changed', (event) => {
     const enabled = event && event.detail && event.detail.enabled === true;
-    updateGithubWorkerRowVisibility(enabled);
+    updateDevModeRowsVisibility(enabled);
+  });
+
+  window.addEventListener('rsp:catbox-default-updated', (event) => {
+    try {
+      const detail = event && event.detail ? event.detail : {};
+      const previous = (typeof detail.previous === 'string') ? detail.previous.trim() : '';
+      const nextDefault = defaultCatboxUploadUrl();
+
+      if (mmCatboxUrlInput) {
+        const currentVal = (mmCatboxUrlInput.value || '').trim();
+        if (!currentVal || (previous && currentVal === previous)) {
+          mmCatboxUrlInput.value = nextDefault;
+        }
+      }
+
+      const currentSettings = loadUploadSettings();
+      const storedUrl = (currentSettings.catboxUploadUrl || '').trim();
+      const useProxy = detail && detail.meta && detail.meta.source === 'proxy';
+
+      if (useProxy && (!storedUrl || (previous && storedUrl === previous))) {
+        saveSettingsPartial({ catboxUploadUrl: '' });
+      }
+    } catch (err) {
+      console.error('[Creator] Failed to react to Catbox default update', err);
+    }
   });
 }
 
@@ -96,7 +158,8 @@ if (mmBtn && mmPanel && mmAnonToggle && mmUserhashRow && mmUserhashInput && mmSa
   mmUserhashRow.style.display = st.anonymous ? 'none' : '';
   if (mmGithubWorkerUrlInput) mmGithubWorkerUrlInput.value = st.githubWorkerUrl || SETTINGS_DEFAULT_GITHUB_WORKER_URL;
   if (mmGithubTokenInput) mmGithubTokenInput.value = st.githubToken || '';
-  updateGithubWorkerRowVisibility();
+  if (mmCatboxUrlInput) mmCatboxUrlInput.value = st.catboxUploadUrl || defaultCatboxUploadUrl();
+  updateDevModeRowsVisibility();
   if (mmModeAnime && mmModeManga) {
     const mode = (st.libraryMode === 'manga') ? 'manga' : 'anime';
     mmModeAnime.checked = (mode === 'anime');
@@ -131,7 +194,7 @@ if (mmBtn && mmPanel && mmAnonToggle && mmUserhashRow && mmUserhashInput && mmSa
 
   mmBtn.addEventListener('click', () => {
     mmPanel.style.display = 'flex';
-    updateGithubWorkerRowVisibility();
+    updateDevModeRowsVisibility();
   });
   mmCloseBtn.addEventListener('click', () => { mmPanel.style.display = 'none'; });
   mmPanel.addEventListener('click', (e)=>{ if(e.target===mmPanel) mmPanel.style.display='none'; });
@@ -152,7 +215,8 @@ if (mmBtn && mmPanel && mmAnonToggle && mmUserhashRow && mmUserhashInput && mmSa
       cbzExpandManual: mmCbzExpandManual ? !!mmCbzExpandManual.checked : true,
       compressPosters: mmPosterCompressToggle ? !!mmPosterCompressToggle.checked : true,
       githubWorkerUrl: mmGithubWorkerUrlInput ? mmGithubWorkerUrlInput.value.trim() : '',
-      githubToken: mmGithubTokenInput ? mmGithubTokenInput.value.trim() : ''
+      githubToken: mmGithubTokenInput ? mmGithubTokenInput.value.trim() : '',
+      catboxUploadUrl: mmCatboxUrlInput ? mmCatboxUrlInput.value.trim() : ''
     };
     saveUploadSettings(saved);
     try { window.dispatchEvent(new CustomEvent('mm_settings_saved', { detail: saved })); } catch {}
@@ -189,11 +253,13 @@ async function mm_sendTestJson() {
     const blob = new Blob([json], { type: 'application/json' });
     const file = new File([blob], `mm_test_${Date.now()}.json`, { type: 'application/json' });
 
+    const catboxUrl = (typeof st.catboxUploadUrl === 'string' && st.catboxUploadUrl.trim()) ? st.catboxUploadUrl.trim() : defaultCatboxUploadUrl();
+
     const url = await (window.uploadToCatboxWithProgress ? uploadToCatboxWithProgress(file) : (async () => {
       const fd = new FormData();
       fd.append('reqtype', 'fileupload');
       fd.append('fileToUpload', file);
-      const res = await fetch('https://catbox.moe/user/api.php', { method: 'POST', body: fd });
+      const res = await fetch(catboxUrl, { method: 'POST', body: fd });
       if (!res.ok) throw new Error('Upload error: ' + res.status);
       return (await res.text()).trim();
     })());

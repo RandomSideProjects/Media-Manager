@@ -50,6 +50,83 @@ function showHostFailure(container, codeText) {
   }
 }
 
+const CATBOX_DIRECT_UPLOAD_URL = 'https://catbox.moe/user/api.php';
+const CATBOX_PROXY_UPLOAD_URL = 'https://catbox-proxy.littlehacker303.workers.dev/user/api.php';
+
+async function performUploadProbe(targetUrl, options = {}) {
+  try {
+    const blob = new Blob(['Upload Test'], { type: 'text/plain' });
+    const file = new File([blob], 'UploadTestFile.txt', { type: 'text/plain' });
+    const form = new FormData();
+    form.append('reqtype', 'fileupload');
+    form.append('fileToUpload', file);
+
+    const response = await fetch(targetUrl, {
+      method: 'POST',
+      body: form,
+      credentials: 'omit'
+    });
+
+    if (!response || !response.ok) {
+      console.warn('[Creator] Upload probe received non-OK response', { targetUrl, status: response ? response.status : 'no-response' });
+      return false;
+    }
+
+    const text = await response.text();
+    const trimmed = typeof text === 'string' ? text.trim() : '';
+    const ok = trimmed.length > 0;
+
+    console.info('[Creator] Upload probe result', { targetUrl, ok, status: response.status, body: trimmed.slice(0, 120) });
+
+    if (!ok && options.onSoftFail) {
+      options.onSoftFail(trimmed);
+    }
+    return ok;
+  } catch (err) {
+    if (options.onError) options.onError(err);
+    console.error('[Creator] Upload probe error', { targetUrl, error: err });
+    return false;
+  }
+}
+
+async function probeCatboxUpload() {
+  let lastError = null;
+  let lastResponse = '';
+  const directOk = await performUploadProbe(CATBOX_DIRECT_UPLOAD_URL, {
+    onSoftFail: (body) => { lastResponse = body; },
+    onError: (err) => { lastError = err; }
+  });
+  return { ok: directOk, error: lastError, body: lastResponse };
+}
+
+function applyCatboxDefault(url, meta) {
+  try {
+    const clean = (typeof url === 'string' && url.trim()) ? url.trim() : CATBOX_DIRECT_UPLOAD_URL;
+    const previous = (typeof window !== 'undefined' && typeof window.MM_DEFAULT_CATBOX_UPLOAD_URL === 'string')
+      ? window.MM_DEFAULT_CATBOX_UPLOAD_URL
+      : undefined;
+    window.MM_DEFAULT_CATBOX_UPLOAD_URL = clean;
+    window.dispatchEvent(new CustomEvent('rsp:catbox-default-updated', { detail: { url: clean, previous, meta } }));
+  } catch (err) {
+    console.error('[Creator] Failed to apply Catbox default URL', err);
+  }
+}
+
+async function determineCatboxUploadEndpoint() {
+  return { endpoint: 'pending' };
+}
+
+function logCatboxUnavailable(info) {
+  const parts = ['[Creator] Catbox uploads unavailable.'];
+  try {
+    const directErr = info && info.directResult && (info.directResult.error || info.directResult.body);
+    const proxyErr = info && info.proxyResult && (info.proxyResult.error || info.proxyResult.body);
+    if (directErr) parts.push(`Direct: ${directErr instanceof Error ? directErr.message : String(directErr)}`);
+    if (proxyErr) parts.push(`Proxy: ${proxyErr instanceof Error ? proxyErr.message : String(proxyErr)}`);
+  } catch {}
+  console.error(parts.join(' '));
+}
+
 async function checkHostAndLoadCreator() {
   const container = document.querySelector('.container') || document.body;
   // Create status box (hidden until success)
@@ -108,12 +185,78 @@ async function checkHostAndLoadCreator() {
     return;
   }
 
+  let endpointInfo = { endpoint: 'direct' };
+  let directResult = null;
+  let proxySuccess = false;
+  let proxyError = null;
+  let proxyBody = '';
+
+  try {
+    directResult = await probeCatboxUpload();
+    if (directResult && directResult.ok) {
+      applyCatboxDefault(CATBOX_DIRECT_UPLOAD_URL, { source: 'direct' });
+      endpointInfo = { endpoint: 'direct', directResult };
+    } else {
+      const proxyOk = await performUploadProbe(CATBOX_PROXY_UPLOAD_URL, {
+        onSoftFail: (body) => { proxyBody = body; },
+        onError: (err) => { proxyError = err; }
+      });
+      proxySuccess = proxyOk;
+
+      if (proxyOk) {
+        applyCatboxDefault(CATBOX_PROXY_UPLOAD_URL, { source: 'proxy', directResult });
+        endpointInfo = {
+          endpoint: 'proxy',
+          directResult,
+          proxyResult: { ok: true }
+        };
+      } else {
+        endpointInfo = {
+          endpoint: 'unavailable',
+          directResult,
+          proxyResult: { ok: false, error: proxyError, body: proxyBody }
+        };
+      }
+    }
+  } catch (err) {
+    console.warn('[Creator] Catbox endpoint probe failed', err);
+    endpointInfo = {
+      endpoint: 'unavailable',
+      directResult,
+      proxyResult: { ok: false, error: err }
+    };
+  }
+
+  if (endpointInfo.endpoint === 'unavailable') {
+    applyCatboxDefault(CATBOX_PROXY_UPLOAD_URL, {
+      source: 'unavailable',
+      directResult,
+      proxyResult: { ok: false, error: proxyError, body: proxyBody }
+    });
+  }
+
   // Success path: show status code box and continue
   stop();
-  statusBox.textContent = `Server status code\n${resp.status}`;
+  if (endpointInfo.endpoint === 'unavailable') {
+    stop();
+    logCatboxUnavailable(endpointInfo);
+    showHostFailure(container, 'both upload methods failed, creator may not work as intended');
+    return;
+  }
+
+  stop();
+  statusBox.textContent = `Server status code\n${resp.status}\nCatbox uploads via: ${endpointInfo.endpoint}`;
   statusBox.style.display = 'block';
+
+  try {
+    window.MM_BLOCKED = false;
+    if (typeof startAutoUploadPolling === 'function') {
+      startAutoUploadPolling();
+    }
+  } catch (err) {
+    console.warn('[Creator] Failed to enable auto-upload polling', err);
+  }
 }
 
 // Run on load
 checkHostAndLoadCreator();
-
