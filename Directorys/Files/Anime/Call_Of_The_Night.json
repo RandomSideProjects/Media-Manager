@@ -1,7 +1,7 @@
 {
   "title": "Call Of The Night",
   "Image": "https://files.catbox.moe/xctgbl.webp",
-  "LatestTime": "2025-09-30T04:39:41.308Z",
+  "LatestTime": "2025-10-01T03:00:27.361Z",
   "categories": [
     {
       "category": "Season 1",
@@ -100,10 +100,22 @@
           "src": "https://files.catbox.moe/0ttkh0.mp4",
           "fileSizeBytes": 186598225,
           "durationSeconds": 1377
+        },
+        {
+          "title": "Episode 3",
+          "src": "https://files.catbox.moe/6814h6.mp4",
+          "fileSizeBytes": 186727457,
+          "durationSeconds": 1377
+        },
+        {
+          "title": "Episode 4",
+          "src": "https://files.catbox.moe/pusieu.mp4",
+          "fileSizeBytes": 186949066,
+          "durationSeconds": 1377
         }
       ]
     }
   ],
-  "totalFileSizeBytes": 1802171985,
-  "totalDurationSeconds": 20939
+  "totalFileSizeBytes": 2175848508,
+  "totalDurationSeconds": 23693
 }
