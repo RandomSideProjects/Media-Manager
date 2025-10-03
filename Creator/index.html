@@ -17,8 +17,14 @@
     <button id="mmUploadSettingsBtn" class="settings-button">⚙️</button>
     <h1>Directory Creator</h1>
     <div class="field-group" id="loadUrlContainer">
-      <label for="loadUrl">Load Directory URL:</label><br/>
-      <input type="text" id="loadUrl" placeholder="Enter JSON URL"/>
+      <label for="loadUrl">Load Directory:</label><br/>
+      <div class="load-input-row">
+        <input type="text" id="loadUrl" placeholder="Enter JSON URL"/>
+        <span class="load-separator">or</span>
+        <button id="loadFileBtn" type="button">Select File</button>
+        <input type="file" id="loadFileInput" accept="application/json" style="display:none;"/>
+      </div>
+      <div id="loadFileName" class="load-filename"></div>
       <button id="loadBtn" type="button">Load</button>
     </div>
     <div class="field-group">

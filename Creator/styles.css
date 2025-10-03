@@ -290,7 +290,38 @@ pre {
   justify-content: center;
 }
 /* Hide URL loader by default; shown only in Edit tab via JS */
-#loadUrlContainer { display: none; }
+#loadUrlContainer {
+  display: none;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.6em;
+}
+#loadUrlContainer label {
+  flex-basis: 100%;
+}
+#loadUrlContainer input[type="text"] {
+  flex: 1 1 240px;
+  min-width: 220px;
+}
+.load-input-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  width: 100%;
+}
+.load-input-row button {
+  white-space: nowrap;
+}
+.load-separator {
+  color: #9ecbff;
+  opacity: 0.8;
+  font-size: 0.9em;
+}
+.load-filename {
+  font-size: 0.85em;
+  color: #9ecbff;
+  min-height: 1em;
+}
 /* Server status badge */
 #serverStatusBox {
   position: fixed;

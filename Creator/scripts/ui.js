@@ -12,6 +12,9 @@ const posterChangeBtn = document.getElementById('posterChangeBtn');
 const addCategoryBtn = document.getElementById('addCategory');
 const outputEl = document.getElementById('output');
 const loadUrlInput = document.getElementById('loadUrl');
+const loadFileInput = document.getElementById('loadFileInput');
+const loadFileBtn = document.getElementById('loadFileBtn');
+const loadFileName = document.getElementById('loadFileName');
 const createTabBtn = document.getElementById('createTabBtn');
 const editTabBtn = document.getElementById('editTabBtn');
 const loadUrlContainer = document.getElementById('loadUrlContainer');
@@ -36,6 +39,41 @@ function updateCategoryButtonVisibility(){
     addCategoryBtn.disabled = false;
     addCategoryBtn.style.opacity = '';
   } catch {}
+}
+
+let pendingLoadFile = null;
+
+function truncateFileName(name) {
+  if (typeof name !== 'string') return '';
+  const maxLength = 32;
+  if (name.length <= maxLength) return name;
+  const extIndex = name.lastIndexOf('.');
+  if (extIndex > 0 && name.length - extIndex <= 6) {
+    const base = name.slice(0, maxLength - (name.length - extIndex) - 3);
+    return `${base}...${name.slice(extIndex)}`;
+  }
+  return `${name.slice(0, maxLength - 3)}...`;
+}
+
+function updateLoadFileSummary() {
+  if (loadFileBtn) loadFileBtn.textContent = pendingLoadFile ? 'Change File' : 'Select File';
+  if (loadFileName) {
+    if (pendingLoadFile) {
+      loadFileName.textContent = `Selected file: ${truncateFileName(pendingLoadFile.name || '')} (click to clear)`;
+      loadFileName.style.cursor = 'pointer';
+      loadFileName.title = 'Click to clear the selected file.';
+    } else {
+      loadFileName.textContent = '';
+      loadFileName.style.cursor = 'default';
+      loadFileName.removeAttribute('title');
+    }
+  }
+}
+
+function clearPendingLoadFile() {
+  pendingLoadFile = null;
+  if (loadFileInput) loadFileInput.value = '';
+  updateLoadFileSummary();
 }
 
 function createDragHandle(kind) {
@@ -861,9 +899,51 @@ function addEpisode(container, data) {
   container.appendChild(epDiv);
 }
 
-async function loadDirectory() {
-  const url = loadUrlInput.value.trim();
-  if (!url) return;
+function applyDirectoryJson(json) {
+  if (!json || typeof json !== 'object' || Array.isArray(json)) {
+    throw new Error('JSON payload must be an object');
+  }
+  const categoriesData = Array.isArray(json.categories) ? json.categories : [];
+  posterImageUrl = (json.Image && json.Image !== 'N/A') ? json.Image : '';
+  if (posterImageUrl) {
+    setPosterPreviewSource(posterImageUrl, { isBlob: false });
+    if (posterWrapper) posterWrapper.style.display = 'inline-block';
+    if (posterInput) posterInput.style.display = 'none';
+  } else {
+    setPosterPreviewSource('', { isBlob: false });
+    if (posterWrapper) posterWrapper.style.display = 'none';
+    if (posterInput) posterInput.style.display = 'inline-block';
+  }
+  if (posterChangeBtn) posterChangeBtn.style.display = posterImageUrl ? 'inline-block' : 'none';
+  if (posterStatus) {
+    posterStatus.style.display = 'none';
+    posterStatus.style.color = '#9ecbff';
+    posterStatus.textContent = 'Uploading image…';
+  }
+  const titleInput = document.getElementById('dirTitle');
+  if (titleInput) titleInput.value = json.title || '';
+  if (categoriesEl) {
+    categoriesEl.innerHTML = '';
+    categoriesData.forEach(cat => addCategory(cat));
+  }
+  githubUploadUrl = '';
+  updateOutput();
+  const contentOnly = {
+    title: json.title || '',
+    Image: posterImageUrl || 'N/A',
+    categories: categoriesData
+  };
+  try { window.lastContent = JSON.stringify(contentOnly); } catch {}
+  if (outputEl) outputEl.textContent = '';
+  clearPendingLoadFile();
+}
+
+async function loadDirectory(urlOverride) {
+  const url = (typeof urlOverride === 'string' && urlOverride.trim()) ? urlOverride.trim() : (loadUrlInput ? loadUrlInput.value.trim() : '');
+  if (!url) {
+    if (outputEl) outputEl.textContent = 'Enter a URL or select a file to load.';
+    return false;
+  }
   try {
     const res = await fetch(url, { cache: 'no-store' });
     if (!res || (!res.ok && res.status !== 0)) {
@@ -876,31 +956,61 @@ async function loadDirectory() {
     } catch (err) {
       throw new Error(`Failed to parse JSON (${err && err.message ? err.message : err})`);
     }
-    posterImageUrl = (json.Image && json.Image !== 'N/A') ? json.Image : '';
-    if (posterImageUrl) {
-      setPosterPreviewSource(posterImageUrl, { isBlob: false });
-      if (posterWrapper) posterWrapper.style.display = 'inline-block';
-      if (posterInput) posterInput.style.display = 'none';
-    } else {
-      setPosterPreviewSource('', { isBlob: false });
-      if (posterWrapper) posterWrapper.style.display = 'none';
-      if (posterInput) posterInput.style.display = 'inline-block';
-    }
-    if (posterChangeBtn) posterChangeBtn.style.display = posterImageUrl ? 'inline-block' : 'none';
-    if (posterStatus) { posterStatus.style.display = 'none'; posterStatus.style.color = '#9ecbff'; posterStatus.textContent = 'Uploading image…'; }
-    document.getElementById('dirTitle').value = json.title || '';
-    categoriesEl.innerHTML = '';
-    json.categories.forEach(cat => addCategory(cat));
-    githubUploadUrl = '';
-    updateOutput();
-    const contentOnly = { title: json.title || '', Image: posterImageUrl || 'N/A', categories: json.categories || [] };
-    try { window.lastContent = JSON.stringify(contentOnly); } catch {}
+    applyDirectoryJson(json);
+    return true;
   } catch (err) {
-    outputEl.textContent = 'Failed to load: ' + err.message;
+    if (outputEl) outputEl.textContent = 'Failed to load: ' + err.message;
+    return false;
   }
 }
 const loadBtn = document.getElementById('loadBtn');
-loadBtn.addEventListener('click', loadDirectory);
+
+async function loadDirectoryFromFile(file) {
+  if (!file) return;
+  try {
+    const text = await file.text();
+    let json;
+    try {
+      json = JSON.parse(text);
+    } catch (err) {
+      throw new Error(`Failed to parse JSON (${err && err.message ? err.message : err})`);
+    }
+    applyDirectoryJson(json);
+    if (loadUrlInput) loadUrlInput.value = '';
+  } catch (err) {
+    if (outputEl) outputEl.textContent = 'Failed to load: ' + err.message;
+  }
+}
+
+if (loadFileBtn && loadFileInput) {
+  loadFileBtn.addEventListener('click', () => {
+    loadFileInput.click();
+  });
+  loadFileInput.addEventListener('change', () => {
+    const file = loadFileInput.files && loadFileInput.files[0];
+    pendingLoadFile = file || null;
+    updateLoadFileSummary();
+  });
+}
+
+if (loadFileName) {
+  loadFileName.addEventListener('click', () => {
+    if (!pendingLoadFile) return;
+    clearPendingLoadFile();
+  });
+}
+
+if (loadBtn) {
+  loadBtn.addEventListener('click', async () => {
+    if (pendingLoadFile) {
+      await loadDirectoryFromFile(pendingLoadFile);
+    } else {
+      await loadDirectory();
+    }
+  });
+}
+
+updateLoadFileSummary();
 
 // Button handlers
 addCategoryBtn.addEventListener('click', () => addCategory());
@@ -924,6 +1034,7 @@ window.addEventListener('mm_settings_saved', (e) => {
       if (posterInput) { posterInput.value = ''; }
       if (posterStatus) { posterStatus.style.display = 'none'; posterStatus.style.color = '#9ecbff'; posterStatus.textContent = 'Uploading image…'; }
       if (posterChangeBtn) posterChangeBtn.style.display = 'none';
+      clearPendingLoadFile();
     } catch {}
   }
 });
@@ -964,6 +1075,7 @@ createTabBtn.addEventListener('click', () => {
   if (posterInput) { posterInput.value = ''; }
   if (posterStatus) { posterStatus.style.display = 'none'; posterStatus.style.color = '#9ecbff'; posterStatus.textContent = 'Uploading image…'; }
   if (posterChangeBtn) posterChangeBtn.style.display = 'none';
+  clearPendingLoadFile();
 });
 editTabBtn.addEventListener('click', () => {
   editTabBtn.classList.add('active');
@@ -979,6 +1091,7 @@ editTabBtn.addEventListener('click', () => {
   if (posterInput) { posterInput.value = ''; }
   if (posterStatus) { posterStatus.style.display = 'none'; posterStatus.style.color = '#9ecbff'; posterStatus.textContent = 'Uploading image…'; }
   if (posterChangeBtn) posterChangeBtn.style.display = 'none';
+  clearPendingLoadFile();
 });
 
 homeTabBtn.addEventListener('click', () => { window.location.href = '../index.html'; });
