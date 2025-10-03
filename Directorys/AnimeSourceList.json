@@ -101,16 +101,6 @@
       "LatestTime": "2025-10-03T03:05:29.150Z"
     },
     {
-      "file": "MIkadono.json",
-      "path": "./Files/Anime/MIkadono.json",
-      "title": "Dealing With Mikadono Sisters Is A Breeze",
-      "poster": "./Posters/Anime/Dealing_With_Mikadono_Sisters_Is_A_Breeze.webp",
-      "categoryCount": 1,
-      "episodeCount": 10,
-      "totalFileSizeBytes": 1671113997,
-      "LatestTime": "2025-09-24T21:40:43.000Z"
-    },
-    {
       "file": "Failure_Frame.json",
       "path": "./Files/Anime/Failure_Frame.json",
       "title": "Failure Frame",
