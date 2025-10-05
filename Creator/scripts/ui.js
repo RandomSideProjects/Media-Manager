@@ -167,7 +167,7 @@ let githubUploadUrl = '';
 let isGithubUploadInFlight = false;
 let posterPreviewObjectUrl = '';
 const UI_DEFAULT_GITHUB_WORKER_URL = (typeof window !== 'undefined' && typeof window.MM_DEFAULT_GITHUB_WORKER_URL === 'string') ? window.MM_DEFAULT_GITHUB_WORKER_URL : '';
-const LEGACY_GITHUB_WORKER_ROOT = 'https://mmback.littlehacker303.workers.dev';
+const LEGACY_GITHUB_WORKER_ROOT = 'https://mmback.littlehacker303.workers.dev/gh';
 const githubUploadComboKeys = new Set(['g', 'h']);
 let githubUploadSequence = [];
 const resetGithubUploadSequence = () => { githubUploadSequence = []; };
@@ -208,9 +208,12 @@ function getUploadSettingsSafe() {
 function normalizeGithubWorkerUrlValue(raw) {
   const trimmed = (typeof raw === 'string') ? raw.trim() : '';
   if (!trimmed) return '';
-  const withoutTrailingSlash = trimmed.endsWith('/') ? trimmed.slice(0, -1) : trimmed;
+  const withoutTrailingSlash = trimmed.replace(/\/+$/, '');
   if (withoutTrailingSlash === LEGACY_GITHUB_WORKER_ROOT) {
-    return `${LEGACY_GITHUB_WORKER_ROOT}/gh`;
+    return 'https://mmback.littlehacker303.workers.dev';
+  }
+  if (withoutTrailingSlash === 'https://mmback.littlehacker303.workers.dev') {
+    return withoutTrailingSlash;
   }
   return trimmed;
 }

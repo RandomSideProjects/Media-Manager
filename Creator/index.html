@@ -123,10 +123,17 @@
         <label for="mmCatboxUploadUrl">Catbox Upload URL (Dev Mode)</label>
         <input id="mmCatboxUploadUrl" class="mm-input" type="url" placeholder="https://catbox.moe/user/api.php">
         <small>Override when testing against a proxy (defaults to the Catbox API).</small>
+        <label for="mmCatboxMode" style="margin-top:.4em;">Catbox Mode Override (Dev Mode)</label>
+        <select id="mmCatboxMode" class="mm-input">
+          <option value="auto">Auto (use health check)</option>
+          <option value="direct">Force direct to Catbox</option>
+          <option value="proxy">Force worker proxy</option>
+        </select>
+        <small>Select a mode to bypass automatic Catbox server selection while debugging.</small>
       </div>
       <div id="mmGithubWorkerRow" class="mm-settings-row" style="flex-direction:column; align-items:stretch; gap:.3em;">
         <label for="mmGithubWorkerUrl">GitHub Worker URL (Dev Mode)</label>
-        <input id="mmGithubWorkerUrl" class="mm-input" type="url" placeholder="https://mmback.littlehacker303.workers.dev/gh">
+        <input id="mmGithubWorkerUrl" class="mm-input" type="url" placeholder="https://mmback.littlehacker303.workers.dev">
         <label for="mmGithubToken">GitHub Token (Dev Mode)</label>
         <input id="mmGithubToken" class="mm-input" type="password" autocomplete="off" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
         <small>Press G + H in Dev Mode to upload via the Worker. The token is sent with each upload.</small>

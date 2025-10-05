@@ -4,8 +4,9 @@
 const DEFAULT_USERHASH = '2cdcc7754c86c2871ed2bde9d';
 const LS_SETTINGS_KEY = 'mm_upload_settings';
 const SETTINGS_DEFAULT_GITHUB_WORKER_URL = (typeof window !== 'undefined' && typeof window.MM_DEFAULT_GITHUB_WORKER_URL === 'string') ? window.MM_DEFAULT_GITHUB_WORKER_URL : '';
-const SETTINGS_LEGACY_GITHUB_WORKER_ROOT = 'https://mmback.littlehacker303.workers.dev';
+const SETTINGS_LEGACY_GITHUB_WORKER_ROOT = 'https://mmback.littlehacker303.workers.dev/gh';
 const SETTINGS_CATBOX_DIRECT_UPLOAD_URL = 'https://catbox.moe/user/api.php';
+const SETTINGS_CATBOX_PROXY_UPLOAD_URL = 'https://catbox-proxy.littlehacker303.workers.dev/user/api.php';
 
 function getActiveCatboxDefault() {
   if (typeof window !== 'undefined') {
@@ -20,9 +21,12 @@ function getActiveCatboxDefault() {
 function normalizeGithubWorkerUrlValue(raw) {
   const trimmed = (typeof raw === 'string') ? raw.trim() : '';
   if (!trimmed) return '';
-  const withoutTrailingSlash = trimmed.endsWith('/') ? trimmed.slice(0, -1) : trimmed;
+  const withoutTrailingSlash = trimmed.replace(/\/+$/, '');
   if (withoutTrailingSlash === SETTINGS_LEGACY_GITHUB_WORKER_ROOT) {
-    return `${SETTINGS_LEGACY_GITHUB_WORKER_ROOT}/gh`;
+    return 'https://mmback.littlehacker303.workers.dev';
+  }
+  if (withoutTrailingSlash === 'https://mmback.littlehacker303.workers.dev') {
+    return withoutTrailingSlash;
   }
   return trimmed;
 }
@@ -31,16 +35,38 @@ function defaultCatboxUploadUrl() {
   return getActiveCatboxDefault();
 }
 
+function normalizeCatboxOverrideMode(value) {
+  const trimmed = (typeof value === 'string') ? value.trim().toLowerCase() : '';
+  if (trimmed === 'direct' || trimmed === 'proxy') return trimmed;
+  return 'auto';
+}
+
+function applyCatboxOverrideMode(mode) {
+  const normalized = normalizeCatboxOverrideMode(mode);
+  if (typeof window !== 'undefined') {
+    window.MM_CATBOX_OVERRIDE_MODE = normalized;
+    if (normalized === 'direct') {
+      window.MM_ACTIVE_CATBOX_UPLOAD_URL = SETTINGS_CATBOX_DIRECT_UPLOAD_URL;
+    } else if (normalized === 'proxy') {
+      window.MM_ACTIVE_CATBOX_UPLOAD_URL = SETTINGS_CATBOX_PROXY_UPLOAD_URL;
+    }
+  }
+  return normalized;
+}
+
 function loadUploadSettings(){
   try {
     const raw = localStorage.getItem(LS_SETTINGS_KEY);
     if (!raw) {
-      return {
+      const initial = {
         anonymous: true,
         userhash: '',
         githubWorkerUrl: normalizeGithubWorkerUrlValue(SETTINGS_DEFAULT_GITHUB_WORKER_URL),
-        catboxUploadUrl: defaultCatboxUploadUrl()
+        catboxUploadUrl: defaultCatboxUploadUrl(),
+        catboxOverrideMode: 'auto'
       };
+      applyCatboxOverrideMode(initial.catboxOverrideMode);
+      return initial;
     }
     const p = JSON.parse(raw);
     const compress = (typeof p.compressPosters === 'boolean') ? p.compressPosters : (typeof p.posterCompress === 'boolean' ? p.posterCompress : true);
@@ -57,23 +83,33 @@ function loadUploadSettings(){
       compressPosters: compress,
       githubWorkerUrl: normalizedGithubUrl,
       githubToken: (typeof p.githubToken === 'string') ? p.githubToken : '',
-      catboxUploadUrl: (typeof p.catboxUploadUrl === 'string' && p.catboxUploadUrl.trim()) ? p.catboxUploadUrl.trim() : defaultCatboxUploadUrl()
+      catboxUploadUrl: (typeof p.catboxUploadUrl === 'string' && p.catboxUploadUrl.trim()) ? p.catboxUploadUrl.trim() : defaultCatboxUploadUrl(),
+      catboxOverrideMode: normalizeCatboxOverrideMode(p.catboxOverrideMode)
     };
+    if (result.catboxOverrideMode === 'auto' && result.catboxUploadUrl === SETTINGS_CATBOX_PROXY_UPLOAD_URL) {
+      result.catboxUploadUrl = defaultCatboxUploadUrl();
+      saveUploadSettings(result);
+    }
+    applyCatboxOverrideMode(result.catboxOverrideMode);
     if (storedGithubRaw && normalizedGithubUrl && normalizedGithubUrl !== storedGithubRaw) {
       saveUploadSettings(result);
     }
     return result;
   } catch {
-    return {
+    const fallback = {
       anonymous: true,
       userhash: '',
       githubWorkerUrl: normalizeGithubWorkerUrlValue(SETTINGS_DEFAULT_GITHUB_WORKER_URL),
       githubToken: '',
-      catboxUploadUrl: defaultCatboxUploadUrl()
+      catboxUploadUrl: defaultCatboxUploadUrl(),
+      catboxOverrideMode: 'auto'
     };
+    applyCatboxOverrideMode(fallback.catboxOverrideMode);
+    return fallback;
   }
 }
 function saveUploadSettings(s){
+  const normalizedMode = normalizeCatboxOverrideMode(s.catboxOverrideMode);
   localStorage.setItem(LS_SETTINGS_KEY, JSON.stringify({
     anonymous: !!s.anonymous,
     userhash: (s.userhash||'').trim(),
@@ -85,8 +121,10 @@ function saveUploadSettings(s){
     compressPosters: (typeof s.compressPosters === 'boolean') ? s.compressPosters : true,
     githubWorkerUrl: normalizeGithubWorkerUrlValue((typeof s.githubWorkerUrl === 'string') ? s.githubWorkerUrl.trim() : ''),
     githubToken: (typeof s.githubToken === 'string') ? s.githubToken.trim() : '',
-    catboxUploadUrl: (typeof s.catboxUploadUrl === 'string') ? s.catboxUploadUrl.trim() : ''
+    catboxUploadUrl: (typeof s.catboxUploadUrl === 'string') ? s.catboxUploadUrl.trim() : '',
+    catboxOverrideMode: normalizedMode
   }));
+  applyCatboxOverrideMode(normalizedMode);
 }
 
 function saveSettingsPartial(partial) {
@@ -126,6 +164,7 @@ const mmGithubWorkerUrlInput = document.getElementById('mmGithubWorkerUrl');
 const mmGithubTokenInput = document.getElementById('mmGithubToken');
 const mmCatboxRow = document.getElementById('mmCatboxRow');
 const mmCatboxUrlInput = document.getElementById('mmCatboxUploadUrl');
+const mmCatboxModeSelect = document.getElementById('mmCatboxMode');
 // CBZ expansion controls
 const mmCbzSection = document.getElementById('mmCbzSection');
 const mmCbzExpandToggle = document.getElementById('mmCbzExpandToggle');
@@ -183,6 +222,7 @@ if (mmBtn && mmPanel && mmAnonToggle && mmUserhashRow && mmUserhashInput && mmSa
   if (mmGithubWorkerUrlInput) mmGithubWorkerUrlInput.value = st.githubWorkerUrl || SETTINGS_DEFAULT_GITHUB_WORKER_URL;
   if (mmGithubTokenInput) mmGithubTokenInput.value = st.githubToken || '';
   if (mmCatboxUrlInput) mmCatboxUrlInput.value = st.catboxUploadUrl || defaultCatboxUploadUrl();
+  if (mmCatboxModeSelect) mmCatboxModeSelect.value = st.catboxOverrideMode || 'auto';
   updateDevModeRowsVisibility();
   if (mmModeAnime && mmModeManga) {
     const mode = (st.libraryMode === 'manga') ? 'manga' : 'anime';
@@ -240,7 +280,8 @@ if (mmBtn && mmPanel && mmAnonToggle && mmUserhashRow && mmUserhashInput && mmSa
       compressPosters: mmPosterCompressToggle ? !!mmPosterCompressToggle.checked : true,
       githubWorkerUrl: mmGithubWorkerUrlInput ? mmGithubWorkerUrlInput.value.trim() : '',
       githubToken: mmGithubTokenInput ? mmGithubTokenInput.value.trim() : '',
-      catboxUploadUrl: mmCatboxUrlInput ? mmCatboxUrlInput.value.trim() : ''
+      catboxUploadUrl: mmCatboxUrlInput ? mmCatboxUrlInput.value.trim() : '',
+      catboxOverrideMode: mmCatboxModeSelect ? mmCatboxModeSelect.value : 'auto'
     };
     saveUploadSettings(saved);
     try { window.dispatchEvent(new CustomEvent('mm_settings_saved', { detail: saved })); } catch {}
@@ -252,6 +293,16 @@ if (mmGithubTokenInput) {
   const commitToken = () => { saveSettingsPartial({ githubToken: mmGithubTokenInput.value.trim() }); };
   mmGithubTokenInput.addEventListener('change', commitToken);
   mmGithubTokenInput.addEventListener('blur', commitToken);
+}
+
+if (mmCatboxModeSelect) {
+  mmCatboxModeSelect.addEventListener('change', () => {
+    const normalized = applyCatboxOverrideMode(mmCatboxModeSelect.value);
+    if (mmCatboxModeSelect.value !== normalized) {
+      mmCatboxModeSelect.value = normalized;
+    }
+    saveSettingsPartial({ catboxOverrideMode: normalized });
+  });
 }
 
 // Test JSON sender + 'Q' hotkey

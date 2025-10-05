@@ -51,7 +51,35 @@ function showHostFailure(container, codeText) {
 }
 
 const CATBOX_DIRECT_UPLOAD_URL = 'https://catbox.moe/user/api.php';
-const CATBOX_PROXY_UPLOAD_URL = 'https://mmback.littlehacker303.workers.dev/upload-catbox/user/api.php';
+const CATBOX_PROXY_UPLOAD_URL = 'https://catbox-proxy.littlehacker303.workers.dev/user/api.php';
+
+if (typeof window !== 'undefined') {
+  window.MM_PROXY_CATBOX_UPLOAD_URL = CATBOX_PROXY_UPLOAD_URL;
+}
+
+(function bootstrapCatboxOverride() {
+  if (typeof window === 'undefined') return;
+  if (typeof window.MM_CATBOX_OVERRIDE_MODE === 'string' && window.MM_CATBOX_OVERRIDE_MODE.trim()) return;
+  try {
+    const raw = localStorage.getItem('mm_upload_settings');
+    if (!raw) return;
+    const parsed = JSON.parse(raw);
+    const mode = parsed && typeof parsed.catboxOverrideMode === 'string' ? parsed.catboxOverrideMode.trim().toLowerCase() : '';
+    if (mode === 'direct') {
+      window.MM_CATBOX_OVERRIDE_MODE = 'direct';
+      window.MM_ACTIVE_CATBOX_UPLOAD_URL = CATBOX_DIRECT_UPLOAD_URL;
+    } else if (mode === 'proxy') {
+      window.MM_CATBOX_OVERRIDE_MODE = 'proxy';
+      window.MM_ACTIVE_CATBOX_UPLOAD_URL = CATBOX_PROXY_UPLOAD_URL;
+    }
+  } catch {}
+})();
+
+function getCatboxOverrideMode() {
+  if (typeof window === 'undefined') return 'auto';
+  const raw = (window.MM_CATBOX_OVERRIDE_MODE || '').toString().trim().toLowerCase();
+  return raw === 'direct' || raw === 'proxy' ? raw : 'auto';
+}
 
 async function performUploadProbe(targetUrl, options = {}) {
   try {
@@ -101,15 +129,26 @@ async function probeCatboxUpload() {
 
 function applyCatboxDefault(url, meta) {
   try {
-    const clean = (typeof url === 'string' && url.trim()) ? url.trim() : CATBOX_DIRECT_UPLOAD_URL;
+    let clean = (typeof url === 'string' && url.trim()) ? url.trim() : CATBOX_DIRECT_UPLOAD_URL;
     const previous = (typeof window !== 'undefined' && typeof window.MM_DEFAULT_CATBOX_UPLOAD_URL === 'string')
       ? window.MM_DEFAULT_CATBOX_UPLOAD_URL
       : undefined;
+    const overrideMode = getCatboxOverrideMode();
+    const detailMeta = (meta && typeof meta === 'object') ? { ...meta } : {};
+
+    if (overrideMode === 'direct') {
+      clean = CATBOX_DIRECT_UPLOAD_URL;
+      detailMeta.override = 'direct';
+    } else if (overrideMode === 'proxy') {
+      clean = CATBOX_PROXY_UPLOAD_URL;
+      detailMeta.override = 'proxy';
+    }
+
     window.MM_DEFAULT_CATBOX_UPLOAD_URL = clean;
     if (typeof window !== 'undefined') {
       window.MM_ACTIVE_CATBOX_UPLOAD_URL = clean;
     }
-    window.dispatchEvent(new CustomEvent('rsp:catbox-default-updated', { detail: { url: clean, previous, meta } }));
+    window.dispatchEvent(new CustomEvent('rsp:catbox-default-updated', { detail: { url: clean, previous, meta: detailMeta } }));
   } catch (err) {
     console.error('[Creator] Failed to apply Catbox default URL', err);
   }
@@ -247,8 +286,16 @@ async function checkHostAndLoadCreator() {
     return;
   }
 
+  const overrideMode = getCatboxOverrideMode();
+  let endpointLabel = endpointInfo.endpoint;
+  if (overrideMode === 'direct') {
+    endpointLabel = 'direct (override)';
+  } else if (overrideMode === 'proxy') {
+    endpointLabel = 'proxy (override)';
+  }
+
   stop();
-  statusBox.textContent = `Server status code\n${resp.status}\nCatbox uploads via: ${endpointInfo.endpoint}`;
+  statusBox.textContent = `Server status code\n${resp.status}\nCatbox uploads via: ${endpointLabel}`;
   statusBox.style.display = 'block';
 
   try {
