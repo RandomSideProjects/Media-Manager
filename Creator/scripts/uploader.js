@@ -1,6 +1,18 @@
 "use strict";
 
 // Variables (top)
+const UPLOADER_CATBOX_DIRECT_UPLOAD_URL = 'https://catbox.moe/user/api.php';
+
+function getActiveCatboxDefault() {
+  if (typeof window !== 'undefined') {
+    const active = typeof window.MM_ACTIVE_CATBOX_UPLOAD_URL === 'string' ? window.MM_ACTIVE_CATBOX_UPLOAD_URL.trim() : '';
+    if (active) return active;
+    const fallback = typeof window.MM_DEFAULT_CATBOX_UPLOAD_URL === 'string' ? window.MM_DEFAULT_CATBOX_UPLOAD_URL.trim() : '';
+    if (fallback) return fallback;
+  }
+  return UPLOADER_CATBOX_DIRECT_UPLOAD_URL;
+}
+
 function normalizeCatboxUrl(raw) {
   const trimmed = (typeof raw === 'string') ? raw.trim() : '';
   if (!trimmed) {
@@ -53,16 +65,27 @@ function readUploadSettings() {
 }
 
 function defaultCatboxUploadUrl() {
-  if (typeof window !== 'undefined' && typeof window.MM_DEFAULT_CATBOX_UPLOAD_URL === 'string') {
-    const trimmed = window.MM_DEFAULT_CATBOX_UPLOAD_URL.trim();
-    if (trimmed) return trimmed;
-  }
-  return 'https://catbox.moe/user/api.php';
+  return getActiveCatboxDefault();
 }
 
 function resolveCatboxUploadUrl(settings) {
   const raw = settings && typeof settings.catboxUploadUrl === 'string' ? settings.catboxUploadUrl.trim() : '';
-  return raw || defaultCatboxUploadUrl();
+  const defaultUrl = getActiveCatboxDefault();
+  if (typeof window !== 'undefined') {
+    const forced = typeof window.MM_ACTIVE_CATBOX_UPLOAD_URL === 'string' ? window.MM_ACTIVE_CATBOX_UPLOAD_URL.trim() : '';
+    if (forced && forced !== UPLOADER_CATBOX_DIRECT_UPLOAD_URL) {
+      if (!raw || raw === UPLOADER_CATBOX_DIRECT_UPLOAD_URL || raw === forced) {
+        return forced;
+      }
+    }
+    if (forced && !raw) {
+      return forced;
+    }
+    if (!forced && !raw && defaultUrl) {
+      return defaultUrl;
+    }
+  }
+  return raw || defaultUrl;
 }
 
 // opts: { context?: 'batch'|'manual' }

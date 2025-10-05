@@ -4,13 +4,31 @@
 const DEFAULT_USERHASH = '2cdcc7754c86c2871ed2bde9d';
 const LS_SETTINGS_KEY = 'mm_upload_settings';
 const SETTINGS_DEFAULT_GITHUB_WORKER_URL = (typeof window !== 'undefined' && typeof window.MM_DEFAULT_GITHUB_WORKER_URL === 'string') ? window.MM_DEFAULT_GITHUB_WORKER_URL : '';
+const SETTINGS_LEGACY_GITHUB_WORKER_ROOT = 'https://mmback.littlehacker303.workers.dev';
+const SETTINGS_CATBOX_DIRECT_UPLOAD_URL = 'https://catbox.moe/user/api.php';
+
+function getActiveCatboxDefault() {
+  if (typeof window !== 'undefined') {
+    const active = typeof window.MM_ACTIVE_CATBOX_UPLOAD_URL === 'string' ? window.MM_ACTIVE_CATBOX_UPLOAD_URL.trim() : '';
+    if (active) return active;
+    const fallback = typeof window.MM_DEFAULT_CATBOX_UPLOAD_URL === 'string' ? window.MM_DEFAULT_CATBOX_UPLOAD_URL.trim() : '';
+    if (fallback) return fallback;
+  }
+  return SETTINGS_CATBOX_DIRECT_UPLOAD_URL;
+}
+
+function normalizeGithubWorkerUrlValue(raw) {
+  const trimmed = (typeof raw === 'string') ? raw.trim() : '';
+  if (!trimmed) return '';
+  const withoutTrailingSlash = trimmed.endsWith('/') ? trimmed.slice(0, -1) : trimmed;
+  if (withoutTrailingSlash === SETTINGS_LEGACY_GITHUB_WORKER_ROOT) {
+    return `${SETTINGS_LEGACY_GITHUB_WORKER_ROOT}/gh`;
+  }
+  return trimmed;
+}
 
 function defaultCatboxUploadUrl() {
-  if (typeof window !== 'undefined' && typeof window.MM_DEFAULT_CATBOX_UPLOAD_URL === 'string') {
-    const trimmed = window.MM_DEFAULT_CATBOX_UPLOAD_URL.trim();
-    if (trimmed) return trimmed;
-  }
-  return 'https://catbox.moe/user/api.php';
+  return getActiveCatboxDefault();
 }
 
 function loadUploadSettings(){
@@ -20,13 +38,15 @@ function loadUploadSettings(){
       return {
         anonymous: true,
         userhash: '',
-        githubWorkerUrl: SETTINGS_DEFAULT_GITHUB_WORKER_URL,
+        githubWorkerUrl: normalizeGithubWorkerUrlValue(SETTINGS_DEFAULT_GITHUB_WORKER_URL),
         catboxUploadUrl: defaultCatboxUploadUrl()
       };
     }
     const p = JSON.parse(raw);
     const compress = (typeof p.compressPosters === 'boolean') ? p.compressPosters : (typeof p.posterCompress === 'boolean' ? p.posterCompress : true);
-    return {
+    const storedGithubRaw = (typeof p.githubWorkerUrl === 'string') ? p.githubWorkerUrl.trim() : '';
+    const normalizedGithubUrl = normalizeGithubWorkerUrlValue(storedGithubRaw || SETTINGS_DEFAULT_GITHUB_WORKER_URL);
+    const result = {
       anonymous: typeof p.anonymous==='boolean' ? p.anonymous : true,
       userhash: (p.userhash||'').trim(),
       uploadConcurrency: Number.isFinite(parseInt(p.uploadConcurrency,10)) ? Math.max(1, Math.min(8, parseInt(p.uploadConcurrency,10))) : 2,
@@ -35,15 +55,19 @@ function loadUploadSettings(){
       cbzExpandBatch: (typeof p.cbzExpandBatch === 'boolean') ? p.cbzExpandBatch : true,
       cbzExpandManual: (typeof p.cbzExpandManual === 'boolean') ? p.cbzExpandManual : true,
       compressPosters: compress,
-      githubWorkerUrl: (typeof p.githubWorkerUrl === 'string' && p.githubWorkerUrl.trim()) ? p.githubWorkerUrl.trim() : SETTINGS_DEFAULT_GITHUB_WORKER_URL,
+      githubWorkerUrl: normalizedGithubUrl,
       githubToken: (typeof p.githubToken === 'string') ? p.githubToken : '',
       catboxUploadUrl: (typeof p.catboxUploadUrl === 'string' && p.catboxUploadUrl.trim()) ? p.catboxUploadUrl.trim() : defaultCatboxUploadUrl()
     };
+    if (storedGithubRaw && normalizedGithubUrl && normalizedGithubUrl !== storedGithubRaw) {
+      saveUploadSettings(result);
+    }
+    return result;
   } catch {
     return {
       anonymous: true,
       userhash: '',
-      githubWorkerUrl: SETTINGS_DEFAULT_GITHUB_WORKER_URL,
+      githubWorkerUrl: normalizeGithubWorkerUrlValue(SETTINGS_DEFAULT_GITHUB_WORKER_URL),
       githubToken: '',
       catboxUploadUrl: defaultCatboxUploadUrl()
     };
@@ -59,7 +83,7 @@ function saveUploadSettings(s){
     cbzExpandBatch: !!s.cbzExpandBatch,
     cbzExpandManual: !!s.cbzExpandManual,
     compressPosters: (typeof s.compressPosters === 'boolean') ? s.compressPosters : true,
-    githubWorkerUrl: (typeof s.githubWorkerUrl === 'string') ? s.githubWorkerUrl.trim() : '',
+    githubWorkerUrl: normalizeGithubWorkerUrlValue((typeof s.githubWorkerUrl === 'string') ? s.githubWorkerUrl.trim() : ''),
     githubToken: (typeof s.githubToken === 'string') ? s.githubToken.trim() : '',
     catboxUploadUrl: (typeof s.catboxUploadUrl === 'string') ? s.catboxUploadUrl.trim() : ''
   }));

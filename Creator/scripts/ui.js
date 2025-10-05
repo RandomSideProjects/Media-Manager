@@ -167,6 +167,7 @@ let githubUploadUrl = '';
 let isGithubUploadInFlight = false;
 let posterPreviewObjectUrl = '';
 const UI_DEFAULT_GITHUB_WORKER_URL = (typeof window !== 'undefined' && typeof window.MM_DEFAULT_GITHUB_WORKER_URL === 'string') ? window.MM_DEFAULT_GITHUB_WORKER_URL : '';
+const LEGACY_GITHUB_WORKER_ROOT = 'https://mmback.littlehacker303.workers.dev';
 const githubUploadComboKeys = new Set(['g', 'h']);
 let githubUploadSequence = [];
 const resetGithubUploadSequence = () => { githubUploadSequence = []; };
@@ -204,12 +205,29 @@ function getUploadSettingsSafe() {
   } catch { return {}; }
 }
 
+function normalizeGithubWorkerUrlValue(raw) {
+  const trimmed = (typeof raw === 'string') ? raw.trim() : '';
+  if (!trimmed) return '';
+  const withoutTrailingSlash = trimmed.endsWith('/') ? trimmed.slice(0, -1) : trimmed;
+  if (withoutTrailingSlash === LEGACY_GITHUB_WORKER_ROOT) {
+    return `${LEGACY_GITHUB_WORKER_ROOT}/gh`;
+  }
+  return trimmed;
+}
+
 function getGithubWorkerUrl() {
   try {
     const settings = getUploadSettingsSafe();
     const raw = settings.githubWorkerUrl;
     const trimmed = (typeof raw === 'string') ? raw.trim() : '';
-    return trimmed || UI_DEFAULT_GITHUB_WORKER_URL;
+    const normalized = normalizeGithubWorkerUrlValue(trimmed);
+    if (normalized && normalized !== trimmed) {
+      try {
+        const next = Object.assign({}, settings, { githubWorkerUrl: normalized });
+        localStorage.setItem('mm_upload_settings', JSON.stringify(next));
+      } catch {}
+    }
+    return (normalized || trimmed) || UI_DEFAULT_GITHUB_WORKER_URL;
   } catch { return UI_DEFAULT_GITHUB_WORKER_URL; }
 }
 

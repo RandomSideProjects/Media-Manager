@@ -51,7 +51,7 @@ function showHostFailure(container, codeText) {
 }
 
 const CATBOX_DIRECT_UPLOAD_URL = 'https://catbox.moe/user/api.php';
-const CATBOX_PROXY_UPLOAD_URL = 'https://catbox-proxy.littlehacker303.workers.dev/user/api.php';
+const CATBOX_PROXY_UPLOAD_URL = 'https://mmback.littlehacker303.workers.dev/upload-catbox/user/api.php';
 
 async function performUploadProbe(targetUrl, options = {}) {
   try {
@@ -106,6 +106,9 @@ function applyCatboxDefault(url, meta) {
       ? window.MM_DEFAULT_CATBOX_UPLOAD_URL
       : undefined;
     window.MM_DEFAULT_CATBOX_UPLOAD_URL = clean;
+    if (typeof window !== 'undefined') {
+      window.MM_ACTIVE_CATBOX_UPLOAD_URL = clean;
+    }
     window.dispatchEvent(new CustomEvent('rsp:catbox-default-updated', { detail: { url: clean, previous, meta } }));
   } catch (err) {
     console.error('[Creator] Failed to apply Catbox default URL', err);
