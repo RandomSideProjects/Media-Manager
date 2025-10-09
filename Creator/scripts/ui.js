@@ -577,6 +577,11 @@ function addCategory(data) {
   const categoryDiv = document.createElement('div');
   categoryDiv.className = 'category';
   categoryDiv.addEventListener('contextmenu', (e) => {
+    // Guard against episode right-clicks bubbling up and triggering category removal
+    const target = e.target;
+    if (target && typeof target.closest === 'function' && target.closest('.episode')) {
+      return;
+    }
     e.preventDefault();
     confirmModal.style.display = 'flex';
     pendingRemoval = { type: 'category', elem: categoryDiv };
@@ -634,7 +639,11 @@ function addEpisode(container, data) {
       epDiv.dataset.volumePageCount = String(data.VolumePageCount);
     }
   } catch {}
-  epDiv.addEventListener('contextmenu', (e) => { e.preventDefault(); epDiv.remove(); });
+  epDiv.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    e.stopPropagation(); // Allow episode deletions without triggering category-level prompts
+    epDiv.remove();
+  });
 
   const epTitle = document.createElement('input');
   epTitle.type = 'text';
