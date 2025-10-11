@@ -191,6 +191,16 @@
       "LatestTime": "2025-08-22T03:48:20.383Z"
     },
     {
+      "file": "Konosuba_God_S_Blessing_On_This_Wonderful_World.json",
+      "path": "./Files/Anime/Konosuba_God_S_Blessing_On_This_Wonderful_World.json",
+      "title": "KONOSUBA -God's blessing on this wonderful world!",
+      "poster": "./Posters/Anime/KONOSUBA_-God's_blessing_on_this_wonderful_world!.webp",
+      "categoryCount": 4,
+      "episodeCount": 33,
+      "totalFileSizeBytes": 5070684574,
+      "LatestTime": "2025-10-11T15:30:25.104Z"
+    },
+    {
       "file": "konosuba.json",
       "path": "./Files/Anime/konosuba.json",
       "title": "KONOSUBA -God's blessing on this wonderful world!",
