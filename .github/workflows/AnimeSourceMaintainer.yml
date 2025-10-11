@@ -130,16 +130,24 @@ jobs:
 
                 const title = json.title || path.parse(file).name;
                 const cats = Array.isArray(json.categories) ? json.categories : [];
-                const categoryCount = cats.length;
+                let categoryCount = 0;
                 let episodeCount = 0;
+                let separatedCategoryCount = 0;
+                let separatedItemCount = 0;
                 let totalFileSizeBytes = 0;
                 for (const c of cats) {
-                  if (Array.isArray(c.episodes)) {
-                    episodeCount += c.episodes.length;
-                    for (const e of c.episodes) {
-                      const n = Number(e && e.fileSizeBytes);
-                      if (Number.isFinite(n) && n >= 0) totalFileSizeBytes += Math.round(n);
-                    }
+                  const episodes = Array.isArray(c.episodes) ? c.episodes : [];
+                  const isSeparated = Number(c && c.separated) === 1;
+                  if (isSeparated) {
+                    separatedCategoryCount += 1;
+                    separatedItemCount += episodes.length;
+                  } else {
+                    categoryCount += 1;
+                    episodeCount += episodes.length;
+                  }
+                  for (const e of episodes) {
+                    const n = Number(e && e.fileSizeBytes);
+                    if (Number.isFinite(n) && n >= 0) totalFileSizeBytes += Math.round(n);
                   }
                 }
                 if (!totalFileSizeBytes && Number.isFinite(Number(json.totalFileSizeBytes))) totalFileSizeBytes = Number(json.totalFileSizeBytes);
@@ -180,6 +188,10 @@ jobs:
                   poster,
                   categoryCount,
                   episodeCount,
+                  ...(separatedCategoryCount > 0 ? {
+                    separatedCategoryCount,
+                    separatedItemCount
+                  } : {}),
                   totalFileSizeBytes: Number.isFinite(totalFileSizeBytes) ? totalFileSizeBytes : 0,
                   LatestTime: json.LatestTime || null
                 });
