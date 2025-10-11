@@ -1,0 +1,86 @@
+{
+  "title": "Love, Chunibyo & Other Delusions",
+  "Image": "https://files.catbox.moe/ir7jdj.webp",
+  "LatestTime": "2025-10-11T05:39:02.686Z",
+  "categories": [
+    {
+      "category": "Season 1",
+      "episodes": [
+        {
+          "title": "Episode 1",
+          "src": "https://files.catbox.moe/6oxqjo.mp4",
+          "fileSizeBytes": 128245398,
+          "durationSeconds": 1416
+        },
+        {
+          "title": "Episode 2",
+          "src": "https://files.catbox.moe/brtmit.mp4",
+          "fileSizeBytes": 128350754,
+          "durationSeconds": 1416
+        },
+        {
+          "title": "Episode 3",
+          "src": "https://files.catbox.moe/7podvv.mp4",
+          "fileSizeBytes": 134157764,
+          "durationSeconds": 1416
+        },
+        {
+          "title": "Episode 4",
+          "src": "https://files.catbox.moe/66zuc4.mp4",
+          "fileSizeBytes": 129350427,
+          "durationSeconds": 1416
+        },
+        {
+          "title": "Episode 5",
+          "src": "https://files.catbox.moe/3lsy2d.mp4",
+          "fileSizeBytes": 112197632,
+          "durationSeconds": 1416
+        },
+        {
+          "title": "Episode 6",
+          "src": "https://files.catbox.moe/chd2vz.mp4",
+          "fileSizeBytes": 129529341,
+          "durationSeconds": 1416
+        },
+        {
+          "title": "Episode 7",
+          "src": "https://files.catbox.moe/4inlz2.mp4",
+          "fileSizeBytes": 117775863,
+          "durationSeconds": 1416
+        },
+        {
+          "title": "Episode 8",
+          "src": "https://files.catbox.moe/ddxdyz.mp4",
+          "fileSizeBytes": 111284288,
+          "durationSeconds": 1416
+        },
+        {
+          "title": "Episode 9",
+          "src": "https://files.catbox.moe/jpseat.mp4",
+          "fileSizeBytes": 108044392,
+          "durationSeconds": 1416
+        },
+        {
+          "title": "Episode 10",
+          "src": "https://files.catbox.moe/qx09mj.mp4",
+          "fileSizeBytes": 110772986,
+          "durationSeconds": 1416
+        },
+        {
+          "title": "Episode 11",
+          "src": "https://files.catbox.moe/o473v7.mp4",
+          "fileSizeBytes": 110146867,
+          "durationSeconds": 1416
+        },
+        {
+          "title": "Episode 12",
+          "src": "https://files.catbox.moe/muw8cx.mp4",
+          "fileSizeBytes": 106055191,
+          "durationSeconds": 1416
+        }
+      ]
+    }
+  ],
+  "totalFileSizeBytes": 1425910903,
+  "totalDurationSeconds": 16992
+}
