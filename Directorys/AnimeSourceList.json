@@ -195,10 +195,12 @@
       "path": "./Files/Anime/Konosuba_God_S_Blessing_On_This_Wonderful_World.json",
       "title": "KONOSUBA -God's blessing on this wonderful world!",
       "poster": "./Posters/Anime/KONOSUBA_-God's_blessing_on_this_wonderful_world!.webp",
-      "categoryCount": 4,
-      "episodeCount": 33,
+      "categoryCount": 3,
+      "episodeCount": 29,
+      "separatedCategoryCount": 1,
+      "separatedItemCount": 4,
       "totalFileSizeBytes": 5070684574,
-      "LatestTime": "2025-10-11T15:30:25.104Z"
+      "LatestTime": "2025-10-11T15:57:41.444Z"
     },
     {
       "file": "Love_Flops.json",
