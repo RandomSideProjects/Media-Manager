@@ -201,16 +201,6 @@
       "LatestTime": "2025-10-11T15:30:25.104Z"
     },
     {
-      "file": "konosuba.json",
-      "path": "./Files/Anime/konosuba.json",
-      "title": "KONOSUBA -God's blessing on this wonderful world!",
-      "poster": null,
-      "categoryCount": 4,
-      "episodeCount": 33,
-      "totalFileSizeBytes": 5070684574,
-      "LatestTime": "2025-10-11T07:15:36.106Z"
-    },
-    {
       "file": "Love_Flops.json",
       "path": "./Files/Anime/Love_Flops.json",
       "title": "Love Flops",
