@@ -201,6 +201,16 @@
       "LatestTime": "2025-09-07T07:04:35.767Z"
     },
     {
+      "file": "Love_Chunibyo_Other_Delusions.json",
+      "path": "./Files/Anime/Love_Chunibyo_Other_Delusions.json",
+      "title": "Love, Chunibyo & Other Delusions",
+      "poster": "./Posters/Anime/Love,_Chunibyo_&_Other_Delusions.webp",
+      "categoryCount": 1,
+      "episodeCount": 12,
+      "totalFileSizeBytes": 1425910903,
+      "LatestTime": "2025-10-11T05:39:02.686Z"
+    },
+    {
       "file": "MarriedNotLovers.json",
       "path": "./Files/Anime/MarriedNotLovers.json",
       "title": "More Than a Married Couple, But Not Lovers",
