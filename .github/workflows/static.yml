@@ -26,9 +26,7 @@ concurrency:
 jobs:
   # Single deploy job since we're just deploying
   deploy:
-    # Allow maintainer commits (also authored by github-actions[bot]) but skip the
-    # follow-up run triggered by the LastUpdated.txt commit we create below.
-    if: github.actor != 'github-actions[bot]' || github.event.head_commit.message != 'chore: update LastUpdated.txt [skip ci]'
+    if: github.actor != 'github-actions[bot]'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
