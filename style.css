@@ -92,6 +92,9 @@ button:hover {
   border-color: #007bff;
   background-color: #2a2a2a;
 }
+.episode-button.separated-category {
+  font-weight: 600;
+}
 
 .episode-meta {
   color: #b6b6b6;

@@ -49,9 +49,12 @@ function startAutoUploadPolling() {
     const titleEl = document.getElementById('dirTitle');
     if (!titleEl) return;
     const titleVal = titleEl.value.trim();
+    const mode = (function(){ try { const p = JSON.parse(localStorage.getItem('mm_upload_settings')||'{}'); return (p.libraryMode === 'manga') ? 'manga' : 'anime'; } catch { return 'anime'; } })();
     const cats = [];
+    let separatedCategoryCount = 0;
+    let separatedItemCount = 0;
     document.querySelectorAll('.category').forEach(cat => {
-      const input = cat.querySelector('label input');
+      const input = cat.querySelector('.category-header input[type="text"]');
       const catTitle = input ? input.value.trim() : '';
       const eps = [];
       cat.querySelectorAll('.episode').forEach(epDiv => {
@@ -60,7 +63,6 @@ function startAutoUploadPolling() {
         const s = inputs[1] ? inputs[1].value.trim() : '';
         let fs = null, dur = null;
         try { const v = parseFloat(epDiv.dataset.fileSizeBytes); if (Number.isFinite(v) && v >= 0) fs = Math.round(v); } catch {}
-        const mode = (function(){ try { const p = JSON.parse(localStorage.getItem('mm_upload_settings')||'{}'); return (p.libraryMode === 'manga') ? 'manga' : 'anime'; } catch { return 'anime'; } })();
         if (mode === 'manga') {
           let pages = null; try { const v = parseFloat(epDiv.dataset.volumePageCount || epDiv.dataset.VolumePageCount); if (Number.isFinite(v) && v >= 0) pages = Math.round(v); } catch {}
           if (t && s) eps.push({ title: t, src: s, fileSizeBytes: fs, VolumePageCount: pages });
@@ -69,7 +71,16 @@ function startAutoUploadPolling() {
           if (t && s) eps.push({ title: t, src: s, fileSizeBytes: fs, durationSeconds: dur });
         }
       });
-      if (catTitle) cats.push({ category: catTitle, episodes: eps });
+      if (catTitle) {
+        const isSeparated = (mode !== 'manga') && cat.dataset && cat.dataset.separated === '1';
+        const payload = { category: catTitle, episodes: eps };
+        if (isSeparated) {
+          payload.separated = 1;
+          separatedCategoryCount += 1;
+          separatedItemCount += eps.length;
+        }
+        cats.push(payload);
+      }
     });
     const posterValue = (typeof posterImageUrl !== 'undefined')
       ? posterImageUrl
@@ -86,9 +97,12 @@ function startAutoUploadPolling() {
       }
     }
     // Build payload (omit duration aggregate for manga mode)
-    const mode = (function(){ try { const p = JSON.parse(localStorage.getItem('mm_upload_settings')||'{}'); return (p.libraryMode === 'manga') ? 'manga' : 'anime'; } catch { return 'anime'; } })();
     const contentOnly = { title: titleVal, Image: imageField, categories: cats, totalFileSizeBytes };
     if (mode !== 'manga') contentOnly.totalDurationSeconds = totalDurationSeconds; else contentOnly.totalPagecount = totalPagecount;
+    if (mode !== 'manga' && separatedCategoryCount > 0) {
+      contentOnly.separatedCategoryCount = separatedCategoryCount;
+      contentOnly.separatedItemCount = separatedItemCount;
+    }
     const contentStr = JSON.stringify(contentOnly);
     if (contentStr !== lastContent) {
       lastContent = contentStr;

@@ -63,7 +63,8 @@ function loadUploadSettings(){
         userhash: '',
         githubWorkerUrl: normalizeGithubWorkerUrlValue(SETTINGS_DEFAULT_GITHUB_WORKER_URL),
         catboxUploadUrl: defaultCatboxUploadUrl(),
-        catboxOverrideMode: 'auto'
+        catboxOverrideMode: 'auto',
+        separationTag: false
       };
       applyCatboxOverrideMode(initial.catboxOverrideMode);
       return initial;
@@ -81,6 +82,7 @@ function loadUploadSettings(){
       cbzExpandBatch: (typeof p.cbzExpandBatch === 'boolean') ? p.cbzExpandBatch : true,
       cbzExpandManual: (typeof p.cbzExpandManual === 'boolean') ? p.cbzExpandManual : true,
       compressPosters: compress,
+      separationTag: !!p.separationTag,
       githubWorkerUrl: normalizedGithubUrl,
       githubToken: (typeof p.githubToken === 'string') ? p.githubToken : '',
       catboxUploadUrl: (typeof p.catboxUploadUrl === 'string' && p.catboxUploadUrl.trim()) ? p.catboxUploadUrl.trim() : defaultCatboxUploadUrl(),
@@ -96,17 +98,18 @@ function loadUploadSettings(){
     }
     return result;
   } catch {
-    const fallback = {
-      anonymous: true,
-      userhash: '',
-      githubWorkerUrl: normalizeGithubWorkerUrlValue(SETTINGS_DEFAULT_GITHUB_WORKER_URL),
-      githubToken: '',
-      catboxUploadUrl: defaultCatboxUploadUrl(),
-      catboxOverrideMode: 'auto'
-    };
-    applyCatboxOverrideMode(fallback.catboxOverrideMode);
-    return fallback;
-  }
+  const fallback = {
+    anonymous: true,
+    userhash: '',
+    githubWorkerUrl: normalizeGithubWorkerUrlValue(SETTINGS_DEFAULT_GITHUB_WORKER_URL),
+    githubToken: '',
+    catboxUploadUrl: defaultCatboxUploadUrl(),
+    catboxOverrideMode: 'auto',
+    separationTag: false
+  };
+  applyCatboxOverrideMode(fallback.catboxOverrideMode);
+  return fallback;
+}
 }
 function saveUploadSettings(s){
   const normalizedMode = normalizeCatboxOverrideMode(s.catboxOverrideMode);
@@ -119,6 +122,7 @@ function saveUploadSettings(s){
     cbzExpandBatch: !!s.cbzExpandBatch,
     cbzExpandManual: !!s.cbzExpandManual,
     compressPosters: (typeof s.compressPosters === 'boolean') ? s.compressPosters : true,
+    separationTag: !!s.separationTag,
     githubWorkerUrl: normalizeGithubWorkerUrlValue((typeof s.githubWorkerUrl === 'string') ? s.githubWorkerUrl.trim() : ''),
     githubToken: (typeof s.githubToken === 'string') ? s.githubToken.trim() : '',
     catboxUploadUrl: (typeof s.catboxUploadUrl === 'string') ? s.catboxUploadUrl.trim() : '',
@@ -172,6 +176,7 @@ const mmCbzExpandSubrows = document.getElementById('mmCbzExpandSubrows');
 const mmCbzExpandBatch = document.getElementById('mmCbzExpandBatch');
 const mmCbzExpandManual = document.getElementById('mmCbzExpandManual');
 const mmPosterCompressToggle = document.getElementById('mmPosterCompressToggle');
+const mmSeparationToggle = document.getElementById('mmSeparationToggle');
 // No per-flow anon controls; only userhash visibility when anonymous is off
 
 function updateDevModeRowsVisibility(force) {
@@ -230,6 +235,7 @@ if (mmBtn && mmPanel && mmAnonToggle && mmUserhashRow && mmUserhashInput && mmSa
     mmModeManga.checked = (mode === 'manga');
   }
   if (mmPosterCompressToggle) mmPosterCompressToggle.checked = (typeof st.compressPosters === 'boolean') ? st.compressPosters : true;
+  if (mmSeparationToggle) mmSeparationToggle.checked = !!st.separationTag;
   if (mmUploadConcRange) {
     mmUploadConcRange.value = String(st.uploadConcurrency || 2);
     if (mmUploadConcValue) mmUploadConcValue.textContent = String(st.uploadConcurrency || 2);
@@ -278,6 +284,7 @@ if (mmBtn && mmPanel && mmAnonToggle && mmUserhashRow && mmUserhashInput && mmSa
       cbzExpandBatch: mmCbzExpandBatch ? !!mmCbzExpandBatch.checked : true,
       cbzExpandManual: mmCbzExpandManual ? !!mmCbzExpandManual.checked : true,
       compressPosters: mmPosterCompressToggle ? !!mmPosterCompressToggle.checked : true,
+      separationTag: mmSeparationToggle ? !!mmSeparationToggle.checked : false,
       githubWorkerUrl: mmGithubWorkerUrlInput ? mmGithubWorkerUrlInput.value.trim() : '',
       githubToken: mmGithubTokenInput ? mmGithubTokenInput.value.trim() : '',
       catboxUploadUrl: mmCatboxUrlInput ? mmCatboxUrlInput.value.trim() : '',

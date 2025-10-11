@@ -38,6 +38,7 @@ function updateCategoryButtonVisibility(){
     // Allow multiple categories in Manga mode as well
     addCategoryBtn.disabled = false;
     addCategoryBtn.style.opacity = '';
+    refreshAllSeparationToggles();
   } catch {}
 }
 
@@ -261,6 +262,37 @@ function isPosterCompressionEnabled() {
   return true;
 }
 
+function isSeparationTagEnabled() {
+  try {
+    const settings = getUploadSettingsSafe();
+    return settings && settings.separationTag === true;
+  } catch { return false; }
+}
+
+function isSeparationFeatureActive() {
+  return !isMangaMode() && isSeparationTagEnabled();
+}
+
+function updateCategorySeparationToggleVisibility(categoryDiv) {
+  if (!categoryDiv) return;
+  const wrap = categoryDiv._separationWrap;
+  const input = categoryDiv._separationInput;
+  const active = isSeparationFeatureActive();
+  if (wrap) wrap.style.display = active ? 'flex' : 'none';
+  if (input) {
+    input.disabled = !active;
+    const shouldCheck = categoryDiv.dataset && categoryDiv.dataset.separated === '1';
+    if (input.checked !== shouldCheck) input.checked = shouldCheck;
+  }
+}
+
+function refreshAllSeparationToggles() {
+  try {
+    const nodes = document.querySelectorAll('.category');
+    nodes.forEach(node => updateCategorySeparationToggleVisibility(node));
+  } catch {}
+}
+
 function makeWebpName(name) {
   const base = (typeof name === 'string' && name.trim()) ? name.trim() : 'poster';
   const withoutExt = base.includes('.') ? base.slice(0, base.lastIndexOf('.')) : base;
@@ -400,21 +432,20 @@ folderInput.addEventListener('change', async (e) => {
 
     // Prompt for season/collection index or create new
     const seasonIndex = categoriesEl.children.length + 1;
-    const categoryDiv = document.createElement('div');
-    categoryDiv.className = 'category';
-    const titleLabel = document.createElement('label');
-    titleLabel.textContent = 'Category Title:';
-    const titleInput = document.createElement('input');
-    titleInput.type = 'text';
-    if (isMangaMode()) { titleInput.placeholder = 'Volumes'; titleInput.value = 'Volumes'; }
-    else { titleInput.placeholder = `Season ${seasonIndex}`; titleInput.value = `Season ${seasonIndex}`; }
-    titleLabel.appendChild(document.createElement('br'));
-    titleLabel.appendChild(titleInput);
-    const episodesDiv = document.createElement('div');
-    episodesDiv.className = 'episodes';
-    categoryDiv.appendChild(titleLabel);
-    categoryDiv.appendChild(episodesDiv);
-    categoriesEl.appendChild(categoryDiv);
+    const defaultTitle = isMangaMode() ? 'Volumes' : `Season ${seasonIndex}`;
+    addCategory({ category: defaultTitle });
+    const categoryDiv = categoriesEl.lastElementChild;
+    if (!categoryDiv) {
+      console.error('[Creator] Failed to create category container for folder upload.');
+      return;
+    }
+    const titleInput = categoryDiv.querySelector('.category-header input[type="text"]');
+    if (titleInput) titleInput.value = defaultTitle;
+    const episodesDiv = categoryDiv.querySelector('.episodes');
+    if (!episodesDiv) {
+      console.error('[Creator] Missing episodes container for folder upload.');
+      return;
+    }
 
     // Derive numbers and labels from filenames
     const filesInSeason = files
@@ -576,6 +607,8 @@ function addCategory(data) {
   const categoryIndex = categoriesEl.children.length + 1;
   const categoryDiv = document.createElement('div');
   categoryDiv.className = 'category';
+  const separatedFromData = (!isMangaMode() && data && Number(data.separated) === 1);
+  categoryDiv.dataset.separated = separatedFromData ? '1' : '0';
   categoryDiv.addEventListener('contextmenu', (e) => {
     // Guard against episode right-clicks bubbling up and triggering category removal
     const target = e.target;
@@ -608,6 +641,24 @@ function addCategory(data) {
   categoryHeader.appendChild(categoryHandle);
   categoryHeader.appendChild(titleLabel);
 
+  const separationLabel = document.createElement('label');
+  separationLabel.className = 'category-separation-toggle';
+  const separationInput = document.createElement('input');
+  separationInput.type = 'checkbox';
+  separationInput.className = 'category-separation-checkbox';
+  separationInput.checked = categoryDiv.dataset.separated === '1';
+  const separationText = document.createElement('span');
+  separationText.textContent = 'Separated';
+  separationLabel.appendChild(separationInput);
+  separationLabel.appendChild(separationText);
+  categoryHeader.appendChild(separationLabel);
+  categoryDiv._separationWrap = separationLabel;
+  categoryDiv._separationInput = separationInput;
+
+  separationInput.addEventListener('change', () => {
+    categoryDiv.dataset.separated = separationInput.checked ? '1' : '0';
+  });
+
   const episodesDiv = document.createElement('div');
   episodesDiv.className = 'episodes';
   const addEpBtn = document.createElement('button');
@@ -619,6 +670,7 @@ function addCategory(data) {
   categoryDiv.appendChild(episodesDiv);
   categoryDiv.appendChild(addEpBtn);
   categoriesEl.appendChild(categoryDiv);
+  updateCategorySeparationToggleVisibility(categoryDiv);
 
   makeSortable(episodesDiv, { itemSelector: '.episode', handleSelector: '.episode-top-row .drag-handle' });
 
@@ -1067,6 +1119,7 @@ window.addEventListener('mm_settings_saved', (e) => {
       clearPendingLoadFile();
     } catch {}
   }
+  refreshAllSeparationToggles();
 });
 
 function updateOutput() {
@@ -1191,8 +1244,11 @@ function buildLocalDirectoryJSON() {
   let totalBytes = 0;
   let totalSecs = 0;
   let totalPages = 0;
+  let separatedCategoryCount = 0;
+  let separatedItemCount = 0;
   document.querySelectorAll('.category').forEach(cat => {
-    const catTitle = cat.querySelector('input[type="text"]').value.trim();
+    const titleInput = cat.querySelector('.category-header input[type="text"]');
+    const catTitle = titleInput ? titleInput.value.trim() : '';
     const episodes = [];
     cat.querySelectorAll('.episode').forEach(epDiv => {
       const inputs = epDiv.querySelectorAll('input[type="text"]');
@@ -1208,7 +1264,16 @@ function buildLocalDirectoryJSON() {
         if (t && s) episodes.push({ title: t, src: s, fileSizeBytes: fs, durationSeconds: dur });
       }
     });
-    if (catTitle) categories.push({ category: catTitle, episodes });
+    if (catTitle) {
+      const separated = !isMangaMode() && cat.dataset && cat.dataset.separated === '1';
+      const categoryPayload = { category: catTitle, episodes };
+      if (separated) {
+        categoryPayload.separated = 1;
+        separatedCategoryCount += 1;
+        separatedItemCount += episodes.length;
+      }
+      categories.push(categoryPayload);
+    }
   });
   const imageField = posterImageUrl || 'N/A';
   const base = {
@@ -1219,6 +1284,10 @@ function buildLocalDirectoryJSON() {
     totalFileSizeBytes: totalBytes || 0
   };
   if (!isMangaMode()) base.totalDurationSeconds = totalSecs || 0; else base.totalPagecount = totalPages || 0;
+  if (!isMangaMode() && separatedCategoryCount > 0) {
+    base.separatedCategoryCount = separatedCategoryCount;
+    base.separatedItemCount = separatedItemCount;
+  }
   return base;
 }
 

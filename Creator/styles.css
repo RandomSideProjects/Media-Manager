@@ -123,6 +123,25 @@ button:active { transform: scale(0.98); }
   flex: 1;
   display: block;
 }
+.category-separation-toggle {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 0.35em;
+  margin-left: auto;
+  font-size: 0.9em;
+  opacity: 0.85;
+  cursor: pointer;
+  user-select: none;
+}
+.category-separation-toggle input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #007bff;
+}
+.category-separation-toggle span {
+  color: #e0e6ff;
+}
 .episodes {
   margin-top: 0.5em;
   padding-left: 1em;

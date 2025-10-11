@@ -9,6 +9,9 @@ function buildSourceCardFromMeta(meta) {
   const isManga = (typeof SOURCES_MODE !== 'undefined' && SOURCES_MODE === 'manga');
   const categoryCount = isManga ? 0 : (typeof meta.categoryCount === 'number' ? meta.categoryCount : 0);
   const episodeCount  = isManga ? 0 : (typeof meta.episodeCount  === 'number' ? meta.episodeCount  : 0);
+  const separatedCategoryCount = (!isManga && Number.isFinite(Number(meta.separatedCategoryCount))) ? Number(meta.separatedCategoryCount) : (!isManga && Number.isFinite(Number(meta.separatedCount)) ? Number(meta.separatedCount) : 0);
+  const separatedItemCount = (!isManga && Number.isFinite(Number(meta.separatedItemCount))) ? Number(meta.separatedItemCount) : 0;
+  const hasSeparatedMeta = !isManga && separatedCategoryCount > 0;
   const volumeCount   = isManga ? (typeof meta.volumeCount === 'number' ? meta.volumeCount : 0) : 0;
   const pageCountRaw  = isManga ? (Number.isFinite(Number(meta.totalPagecount)) ? Number(meta.totalPagecount) : (typeof meta.pageCount === 'number' ? meta.pageCount : 0)) : 0;
   const openPath = meta.path || `./Files/${meta.file || ''}`;
@@ -39,12 +42,19 @@ function buildSourceCardFromMeta(meta) {
 
   const p1 = document.createElement('p');
   const p2 = document.createElement('p');
+  const p3 = document.createElement('p');
   if (isManga) {
     p1.innerHTML = `<strong>${volumeCount}</strong> ${volumeCount === 1 ? 'Volume' : 'Volumes'}`;
     p2.innerHTML = `<strong>${pageCountRaw}</strong> ${pageCountRaw === 1 ? 'Page' : 'Pages'}`;
+    p3.style.display = 'none';
   } else {
     p1.innerHTML = `<strong>${categoryCount}</strong> ${categoryCount === 1 ? 'Season' : 'Seasons'}`;
     p2.innerHTML = `<strong>${episodeCount}</strong> ${episodeCount === 1 ? 'Episode' : 'Episodes'}`;
+    if (hasSeparatedMeta) {
+      p3.innerHTML = `<strong>${separatedCategoryCount}</strong> ${separatedCategoryCount === 1 ? 'Movie' : 'Movies'}`;
+    } else {
+      p3.style.display = 'none';
+    }
   }
 
   const timeP = document.createElement('p');
@@ -92,7 +102,9 @@ function buildSourceCardFromMeta(meta) {
     window.location.href = `../index.html?source=${src}`;
   };
 
-  right.append(h3, p1, p2, timeP, sizeP, durP, btn);
+  right.append(h3, p1, p2);
+  if (hasSeparatedMeta) right.appendChild(p3);
+  right.append(timeP, sizeP, durP, btn);
   card.appendChild(right);
 
   // Right-click: toggle details. For Anime, also flips labels; for Manga, just shows details.
@@ -112,12 +124,21 @@ function buildSourceCardFromMeta(meta) {
         timeP.style.display = meta.LatestTime ? 'block' : 'none';
         sizeP.style.display = (typeof meta.totalFileSizeBytes === 'number') ? 'block' : 'none';
         durP.style.display = (typeof meta.totalDurationSeconds === 'number') ? 'block' : 'none';
+        if (hasSeparatedMeta) {
+          const separatedCountForItems = separatedItemCount > 0 ? separatedItemCount : separatedCategoryCount;
+          p3.innerHTML = `<strong>${separatedCountForItems}</strong> ${separatedCountForItems === 1 ? 'Separated Item' : 'Separated Items'}`;
+          p3.style.display = 'block';
+        }
       } else {
         p1.innerHTML = `<strong>${categoryCount}</strong> ${categoryCount === 1 ? 'Season' : 'Seasons'}`;
         p2.innerHTML = `<strong>${episodeCount}</strong> ${episodeCount === 1 ? 'Episode' : 'Episodes'}`;
         timeP.style.display = 'none';
         sizeP.style.display = 'none';
         durP.style.display = 'none';
+        if (hasSeparatedMeta) {
+          p3.innerHTML = `<strong>${separatedCategoryCount}</strong> ${separatedCategoryCount === 1 ? 'Movie' : 'Movies'}`;
+          p3.style.display = 'block';
+        }
       }
     }
   });
@@ -138,12 +159,29 @@ function renderSourcesFromState() {
 // Build a card from a full data JSON
 function buildSourceCard(data, openSourceParam, fileNameForFallback) {
   const title = data.title || fileNameForFallback || 'Untitled';
+  const isManga = (typeof SOURCES_MODE !== 'undefined' && SOURCES_MODE === 'manga');
   const categories = Array.isArray(data.categories) ? data.categories : [];
-  const seasons = categories.length;
+  const separatedCategories = isManga ? [] : categories.filter(cat => Number(cat && cat.separated) === 1);
+  const primaryCategories = isManga ? categories : categories.filter(cat => Number(cat && cat.separated) !== 1);
+  const seasons = isManga ? primaryCategories.length : primaryCategories.length;
   let episodes = 0;
-  categories.forEach(cat => {
+  primaryCategories.forEach(cat => {
     if (Array.isArray(cat.episodes)) episodes += cat.episodes.length;
   });
+  const separatedCategoryCount = isManga ? 0 : separatedCategories.length;
+  let separatedItemCount = 0;
+  separatedCategories.forEach(cat => {
+    if (Array.isArray(cat.episodes)) separatedItemCount += cat.episodes.length;
+  });
+  const volumeCount = isManga ? categories.length : 0;
+  let pageCount = isManga ? (Number.isFinite(Number(data.totalPagecount)) ? Number(data.totalPagecount) : 0) : 0;
+  if (isManga && pageCount === 0) {
+    for (const c of categories) {
+      for (const e of (c.episodes || [])) {
+        if (Number.isFinite(Number(e.VolumePageCount))) pageCount += Number(e.VolumePageCount);
+      }
+    }
+  }
   // Compute totals if available
   let totalBytes = (typeof data.totalFileSizeBytes === 'number') ? data.totalFileSizeBytes : 0;
   let totalSecs = (typeof data.totalDurationSeconds === 'number') ? data.totalDurationSeconds : 0;
@@ -188,10 +226,23 @@ function buildSourceCard(data, openSourceParam, fileNameForFallback) {
   const h3 = document.createElement('h3');
   h3.textContent = title;
 
+  const hasSeparatedMeta = !isManga && separatedCategoryCount > 0;
   const p1 = document.createElement('p');
-  p1.innerHTML = `<strong>${seasons}</strong> ${seasons === 1 ? 'Season' : 'Seasons'}`;
   const p2 = document.createElement('p');
-  p2.innerHTML = `<strong>${episodes}</strong> ${episodes === 1 ? 'Episode' : 'Episodes'}`;
+  const p3 = document.createElement('p');
+  if (isManga) {
+    p1.innerHTML = `<strong>${volumeCount}</strong> ${volumeCount === 1 ? 'Volume' : 'Volumes'}`;
+    p2.innerHTML = `<strong>${pageCount}</strong> ${pageCount === 1 ? 'Page' : 'Pages'}`;
+    p3.style.display = 'none';
+  } else {
+    p1.innerHTML = `<strong>${seasons}</strong> ${seasons === 1 ? 'Season' : 'Seasons'}`;
+    p2.innerHTML = `<strong>${episodes}</strong> ${episodes === 1 ? 'Episode' : 'Episodes'}`;
+    if (hasSeparatedMeta) {
+      p3.innerHTML = `<strong>${separatedCategoryCount}</strong> ${separatedCategoryCount === 1 ? 'Movie' : 'Movies'}`;
+    } else {
+      p3.style.display = 'none';
+    }
+  }
 
   const btn = document.createElement('button');
   btn.className = 'pill-button';
@@ -221,22 +272,40 @@ function buildSourceCard(data, openSourceParam, fileNameForFallback) {
   if (totalBytes) sizeP.textContent = 'Size: ' + formatBytes(totalBytes);
   if (totalSecs) durP.textContent = 'Duration: ' + formatDur(totalSecs);
 
-  right.append(h3, p1, p2, sizeP, durP, btn);
+  right.append(h3, p1, p2);
+  if (hasSeparatedMeta) right.appendChild(p3);
+  right.append(sizeP, durP, btn);
   card.appendChild(right);
 
-  // Right-click terminology toggle (Season/Categories, Episode/Items)
+  // Right-click terminology toggle / details
   card.addEventListener('contextmenu', e => {
     e.preventDefault();
-    if (p1.textContent.includes('Season')) {
-      p1.innerHTML = `<strong>${seasons}</strong> ${seasons === 1 ? 'Category' : 'Categories'}`;
-      p2.innerHTML = `<strong>${episodes}</strong> ${episodes === 1 ? 'Item' : 'Items'}`;
-      sizeP.style.display = (totalBytes) ? 'block' : 'none';
-      durP.style.display = (totalSecs) ? 'block' : 'none';
+    if (isManga) {
+      const showingDetails = sizeP.style.display === 'block' || durP.style.display === 'block';
+      sizeP.style.display = showingDetails ? 'none' : (totalBytes ? 'block' : 'none');
+      durP.style.display = showingDetails ? 'none' : (totalSecs ? 'block' : 'none');
     } else {
-      p1.innerHTML = `<strong>${seasons}</strong> ${seasons === 1 ? 'Season' : 'Seasons'}`;
-      p2.innerHTML = `<strong>${episodes}</strong> ${episodes === 1 ? 'Episode' : 'Episodes'}`;
-      sizeP.style.display = 'none';
-      durP.style.display = 'none';
+      const inSeasonMode = p1.textContent.includes('Season');
+      if (inSeasonMode) {
+        p1.innerHTML = `<strong>${seasons}</strong> ${seasons === 1 ? 'Category' : 'Categories'}`;
+        p2.innerHTML = `<strong>${episodes}</strong> ${episodes === 1 ? 'Item' : 'Items'}`;
+        sizeP.style.display = totalBytes ? 'block' : 'none';
+        durP.style.display = totalSecs ? 'block' : 'none';
+        if (hasSeparatedMeta) {
+          const separatedCountForItems = separatedItemCount > 0 ? separatedItemCount : separatedCategoryCount;
+          p3.innerHTML = `<strong>${separatedCountForItems}</strong> ${separatedCountForItems === 1 ? 'Separated Item' : 'Separated Items'}`;
+          p3.style.display = 'block';
+        }
+      } else {
+        p1.innerHTML = `<strong>${seasons}</strong> ${seasons === 1 ? 'Season' : 'Seasons'}`;
+        p2.innerHTML = `<strong>${episodes}</strong> ${episodes === 1 ? 'Episode' : 'Episodes'}`;
+        sizeP.style.display = 'none';
+        durP.style.display = 'none';
+        if (hasSeparatedMeta) {
+          p3.innerHTML = `<strong>${separatedCategoryCount}</strong> ${separatedCategoryCount === 1 ? 'Movie' : 'Movies'}`;
+          p3.style.display = 'block';
+        }
+      }
     }
   });
 

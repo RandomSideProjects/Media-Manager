@@ -78,6 +78,7 @@ async function handleFolderUpload(event) {
   let flatCounter = 0;
   videoList = (cats || []).map(cat => ({
     category: cat.category,
+    separated: Number(cat && cat.separated) === 1 ? 1 : 0,
     episodes: (cat.episodes || []).map(ep => {
       const fileObj = findEpisodeFile(ep && ep.src);
       const srcUrl = fileObj ? URL.createObjectURL(fileObj) : '';

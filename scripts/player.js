@@ -384,6 +384,11 @@ document.addEventListener('keydown', (e) => {
 
 function loadVideo(index) {
   const item = flatList[index];
+  const groupInfo = item && item.__separatedGroup ? item.__separatedGroup : null;
+  const resumeKey = resolveResumeKeyForItem(item);
+  if (resumeKey) {
+    try { localStorage.setItem('lastEpSrc', resumeKey); } catch {}
+  }
   try {
     const sourceTitleText = (directoryTitle && directoryTitle.textContent ? directoryTitle.textContent.trim() : '') || 'Source';
     const itemTitleText = (item && item.title) ? item.title : 'Item';
@@ -472,11 +477,20 @@ function showPlayerAlert(message) {
 
 if (video) {
   video.addEventListener("timeupdate", () => {
-    if (video.currentTime / video.duration > 0.9 && currentIndex < flatList.length - 1) {
-      nextBtn.style.display = "inline-block";
-    }
     try {
       const curItem = (typeof currentIndex === 'number' && flatList && flatList[currentIndex]) ? flatList[currentIndex] : null;
+      const groupInfo = curItem && curItem.__separatedGroup ? curItem.__separatedGroup : null;
+      if (nextBtn) {
+        if (!video.duration || !isFinite(video.duration) || video.duration <= 0) {
+          nextBtn.style.display = 'none';
+        } else if (groupInfo) {
+          nextBtn.style.display = 'none';
+        } else if ((video.currentTime / video.duration) > 0.9 && currentIndex < flatList.length - 1) {
+          nextBtn.style.display = 'inline-block';
+        } else {
+          nextBtn.style.display = 'none';
+        }
+      }
       const pk = curItem && curItem.progressKey ? String(curItem.progressKey) : '';
       if (pk) localStorage.setItem(pk, video.currentTime);
     } catch {}
