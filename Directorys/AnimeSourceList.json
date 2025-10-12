@@ -313,6 +313,16 @@
       "LatestTime": "2025-08-11T12:36:00"
     },
     {
+      "file": "Re_Zero.json",
+      "path": "./Files/Anime/Re_Zero.json",
+      "title": "Re: Zero",
+      "poster": "./Posters/Anime/Re_Zero.webp",
+      "categoryCount": 1,
+      "episodeCount": 25,
+      "totalFileSizeBytes": 3755183917,
+      "LatestTime": "2025-10-12T06:00:57.321Z"
+    },
+    {
       "file": "Kanokari.json",
       "path": "./Files/Anime/Kanokari.json",
       "title": "Rent-A-Girlfriend! ",
