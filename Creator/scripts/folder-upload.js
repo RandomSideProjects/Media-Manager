@@ -112,18 +112,35 @@
       <div style="background:#1a1a1a; padding:1em; border-radius:8px; width:90%; max-width:700px; color:#f1f1f1; font-family:inherit;">
         <h2 style="margin-top:0; font-size:1.4em;">Uploading Folder</h2>
         <div id="folderUploadList" style="display:grid; gap:8px; max-height:50vh; overflow:auto;"></div>
-        <div style="margin-top:0.75em; display:flex; justify-content:space-between; align-items:center;">
+        <div style="margin-top:0.75em; display:flex; justify-content:space-between; align-items:center; gap:0.75em;">
           <div id="folderUploadSummary" style="font-size:0.9em;">0 / 0 completed</div>
+          <button id="folderUploadCancel" type="button" style="background:#ff5f5f; color:#111; border:none; border-radius:4px; padding:0.45em 1em; cursor:pointer; font-weight:600;">Cancel</button>
         </div>
       </div>`;
     folderOverlay.style.display = 'flex';
     const folderUploadList = folderOverlay.querySelector('#folderUploadList');
     const folderUploadSummary = folderOverlay.querySelector('#folderUploadSummary');
-    folderUploadSummary.textContent = `0 / ${filesInSeason.length} completed`;
+    const cancelBtn = folderOverlay.querySelector('#folderUploadCancel');
+    const totalFiles = filesInSeason.length;
+    let completedCount = 0;
+    folderUploadSummary.textContent = `0 / ${totalFiles} completed`;
+    const uploadAbortController = new AbortController();
+    let cancelRequested = false;
+    const isCancelled = () => cancelRequested || uploadAbortController.signal.aborted;
+
+    if (cancelBtn) {
+      cancelBtn.addEventListener('click', () => {
+        if (cancelRequested) return;
+        cancelRequested = true;
+        cancelBtn.disabled = true;
+        cancelBtn.textContent = 'Cancelling...';
+        folderUploadSummary.textContent = `Cancelling... ${completedCount} / ${totalFiles} completed`;
+        try { uploadAbortController.abort(); } catch {}
+      });
+    }
 
     const taskFns = [];
     const maxAttempts = 5;
-    let completedCount = 0;
 
     const computeLocalFileDurationSeconds = (file) => new Promise((resolve) => {
       try {
@@ -141,6 +158,7 @@
     try { await new Promise(r => setTimeout(r, 0)); } catch {}
 
     for (const { file, num, label } of filesInSeason) {
+      if (isCancelled()) break;
       const title = label || (isManga() ? `Volume ${num}` : `Episode ${num}`);
       if (typeof addEpisode === 'function' && episodesDiv) addEpisode(episodesDiv, { title, src: '' });
       const epDiv = episodesDiv ? episodesDiv.lastElementChild : null;
@@ -162,8 +180,21 @@
       folderUploadList.appendChild(row);
 
       const fn = async () => {
+        const markCancelled = () => {
+          status.textContent = 'Cancelled';
+          status.style.color = '#cccccc';
+          prog.value = 0;
+        };
+        if (isCancelled()) {
+          markCancelled();
+          return;
+        }
         // Compute metadata per file inside the task so queue builds instantly
         try {
+          if (isCancelled()) {
+            markCancelled();
+            return;
+          }
           if (isManga() && /\.cbz$/i.test(file.name||'')) {
             const ab = await file.arrayBuffer();
             const zip = await JSZip.loadAsync(ab);
@@ -179,6 +210,10 @@
         const cbzSet = getCbzExpandSettings();
         if (isManga() && /\.cbz$/i.test(file.name||'') && cbzSet.expand && cbzSet.batch) {
           try {
+            if (isCancelled()) {
+              markCancelled();
+              return;
+            }
             status.textContent = 'Processing';
             prog.value = 0;
             const ab = await file.arrayBuffer();
@@ -189,13 +224,25 @@
             const pageUrls = [];
             const totalSteps = names.length + 1; // +1 for JSON upload
             for (let i = 0; i < names.length; i++) {
+              if (isCancelled()) {
+                markCancelled();
+                return;
+              }
               const name = names[i];
               const imgBlob = await zip.files[name].async('blob');
               const ext = (() => { const m = name.toLowerCase().match(/\.(jpe?g|png|gif|webp|bmp)$/); return m ? m[0] : '.png'; })();
               const pageFile = new File([imgBlob], `${i + 1}${ext}`, { type: imgBlob.type || 'application/octet-stream' });
               const base = (i / totalSteps) * 100;
-              const url = await uploadToCatboxWithProgress(pageFile, pct => { const adj = Math.max(0, Math.min(100, base + pct / totalSteps)); prog.value = adj; }, { context: 'batch' });
+              const url = await uploadToCatboxWithProgress(
+                pageFile,
+                pct => { const adj = Math.max(0, Math.min(100, base + pct / totalSteps)); prog.value = adj; },
+                { context: 'batch', signal: uploadAbortController.signal }
+              );
               pageUrls.push(url);
+            }
+            if (isCancelled()) {
+              markCancelled();
+              return;
             }
             // Build volume JSON with pagecount and mapping { "Page 1": url }
             const pagesMap = {};
@@ -204,47 +251,71 @@
             const volBlob = new Blob([JSON.stringify(volumeJson, null, 2)], { type: 'application/json' });
             const volNum = num || 1;
             const volFile = new File([volBlob], `${volNum}.json`, { type: 'application/json' });
-            const url = await uploadToCatboxWithProgress(volFile, pct => { const base = ((names.length) / totalSteps) * 100; const adj = Math.max(0, Math.min(100, base + pct / totalSteps)); prog.value = adj; }, { context: 'batch' });
+            const url = await uploadToCatboxWithProgress(
+              volFile,
+              pct => { const base = ((names.length) / totalSteps) * 100; const adj = Math.max(0, Math.min(100, base + pct / totalSteps)); prog.value = adj; },
+              { context: 'batch', signal: uploadAbortController.signal }
+            );
             if (epSrcInput) epSrcInput.value = url;
             if (epError) epError.textContent = '';
             status.textContent = 'Done';
             status.style.color = '#6ec1e4';
             prog.value = 100;
             completedCount++;
-            folderUploadSummary.textContent = `${completedCount} / ${filesInSeason.length} completed`;
+            folderUploadSummary.textContent = `${completedCount} / ${totalFiles} completed`;
             return;
           } catch (err) {
+            if (isCancelled() || (err && err.name === 'AbortError')) {
+              markCancelled();
+              return;
+            }
             status.textContent = 'Failed';
             status.style.color = '#ff4444';
-            if (epError) epError.innerHTML = '<span style=\"color:red\">Upload failed</span>';
+            if (epError) epError.innerHTML = '<span style="color:red">Upload failed</span>';
             return;
           }
         }
 
         // Default path (videos or non-CBZ files)
         for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+          if (isCancelled()) {
+            markCancelled();
+            return;
+          }
           status.textContent = (attempt === 1) ? 'Uploading' : `Retry ${attempt} of ${maxAttempts}`;
           prog.value = 0;
           try {
-            const url = await uploadToCatboxWithProgress(file, pct => { prog.value = pct; }, { context: 'batch' });
+            const url = await uploadToCatboxWithProgress(
+              file,
+              pct => { prog.value = pct; },
+              { context: 'batch', signal: uploadAbortController.signal }
+            );
             if (epSrcInput) epSrcInput.value = url;
             if (epError) epError.textContent = '';
             status.textContent = 'Done';
             status.style.color = '#6ec1e4';
             prog.value = 100;
             completedCount++;
-            folderUploadSummary.textContent = `${completedCount} / ${filesInSeason.length} completed`;
+            folderUploadSummary.textContent = `${completedCount} / ${totalFiles} completed`;
             return;
           } catch (err) {
+            if (isCancelled() || (err && err.name === 'AbortError')) {
+              markCancelled();
+              return;
+            }
             if (attempt < maxAttempts) {
               const base = 800 * Math.pow(2, attempt - 1);
               const jitter = base * (0.3 + Math.random() * 0.4);
               await new Promise(r => setTimeout(r, base + jitter));
+              if (isCancelled()) {
+                markCancelled();
+                return;
+              }
               continue;
             }
             status.textContent = 'Failed';
             status.style.color = '#ff4444';
-            if (epError) epError.innerHTML = '<span style=\"color:red\">Upload failed</span>';
+            if (epError) epError.innerHTML = '<span style="color:red">Upload failed</span>';
             return;
           }
         }
@@ -255,8 +326,14 @@
     const runWithConcurrency = async (fns, limit) => {
       let idx = 0;
       const workers = Array.from({ length: Math.min(limit, fns.length) }, async () => {
-        while (idx < fns.length) {
-          const current = fns[idx++];
+        while (true) {
+          if (isCancelled()) return;
+          let current;
+          if (idx < fns.length) {
+            current = fns[idx++];
+          } else {
+            return;
+          }
           await current();
         }
       });
@@ -267,6 +344,9 @@
       await runWithConcurrency(taskFns, getUploadConcurrency());
     } finally {
       try { window.isFolderUploading = false; } catch {}
+      if (cancelRequested && folderUploadSummary) {
+        folderUploadSummary.textContent = `Cancelled ${completedCount} / ${totalFiles} completed`;
+      }
       if (folderOverlay) folderOverlay.remove();
     }
   };

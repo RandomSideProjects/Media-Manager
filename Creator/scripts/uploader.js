@@ -160,6 +160,8 @@ async function uploadToCatbox(file, opts) {
 
 // opts: { context?: 'batch'|'manual' }
 function uploadToCatboxWithProgress(file, onProgress, opts) {
+  const options = (opts && typeof opts === 'object') ? opts : {};
+  const signal = options.signal;
   return new Promise((resolve, reject) => {
     const st = readUploadSettings();
     const settings = st && typeof st === 'object' ? st : { anonymous: true, userhash: '' };
@@ -174,13 +176,51 @@ function uploadToCatboxWithProgress(file, onProgress, opts) {
     // Pull current settings; anonymous defaults to true
     let isAnon = (typeof settings.anonymous === 'boolean') ? settings.anonymous : true;
     try {
-      const ctx = opts && opts.context;
+      const ctx = options.context;
       if (isAnon && ctx === 'batch' && typeof settings.anonymousBatch === 'boolean') isAnon = !!settings.anonymousBatch;
       if (isAnon && ctx === 'manual' && typeof settings.anonymousManual === 'boolean') isAnon = !!settings.anonymousManual;
     } catch {}
     const effectiveUserhash = ((settings.userhash || '').trim()) || '2cdcc7754c86c2871ed2bde9d';
     if (!isAnon) {
       form.append('userhash', effectiveUserhash);
+    }
+
+    const createAbortError = () => {
+      if (typeof DOMException === 'function') return new DOMException('Upload aborted', 'AbortError');
+      const err = new Error('Upload aborted');
+      err.name = 'AbortError';
+      return err;
+    };
+
+    let settled = false;
+    const cleanup = () => {
+      if (signal && typeof signal.removeEventListener === 'function') {
+        try { signal.removeEventListener('abort', onAbort); } catch {}
+      }
+    };
+    const finalizeResolve = (value) => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      resolve(value);
+    };
+    const finalizeReject = (error) => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      reject(error);
+    };
+    const onAbort = () => {
+      try { xhr.abort(); } catch {}
+      finalizeReject(createAbortError());
+    };
+
+    if (signal && typeof signal.addEventListener === 'function') {
+      if (signal.aborted) {
+        onAbort();
+        return;
+      }
+      signal.addEventListener('abort', onAbort, { once: true });
     }
 
     if (xhr.upload && typeof onProgress === 'function') {
@@ -198,16 +238,16 @@ function uploadToCatboxWithProgress(file, onProgress, opts) {
         if (ok) {
           const text = xhr.responseText.trim();
           const normalized = normalizeCatboxUrl(text);
-          resolve(normalized.url || text);
+          finalizeResolve(normalized.url || text);
         } else {
           const err = new Error('Upload error: ' + xhr.status);
-          reject(err);
+          finalizeReject(err);
         }
       }
     };
     xhr.onerror = () => {
       const err = new Error('Network error');
-      reject(err);
+      finalizeReject(err);
     };
 
     xhr.send(form);
