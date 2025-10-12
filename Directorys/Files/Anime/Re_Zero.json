@@ -1,7 +1,7 @@
 {
   "title": "Re: Zero",
   "Image": "https://files.catbox.moe/q47b9r.webp",
-  "LatestTime": "2025-10-12T06:00:57.321Z",
+  "LatestTime": "2025-10-12T06:27:25.482Z",
   "categories": [
     {
       "category": "Season 1",
@@ -157,8 +157,163 @@
           "durationSeconds": 1637
         }
       ]
+    },
+    {
+      "category": "Season 2",
+      "episodes": [
+        {
+          "title": "Episode 1",
+          "src": "https://files.catbox.moe/f3jzlv.mp4",
+          "fileSizeBytes": 123560824,
+          "durationSeconds": 1720
+        },
+        {
+          "title": "Episode 2",
+          "src": "https://files.catbox.moe/9prkj5.mp4",
+          "fileSizeBytes": 132913477,
+          "durationSeconds": 1541
+        },
+        {
+          "title": "Episode 3",
+          "src": "https://files.catbox.moe/hoqwlh.mp4",
+          "fileSizeBytes": 118410923,
+          "durationSeconds": 1530
+        },
+        {
+          "title": "Episode 4",
+          "src": "https://files.catbox.moe/j8a9rf.mp4",
+          "fileSizeBytes": 116074635,
+          "durationSeconds": 1771
+        },
+        {
+          "title": "Episode 5",
+          "src": "https://files.catbox.moe/s4v2ji.mp4",
+          "fileSizeBytes": 109586502,
+          "durationSeconds": 1573
+        },
+        {
+          "title": "Episode 6",
+          "src": "https://files.catbox.moe/9uynxe.mp4",
+          "fileSizeBytes": 108419638,
+          "durationSeconds": 1572
+        },
+        {
+          "title": "Episode 7",
+          "src": "https://files.catbox.moe/dvl6nw.mp4",
+          "fileSizeBytes": 96536962,
+          "durationSeconds": 1590
+        },
+        {
+          "title": "Episode 8",
+          "src": "https://files.catbox.moe/69rhve.mp4",
+          "fileSizeBytes": 124346739,
+          "durationSeconds": 1450
+        },
+        {
+          "title": "Episode 9",
+          "src": "https://files.catbox.moe/u49xpp.mp4",
+          "fileSizeBytes": 105181473,
+          "durationSeconds": 1481
+        },
+        {
+          "title": "Episode 10",
+          "src": "https://files.catbox.moe/vzi29a.mp4",
+          "fileSizeBytes": 112354683,
+          "durationSeconds": 1591
+        },
+        {
+          "title": "Episode 11",
+          "src": "https://files.catbox.moe/qmvtg3.mp4",
+          "fileSizeBytes": 141470499,
+          "durationSeconds": 1571
+        },
+        {
+          "title": "Episode 12",
+          "src": "https://files.catbox.moe/ns7ajs.mp4",
+          "fileSizeBytes": 129855507,
+          "durationSeconds": 1621
+        },
+        {
+          "title": "Episode 13",
+          "src": "https://files.catbox.moe/k5sbe8.mp4",
+          "fileSizeBytes": 106760316,
+          "durationSeconds": 1621
+        },
+        {
+          "title": "Episode 14",
+          "src": "https://files.catbox.moe/377uqs.mp4",
+          "fileSizeBytes": 86633444,
+          "durationSeconds": 1680
+        },
+        {
+          "title": "Episode 15",
+          "src": "https://files.catbox.moe/r8oogl.mp4",
+          "fileSizeBytes": 170044332,
+          "durationSeconds": 1650
+        },
+        {
+          "title": "Episode 16",
+          "src": "https://files.catbox.moe/o3580x.mp4",
+          "fileSizeBytes": 152119346,
+          "durationSeconds": 1771
+        },
+        {
+          "title": "Episode 17",
+          "src": "https://files.catbox.moe/nnwsdk.mp4",
+          "fileSizeBytes": 126070002,
+          "durationSeconds": 1771
+        },
+        {
+          "title": "Episode 18",
+          "src": "https://files.catbox.moe/hudgks.mp4",
+          "fileSizeBytes": 149429080,
+          "durationSeconds": 1771
+        },
+        {
+          "title": "Episode 19",
+          "src": "https://files.catbox.moe/5otzsr.mp4",
+          "fileSizeBytes": 145784028,
+          "durationSeconds": 1772
+        },
+        {
+          "title": "Episode 20",
+          "src": "https://files.catbox.moe/op149q.mp4",
+          "fileSizeBytes": 127710037,
+          "durationSeconds": 1772
+        },
+        {
+          "title": "Episode 21",
+          "src": "https://files.catbox.moe/mga65t.mp4",
+          "fileSizeBytes": 104360210,
+          "durationSeconds": 1772
+        },
+        {
+          "title": "Episode 22",
+          "src": "https://files.catbox.moe/fi04hz.mp4",
+          "fileSizeBytes": 117152478,
+          "durationSeconds": 1742
+        },
+        {
+          "title": "Episode 23",
+          "src": "https://files.catbox.moe/lakrfg.mp4",
+          "fileSizeBytes": 141073228,
+          "durationSeconds": 1772
+        },
+        {
+          "title": "Episode 24",
+          "src": "https://files.catbox.moe/gzwngj.mp4",
+          "fileSizeBytes": 130043244,
+          "durationSeconds": 1772
+        },
+        {
+          "title": "Episode 25",
+          "src": "https://files.catbox.moe/rq3u3q.mp4",
+          "fileSizeBytes": 169575319,
+          "durationSeconds": 1772
+        }
+      ]
     }
   ],
-  "totalFileSizeBytes": 3755183917,
-  "totalDurationSeconds": 39631
+  "totalFileSizeBytes": 6900650843,
+  "totalDurationSeconds": 81280
 }
