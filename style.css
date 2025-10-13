@@ -77,9 +77,10 @@ button:hover {
   margin-top: 1em;
 }
 .episode-button {
-  width: 100%;
-  max-width: 500px;
+  width: min(100%, 720px);
+  max-width: 720px;
   padding: 1em;
+  padding-right: 150px;
   background: #222;
   border-radius: 12px;
   border: 2px solid transparent;
@@ -100,6 +101,9 @@ button:hover {
   color: #b6b6b6;
   font-size: 0.9em;
   white-space: nowrap;
+  max-width: 40%;
+  overflow: hidden;
+  text-overflow: ellipsis;
   position: absolute;
   right: 12px;
   top: 50%;

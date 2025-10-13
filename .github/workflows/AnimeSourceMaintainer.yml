@@ -60,6 +60,121 @@ jobs:
           const https = require('https');
           const sharp = require('sharp');
 
+          function coerceSeparatedFlag(value) {
+            if (value === true) return true;
+            if (value === false) return false;
+            if (typeof value === 'number') return value !== 0;
+            if (typeof value === 'string') {
+              const trimmed = value.trim().toLowerCase();
+              if (!trimmed) return false;
+              if (['1','true','yes','y','separated','seperate'].includes(trimmed)) return true;
+              if (['0','false','no','n'].includes(trimmed)) return false;
+            }
+            return false;
+          }
+
+          function pickNumeric(values) {
+            for (const value of values) {
+              const num = Number(value);
+              if (Number.isFinite(num) && num > 0) return num;
+            }
+            for (const value of values) {
+              const num = Number(value);
+              if (Number.isFinite(num) && num === 0) return 0;
+            }
+            return null;
+          }
+
+          function collectEpisodeParts(entry) {
+            if (!entry || typeof entry !== 'object') return [];
+            const candidates = [
+              Array.isArray(entry.sources) ? entry.sources : null,
+              Array.isArray(entry.parts) ? entry.parts : null,
+              Array.isArray(entry.items) ? entry.items : null,
+              Array.isArray(entry.__separatedParts) ? entry.__separatedParts : null
+            ];
+            for (const candidate of candidates) {
+              if (Array.isArray(candidate) && candidate.length) {
+                return candidate.filter(part => part && typeof part === 'object');
+              }
+            }
+            return [];
+          }
+
+          function deriveEpisodeStats(entry) {
+            const parts = collectEpisodeParts(entry);
+            const sizeCandidates = [
+              entry && entry.fileSizeBytes,
+              entry && entry.FileSizeBytes,
+              entry && entry.ItemfileSizeBytes,
+              entry && entry.itemFileSizeBytes,
+              entry && entry.totalFileSizeBytes,
+              entry && entry.sizeBytes,
+              entry && entry.size
+            ];
+            let size = pickNumeric(sizeCandidates);
+            if ((size === null || size <= 0) && parts.length) {
+              let sum = 0;
+              for (const part of parts) {
+                const partSize = pickNumeric([
+                  part && part.fileSizeBytes,
+                  part && part.FileSizeBytes,
+                  part && part.partfileSizeBytes,
+                  part && part.itemFileSizeBytes,
+                  part && part.ItemfileSizeBytes,
+                  part && part.sizeBytes,
+                  part && part.size
+                ]);
+                if (Number.isFinite(partSize) && partSize > 0) sum += partSize;
+              }
+              if (sum > 0) size = sum;
+            }
+
+            const durationCandidates = [
+              entry && entry.durationSeconds,
+              entry && entry.DurationSeconds,
+              entry && entry.itemDurationSeconds,
+              entry && entry.ItemDurationSeconds,
+              entry && entry.ItemdurationSeconds,
+              entry && entry.totalDurationSeconds,
+              entry && entry.runtimeSeconds,
+              entry && entry.runtime,
+              entry && entry.lengthSeconds,
+              entry && entry.lengthInSeconds,
+              entry && entry.timeSeconds
+            ];
+            let duration = pickNumeric(durationCandidates);
+            if ((duration === null || duration <= 0) && parts.length) {
+              let sum = 0;
+              for (const part of parts) {
+                const partDuration = pickNumeric([
+                  part && part.durationSeconds,
+                  part && part.DurationSeconds,
+                  part && part.partDurationSeconds,
+                  part && part.partDuration,
+                  part && part.lengthSeconds,
+                  part && part.lengthInSeconds,
+                  part && part.timeSeconds
+                ]);
+                if (Number.isFinite(partDuration) && partDuration > 0) sum += partDuration;
+              }
+              if (sum > 0) duration = sum;
+            }
+
+            return {
+              size: Number.isFinite(size) && size > 0 ? size : 0,
+              duration: Number.isFinite(duration) && duration > 0 ? duration : 0,
+              partCount: parts.length
+            };
+          }
+
+          function getCategoryEntries(category) {
+            if (!category || typeof category !== 'object') return [];
+            if (Array.isArray(category.episodes)) return category.episodes;
+            if (Array.isArray(category.items)) return category.items;
+            return [];
+          }
+
           const FILE_DIR = 'Directorys/Files/Anime';
           const INDEX_FILE = 'Directorys/AnimeSourceList.json';
           const POSTERS_DIR = 'Directorys/Posters/Anime';
@@ -135,23 +250,32 @@ jobs:
                 let separatedCategoryCount = 0;
                 let separatedItemCount = 0;
                 let totalFileSizeBytes = 0;
+                let totalDurationSeconds = 0;
                 for (const c of cats) {
-                  const episodes = Array.isArray(c.episodes) ? c.episodes : [];
-                  const isSeparated = Number(c && c.separated) === 1;
+                  const entries = getCategoryEntries(c);
+                  const isSeparated = coerceSeparatedFlag(c && (c.separated ?? c.seperated));
                   if (isSeparated) {
                     separatedCategoryCount += 1;
-                    separatedItemCount += episodes.length;
+                    separatedItemCount += entries.length;
                   } else {
                     categoryCount += 1;
-                    episodeCount += episodes.length;
+                    episodeCount += entries.length;
                   }
-                  for (const e of episodes) {
-                    const sizeCandidate = e && (e.fileSizeBytes ?? e.ItemfileSizeBytes ?? e.itemFileSizeBytes);
-                    const n = Number(sizeCandidate);
-                    if (Number.isFinite(n) && n >= 0) totalFileSizeBytes += Math.round(n);
+                  for (const entry of entries) {
+                    const stats = deriveEpisodeStats(entry);
+                    if (stats.size > 0) totalFileSizeBytes += stats.size;
+                    if (stats.duration > 0) totalDurationSeconds += stats.duration;
                   }
                 }
-                if (!totalFileSizeBytes && Number.isFinite(Number(json.totalFileSizeBytes))) totalFileSizeBytes = Number(json.totalFileSizeBytes);
+                if ((totalFileSizeBytes <= 0 || !Number.isFinite(totalFileSizeBytes)) && Number.isFinite(Number(json.totalFileSizeBytes))) {
+                  totalFileSizeBytes = Number(json.totalFileSizeBytes);
+                }
+                if ((totalDurationSeconds <= 0 || !Number.isFinite(totalDurationSeconds)) && Number.isFinite(Number(json.totalDurationSeconds))) {
+                  totalDurationSeconds = Number(json.totalDurationSeconds);
+                }
+                totalFileSizeBytes = Number.isFinite(totalFileSizeBytes) && totalFileSizeBytes > 0 ? Math.round(totalFileSizeBytes) : 0;
+                totalDurationSeconds = Number.isFinite(totalDurationSeconds) && totalDurationSeconds > 0 ? Math.round(totalDurationSeconds) : 0;
+                const totalItemCount = episodeCount + separatedItemCount;
 
                 // Build poster file in repo (WebP, height=512) and reference by path
                 let poster = null;
@@ -189,11 +313,13 @@ jobs:
                   poster,
                   categoryCount,
                   episodeCount,
+                  ...(totalItemCount > 0 ? { itemCount: totalItemCount } : {}),
                   ...(separatedCategoryCount > 0 ? {
                     separatedCategoryCount,
                     separatedItemCount
                   } : {}),
-                  totalFileSizeBytes: Number.isFinite(totalFileSizeBytes) ? totalFileSizeBytes : 0,
+                  totalFileSizeBytes,
+                  ...(totalDurationSeconds > 0 ? { totalDurationSeconds } : {}),
                   LatestTime: json.LatestTime || null
                 });
               } catch (e) {

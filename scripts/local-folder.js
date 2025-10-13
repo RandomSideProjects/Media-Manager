@@ -1,5 +1,18 @@
 "use strict";
 
+function coerceSeparatedFlag(value) {
+  if (value === true) return true;
+  if (value === false) return false;
+  if (typeof value === 'number') return value !== 0;
+  if (typeof value === 'string') {
+    const trimmed = value.trim().toLowerCase();
+    if (!trimmed) return false;
+    if (['1','true','yes','y','separated','seperate'].includes(trimmed)) return true;
+    if (['0','false','no','n'].includes(trimmed)) return false;
+  }
+  return false;
+}
+
 async function handleFolderUpload(event) {
   const files = Array.from(event.target.files || []);
   // Build index of all selected files by relative path (lowercased)
@@ -80,31 +93,104 @@ async function handleFolderUpload(event) {
     category: cat.category,
     separated: Number(cat && cat.separated) === 1 ? 1 : 0,
     episodes: (cat.episodes || []).map(ep => {
-      const fileObj = findEpisodeFile(ep && ep.src);
-      const srcUrl = fileObj ? URL.createObjectURL(fileObj) : '';
-      const isPlaceholder = !fileObj || (fileObj && fileObj.size === 0);
+      const separatedItemFlag = coerceSeparatedFlag(ep && (ep.separated ?? ep.seperated));
+      const manifestSources = Array.isArray(ep && ep.sources) ? ep.sources : [];
+      const treatAsSeparatedItem = separatedItemFlag || manifestSources.length > 0;
+
+      const primaryFile = findEpisodeFile(ep && ep.src);
+      const primarySrcUrl = primaryFile ? URL.createObjectURL(primaryFile) : '';
+
+      const separatedParts = treatAsSeparatedItem ? manifestSources.map((source, idx) => {
+        const sourcePath = source && source.src;
+        const partFile = findEpisodeFile(sourcePath);
+        const objectUrl = partFile ? URL.createObjectURL(partFile) : '';
+        const title = (source && typeof source.title === 'string' && source.title.trim()) ? source.title.trim() : `Part ${idx + 1}`;
+        const partSize = partFile ? Number(partFile.size) : Number(source && source.fileSizeBytes);
+        const partDuration = Number(source && source.durationSeconds);
+        let partPathRel = '';
+        try {
+          const rp = partFile ? String((partFile.webkitRelativePath || partFile.relativePath || partFile.name || '')).replace(/\\/g, '/') : '';
+          partPathRel = rp;
+        } catch {}
+        return {
+          title,
+          src: objectUrl,
+          file: partFile || null,
+          fileName: partFile ? (partFile.name || '') : '',
+          filePathRel: partPathRel,
+          fileSizeBytes: Number.isFinite(partSize) && partSize >= 0 ? partSize : null,
+          durationSeconds: Number.isFinite(partDuration) && partDuration > 0 ? partDuration : null,
+          manifestSrc: sourcePath || ''
+        };
+      }) : [];
+
       const progressKey = `${localId}:item${flatCounter++}`;
       let filePathRel = '';
       let fileBaseDirRel = '';
       try {
-        const rp = fileObj ? String((fileObj.webkitRelativePath || fileObj.relativePath || fileObj.name || '')).replace(/\\/g, '/') : '';
+        const rp = primaryFile ? String((primaryFile.webkitRelativePath || primaryFile.relativePath || primaryFile.name || '')).replace(/\\/g, '/') : '';
         filePathRel = rp;
         fileBaseDirRel = rp ? rp.slice(0, rp.lastIndexOf('/') + 1) : '';
       } catch {}
-      return {
+      if (treatAsSeparatedItem && !filePathRel && separatedParts.length && separatedParts[0].filePathRel) {
+        filePathRel = separatedParts[0].filePathRel;
+        fileBaseDirRel = filePathRel ? filePathRel.slice(0, filePathRel.lastIndexOf('/') + 1) : '';
+      }
+
+      const missingParts = treatAsSeparatedItem ? separatedParts.filter(part => !part.file) : [];
+      const baseIsPlaceholder = !primaryFile || (primaryFile && primaryFile.size === 0);
+      const isPlaceholder = treatAsSeparatedItem ? (missingParts.length > 0) : baseIsPlaceholder;
+
+      let durationSeconds = (typeof ep.durationSeconds === 'number') ? ep.durationSeconds : null;
+      let fileSizeBytes = (typeof ep.fileSizeBytes === 'number') ? ep.fileSizeBytes : null;
+      if (!Number.isFinite(fileSizeBytes) && primaryFile) fileSizeBytes = Number(primaryFile.size);
+      if (treatAsSeparatedItem) {
+        let sumSize = 0;
+        let sumDuration = 0;
+        let anySize = false;
+        let anyDuration = false;
+        separatedParts.forEach(part => {
+          if (Number.isFinite(part.fileSizeBytes) && part.fileSizeBytes > 0) {
+            sumSize += part.fileSizeBytes;
+            anySize = true;
+          }
+          if (Number.isFinite(part.durationSeconds) && part.durationSeconds > 0) {
+            sumDuration += part.durationSeconds;
+            anyDuration = true;
+          }
+        });
+        if (anySize) fileSizeBytes = sumSize;
+        if (anyDuration) durationSeconds = sumDuration;
+      }
+
+      const entry = {
         title: ep.title,
-        src: srcUrl,
-        fileName: fileObj ? (fileObj.name || '') : '',
+        src: treatAsSeparatedItem && separatedParts.length ? separatedParts[0].src : primarySrcUrl,
+        fileName: treatAsSeparatedItem && separatedParts.length ? separatedParts[0].fileName : (primaryFile ? (primaryFile.name || '') : ''),
         progressKey,
-        file: fileObj || null,
+        file: treatAsSeparatedItem ? (separatedParts[0] ? separatedParts[0].file : null) : (primaryFile || null),
         filePathRel,
         fileBaseDirRel,
         filesIndex,
         rootPrefix,
         isPlaceholder,
-        durationSeconds: (typeof ep.durationSeconds === 'number') ? ep.durationSeconds : null,
-        fileSizeBytes: (typeof ep.fileSizeBytes === 'number') ? ep.fileSizeBytes : null
+        durationSeconds,
+        fileSizeBytes,
+        separated: treatAsSeparatedItem ? 1 : 0,
+        seperated: treatAsSeparatedItem ? 1 : 0
       };
+
+      if (treatAsSeparatedItem) {
+        entry.sources = separatedParts.map(part => {
+          const sourceEntry = { title: part.title, src: part.src || '' };
+          if (Number.isFinite(part.fileSizeBytes) && part.fileSizeBytes >= 0) sourceEntry.fileSizeBytes = Math.round(part.fileSizeBytes);
+          if (Number.isFinite(part.durationSeconds) && part.durationSeconds > 0) sourceEntry.durationSeconds = Math.round(part.durationSeconds);
+          return sourceEntry;
+        });
+        entry.__localSeparatedFiles = separatedParts;
+      }
+
+      return entry;
     })
   }));
   directoryTitle.textContent = dirTitle;

@@ -9,9 +9,17 @@ function buildSourceCardFromMeta(meta) {
   const isManga = (typeof SOURCES_MODE !== 'undefined' && SOURCES_MODE === 'manga');
   const categoryCount = isManga ? 0 : (typeof meta.categoryCount === 'number' ? meta.categoryCount : 0);
   const episodeCount  = isManga ? 0 : (typeof meta.episodeCount  === 'number' ? meta.episodeCount  : 0);
-  const separatedCategoryCount = (!isManga && Number.isFinite(Number(meta.separatedCategoryCount))) ? Number(meta.separatedCategoryCount) : (!isManga && Number.isFinite(Number(meta.separatedCount)) ? Number(meta.separatedCount) : 0);
-  const separatedItemCount = (!isManga && Number.isFinite(Number(meta.separatedItemCount))) ? Number(meta.separatedItemCount) : 0;
+  const separatedCountRaw = (!isManga && Number.isFinite(Number(meta.separatedCategoryCount))) ? Number(meta.separatedCategoryCount) : (!isManga && Number.isFinite(Number(meta.separatedCount)) ? Number(meta.separatedCount) : 0);
+  const separatedCategoryCount = isManga ? 0 : separatedCountRaw;
+  const separatedItemCountRaw = (!isManga && Number.isFinite(Number(meta.separatedItemCount))) ? Number(meta.separatedItemCount) : 0;
+  const separatedItemCount = isManga ? 0 : separatedItemCountRaw;
   const hasSeparatedMeta = !isManga && separatedCategoryCount > 0;
+  let itemCount = 0;
+  if (!isManga) {
+    const itemCountRaw = Number(meta.itemCount);
+    if (Number.isFinite(itemCountRaw) && itemCountRaw >= 0) itemCount = itemCountRaw;
+    else itemCount = episodeCount + separatedItemCount;
+  }
   const volumeCount   = isManga ? (typeof meta.volumeCount === 'number' ? meta.volumeCount : 0) : 0;
   const pageCountRaw  = isManga ? (Number.isFinite(Number(meta.totalPagecount)) ? Number(meta.totalPagecount) : (typeof meta.pageCount === 'number' ? meta.pageCount : 0)) : 0;
   const openPath = meta.path || `./Files/${meta.file || ''}`;
@@ -120,7 +128,7 @@ function buildSourceCardFromMeta(meta) {
       const inSeasonMode = p1.textContent.includes('Season');
       if (inSeasonMode) {
         p1.innerHTML = `<strong>${categoryCount}</strong> ${categoryCount === 1 ? 'Category' : 'Categories'}`;
-        p2.innerHTML = `<strong>${episodeCount}</strong> ${episodeCount === 1 ? 'Item' : 'Items'}`;
+        p2.innerHTML = `<strong>${itemCount}</strong> ${itemCount === 1 ? 'Item' : 'Items'}`;
         timeP.style.display = meta.LatestTime ? 'block' : 'none';
         sizeP.style.display = (typeof meta.totalFileSizeBytes === 'number') ? 'block' : 'none';
         durP.style.display = (typeof meta.totalDurationSeconds === 'number') ? 'block' : 'none';
@@ -173,6 +181,7 @@ function buildSourceCard(data, openSourceParam, fileNameForFallback) {
   separatedCategories.forEach(cat => {
     if (Array.isArray(cat.episodes)) separatedItemCount += cat.episodes.length;
   });
+  const itemCount = isManga ? 0 : (episodes + separatedItemCount);
   const volumeCount = isManga ? categories.length : 0;
   let pageCount = isManga ? (Number.isFinite(Number(data.totalPagecount)) ? Number(data.totalPagecount) : 0) : 0;
   if (isManga && pageCount === 0) {
@@ -288,7 +297,7 @@ function buildSourceCard(data, openSourceParam, fileNameForFallback) {
       const inSeasonMode = p1.textContent.includes('Season');
       if (inSeasonMode) {
         p1.innerHTML = `<strong>${seasons}</strong> ${seasons === 1 ? 'Category' : 'Categories'}`;
-        p2.innerHTML = `<strong>${episodes}</strong> ${episodes === 1 ? 'Item' : 'Items'}`;
+        p2.innerHTML = `<strong>${itemCount}</strong> ${itemCount === 1 ? 'Item' : 'Items'}`;
         sizeP.style.display = totalBytes ? 'block' : 'none';
         durP.style.display = totalSecs ? 'block' : 'none';
         if (hasSeparatedMeta) {

@@ -53,6 +53,163 @@ function loadStreamSaver() {
   return streamSaverLoadPromise.catch(() => null);
 }
 
+function coerceSeparatedFlag(value) {
+  if (value === true) return true;
+  if (value === false) return false;
+  if (typeof value === 'number') return value !== 0;
+  if (typeof value === 'string') {
+    const trimmed = value.trim().toLowerCase();
+    if (!trimmed) return false;
+    if (['1','true','yes','y','separated','seperate'].includes(trimmed)) return true;
+    if (['0','false','no','n'].includes(trimmed)) return false;
+  }
+  return false;
+}
+
+function pickFirstNumber(values, options = {}) {
+  const { allowZero = false } = options;
+  for (const value of values) {
+    const num = Number(value);
+    if (Number.isFinite(num) && num > 0) return num;
+  }
+  if (allowZero) {
+    for (const value of values) {
+      const num = Number(value);
+      if (Number.isFinite(num) && num === 0) return 0;
+    }
+  }
+  return null;
+}
+
+function inferExtensionFromUrl(url, fallback = '') {
+  try {
+    if (!url) return fallback;
+    const full = new URL(url, window.location && window.location.href ? window.location.href : 'http://localhost');
+    const name = decodeURIComponent(full.pathname.split('/').pop() || '');
+    if (name && name.includes('.')) {
+      const ext = name.slice(name.lastIndexOf('.')).toLowerCase();
+      if (/^\.[a-z0-9]{1,8}$/i.test(ext)) return ext;
+    }
+  } catch {}
+  return fallback;
+}
+
+function extractSeparatedParts(entry) {
+  if (!entry || typeof entry !== 'object') return [];
+  const candidates = [
+    Array.isArray(entry.sources) ? entry.sources : null,
+    Array.isArray(entry.parts) ? entry.parts : null,
+    Array.isArray(entry.items) ? entry.items : null,
+    Array.isArray(entry.__separatedParts) ? entry.__separatedParts : null
+  ];
+  let sourceList = [];
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate) && candidate.length) {
+      sourceList = candidate;
+      break;
+    }
+  }
+  return sourceList
+    .filter(part => part && typeof part === 'object' && typeof part.src === 'string' && part.src.trim())
+    .map((part, idx) => {
+      const title = typeof part.title === 'string' && part.title.trim() ? part.title.trim() : `Part ${idx + 1}`;
+      const duration = pickFirstNumber([
+        part.durationSeconds,
+        part.DurationSeconds,
+        part.partDurationSeconds,
+        part.partDuration,
+        part.lengthSeconds,
+        part.lengthInSeconds,
+        part.timeSeconds
+      ], { allowZero: true });
+      const fileSize = pickFirstNumber([
+        part.fileSizeBytes,
+        part.FileSizeBytes,
+        part.partfileSizeBytes,
+        part.itemFileSizeBytes,
+        part.ItemfileSizeBytes,
+        part.sizeBytes,
+        part.size
+      ], { allowZero: true });
+      return {
+        title,
+        src: part.src.trim(),
+        duration: Number.isFinite(duration) && duration > 0 ? duration : null,
+        fileSize: Number.isFinite(fileSize) && fileSize >= 0 ? fileSize : null,
+        raw: part
+      };
+    });
+}
+
+function deriveAggregatedStats(episode, parts) {
+  const sizeCandidates = [
+    episode && episode.fileSizeBytes,
+    episode && episode.FileSizeBytes,
+    episode && episode.ItemfileSizeBytes,
+    episode && episode.itemFileSizeBytes,
+    episode && episode.totalFileSizeBytes,
+    episode && episode.sizeBytes,
+    episode && episode.size
+  ];
+  let totalSize = pickFirstNumber(sizeCandidates, { allowZero: true });
+  if ((totalSize === null || totalSize <= 0) && Array.isArray(parts) && parts.length) {
+    let sum = 0;
+    parts.forEach(part => {
+      if (!part) return;
+      const candidate = pickFirstNumber([
+        part.fileSize,
+        part.raw && part.raw.fileSizeBytes,
+        part.raw && part.raw.FileSizeBytes,
+        part.raw && part.raw.partfileSizeBytes,
+        part.raw && part.raw.itemFileSizeBytes,
+        part.raw && part.raw.ItemfileSizeBytes,
+        part.raw && part.raw.sizeBytes,
+        part.raw && part.raw.size
+      ], { allowZero: true });
+      if (Number.isFinite(candidate) && candidate > 0) sum += candidate;
+    });
+    if (sum > 0) totalSize = sum;
+  }
+
+  const durationCandidates = [
+    episode && episode.durationSeconds,
+    episode && episode.DurationSeconds,
+    episode && episode.itemDurationSeconds,
+    episode && episode.ItemDurationSeconds,
+    episode && episode.ItemdurationSeconds,
+    episode && episode.totalDurationSeconds,
+    episode && episode.runtimeSeconds,
+    episode && episode.runtime,
+    episode && episode.lengthSeconds,
+    episode && episode.lengthInSeconds,
+    episode && episode.timeSeconds
+  ];
+  let totalDuration = pickFirstNumber(durationCandidates, { allowZero: true });
+  if ((totalDuration === null || totalDuration <= 0) && Array.isArray(parts) && parts.length) {
+    let sum = 0;
+    parts.forEach(part => {
+      if (!part) return;
+      const candidate = pickFirstNumber([
+        part.duration,
+        part.raw && part.raw.durationSeconds,
+        part.raw && part.raw.DurationSeconds,
+        part.raw && part.raw.partDurationSeconds,
+        part.raw && part.raw.partDuration,
+        part.raw && part.raw.lengthSeconds,
+        part.raw && part.raw.lengthInSeconds,
+        part.raw && part.raw.timeSeconds
+      ], { allowZero: true });
+      if (Number.isFinite(candidate) && candidate > 0) sum += candidate;
+    });
+    if (sum > 0) totalDuration = sum;
+  }
+
+  return {
+    size: Number.isFinite(totalSize) && totalSize > 0 ? Math.round(totalSize) : null,
+    duration: Number.isFinite(totalDuration) && totalDuration > 0 ? Math.round(totalDuration) : null
+  };
+}
+
 async function openSeasonSelectionModal() {
   return new Promise((resolve) => {
     const backdrop = document.createElement('div');
@@ -369,39 +526,70 @@ async function downloadSourceFolder(options = {}) {
   try { const n = Math.floor((Date.now() + Math.random() * 1000000)) % 1000000; localId = `Local${String(n).padStart(6, '0')}`; }
   catch { localId = 'Local000000'; }
   const manifest = { title: titleText, Image: sourceImageUrl || 'N/A', categories: [], LocalID: localId };
-  const catFolders = []; const catObjs = [];
+  const catFolders = [];
+  const catObjs = [];
   const sanitizedCats = videoList.map(cat => safeZipSegment(cat.category));
-  videoList.forEach((cat, i) => {
-    const catFolder = rootFolder.folder(sanitizedCats[i]); catFolders.push(catFolder);
-    const episodesPlaceholders = cat.episodes.map((ep, ei) => {
-      let ext = '.mp4';
-      try {
-        const urlParts = new URL(ep.src, window.location.href);
-        const origName = decodeURIComponent(urlParts.pathname.split('/').pop());
-        if (origName && origName.includes('.')) ext = origName.slice(origName.lastIndexOf('.')).toLowerCase();
-      } catch {}
-      const pad = String(ei + 1).padStart(2, '0');
-      const isCbz = ext === '.cbz';
-      const isJsonVolume = ext === '.json';
-      const prefix = (isCbz || isJsonVolume) ? 'V' : 'E';
-      // For JSON volumes, store an index.json within a V##/ subfolder
-      const localPath = isJsonVolume
-        ? `Directorys/${zipRootName}/${sanitizedCats[i]}/${prefix}${pad}/index.json`
-        : `Directorys/${zipRootName}/${sanitizedCats[i]}/${prefix}${pad}${ext}`;
-      const base = { title: ep.title, src: localPath, fileSizeBytes: (typeof ep.fileSizeBytes === 'number') ? ep.fileSizeBytes : null };
-      if (isCbz || isJsonVolume) { base.VolumePageCount = (typeof ep.VolumePageCount === 'number') ? ep.VolumePageCount : null; }
-      else { base.durationSeconds = (typeof ep.durationSeconds === 'number') ? ep.durationSeconds : null; }
-      return base;
-    });
-    const catObj = { category: cat.category, episodes: episodesPlaceholders }; catObjs.push(catObj); manifest.categories.push(catObj);
-  });
-
-  const plannedNames = videoList.map(() => []);
   const tasks = [];
   const skippedEpisodes = [];
   const missingEpisodes = [];
+  let manifestCategoryCount = 0;
+  let manifestEpisodeCount = 0;
+  let manifestSeparatedCategoryCount = 0;
+  let manifestSeparatedItemCount = 0;
+
   videoList.forEach((cat, ci) => {
-    cat.episodes.forEach((episode, ei) => {
+    const sanitizedCategory = sanitizedCats[ci];
+    const catFolder = rootFolder.folder(sanitizedCategory);
+    catFolders.push(catFolder);
+    const catSeparated = coerceSeparatedFlag(cat && (cat.separated ?? cat.seperated));
+    if (catSeparated) manifestSeparatedCategoryCount += 1;
+    else manifestCategoryCount += 1;
+
+    const episodesPlaceholders = [];
+    (cat.episodes || []).forEach((episode, ei) => {
+      const epTitle = episode && episode.title ? episode.title : (catSeparated ? `Part ${ei + 1}` : `Episode ${ei + 1}`);
+      const progressBaseKey = episode && episode.progressKey ? String(episode.progressKey) : null;
+      const separatedParts = extractSeparatedParts(episode);
+      const treatAsSeparatedItem = !catSeparated && separatedParts.length > 0;
+      const rawSrc = typeof episode && typeof episode.src === 'string' ? episode.src.trim() : '';
+      let ext = inferExtensionFromUrl(rawSrc);
+      if (!ext && treatAsSeparatedItem && separatedParts.length) {
+        ext = inferExtensionFromUrl(separatedParts[0].src);
+      }
+      if (!ext && episode && typeof episode.fileName === 'string' && episode.fileName.includes('.')) {
+        ext = episode.fileName.slice(episode.fileName.lastIndexOf('.')).toLowerCase();
+      }
+      ext = (ext || '').toLowerCase();
+      if (!ext || ext.length > 8 || /[^a-z0-9.]/i.test(ext)) ext = '.mp4';
+      const isJsonVolume = ext === '.json';
+      const isCbz = ext === '.cbz';
+      const prefix = (isCbz || isJsonVolume) ? 'V' : 'E';
+      const pad = String(ei + 1).padStart(2, '0');
+      const folderPath = `Directorys/${zipRootName}/${sanitizedCategory}/`;
+      const placeholder = {
+        title: epTitle,
+        progressKey: progressBaseKey
+      };
+
+      if (!catSeparated) manifestEpisodeCount += 1;
+      else manifestSeparatedItemCount += 1;
+
+      const aggregates = deriveAggregatedStats(episode, treatAsSeparatedItem ? separatedParts : []);
+      if (aggregates.size !== null) {
+        placeholder.fileSizeBytes = aggregates.size;
+        placeholder.ItemfileSizeBytes = aggregates.size;
+      } else if (Number.isFinite(Number(episode && episode.fileSizeBytes))) {
+        placeholder.fileSizeBytes = Number(episode.fileSizeBytes);
+      }
+      if (aggregates.duration !== null) {
+        placeholder.durationSeconds = aggregates.duration;
+      } else if (Number.isFinite(Number(episode && episode.durationSeconds))) {
+        placeholder.durationSeconds = Math.round(Number(episode.durationSeconds));
+      }
+      if (Number.isFinite(Number(episode && episode.VolumePageCount))) {
+        placeholder.VolumePageCount = Number(episode.VolumePageCount);
+      }
+
       let shouldDownload = true;
       const epSet = selectedEpisodesBySeason && selectedEpisodesBySeason[ci];
       if (epSet instanceof Set) {
@@ -410,44 +598,114 @@ async function downloadSourceFolder(options = {}) {
         shouldDownload = selectedSet.has(ci);
       }
 
-      const epObj = catObjs[ci].episodes[ei];
-      const srcString = episode && typeof episode.src === 'string' ? episode.src.trim() : '';
       const isPlaceholder = !!(episode && episode.isPlaceholder);
-      const hasSrc = srcString.length > 0;
-      if (isPlaceholder || !hasSrc) {
-        if (epObj) {
-          epObj.downloadFailed = true;
-          epObj.downloadError = isPlaceholder ? 'Placeholder item – skipped' : 'Missing source URL';
+      const hasSeparatedSources = treatAsSeparatedItem && separatedParts.length > 0;
+      const hasDirectSrc = !treatAsSeparatedItem && typeof rawSrc === 'string' && rawSrc.length > 0;
+      const isJsonCandidate = isJsonVolume && typeof rawSrc === 'string' && rawSrc.length > 0;
+      const lacksSource = treatAsSeparatedItem ? !hasSeparatedSources : !hasDirectSrc;
+      const invalidSource = !treatAsSeparatedItem && !isJsonVolume && hasDirectSrc && !rawSrc.startsWith('http');
+
+      let catEntryFolder = catFolder;
+      let plannedTask = null;
+
+      if (isPlaceholder || lacksSource || invalidSource) {
+        placeholder.downloadFailed = true;
+        placeholder.downloadError = isPlaceholder ? 'Placeholder item – skipped' : 'Missing source URL';
+        if (isPlaceholder) skippedEpisodes.push(epTitle);
+        else missingEpisodes.push(epTitle);
+      } else if (isJsonVolume) {
+        const volFolderName = `${prefix}${pad}`;
+        placeholder.src = `${folderPath}${volFolderName}/index.json`;
+        if (!catSeparated) placeholder.separated = 0;
+        plannedTask = {
+          type: 'json',
+          ci,
+          ei,
+          episode,
+          placeholder,
+          volumeFolderName: volFolderName,
+          sanitizedCategory,
+          categoryFolder: catEntryFolder
+        };
+      } else if (treatAsSeparatedItem) {
+        placeholder.separated = 1;
+        placeholder.seperated = 1;
+        placeholder.sources = [];
+        const epFolderName = `${prefix}${pad}`;
+        const epFolder = catEntryFolder.folder(epFolderName);
+        const partPlans = separatedParts.map((part, partIndex) => {
+          const partExt = inferExtensionFromUrl(part.src, ext) || ext || '.mp4';
+          const partPad = String(partIndex + 1).padStart(2, '0');
+          const partFileName = `P${partPad}${partExt}`;
+          const localPath = `${folderPath}${epFolderName}/${partFileName}`;
+          const sourceMeta = {
+            title: part.title,
+            src: localPath
+          };
+          if (Number.isFinite(part.fileSize) && part.fileSize > 0) sourceMeta.fileSizeBytes = Math.round(part.fileSize);
+          if (Number.isFinite(part.duration) && part.duration > 0) sourceMeta.durationSeconds = Math.round(part.duration);
+          placeholder.sources.push(sourceMeta);
+          return {
+            remoteUrl: part.src,
+            localPath,
+            fileName: partFileName,
+            folder: epFolder,
+            duration: part.duration,
+            fileSize: part.fileSize
+          };
+        });
+        if (!placeholder.src && placeholder.sources.length > 0) {
+          placeholder.src = placeholder.sources[0].src;
         }
-        if (isPlaceholder) skippedEpisodes.push(episode.title || `Episode ${ei + 1}`);
-        else missingEpisodes.push(episode.title || `Episode ${ei + 1}`);
-        return;
+        plannedTask = {
+          type: 'separated',
+          ci,
+          ei,
+          episode,
+          placeholder,
+          parts: partPlans
+        };
+      } else {
+        const fileName = `${prefix}${pad}${ext}`;
+        placeholder.src = `${folderPath}${fileName}`;
+        plannedTask = {
+          type: isCbz ? 'cbz' : 'video',
+          ci,
+          ei,
+          episode,
+          placeholder,
+          fileName,
+          sanitizedCategory,
+          categoryFolder: catEntryFolder
+        };
       }
 
-      let origName = '';
-      let ext = '';
-      try {
-        const urlParts = new URL(srcString, window.location.href);
-        origName = decodeURIComponent(urlParts.pathname.split('/').pop() || '');
-        ext = origName.includes('.') ? origName.slice(origName.lastIndexOf('.')).toLowerCase() : '';
-      } catch {
-        if (epObj) {
-          epObj.downloadFailed = true;
-          epObj.downloadError = 'Invalid URL';
-        }
-        missingEpisodes.push(episode.title || `Episode ${ei + 1}`);
-        return;
+      if (shouldDownload && plannedTask && !placeholder.downloadFailed) {
+        tasks.push(plannedTask);
+      } else if (!shouldDownload) {
+        placeholder.downloadSkipped = true;
       }
 
-      const pad = String(ei + 1).padStart(2, '0');
-      const isJsonVolume = ext === '.json';
-      const isCbz = ext === '.cbz';
-      const prefix = (isCbz || isJsonVolume) ? 'V' : 'E';
-      const fileName = `${prefix}${pad}${ext}`;
-      plannedNames[ci][ei] = fileName;
-      if (shouldDownload) tasks.push({ ci, ei, episode, fileName });
+      episodesPlaceholders.push(placeholder);
     });
+
+    const catObj = { category: cat.category, episodes: episodesPlaceholders };
+    if (catSeparated) {
+      catObj.separated = 1;
+      catObj.seperated = 1;
+    }
+    catObjs.push(catObj);
+    manifest.categories.push(catObj);
   });
+
+  const totalItemCount = manifestEpisodeCount + manifestSeparatedItemCount;
+  if (manifestCategoryCount > 0) manifest.categoryCount = manifestCategoryCount;
+  if (manifestEpisodeCount > 0) manifest.episodeCount = manifestEpisodeCount;
+  if (totalItemCount > 0) manifest.itemCount = totalItemCount;
+  if (manifestSeparatedCategoryCount > 0) {
+    manifest.separatedCategoryCount = manifestSeparatedCategoryCount;
+    manifest.separatedItemCount = manifestSeparatedItemCount;
+  }
 
   if (tasks.length === 0) {
     try { speedLabel.textContent = 'No downloads started'; } catch {}
@@ -612,7 +870,10 @@ async function downloadSourceFolder(options = {}) {
 
     updateRemainingLabel();
   }
-  tasks.forEach(({ ci, ei }, idx) => {
+  tasks.forEach((task, idx) => {
+    const { ci, ei, placeholder, type } = task;
+    const catName = (videoList[ci] && videoList[ci].category) ? videoList[ci].category : `Category ${ci + 1}`;
+    const epTitle = (placeholder && placeholder.title) ? placeholder.title : ((task.episode && task.episode.title) ? task.episode.title : `Item ${ei + 1}`);
     const row = document.createElement('div');
     row.style.display = 'flex';
     row.style.alignItems = 'center';
@@ -623,8 +884,17 @@ async function downloadSourceFolder(options = {}) {
     row.style.fontSize = '0.9em';
 
     const labelEl = document.createElement('div');
-    labelEl.textContent = `S${ci+1}E${ei+1}`;
-    labelEl.style.flex = '1';
+    let labelText = `${catName} · ${epTitle}`;
+    if (type === 'separated' && Array.isArray(task.parts)) {
+      labelText += ` (Parts: ${task.parts.length})`;
+    } else if (type === 'json') {
+      labelText += ' [JSON]';
+    } else if (type === 'cbz') {
+      labelText += ' [CBZ]';
+    }
+    labelEl.textContent = labelText;
+    labelEl.style.flex = '3';
+    labelEl.style.minWidth = '120px';
 
     const progressWrapper = document.createElement('div');
     progressWrapper.style.flex = '2';
@@ -648,7 +918,14 @@ async function downloadSourceFolder(options = {}) {
   });
   applyVisibilityAll();
 
-  plannedTotalBytes = 0; try { for (const { episode } of tasks) { const v = Number(episode && episode.fileSizeBytes); if (Number.isFinite(v) && v >= 0) plannedTotalBytes += v; } } catch {}
+  plannedTotalBytes = 0;
+  try {
+    for (const task of tasks) {
+      const placeholder = task && task.placeholder;
+      const v = Number(placeholder && placeholder.fileSizeBytes);
+      if (Number.isFinite(v) && v >= 0) plannedTotalBytes += v;
+    }
+  } catch {}
   updateRemainingLabel();
   updateFailureSummary();
   speedLabel.textContent = 'Speed: 0.00 MB/s';
@@ -683,20 +960,19 @@ async function downloadSourceFolder(options = {}) {
   const workers = Array.from({ length: concurrency }, async () => {
     while (!cancelRequested && pointer < tasks.length) {
       const idx = pointer++;
-      const { ci, ei, episode, fileName } = tasks[idx];
+      const task = tasks[idx];
+      const { ci, ei, episode, placeholder, type } = task;
       try {
-        const isJson = fileName.toLowerCase().endsWith('.json');
         if (dataLeftLabels[idx]) {
           dataLeftLabels[idx].textContent = 'Starting…';
           dataLeftLabels[idx].style.color = '#6ec1e4';
         }
-        if (isJson) {
+        if (type === 'json') {
           // JSON volume: fetch JSON, inline remote links as base64 data URIs, save JSON
           const epObj = catObjs[ci].episodes[ei];
-          const folderPath = `Directorys/${zipRootName}/${sanitizedCats[ci]}/`;
-          const pad = String(ei + 1).padStart(2, '0');
-          const volFolderName = `V${pad}`;
-          const volFolder = catFolders[ci].folder(volFolderName);
+          const folderPath = `Directorys/${zipRootName}/${task.sanitizedCategory}/`;
+          const volFolderName = task.volumeFolderName;
+          const volFolder = task.categoryFolder.folder(volFolderName);
           // Point to the nested index.json
           epObj.src = `${folderPath}${volFolderName}/index.json`;
 
@@ -877,7 +1153,118 @@ async function downloadSourceFolder(options = {}) {
 
           // Mark row completed
           try { progressBars[idx].value = 100; dataLeftLabels[idx].textContent = 'Done'; rowCompleted[idx] = true; applyVisibilityAll(); } catch {}
+        } else if (type === 'separated') {
+          const epObj = catObjs[ci].episodes[ei];
+          const partPlans = Array.isArray(task.parts) ? task.parts : [];
+          if (!partPlans.length) throw new Error('No separated parts available');
+          let completedParts = 0;
+          let accumulatedBytes = 0;
+          let accumulatedDuration = 0;
+          loadedBytes[idx] = 0;
+          totalBytes[idx] = 0;
+          for (let partIndex = 0; partIndex < partPlans.length; partIndex++) {
+            const plan = partPlans[partIndex];
+            if (!plan || !plan.remoteUrl) throw new Error(`Missing source for part ${partIndex + 1}`);
+            let partBlob = await new Promise((resolve, reject) => {
+              const xhr = new XMLHttpRequest(); xhrs.push(xhr);
+              let cleaned = false;
+              let watchdog;
+              const cleanup = () => {
+                if (cleaned) return;
+                cleaned = true;
+                if (watchdog) watchdog.cancel();
+                const i = xhrs.indexOf(xhr); if (i >= 0) xhrs.splice(i, 1);
+              };
+              const rejectWithCleanup = (err) => { cleanup(); reject(err); };
+              watchdog = createXhrInactivityWatchdog(xhr, rejectWithCleanup);
+              xhr.addEventListener('loadend', cleanup);
+              xhr.open('GET', plan.remoteUrl); xhr.responseType = 'blob';
+              xhr.addEventListener('progress', e => {
+                if (e.lengthComputable) {
+                  const partProgress = Math.max(0, Math.min(1, e.loaded / Math.max(1, e.total)));
+                  const overallProgress = ((completedParts + partProgress) / partPlans.length) * 100;
+                  try { progressBars[idx].value = overallProgress; } catch {}
+                  loadedBytes[idx] = accumulatedBytes + e.loaded;
+                  totalBytes[idx] = accumulatedBytes + e.total;
+                  updateRemainingLabel();
+                  const totalLoaded = loadedBytes.reduce((a, b) => a + b, 0);
+                  const totalTotal = totalBytes.reduce((a, b) => a + b, 0);
+                  const elapsedSeconds = Math.max(0.001, (Date.now() - downloadStartTime) / 1000);
+                  const averageSpeedBytes = downloadedBytes / elapsedSeconds;
+                  const remaining = totalTotal - totalLoaded;
+                  let eta = '';
+                  if (averageSpeedBytes > 0 && remaining > 0) {
+                    const seconds = remaining / averageSpeedBytes;
+                    const min = Math.floor(seconds / 60);
+                    const sec = Math.round(seconds % 60);
+                    eta = `ETA: ${min}m ${sec}s`;
+                  }
+                  etaLabel.textContent = eta;
+                  const speedMBps = (averageSpeedBytes / (1024 * 1024)).toFixed(2);
+                  speedLabel.textContent = `Speed: ${speedMBps} MB/s`;
+                  const remainingBytesPart = e.total - e.loaded;
+                  const remainingMB = (remainingBytesPart / (1024 * 1024)).toFixed(2);
+                  dataLeftLabels[idx].textContent = `${remainingMB} MB left (Part ${partIndex + 1}/${partPlans.length})`;
+                } else if (dataLeftLabels[idx]) {
+                  dataLeftLabels[idx].textContent = `Part ${partIndex + 1}/${partPlans.length}…`;
+                }
+              });
+              xhr.onload = () => {
+                const ok = (xhr.status >= 200 && xhr.status < 300) || xhr.status === 0;
+                if (ok) { cleanup(); resolve(xhr.response); }
+                else { rejectWithCleanup(new Error('Download failed: ' + xhr.status)); }
+              };
+              xhr.onerror = () => rejectWithCleanup(new Error('Network error'));
+              xhr.send();
+            }).catch(() => null);
+
+            if (!partBlob) {
+              try {
+                const resp = await fetchWithTimeout(plan.remoteUrl, { cache: 'no-store', credentials: 'omit', referrerPolicy: 'no-referrer' }, FETCH_TOTAL_TIMEOUT_MS);
+                if (resp && (resp.ok || resp.status === 0)) {
+                  partBlob = await resp.blob();
+                }
+              } catch {}
+            }
+            if (!partBlob) throw new Error(`Download failed for part ${partIndex + 1}`);
+            plan.folder.file(plan.fileName, partBlob);
+            const partSize = Number(partBlob && partBlob.size);
+            if (Number.isFinite(partSize) && partSize >= 0) {
+              accumulatedBytes += partSize;
+              downloadedBytes += partSize;
+              loadedBytes[idx] = accumulatedBytes;
+              totalBytes[idx] = accumulatedBytes;
+              updateRemainingLabel();
+              if (placeholder && Array.isArray(placeholder.sources) && placeholder.sources[partIndex]) {
+                placeholder.sources[partIndex].fileSizeBytes = Math.round(partSize);
+              }
+            }
+            try {
+              const duration = await computeBlobDurationSeconds(partBlob);
+              if (Number.isFinite(duration) && duration > 0) {
+                accumulatedDuration += duration;
+                if (placeholder && Array.isArray(placeholder.sources) && placeholder.sources[partIndex]) {
+                  placeholder.sources[partIndex].durationSeconds = Math.round(duration);
+                }
+              }
+            } catch {}
+            completedParts += 1;
+            try {
+              progressBars[idx].value = (completedParts / partPlans.length) * 100;
+              dataLeftLabels[idx].textContent = completedParts === partPlans.length ? 'Finalizing…' : `Part ${completedParts}/${partPlans.length}`;
+            } catch {}
+          }
+          if (accumulatedBytes > 0) {
+            epObj.fileSizeBytes = Math.round(accumulatedBytes);
+            epObj.ItemfileSizeBytes = Math.round(accumulatedBytes);
+          }
+          if (accumulatedDuration > 0) {
+            epObj.durationSeconds = Math.round(accumulatedDuration);
+          }
+          try { progressBars[idx].value = 100; dataLeftLabels[idx].textContent = 'Done'; rowCompleted[idx] = true; applyVisibilityAll(); } catch {}
         } else {
+          const fileName = task.fileName;
+          const isCbz = type === 'cbz';
           // Regular path: download blob directly
           let blob = await new Promise((resolve, reject) => {
             const xhr = new XMLHttpRequest(); xhrs.push(xhr);
@@ -940,8 +1327,9 @@ async function downloadSourceFolder(options = {}) {
           }
 
           if (!blob) throw new Error('Download failed');
-          catFolders[ci].file(fileName, blob);
-          const epObj = catObjs[ci].episodes[ei]; epObj.src = `Directorys/${zipRootName}/${sanitizedCats[ci]}/${fileName}`;
+          task.categoryFolder.file(fileName, blob);
+          const epObj = catObjs[ci].episodes[ei];
+          epObj.src = placeholder && placeholder.src ? placeholder.src : `Directorys/${zipRootName}/${task.sanitizedCategory}/${fileName}`;
           try {
             const sz = Number(blob && blob.size);
             if (Number.isFinite(sz) && sz >= 0) {
@@ -964,8 +1352,12 @@ async function downloadSourceFolder(options = {}) {
           try { progressBars[idx].value = 100; dataLeftLabels[idx].textContent = 'Done'; rowCompleted[idx] = true; applyVisibilityAll(); } catch {}
         }
       } catch (err) {
-        console.error('Error downloading', episode.src, err);
-        markDownloadFailed(idx, err, ci, ei, episode, { cancelled: cancelRequested });
+        const errorContext = type === 'separated'
+          ? (task.parts && task.parts[0] && task.parts[0].remoteUrl)
+          : (episode && episode.src);
+        console.error('Error downloading', errorContext, err);
+        const failureContext = placeholder && placeholder.src ? placeholder : episode;
+        markDownloadFailed(idx, err, ci, ei, failureContext || {}, { cancelled: cancelRequested });
       }
     }
   });
