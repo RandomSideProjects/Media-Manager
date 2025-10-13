@@ -21,6 +21,7 @@ const placeholderNotice = document.getElementById('placeholderNotice');
 const folderInput = document.getElementById("folderInput");
 const downloadBtn = document.getElementById('downloadBtn');
 const themeToggle = document.getElementById('themeToggle');
+const separatedPartsBar = document.getElementById('separatedPartsBar');
 
 // CBZ viewer elements
 const cbzViewer = document.getElementById('cbzViewer');

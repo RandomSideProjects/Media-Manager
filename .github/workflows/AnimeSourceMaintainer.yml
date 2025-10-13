@@ -146,7 +146,8 @@ jobs:
                     episodeCount += episodes.length;
                   }
                   for (const e of episodes) {
-                    const n = Number(e && e.fileSizeBytes);
+                    const sizeCandidate = e && (e.fileSizeBytes ?? e.ItemfileSizeBytes ?? e.itemFileSizeBytes);
+                    const n = Number(sizeCandidate);
                     if (Number.isFinite(n) && n >= 0) totalFileSizeBytes += Math.round(n);
                   }
                 }

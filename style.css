@@ -826,6 +826,43 @@ body.light-mode #clipPresetContent .overlay-close:focus {
   position: relative;
 }
 
+.separated-parts-bar {
+  display: none;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+  margin: 0.5em 0 1em;
+}
+
+.separated-part-pill {
+  background: #222;
+  color: var(--text);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  padding: 0.4em 0.9em;
+  font-size: 0.9rem;
+  margin: 0;
+  transition: background 0.25s, border-color 0.25s, transform 0.1s;
+}
+
+.separated-part-pill:hover {
+  background: #2f2f2f;
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.separated-part-pill:focus-visible {
+  outline: 2px solid var(--button-bg);
+  outline-offset: 2px;
+}
+
+.separated-part-pill.active {
+  background: var(--button-bg);
+  color: var(--button-text);
+  border-color: transparent;
+  transform: translateY(-1px);
+}
+
 /* Spinner overlay */
 .spinner {
   display: none;

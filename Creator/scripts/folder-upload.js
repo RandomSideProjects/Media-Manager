@@ -147,9 +147,10 @@
         const url = URL.createObjectURL(file);
         const v = document.createElement('video');
         v.preload = 'metadata';
-        const done = () => { try { URL.revokeObjectURL(url); } catch {}; resolve(isFinite(v.duration) ? v.duration : NaN); };
-        v.onloadedmetadata = done;
-        v.onerror = () => resolve(NaN);
+        const cleanup = () => { try { URL.revokeObjectURL(url); } catch {} };
+        const finalize = (value) => { cleanup(); resolve(value); };
+        v.onloadedmetadata = () => finalize(isFinite(v.duration) ? v.duration : NaN);
+        v.onerror = () => finalize(NaN);
         v.src = url;
       } catch { resolve(NaN); }
     });

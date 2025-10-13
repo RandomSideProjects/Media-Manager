@@ -112,6 +112,7 @@ function formatBytesDecimalMaxUnit(n) {
 
 function resolveResumeKeyForItem(item) {
   if (!item || typeof item !== 'object') return '';
+  if (item.__separatedResumeKey) return String(item.__separatedResumeKey);
   if (item.__groupResumeKey) return String(item.__groupResumeKey);
   if (item.__separatedGroup && item.__separatedGroup.resumeKey) return String(item.__separatedGroup.resumeKey);
   if (item.progressKey) return String(item.progressKey);

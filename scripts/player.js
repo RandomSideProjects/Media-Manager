@@ -30,6 +30,324 @@ function clearCbzUrls() {
   cbzObjectUrls = [];
 }
 
+function hasSeparatedParts(item) {
+  return !!(item && Array.isArray(item.__separatedParts) && item.__separatedParts.length > 0);
+}
+
+function getSeparatedMeta(item) {
+  if (!hasSeparatedParts(item)) return null;
+  const parts = item.__separatedParts;
+  let offsets = Array.isArray(item.__separatedOffsets) && item.__separatedOffsets.length === parts.length
+    ? item.__separatedOffsets.slice()
+    : null;
+  let derivedTotal = 0;
+  if (!offsets) {
+    offsets = [];
+    let running = 0;
+    const fallbackDurations = Array.isArray(item.__separatedDurations) ? item.__separatedDurations : [];
+    parts.forEach((part, idx) => {
+      offsets.push(running);
+      let d = Number(part && part.durationSeconds);
+      if (!Number.isFinite(d) || d <= 0) {
+        const fallback = Number(fallbackDurations[idx]);
+        if (Number.isFinite(fallback) && fallback > 0) d = fallback;
+      }
+      if (Number.isFinite(d) && d > 0) running += d;
+    });
+    derivedTotal = running;
+  } else {
+    const fallbackDurations = Array.isArray(item.__separatedDurations) ? item.__separatedDurations : [];
+    derivedTotal = offsets[offsets.length - 1] || 0;
+    const lastIdx = parts.length - 1;
+    if (lastIdx >= 0) {
+      let lastDur = Number(parts[lastIdx] && parts[lastIdx].durationSeconds);
+      if (!Number.isFinite(lastDur) || lastDur <= 0) {
+        const fallback = Number(fallbackDurations[lastIdx]);
+        if (Number.isFinite(fallback) && fallback > 0) lastDur = fallback;
+      }
+      if (Number.isFinite(lastDur) && lastDur > 0) derivedTotal += lastDur;
+    }
+  }
+  let totalDuration = Number(item.__separatedTotalDuration);
+  if (!Number.isFinite(totalDuration) || totalDuration <= 0) {
+    const lastOffset = offsets[offsets.length - 1] || 0;
+    const lastPart = parts[parts.length - 1];
+    let lastDuration = Number(lastPart && lastPart.durationSeconds);
+    if (!Number.isFinite(lastDuration) || lastDuration <= 0) {
+      const fallbackDur = Array.isArray(item.__separatedDurations) ? Number(item.__separatedDurations[parts.length - 1]) : NaN;
+      if (Number.isFinite(fallbackDur) && fallbackDur > 0) lastDuration = fallbackDur;
+    }
+    const inferred = lastOffset + (Number.isFinite(lastDuration) && lastDuration > 0 ? lastDuration : 0);
+    totalDuration = inferred > 0 ? inferred : (derivedTotal > 0 ? derivedTotal : Number(item.durationSeconds));
+  }
+  if (!Number.isFinite(totalDuration) || totalDuration <= 0) totalDuration = null;
+  return { parts, offsets, totalDuration };
+}
+
+function getPartDuration(meta, item, index) {
+  if (!meta || !meta.parts || index < 0 || index >= meta.parts.length) return 0;
+  const part = meta.parts[index];
+  let d = Number(part && part.durationSeconds);
+  if (!Number.isFinite(d) || d <= 0) {
+    const fallback = item && Array.isArray(item.__separatedDurations) ? Number(item.__separatedDurations[index]) : NaN;
+    if (Number.isFinite(fallback) && fallback > 0) d = fallback;
+  }
+  if (!Number.isFinite(d) || d <= 0) {
+    const nextOffset = meta.offsets[index + 1];
+    const currentOffset = meta.offsets[index] || 0;
+    if (Number.isFinite(nextOffset)) d = Math.max(0, nextOffset - currentOffset);
+  }
+  return Number.isFinite(d) && d > 0 ? d : 0;
+}
+
+function computeSeparatedProgress(item, currentPartTime) {
+  const meta = getSeparatedMeta(item);
+  const safeCurrent = Math.max(0, Number(currentPartTime) || 0);
+  if (!meta) {
+    let totalDuration = Number(item && item.__separatedTotalDuration);
+    if (!Number.isFinite(totalDuration) || totalDuration <= 0) totalDuration = Number(item && item.durationSeconds);
+    if (!Number.isFinite(totalDuration) || totalDuration <= 0) totalDuration = Number(video && video.duration);
+    const clamped = (Number.isFinite(totalDuration) && totalDuration > 0) ? Math.min(safeCurrent, totalDuration) : safeCurrent;
+    return {
+      time: clamped,
+      duration: (Number.isFinite(totalDuration) && totalDuration > 0) ? totalDuration : clamped,
+      partIndex: 0,
+      partTime: clamped,
+      partCount: 1
+    };
+  }
+
+  const partCount = meta.parts.length;
+  let activeIndex = Number(item && item.__activePartIndex);
+  if (!Number.isFinite(activeIndex) || activeIndex < 0 || activeIndex >= partCount) {
+    let datasetIndex = NaN;
+    if (video && video.dataset && video.dataset.separatedPartIndex !== undefined) {
+      const parsed = Number(video.dataset.separatedPartIndex);
+      if (Number.isFinite(parsed)) datasetIndex = parsed;
+    }
+    activeIndex = Number.isFinite(datasetIndex) ? datasetIndex : 0;
+  }
+  activeIndex = Math.max(0, Math.min(activeIndex, partCount - 1));
+  if (item) item.__activePartIndex = activeIndex;
+
+  const startOffset = meta.offsets[activeIndex] || 0;
+  const partDuration = getPartDuration(meta, item, activeIndex);
+  const effectivePartDuration = (Number.isFinite(partDuration) && partDuration > 0) ? partDuration : null;
+  const partTime = effectivePartDuration ? Math.min(safeCurrent, effectivePartDuration) : safeCurrent;
+
+  let totalDuration = Number(item && item.__separatedTotalDuration);
+  if (!Number.isFinite(totalDuration) || totalDuration <= 0) {
+    if (Number.isFinite(meta.totalDuration) && meta.totalDuration > 0) {
+      totalDuration = meta.totalDuration;
+    } else {
+      const lastOffset = meta.offsets[partCount - 1] || 0;
+      const lastDur = getPartDuration(meta, item, partCount - 1);
+      const fallback = lastOffset + (Number.isFinite(lastDur) && lastDur > 0 ? lastDur : 0);
+      if (fallback > 0) totalDuration = fallback;
+    }
+  }
+  if ((!Number.isFinite(totalDuration) || totalDuration <= 0) && Number.isFinite(item && item.durationSeconds) && item.durationSeconds > 0) {
+    totalDuration = Number(item.durationSeconds);
+  }
+  const aggregated = startOffset + partTime;
+  const clampedAggregated = (Number.isFinite(totalDuration) && totalDuration > 0)
+    ? Math.min(aggregated, totalDuration)
+    : aggregated;
+
+  return {
+    time: clampedAggregated,
+    duration: (Number.isFinite(totalDuration) && totalDuration > 0) ? totalDuration : clampedAggregated,
+    partIndex: activeIndex,
+    partTime,
+    partCount
+  };
+}
+
+function getAggregatedDurationForItem(item) {
+  if (!item) return 0;
+  const meta = getSeparatedMeta(item);
+  if (meta) {
+    if (Number.isFinite(meta.totalDuration) && meta.totalDuration > 0) return meta.totalDuration;
+    let total = 0;
+    for (let i = 0; i < meta.parts.length; i++) {
+      total += getPartDuration(meta, item, i);
+    }
+    if (total > 0) return total;
+  }
+  if (Number.isFinite(item.durationSeconds) && item.durationSeconds > 0) return Number(item.durationSeconds);
+  if (video && Number.isFinite(video.duration) && video.duration > 0) return Number(video.duration);
+  return 0;
+}
+
+function resolveCombinedPosition(item, combinedSeconds) {
+  const safeCombined = Math.max(0, Number(combinedSeconds) || 0);
+  const meta = getSeparatedMeta(item);
+  if (!meta) {
+    return { partIndex: 0, partTime: safeCombined };
+  }
+  const totalDuration = getAggregatedDurationForItem(item);
+  const clampedCombined = totalDuration > 0 ? Math.min(safeCombined, totalDuration) : safeCombined;
+  let partIndex = meta.parts.length - 1;
+  for (let i = 0; i < meta.parts.length; i++) {
+    const start = meta.offsets[i] || 0;
+    const duration = getPartDuration(meta, item, i);
+    const end = start + (duration || 0);
+    if (clampedCombined < end || i === meta.parts.length - 1) {
+      partIndex = i;
+      break;
+    }
+  }
+  const startOffset = meta.offsets[partIndex] || 0;
+  const partTime = Math.max(0, clampedCombined - startOffset);
+  return { partIndex, partTime };
+}
+
+function getAggregatedCurrentTime(item) {
+  if (!item) return 0;
+  if (hasSeparatedParts(item)) {
+    const progress = computeSeparatedProgress(item, video ? video.currentTime : 0);
+    return progress.time;
+  }
+  return Number(video ? video.currentTime : 0) || 0;
+}
+
+function getCurrentMediaItem() {
+  if (typeof currentIndex !== 'number' || !Array.isArray(flatList)) return null;
+  if (currentIndex < 0 || currentIndex >= flatList.length) return null;
+  return flatList[currentIndex];
+}
+
+function updateEpisodeTimeOverlay(item, aggregatedTime) {
+  if (!item) {
+    return;
+  }
+  const duration = getAggregatedDurationForItem(item);
+  const totalDuration = duration > 0 ? duration : 0;
+  const clamped = Math.max(0, Math.min(Number(aggregatedTime) || 0, totalDuration || Number(aggregatedTime) || 0));
+}
+
+function seekAggregated(item, targetTimeSeconds, shouldPlay) {
+  if (!item) return;
+  const desiredPlay = shouldPlay === undefined ? !video.paused : shouldPlay;
+  const target = Math.max(0, Number(targetTimeSeconds) || 0);
+  if (hasSeparatedParts(item)) {
+    const position = resolveCombinedPosition(item, target);
+    setSeparatedPartSource(item, position.partIndex, { resumeTime: position.partTime, suppressPlay: !desiredPlay, combinedTime: target });
+  } else if (video) {
+    const duration = Number(video.duration);
+    const clamped = Number.isFinite(duration) && duration > 0 ? Math.max(0, Math.min(target, duration)) : target;
+    try { video.currentTime = clamped; } catch {}
+    if (desiredPlay) {
+      const playPromise = video.play();
+      if (playPromise && typeof playPromise.catch === 'function') playPromise.catch(() => {});
+    }
+    updateEpisodeTimeOverlay(item, clamped);
+  }
+}
+
+function setSeparatedPartSource(item, partIndex, options) {
+  const meta = getSeparatedMeta(item);
+  if (!meta) return;
+  const targetIndex = Math.max(0, Math.min(partIndex, meta.parts.length - 1));
+  const part = meta.parts[targetIndex];
+  item.__activePartIndex = targetIndex;
+  if (!Array.isArray(item.__separatedOffsets) || item.__separatedOffsets.length !== meta.offsets.length) {
+    item.__separatedOffsets = meta.offsets.slice();
+  }
+  if (!Number.isFinite(item.__separatedTotalDuration) || item.__separatedTotalDuration <= 0) {
+    item.__separatedTotalDuration = meta.totalDuration;
+  }
+  const resumeKey = item.__separatedBaseKey || resolveResumeKeyForItem(item);
+  item.__separatedBaseKey = resumeKey;
+  const resumeTime = options && Number.isFinite(Number(options.resumeTime)) ? Number(options.resumeTime) : 0;
+  const aggregatedTime = (options && Number.isFinite(Number(options.combinedTime)))
+    ? Math.max(0, Number(options.combinedTime))
+    : (meta.offsets[targetIndex] || 0) + Math.max(0, resumeTime);
+  updateEpisodeTimeOverlay(item, aggregatedTime);
+  updateChaptersSelection(item);
+  if (resumeKey) {
+    try { localStorage.setItem(`${resumeKey}:part`, String(targetIndex)); }
+    catch {}
+  }
+  if (video) {
+    const suppressPlay = options && options.suppressPlay === true;
+    video.dataset.separatedItem = '1';
+    video.dataset.separatedPartIndex = String(targetIndex);
+    video.dataset.separatedPartCount = String(meta.parts.length);
+    video.dataset.separatedBaseKey = resumeKey || '';
+    const onMeta = () => {
+      try {
+        localStorage.setItem(video.src + ':duration', video.duration);
+        if (resumeKey && Number.isFinite(item.__separatedTotalDuration) && item.__separatedTotalDuration > 0) {
+          localStorage.setItem(`${resumeKey}:duration`, item.__separatedTotalDuration);
+        }
+        const clamped = Math.max(0, Math.min(resumeTime, Number(video.duration) || resumeTime));
+        try { video.currentTime = clamped; } catch {}
+        if (!suppressPlay) {
+          const playPromise = video.play();
+          if (playPromise && typeof playPromise.catch === 'function') playPromise.catch(() => {});
+        }
+        updateEpisodeTimeOverlay(item, aggregatedTime);
+      } catch {}
+      video.removeEventListener('loadedmetadata', onMeta);
+    };
+    video.addEventListener('loadedmetadata', onMeta);
+    try {
+      video.src = part.src;
+      video.load();
+    } catch {}
+  }
+  if (resumeKey) {
+    try {
+      localStorage.setItem(resumeKey, String(Math.max(0, aggregatedTime)));
+      localStorage.setItem(`${resumeKey}:part`, String(targetIndex));
+      localStorage.setItem(`${resumeKey}:partTime`, String(Math.max(0, resumeTime)));
+      if (typeof writeSourceScopedValue === 'function') {
+        writeSourceScopedValue('SavedItemTime', String(Math.max(0, aggregatedTime)));
+      }
+    } catch {}
+  }
+}
+
+function updateChaptersSelection(item) {
+  if (!separatedPartsBar) return;
+  separatedPartsBar.innerHTML = '';
+  separatedPartsBar.style.display = 'none';
+  separatedPartsBar.setAttribute('aria-hidden', 'true');
+
+  if (!item || !hasSeparatedParts(item)) return;
+  const meta = getSeparatedMeta(item);
+  if (!meta || !Array.isArray(meta.parts) || meta.parts.length === 0) return;
+
+  const activeIndexRaw = Number(item.__activePartIndex);
+  const activeIndex = Number.isFinite(activeIndexRaw) && activeIndexRaw >= 0 ? activeIndexRaw : 0;
+  const formatter = (typeof formatTime === 'function')
+    ? formatTime
+    : (value => `${Math.round(Math.max(0, Number(value) || 0))}s`);
+
+  separatedPartsBar.style.display = 'flex';
+  separatedPartsBar.setAttribute('aria-hidden', 'false');
+  meta.parts.forEach((part, idx) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'separated-part-pill';
+    const label = (part && typeof part.title === 'string' && part.title.trim())
+      ? part.title.trim()
+      : `Part ${idx + 1}`;
+    const duration = getPartDuration(meta, item, idx);
+    button.textContent = duration > 0 ? `${label} · ${formatter(duration)}` : label;
+    button.dataset.partIndex = String(idx);
+    button.setAttribute('aria-pressed', idx === activeIndex ? 'true' : 'false');
+    if (idx === activeIndex) button.classList.add('active');
+    button.addEventListener('click', () => {
+      const offsets = meta.offsets || [];
+      const startAt = offsets[idx] || 0;
+      seekAggregated(item, startAt, undefined);
+    });
+    separatedPartsBar.appendChild(button);
+  });
+}
+
 function hideVideoShowCbz() {
   if (video) { try { video.pause(); } catch {} video.style.display = 'none'; }
   if (cbzViewer) cbzViewer.style.display = 'block';
@@ -384,7 +702,7 @@ document.addEventListener('keydown', (e) => {
 
 function loadVideo(index) {
   const item = flatList[index];
-  const groupInfo = item && item.__separatedGroup ? item.__separatedGroup : null;
+  updateChaptersSelection(null);
   const resumeKey = resolveResumeKeyForItem(item);
   if (resumeKey) {
     try { localStorage.setItem('lastEpSrc', resumeKey); } catch {}
@@ -396,53 +714,121 @@ function loadVideo(index) {
   } catch {}
 
   if (item && item.isPlaceholder) {
+    updateEpisodeTimeOverlay(null, 0);
     if (video) {
       video.pause();
       video.removeAttribute('src');
       try { video.load(); } catch {}
       video.style.display = 'none';
+      video.dataset.separatedItem = '';
+      video.dataset.separatedPartIndex = '';
+      video.dataset.separatedPartCount = '';
+      video.dataset.separatedBaseKey = '';
     }
     if (theaterBtn) theaterBtn.style.display = 'none';
     unloadCbz();
     showPlayerAlert("Unfortunatly, this file in unavalible at this moment, please try again later.\n If this is a local source, please download the remaining files to continue");
-  } else if (isMangaVolumeItem(item)) {
-    // Load CBZ instead of video
+    return;
+  }
+
+  if (isMangaVolumeItem(item)) {
     if (placeholderNotice) placeholderNotice.style.display = 'none';
     unloadCbz();
     loadMangaVolume(item);
-  } else {
-    if (placeholderNotice) placeholderNotice.style.display = 'none';
-    // Ensure CBZ viewer is disabled when playing video
-    unloadCbz();
-    hideCbzShowVideo();
     if (video) {
-      video.style.display = '';
-      video.src = item.src;
-      video.addEventListener('loadedmetadata', function onMeta() {
-        // Persist duration under src and progressKey (for local folders)
-        localStorage.setItem(video.src + ':duration', video.duration);
-        try {
-          const pk = (item && item.progressKey) ? String(item.progressKey) : '';
-          if (pk) localStorage.setItem(pk + ':duration', video.duration);
-        } catch {}
-        video.removeEventListener('loadedmetadata', onMeta);
-      });
-      function onVideoError() {
-        try { video.pause(); } catch {}
-        video.style.display = 'none';
-        showPlayerAlert("Unfortunatly, this file in unavalible at this moment, please try again later.\n If this is a local source, please download the remaining files to continue");
-        video.removeEventListener('error', onVideoError);
-      }
-      video.addEventListener('error', onVideoError);
-      let savedTime = localStorage.getItem(video.src);
-      if (!savedTime && item && item.progressKey) savedTime = localStorage.getItem(String(item.progressKey));
-      if (savedTime) video.currentTime = parseFloat(savedTime);
+      video.dataset.separatedItem = '';
+      video.dataset.separatedPartIndex = '';
+      video.dataset.separatedPartCount = '';
+      video.dataset.separatedBaseKey = '';
+      video.style.display = 'none';
     }
-    if (theaterBtn) theaterBtn.style.display = 'inline-block';
+    updateEpisodeTimeOverlay(null, 0);
+    if (theaterBtn) theaterBtn.style.display = 'none';
+    return;
   }
+
+  if (placeholderNotice) placeholderNotice.style.display = 'none';
+  unloadCbz();
+  hideCbzShowVideo();
+  if (video) {
+    video.style.display = '';
+    video.dataset.separatedItem = '';
+    video.dataset.separatedPartIndex = '';
+    video.dataset.separatedPartCount = '';
+    video.dataset.separatedBaseKey = '';
+  }
+
+  const isSeparatedItem = hasSeparatedParts(item);
+  if (isSeparatedItem && video) {
+    const baseKey = resumeKey || item.__separatedBaseKey || '';
+    item.__separatedBaseKey = baseKey || item.__separatedBaseKey || '';
+    let resumeCombined = NaN;
+    if (baseKey) {
+      const storedCombined = parseFloat(localStorage.getItem(baseKey));
+      if (Number.isFinite(storedCombined) && storedCombined >= 0) resumeCombined = storedCombined;
+      if (Number.isFinite(item.__separatedTotalDuration) && item.__separatedTotalDuration > 0) {
+        try { localStorage.setItem(`${baseKey}:duration`, item.__separatedTotalDuration); } catch {}
+      }
+    }
+    const meta = getSeparatedMeta(item);
+    if (Number.isFinite(resumeCombined)) {
+      const position = resolveCombinedPosition(item, resumeCombined);
+      setSeparatedPartSource(item, position.partIndex, { resumeTime: position.partTime, combinedTime: resumeCombined });
+    } else {
+      let fallbackIndex = 0;
+      let fallbackTime = 0;
+      if (baseKey) {
+        const storedPart = parseInt(localStorage.getItem(`${baseKey}:part`), 10);
+        if (Number.isFinite(storedPart) && storedPart >= 0) fallbackIndex = Math.max(0, storedPart);
+        const storedPartTime = parseFloat(localStorage.getItem(`${baseKey}:partTime`));
+        if (Number.isFinite(storedPartTime) && storedPartTime >= 0) fallbackTime = storedPartTime;
+      }
+      const combinedGuess = (meta && meta.offsets && meta.offsets[fallbackIndex] || 0) + Math.max(0, fallbackTime);
+      setSeparatedPartSource(item, fallbackIndex, { resumeTime: fallbackTime, combinedTime: combinedGuess });
+    }
+  } else if (video) {
+    video.src = item.src;
+    video.addEventListener('loadedmetadata', function onMeta() {
+      try { localStorage.setItem(video.src + ':duration', video.duration); } catch {}
+      try {
+        const pk = (item && item.progressKey) ? String(item.progressKey) : '';
+        if (pk) localStorage.setItem(pk + ':duration', video.duration);
+      } catch {}
+      updateEpisodeTimeOverlay(item, video.currentTime);
+      video.removeEventListener('loadedmetadata', onMeta);
+    });
+    let savedTime = localStorage.getItem(video.src);
+    if (!savedTime && item && item.progressKey) savedTime = localStorage.getItem(String(item.progressKey));
+    if (savedTime) {
+      const targetTime = parseFloat(savedTime);
+      if (Number.isFinite(targetTime) && targetTime >= 0) {
+        try { video.currentTime = targetTime; } catch {}
+      }
+    }
+    video.load();
+  }
+
+  if (video) {
+    function onVideoError() {
+      try { video.pause(); } catch {}
+      video.style.display = 'none';
+      showPlayerAlert("Unfortunatly, this file in unavalible at this moment, please try again later.\n If this is a local source, please download the remaining files to continue");
+      video.removeEventListener('error', onVideoError);
+    }
+    video.addEventListener('error', onVideoError);
+  }
+
+  if (theaterBtn) theaterBtn.style.display = 'inline-block';
   title.textContent = item.title;
+  updateEpisodeTimeOverlay(item, getAggregatedCurrentTime(item));
   nextBtn.style.display = "none";
-  if (!item.isPlaceholder && !isMangaVolumeItem(item)) { video.load(); video.play(); }
+  if (!isSeparatedItem && video) {
+    const playPromise = video.play();
+    if (playPromise && typeof playPromise.catch === 'function') {
+      playPromise.catch(() => {});
+    }
+  }
+
   const params = new URLSearchParams(window.location.search);
   params.set('item', index + 1);
   window.history.replaceState(null, '', `${window.location.pathname}?${params.toString()}`);
@@ -477,29 +863,93 @@ function showPlayerAlert(message) {
 
 if (video) {
   video.addEventListener("timeupdate", () => {
+    let handledSeparated = false;
+    let curItem = null;
+    let aggregatedTime = Number(video.currentTime) || 0;
     try {
-      const curItem = (typeof currentIndex === 'number' && flatList && flatList[currentIndex]) ? flatList[currentIndex] : null;
+      curItem = (typeof currentIndex === 'number' && flatList && flatList[currentIndex]) ? flatList[currentIndex] : null;
       const groupInfo = curItem && curItem.__separatedGroup ? curItem.__separatedGroup : null;
-      if (nextBtn) {
-        if (!video.duration || !isFinite(video.duration) || video.duration <= 0) {
-          nextBtn.style.display = 'none';
-        } else if (groupInfo) {
-          nextBtn.style.display = 'none';
-        } else if ((video.currentTime / video.duration) > 0.9 && currentIndex < flatList.length - 1) {
-          nextBtn.style.display = 'inline-block';
-        } else {
-          nextBtn.style.display = 'none';
+      if (hasSeparatedParts(curItem)) {
+        handledSeparated = true;
+        const progress = computeSeparatedProgress(curItem, video.currentTime);
+        aggregatedTime = progress.time;
+        const baseKey = curItem.__separatedBaseKey || resolveResumeKeyForItem(curItem);
+        const ratio = (progress.duration > 0) ? (progress.time / progress.duration) : 0;
+        if (nextBtn) {
+          if (ratio > 0.9 && currentIndex < flatList.length - 1 && (curItem.__activePartIndex || 0) >= curItem.__separatedParts.length - 1) {
+            nextBtn.style.display = 'inline-block';
+          } else {
+            nextBtn.style.display = 'none';
+          }
         }
+        if (baseKey) {
+          try {
+            localStorage.setItem(baseKey, progress.time);
+            if (progress.duration > 0) localStorage.setItem(`${baseKey}:duration`, progress.duration);
+            localStorage.setItem(`${baseKey}:part`, String(curItem.__activePartIndex || 0));
+            localStorage.setItem(`${baseKey}:partTime`, String(video.currentTime));
+            writeSourceScopedValue && writeSourceScopedValue('SavedItemTime', String(progress.time));
+          } catch {}
+        }
+        const part = curItem.__separatedParts[curItem.__activePartIndex || 0];
+        if (part && part.src) {
+          try { localStorage.setItem(part.src, video.currentTime); } catch {}
+        }
+      } else {
+        const safeDuration = (Number.isFinite(video.duration) && video.duration > 0) ? video.duration : null;
+        if (nextBtn) {
+          if (!safeDuration || groupInfo) {
+            nextBtn.style.display = 'none';
+          } else if ((video.currentTime / safeDuration) > 0.9 && currentIndex < flatList.length - 1) {
+            nextBtn.style.display = 'inline-block';
+          } else {
+            nextBtn.style.display = 'none';
+          }
+        }
+        const pk = curItem && curItem.progressKey ? String(curItem.progressKey) : '';
+        if (pk) localStorage.setItem(pk, video.currentTime);
+        try {
+          writeSourceScopedValue && writeSourceScopedValue('SavedItemTime', String(video.currentTime));
+        } catch {}
       }
-      const pk = curItem && curItem.progressKey ? String(curItem.progressKey) : '';
-      if (pk) localStorage.setItem(pk, video.currentTime);
     } catch {}
-    localStorage.setItem(video.src, video.currentTime);
+    updateEpisodeTimeOverlay(curItem, aggregatedTime);
+    if (!handledSeparated) {
+      try { localStorage.setItem(video.src, video.currentTime); } catch {}
+    }
   });
   video.addEventListener("ended", () => {
-    localStorage.removeItem(video.src);
+    try { localStorage.removeItem(video.src); } catch {}
+    const curItem = (typeof currentIndex === 'number' && flatList && flatList[currentIndex]) ? flatList[currentIndex] : null;
+    if (hasSeparatedParts(curItem)) {
+      const meta = getSeparatedMeta(curItem);
+      const baseKey = curItem.__separatedBaseKey || resolveResumeKeyForItem(curItem);
+      const partIndex = curItem && Number.isFinite(Number(curItem.__activePartIndex)) ? Number(curItem.__activePartIndex) : 0;
+      if (partIndex < meta.parts.length - 1) {
+        if (baseKey) {
+          try {
+            localStorage.setItem(`${baseKey}:part`, String(partIndex + 1));
+            localStorage.setItem(`${baseKey}:partTime`, '0');
+          } catch {}
+        }
+        const nextStart = meta.offsets[partIndex + 1] || ((meta.offsets[partIndex] || 0) + getPartDuration(meta, curItem, partIndex));
+        setSeparatedPartSource(curItem, partIndex + 1, { resumeTime: 0, combinedTime: nextStart });
+        try {
+          video.load();
+          const playPromise = video.play();
+          if (playPromise && typeof playPromise.catch === 'function') {
+            playPromise.catch(() => {});
+          }
+        } catch {}
+        return;
+      }
+      if (baseKey) {
+        try { localStorage.setItem(`${baseKey}:partTime`, '0'); } catch {}
+      }
+    }
     if (currentIndex < flatList.length - 1) { nextBtn.click(); }
   });
+  // Native controls handle play/pause/seek UI.
 }
 
 if (nextBtn) {
@@ -515,6 +965,7 @@ if (backBtn) {
   backBtn.addEventListener("click", () => {
     try { video.pause(); } catch {}
     unloadCbz();
+    updateEpisodeTimeOverlay(null, 0);
     playerScreen.style.display = "none";
     selectorScreen.style.display = "flex";
     backBtn.style.display = "none";

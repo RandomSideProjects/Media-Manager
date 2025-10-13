@@ -193,7 +193,13 @@ async function openSeasonSelectionModal() {
       leftWrap.append(cb, name, caret);
 
       const sizeSpan = document.createElement('span'); sizeSpan.style.color = '#b6b6b6'; sizeSpan.style.whiteSpace = 'nowrap';
-      let seasonBytes = 0; try { (cat.episodes || []).forEach(e => { const v = Number(e.fileSizeBytes); if (Number.isFinite(v) && v >= 0) seasonBytes += v; }); } catch {}
+      let seasonBytes = 0; try {
+        (cat.episodes || []).forEach(e => {
+          const sizeCandidate = e && (e.fileSizeBytes ?? e.ItemfileSizeBytes ?? e.itemFileSizeBytes);
+          const v = Number(sizeCandidate);
+          if (Number.isFinite(v) && v >= 0) seasonBytes += v;
+        });
+      } catch {}
       seasonSizes[idx] = seasonBytes; sizeSpan.textContent = formatBytesDecimalMaxUnit(seasonBytes);
 
       row.append(leftWrap, sizeSpan); list.appendChild(row); seasonCbs.push(cb);
@@ -212,7 +218,12 @@ async function openSeasonSelectionModal() {
         const epTitle = document.createElement('span'); epTitle.textContent = ep.title || `Episode ${ei+1}`; epTitle.style.marginLeft = '6px';
         epLeft.append(epCb, epTitle);
         const epSize = document.createElement('span'); epSize.style.color = '#b6b6b6'; epSize.style.whiteSpace = 'nowrap';
-        let epBytes = 0; try { const v = Number(ep.fileSizeBytes); if (Number.isFinite(v) && v >= 0) epBytes = v; } catch {}
+        let epBytes = 0;
+        try {
+          const sizeCandidate = ep && (ep.fileSizeBytes ?? ep.ItemfileSizeBytes ?? ep.itemFileSizeBytes);
+          const v = Number(sizeCandidate);
+          if (Number.isFinite(v) && v >= 0) epBytes = v;
+        } catch {}
         epSize.textContent = formatBytesDecimalMaxUnit(epBytes);
         epsSizes[ei] = epBytes;
         epRow.append(epLeft, epSize);

@@ -1,5 +1,123 @@
 "use strict";
 
+function coerceSeparatedFlag(value) {
+  if (value === true) return true;
+  if (value === false) return false;
+  if (typeof value === 'number') return value !== 0;
+  if (typeof value === 'string') {
+    const trimmed = value.trim().toLowerCase();
+    if (trimmed === 'true' || trimmed === '1' || trimmed === 'yes') return true;
+    if (trimmed === 'false' || trimmed === '0' || trimmed === 'no') return false;
+  }
+  return false;
+}
+
+function normalizeSeparatedEpisode(entry, context) {
+  const separatedFlag = coerceSeparatedFlag(entry.separated ?? entry.seperated);
+  let rawParts = Array.isArray(entry.sources)
+    ? entry.sources
+    : Array.isArray(entry.parts)
+      ? entry.parts
+      : Array.isArray(entry.items)
+        ? entry.items
+        : [];
+  if ((!rawParts || rawParts.length === 0) && Array.isArray(entry.__separatedParts)) {
+    rawParts = entry.__separatedParts;
+  }
+  if (!separatedFlag || rawParts.length === 0) return entry;
+
+  const normalizedParts = rawParts.map((rawPart, idx) => {
+    if (!rawPart || typeof rawPart !== 'object') return null;
+    const src = typeof rawPart.src === 'string' ? rawPart.src.trim() : '';
+    if (!src) return null;
+    const durationRaw = rawPart.durationSeconds ?? rawPart.partDurationSeconds ?? rawPart.DurationSeconds;
+    const duration = Number(durationRaw);
+    const fileSizeRaw = rawPart.fileSizeBytes ?? rawPart.partfileSizeBytes ?? rawPart.ItemfileSizeBytes ?? rawPart.itemFileSizeBytes;
+    const fileSize = Number(fileSizeRaw);
+    return {
+      title: typeof rawPart.title === 'string' ? rawPart.title : `Part ${idx + 1}`,
+      src,
+      durationSeconds: Number.isFinite(duration) && duration > 0 ? duration : null,
+      fileSizeBytes: Number.isFinite(fileSize) && fileSize > 0 ? Math.round(fileSize) : null,
+      _raw: rawPart
+    };
+  }).filter(Boolean);
+
+  if (!normalizedParts.length) return entry;
+
+  let totalDuration = Number(entry.durationSeconds);
+  if (!Number.isFinite(totalDuration) || totalDuration <= 0) {
+    let sumDuration = 0;
+    let counted = 0;
+    normalizedParts.forEach((part) => {
+      if (Number.isFinite(part.durationSeconds) && part.durationSeconds > 0) {
+        sumDuration += part.durationSeconds;
+        counted += 1;
+      }
+    });
+    if (counted > 0) totalDuration = sumDuration;
+  }
+  const offsets = [];
+  let runningDuration = 0;
+  normalizedParts.forEach((part) => {
+    offsets.push(runningDuration);
+    if (Number.isFinite(part.durationSeconds) && part.durationSeconds > 0) {
+      runningDuration += part.durationSeconds;
+    }
+  });
+  if (!Number.isFinite(totalDuration) || totalDuration <= 0) {
+    totalDuration = runningDuration;
+  }
+
+  let totalFileSize = Number(entry.fileSizeBytes);
+  if (!Number.isFinite(totalFileSize) || totalFileSize <= 0) {
+    let sumSize = 0;
+    let counted = 0;
+    normalizedParts.forEach((part) => {
+      if (Number.isFinite(part.fileSizeBytes) && part.fileSizeBytes > 0) {
+        sumSize += part.fileSizeBytes;
+        counted += 1;
+      }
+    });
+    if (counted > 0) totalFileSize = sumSize;
+  }
+  if (!Number.isFinite(totalFileSize) || totalFileSize <= 0) {
+    const itemSizeRaw = entry.ItemfileSizeBytes ?? entry.itemFileSizeBytes;
+    const altSize = Number(itemSizeRaw);
+    if (Number.isFinite(altSize) && altSize > 0) totalFileSize = Math.round(altSize);
+  }
+
+  const normalizedEntry = { ...entry };
+  normalizedEntry.__separatedItem = true;
+  normalizedEntry.__separatedParts = normalizedParts;
+  normalizedEntry.__separatedOffsets = offsets;
+  normalizedEntry.__separatedTotalDuration = Number.isFinite(totalDuration) && totalDuration > 0 ? totalDuration : null;
+  normalizedEntry.__separatedTotalFileSize = Number.isFinite(totalFileSize) && totalFileSize > 0 ? totalFileSize : null;
+  normalizedEntry.__separatedPartCount = normalizedParts.length;
+  normalizedEntry.__separatedDurations = normalizedParts.map(part => Number.isFinite(part.durationSeconds) && part.durationSeconds > 0 ? part.durationSeconds : null);
+  normalizedEntry.separated = 1;
+  normalizedEntry.seperated = 1;
+  if (!normalizedEntry.src && normalizedParts[0] && normalizedParts[0].src) {
+    normalizedEntry.src = normalizedParts[0].src;
+  }
+  if (Number.isFinite(totalDuration) && totalDuration > 0) {
+    normalizedEntry.durationSeconds = totalDuration;
+  }
+  if (Number.isFinite(totalFileSize) && totalFileSize > 0) {
+    normalizedEntry.fileSizeBytes = totalFileSize;
+  }
+
+  const categoryTitle = context && typeof context.categoryTitle === 'string' ? context.categoryTitle : '';
+  const episodeTitle = typeof normalizedEntry.title === 'string' ? normalizedEntry.title : '';
+  const episodeIndex = Number.isFinite(Number(context && context.episodeIndex)) ? Number(context.episodeIndex) : 0;
+  const resumeSeed = `${categoryTitle}::${episodeTitle}::${episodeIndex}`;
+  const resumeKey = `sepitem:${hashStringToKey(resumeSeed || `${Date.now()}`)}`;
+  normalizedEntry.__separatedResumeKey = resumeKey;
+  if (!normalizedEntry.progressKey) normalizedEntry.progressKey = resumeKey;
+
+  return normalizedEntry;
+}
+
 function isEpisodeManga(item) {
   if (!item) return false;
   try {
@@ -117,8 +235,34 @@ function renderEpisodeList() {
       return;
     }
 
-    episodes.forEach(episode => {
-      const entry = { ...episode };
+    episodes.forEach((episode, episodeIndex) => {
+      const entry = normalizeSeparatedEpisode({ ...episode }, { categoryTitle, episodeIndex });
+      if (entry.__separatedItem) {
+        try {
+          const original = (category && Array.isArray(category.episodes)) ? category.episodes[episodeIndex] : null;
+          if (original && typeof original === 'object') {
+            const patched = Object.assign({}, original, {
+              fileSizeBytes: entry.fileSizeBytes,
+              durationSeconds: entry.durationSeconds,
+              separated: 1,
+              seperated: 1,
+              src: entry.src || original.src,
+              ItemfileSizeBytes: entry.fileSizeBytes
+            });
+            if (entry.progressKey && !original.progressKey) patched.progressKey = entry.progressKey;
+            if (entry.__separatedParts) {
+              patched.__separatedParts = entry.__separatedParts.slice();
+            }
+            if (entry.__separatedDurations) {
+              patched.__separatedDurations = entry.__separatedDurations.slice();
+            }
+            if (entry.__separatedResumeKey) patched.__separatedResumeKey = entry.__separatedResumeKey;
+            if (Array.isArray(entry.sources)) patched.sources = entry.sources.slice();
+            else if (Array.isArray(original.sources)) patched.sources = original.sources.slice();
+            category.episodes[episodeIndex] = patched;
+          }
+        } catch {}
+      }
       entry.__categoryTitle = categoryTitle;
       const index = flatList.length;
       flatList.push(entry);

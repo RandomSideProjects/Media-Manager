@@ -42,6 +42,41 @@ function updateCategoryButtonVisibility(){
   } catch {}
 }
 
+function coerceSeparatedFlag(value) {
+  if (value === true) return true;
+  if (value === false) return false;
+  if (typeof value === 'number') return value !== 0;
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    return normalized === '1' || normalized === 'true' || normalized === 'yes';
+  }
+  return false;
+}
+
+function updatePartsVisibilityOnNode(epDiv) {
+  if (!epDiv) return;
+  try {
+    const toggle = epDiv._separatedToggle;
+    const container = epDiv._partsContainer;
+    if (!toggle || !container) return;
+    container.style.display = toggle.checked ? 'flex' : 'none';
+  } catch {}
+}
+
+// Ensure the Upload Settings close button always hides the panel (safety net if settings.js has not bound yet)
+const mmCloseFallbackBtn = document.getElementById('mmCloseUploadSettings');
+if (mmCloseFallbackBtn && !mmCloseFallbackBtn.dataset.mmUiBound) {
+  mmCloseFallbackBtn.dataset.mmUiBound = '1';
+  mmCloseFallbackBtn.addEventListener('click', () => {
+    const panel = document.getElementById('mmUploadSettingsPanel');
+    if (panel) panel.style.display = 'none';
+    if (separatedToggle.checked) {
+      recalcEpisodeSeparatedTotals();
+      syncEpisodeMainSrc();
+    }
+  });
+}
+
 let pendingLoadFile = null;
 
 function truncateFileName(name) {
@@ -290,6 +325,21 @@ function refreshAllSeparationToggles() {
   try {
     const nodes = document.querySelectorAll('.category');
     nodes.forEach(node => updateCategorySeparationToggleVisibility(node));
+    const episodes = document.querySelectorAll('.episode');
+    const featureActive = isSeparationFeatureActive();
+    episodes.forEach(ep => {
+      const wrap = ep && ep._separatedToggleWrap ? ep._separatedToggleWrap : null;
+      const toggle = ep && ep._separatedToggle ? ep._separatedToggle : null;
+      const parts = ep && ep._partsContainer ? ep._partsContainer : null;
+      if (!wrap || !toggle) return;
+      wrap.style.display = featureActive ? '' : 'none';
+      toggle.disabled = !featureActive;
+      if (!featureActive) {
+        if (parts) parts.style.display = 'none';
+      } else {
+        updatePartsVisibilityOnNode(ep);
+      }
+    });
   } catch {}
 }
 
@@ -683,8 +733,10 @@ function addEpisode(container, data) {
   const episodeIndex = container.querySelectorAll('.episode').length + 1;
   const epDiv = document.createElement('div');
   epDiv.className = 'episode';
+  let baseSeparationMeta = null;
   try {
     if (data && typeof data.fileSizeBytes === 'number') epDiv.dataset.fileSizeBytes = String(data.fileSizeBytes);
+    if (!epDiv.dataset.fileSizeBytes && data && typeof data.ItemfileSizeBytes === 'number') epDiv.dataset.fileSizeBytes = String(data.ItemfileSizeBytes);
     if (data && typeof data.durationSeconds === 'number') epDiv.dataset.durationSeconds = String(data.durationSeconds);
     if (data && typeof data.VolumePageCount === 'number' && Number.isFinite(data.VolumePageCount)) {
       epDiv.dataset.VolumePageCount = String(data.VolumePageCount);
@@ -714,11 +766,293 @@ function addEpisode(container, data) {
   const epError = document.createElement('div');
   epError.className = 'ep-error';
 
+  const separatedRow = document.createElement('div');
+  separatedRow.className = 'episode-separated-row';
+  const separatedLabel = document.createElement('label');
+  separatedLabel.className = 'episode-separated-toggle';
+  const separatedToggle = document.createElement('input');
+  separatedToggle.type = 'checkbox';
+  separatedToggle.className = 'episode-separated-checkbox';
+  const separatedText = document.createElement('span');
+  separatedText.textContent = 'Separated parts';
+  separatedLabel.append(separatedToggle, separatedText);
+  separatedRow.appendChild(separatedLabel);
+
+  const partsContainer = document.createElement('div');
+  partsContainer.className = 'episode-parts-container';
+  partsContainer.style.display = 'none';
+
+  const partsList = document.createElement('div');
+  partsList.className = 'episode-parts-list';
+
+  const addPartBtn = document.createElement('button');
+  addPartBtn.type = 'button';
+  addPartBtn.className = 'episode-add-part';
+  addPartBtn.textContent = 'Add Part';
+
+  partsContainer.append(partsList, addPartBtn);
+
+  epDiv._separatedToggle = separatedToggle;
+  epDiv._separatedToggleWrap = separatedRow;
+  epDiv._partsContainer = partsContainer;
+  epDiv._partsList = partsList;
+  epDiv._partRows = [];
+
   const episodeTopRow = document.createElement('div');
   episodeTopRow.className = 'episode-top-row';
   const episodeHandle = createDragHandle('episode');
   episodeTopRow.appendChild(episodeHandle);
   episodeTopRow.appendChild(epTitle);
+
+  function captureBaseSeparationMeta() {
+    if (baseSeparationMeta) return;
+    baseSeparationMeta = {
+      fileSize: epDiv.dataset.fileSizeBytes || '',
+      duration: epDiv.dataset.durationSeconds || ''
+    };
+  }
+
+  function applyPartMetadata(row, meta) {
+    if (!row || !meta) return;
+    if (Object.prototype.hasOwnProperty.call(meta, 'fileSize')) {
+      const size = Number(meta.fileSize);
+      if (Number.isFinite(size) && size >= 0) row.dataset.fileSizeBytes = String(Math.round(size));
+      else delete row.dataset.fileSizeBytes;
+    }
+    if (Object.prototype.hasOwnProperty.call(meta, 'duration')) {
+      const duration = Number(meta.duration);
+      if (Number.isFinite(duration) && duration >= 0) row.dataset.durationSeconds = String(Math.round(duration));
+      else delete row.dataset.durationSeconds;
+    }
+  }
+
+  function syncEpisodeMainSrc() {
+    if (!separatedToggle.checked) return;
+    if (!epSrc) return;
+    if (epSrc.dataset.manualEntry === '1') return;
+    const firstRow = (epDiv._partRows || []).find(row => row && row._srcInput && row._srcInput.value.trim());
+    if (!firstRow) return;
+    const newSrc = firstRow._srcInput.value.trim();
+    if (!newSrc) return;
+    epSrc.value = newSrc;
+    epSrc.dataset.autoValue = newSrc;
+    epSrc.dataset.manualEntry = '0';
+  }
+
+  function recalcEpisodeSeparatedTotals() {
+    const enabled = separatedToggle.checked && Array.isArray(epDiv._partRows) && epDiv._partRows.length > 0;
+    if (enabled) {
+      captureBaseSeparationMeta();
+      let totalSize = 0;
+      let totalDuration = 0;
+      let sizeCount = 0;
+      let durationCount = 0;
+      epDiv._partRows.forEach((row) => {
+        const size = Number(row && row.dataset && row.dataset.fileSizeBytes);
+        if (Number.isFinite(size) && size >= 0) { totalSize += size; sizeCount += 1; }
+        const duration = Number(row && row.dataset && row.dataset.durationSeconds);
+        if (Number.isFinite(duration) && duration >= 0) { totalDuration += duration; durationCount += 1; }
+      });
+      epDiv.dataset.separated = '1';
+      epDiv.dataset.separatedItem = '1';
+      epDiv.dataset.separatedPartCount = String(epDiv._partRows.length);
+      if (sizeCount > 0) epDiv.dataset.fileSizeBytes = String(Math.round(totalSize));
+      else delete epDiv.dataset.fileSizeBytes;
+      if (durationCount > 0) epDiv.dataset.durationSeconds = String(Math.round(totalDuration));
+      else delete epDiv.dataset.durationSeconds;
+    } else {
+      epDiv.dataset.separated = separatedToggle.checked ? '1' : '0';
+      delete epDiv.dataset.separatedItem;
+      delete epDiv.dataset.separatedPartCount;
+      if (baseSeparationMeta) {
+        if (baseSeparationMeta.fileSize) epDiv.dataset.fileSizeBytes = baseSeparationMeta.fileSize;
+        else delete epDiv.dataset.fileSizeBytes;
+        if (baseSeparationMeta.duration) epDiv.dataset.durationSeconds = baseSeparationMeta.duration;
+        else delete epDiv.dataset.durationSeconds;
+      }
+    }
+  }
+
+  function updatePartsVisibility() {
+    partsContainer.style.display = separatedToggle.checked ? 'flex' : 'none';
+  }
+
+  async function maybeFetchPartMetadata(row) {
+    if (!row || !row._srcInput) return;
+    const fileInput = row._fileInput;
+    if (fileInput && fileInput.files && fileInput.files.length > 0) return;
+    const url = (row._srcInput.value || '').trim();
+    if (!/^https?:\/\//i.test(url)) return;
+    if (row._statusEl) { row._statusEl.style.color = '#9ecbff'; row._statusEl.textContent = 'Fetching metadata…'; }
+    try {
+      const [size, duration] = await Promise.all([
+        fetchRemoteContentLength(url),
+        computeRemoteDurationSeconds(url)
+      ]);
+      if (Number.isFinite(size) && size >= 0) applyPartMetadata(row, { fileSize: size });
+      if (Number.isFinite(duration) && duration > 0) applyPartMetadata(row, { duration });
+      if (row._statusEl) row._statusEl.textContent = '';
+    } catch {
+      if (row._statusEl) row._statusEl.textContent = '';
+    }
+    recalcEpisodeSeparatedTotals();
+    syncEpisodeMainSrc();
+  }
+
+  async function handlePartFileUpload(row, file) {
+    if (!row || !file) return;
+    if (!isMangaMode() && file.size > 200 * 1024 * 1024) {
+      if (row._statusEl) {
+        row._statusEl.style.color = '#ff6b6b';
+        row._statusEl.textContent = 'Files over 200 MB must be uploaded manually.';
+      }
+      if (row._fileInput) row._fileInput.value = '';
+      return;
+    }
+    if (row._statusEl) {
+      row._statusEl.style.color = '#9ecbff';
+      row._statusEl.textContent = 'Uploading';
+    }
+    const progress = document.createElement('progress');
+    progress.max = 100;
+    progress.value = 0;
+    progress.style.marginLeft = '0.5em';
+    if (row._statusEl) row._statusEl.replaceChildren(row._statusEl.textContent || 'Uploading', progress);
+    let durationEstimate = NaN;
+    if (!isMangaMode()) {
+      try {
+        const d = await computeLocalFileDurationSeconds(file);
+        if (!Number.isNaN(d) && d > 0) durationEstimate = d;
+      } catch {}
+    }
+    try {
+      const url = await uploadToCatboxWithProgress(file, pct => {
+        progress.value = pct;
+        if (row._statusEl) {
+          row._statusEl.style.color = '#9ecbff';
+          row._statusEl.textContent = `Uploading ${Math.round(pct)}%`;
+          row._statusEl.appendChild(progress);
+        }
+      }, { context: 'manual' });
+      if (row._srcInput) row._srcInput.value = url;
+      applyPartMetadata(row, { fileSize: file.size });
+      if (Number.isFinite(durationEstimate) && durationEstimate > 0) {
+        applyPartMetadata(row, { duration: durationEstimate });
+      }
+      if (row._statusEl) row._statusEl.textContent = '';
+      syncEpisodeMainSrc();
+    } catch (err) {
+      if (row._statusEl) {
+        row._statusEl.style.color = '#ff6b6b';
+        row._statusEl.textContent = 'Upload failed';
+      }
+      if (row._srcInput) row._srcInput.value = '';
+    }
+  }
+
+  function addPartRow(partData) {
+    const partIndex = (epDiv._partRows || []).length + 1;
+    const row = document.createElement('div');
+    row.className = 'episode-part';
+
+    const topRow = document.createElement('div');
+    topRow.className = 'episode-part-top-row';
+    const titleInput = document.createElement('input');
+    titleInput.type = 'text';
+    titleInput.placeholder = `Part ${partIndex} Title`;
+    titleInput.value = partData && typeof partData.title === 'string' ? partData.title : `Part ${partIndex}`;
+
+    const removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.className = 'episode-part-remove';
+    removeBtn.textContent = 'Remove';
+    removeBtn.addEventListener('click', () => {
+      const idx = epDiv._partRows.indexOf(row);
+      if (idx >= 0) epDiv._partRows.splice(idx, 1);
+      try { row.remove(); } catch {}
+      recalcEpisodeSeparatedTotals();
+      syncEpisodeMainSrc();
+    });
+
+    topRow.append(titleInput, removeBtn);
+
+    const partInputGroup = document.createElement('div');
+    partInputGroup.className = 'input-group';
+    const srcInput = document.createElement('input');
+    srcInput.type = 'text';
+    srcInput.placeholder = 'Part URL';
+    const orSpan = document.createElement('span');
+    orSpan.textContent = 'or';
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = '.mp4,.webm,.mkv,.mov';
+    partInputGroup.append(srcInput, orSpan, fileInput);
+
+    const statusEl = document.createElement('div');
+    statusEl.className = 'ep-error episode-part-status';
+
+    row.append(topRow, partInputGroup, statusEl);
+
+    row._titleInput = titleInput;
+    row._srcInput = srcInput;
+    row._fileInput = fileInput;
+    row._statusEl = statusEl;
+
+    srcInput.addEventListener('change', () => { syncEpisodeMainSrc(); maybeFetchPartMetadata(row); });
+    srcInput.addEventListener('blur', () => { syncEpisodeMainSrc(); maybeFetchPartMetadata(row); });
+    srcInput.addEventListener('input', () => { if (statusEl) statusEl.textContent = ''; });
+    titleInput.addEventListener('input', () => { /* noop but retained for symmetry */ });
+
+    fileInput.addEventListener('change', async (event) => {
+      const file = event && event.target && event.target.files ? event.target.files[0] : null;
+      if (!file) return;
+      await handlePartFileUpload(row, file);
+    });
+
+    if (partData) {
+      if (typeof partData.title === 'string') titleInput.value = partData.title;
+      if (typeof partData.src === 'string') srcInput.value = partData.src;
+      const sizeCandidate = partData.fileSizeBytes ?? partData.partfileSizeBytes ?? partData.ItemfileSizeBytes ?? partData.itemFileSizeBytes;
+      if (Number.isFinite(Number(sizeCandidate))) applyPartMetadata(row, { fileSize: Number(sizeCandidate) });
+      const durationCandidate = partData.durationSeconds ?? partData.partDurationSeconds ?? partData.DurationSeconds;
+      if (Number.isFinite(Number(durationCandidate))) applyPartMetadata(row, { duration: Number(durationCandidate) });
+      if (!srcInput.value && partData.sources && Array.isArray(partData.sources) && partData.sources[0] && partData.sources[0].src) {
+        srcInput.value = String(partData.sources[0].src);
+      }
+    }
+
+    partsList.appendChild(row);
+    epDiv._partRows.push(row);
+    recalcEpisodeSeparatedTotals();
+    syncEpisodeMainSrc();
+    return row;
+  }
+
+  separatedToggle.addEventListener('change', () => {
+    if (separatedToggle.checked) {
+      captureBaseSeparationMeta();
+      updatePartsVisibility();
+      if (!(epDiv._partRows || []).length) addPartRow();
+    } else {
+      updatePartsVisibility();
+    }
+    recalcEpisodeSeparatedTotals();
+    syncEpisodeMainSrc();
+  });
+
+  addPartBtn.addEventListener('click', () => {
+    if (!separatedToggle.checked) {
+      separatedToggle.checked = true;
+      captureBaseSeparationMeta();
+      updatePartsVisibility();
+    }
+    const newRow = addPartRow();
+    if (newRow && newRow._titleInput) {
+      try { newRow._titleInput.focus(); } catch {}
+    }
+  });
+
+  updatePartsVisibility();
 
   async function computeLocalFileDurationSeconds(file) {
     return new Promise((resolve) => {
@@ -962,7 +1296,12 @@ function addEpisode(container, data) {
         epError.textContent = '';
       } catch { epError.textContent = ''; }
     }
+    if (separatedToggle.checked) {
+      recalcEpisodeSeparatedTotals();
+      syncEpisodeMainSrc();
+    }
   }
+  epSrc.addEventListener('input', () => { epSrc.dataset.manualEntry = '1'; });
   epSrc.addEventListener('change', maybeFetchUrlMetadata);
   epSrc.addEventListener('blur', maybeFetchUrlMetadata);
 
@@ -974,11 +1313,133 @@ function addEpisode(container, data) {
   inputGroup.appendChild(epFile);
   epDiv.appendChild(inputGroup);
   epDiv.appendChild(epError);
+  epDiv.appendChild(separatedRow);
+  epDiv.appendChild(partsContainer);
+
+  if (!isMangaMode()) {
+    const hasSeparatedData = data && coerceSeparatedFlag(data.separated ?? data.seperated);
+    const partsData = [];
+    if (hasSeparatedData) {
+      if (Array.isArray(data.sources)) partsData.push(...data.sources);
+      else if (Array.isArray(data.parts)) partsData.push(...data.parts);
+      else if (Array.isArray(data.items)) partsData.push(...data.items);
+      else if (Array.isArray(data.__separatedParts)) partsData.push(...data.__separatedParts);
+    }
+    if (hasSeparatedData && partsData.length) {
+      separatedToggle.checked = true;
+      updatePartsVisibility();
+      captureBaseSeparationMeta();
+      partsData.forEach(part => addPartRow(part));
+      recalcEpisodeSeparatedTotals();
+      syncEpisodeMainSrc();
+    } else if (hasSeparatedData && !partsData.length) {
+      separatedToggle.checked = true;
+      updatePartsVisibility();
+      captureBaseSeparationMeta();
+      recalcEpisodeSeparatedTotals();
+      syncEpisodeMainSrc();
+    }
+  }
+
   epDiv._titleInput = epTitle;
   epDiv._srcInput = epSrc;
   epDiv._errorEl = epError;
   epDiv._fetchMeta = maybeFetchUrlMetadata;
   container.appendChild(epDiv);
+}
+
+function extractEpisodeDataFromElement(epDiv, { isManga } = {}) {
+  if (!epDiv) return null;
+  const titleInput = epDiv._titleInput;
+  const srcInput = epDiv._srcInput;
+  const title = titleInput ? titleInput.value.trim() : '';
+  const rawSrc = srcInput ? srcInput.value.trim() : '';
+  const isMangaModeLocal = !!isManga;
+  const separatedToggle = epDiv._separatedToggle;
+  const partRows = Array.isArray(epDiv._partRows) ? epDiv._partRows : [];
+  const separatedEnabled = !isMangaModeLocal && separatedToggle && separatedToggle.checked && partRows.length > 0;
+
+  const toNumber = (value) => {
+    const n = Number(value);
+    return Number.isFinite(n) && n >= 0 ? n : 0;
+  };
+
+  let totalFileSize = toNumber(epDiv.dataset ? epDiv.dataset.fileSizeBytes : 0);
+  let totalDuration = toNumber(epDiv.dataset ? epDiv.dataset.durationSeconds : 0);
+  let totalPages = toNumber(epDiv.dataset ? (epDiv.dataset.volumePageCount || epDiv.dataset.VolumePageCount) : 0);
+
+  const episode = { title, src: rawSrc };
+
+  if (isMangaModeLocal) {
+    if (totalFileSize > 0) episode.fileSizeBytes = Math.round(totalFileSize);
+    if (totalPages > 0) episode.VolumePageCount = Math.round(totalPages);
+    if (!episode.title || !episode.src) return null;
+    return {
+      episode,
+      totalFileSize: totalFileSize > 0 ? Math.round(totalFileSize) : 0,
+      totalDuration: 0,
+      totalPages: totalPages > 0 ? Math.round(totalPages) : 0
+    };
+  }
+
+  let separatedParts = [];
+  if (separatedEnabled) {
+    let partsTotalSize = 0;
+    let partsTotalDuration = 0;
+    let partSizeCount = 0;
+    let partDurationCount = 0;
+    separatedParts = partRows.map((row, idx) => {
+      if (!row || !row._srcInput) return null;
+      const partSrc = row._srcInput.value.trim();
+      if (!partSrc) return null;
+      const partTitleInput = row._titleInput;
+      const partTitle = partTitleInput ? partTitleInput.value.trim() : `Part ${idx + 1}`;
+      const partSize = toNumber(row.dataset ? row.dataset.fileSizeBytes : 0);
+      const partDuration = toNumber(row.dataset ? row.dataset.durationSeconds : 0);
+      if (partSize > 0) { partsTotalSize += partSize; partSizeCount += 1; }
+      if (partDuration > 0) { partsTotalDuration += partDuration; partDurationCount += 1; }
+      const partEntry = { title: partTitle || `Part ${idx + 1}`, src: partSrc };
+      if (partSize > 0) partEntry.fileSizeBytes = Math.round(partSize);
+      if (partDuration > 0) partEntry.durationSeconds = Math.round(partDuration);
+      return partEntry;
+    }).filter(Boolean);
+
+    if (separatedParts.length) {
+      if (!episode.src) episode.src = separatedParts[0].src;
+      const aggregatedSize = partSizeCount > 0 ? partsTotalSize : totalFileSize;
+      const aggregatedDuration = partDurationCount > 0 ? partsTotalDuration : totalDuration;
+      if (aggregatedSize > 0) {
+        episode.fileSizeBytes = Math.round(aggregatedSize);
+        episode.ItemfileSizeBytes = Math.round(aggregatedSize);
+        totalFileSize = aggregatedSize;
+      }
+      if (aggregatedDuration > 0) {
+        episode.durationSeconds = Math.round(aggregatedDuration);
+        totalDuration = aggregatedDuration;
+      }
+      episode.separated = 1;
+      episode.seperated = 1;
+      episode.sources = separatedParts;
+    }
+  }
+
+  if (!separatedEnabled) {
+    if (totalFileSize > 0) episode.fileSizeBytes = Math.round(totalFileSize);
+    if (totalDuration > 0) episode.durationSeconds = Math.round(totalDuration);
+  }
+
+  if (!episode.title || !episode.src) return null;
+
+  return {
+    episode,
+    totalFileSize: totalFileSize > 0 ? Math.round(totalFileSize) : 0,
+    totalDuration: totalDuration > 0 ? Math.round(totalDuration) : 0,
+    totalPages: 0
+  };
+}
+
+if (typeof window !== 'undefined') {
+  window.mm_extractEpisodeData = extractEpisodeDataFromElement;
 }
 
 function applyDirectoryJson(json) {
@@ -1007,6 +1468,7 @@ function applyDirectoryJson(json) {
   if (categoriesEl) {
     categoriesEl.innerHTML = '';
     categoriesData.forEach(cat => addCategory(cat));
+    refreshAllSeparationToggles();
   }
   githubUploadUrl = '';
   updateOutput();
@@ -1246,26 +1708,21 @@ function buildLocalDirectoryJSON() {
   let totalPages = 0;
   let separatedCategoryCount = 0;
   let separatedItemCount = 0;
+  const isMangaLibrary = isMangaMode();
   document.querySelectorAll('.category').forEach(cat => {
-    const titleInput = cat.querySelector('.category-header input[type="text"]');
+    const titleInput = cat.querySelector('.category-header input[type="text"]') || cat.querySelector('input[type="text"]');
     const catTitle = titleInput ? titleInput.value.trim() : '';
     const episodes = [];
     cat.querySelectorAll('.episode').forEach(epDiv => {
-      const inputs = epDiv.querySelectorAll('input[type="text"]');
-      const t = inputs[0].value.trim();
-      const s = inputs[1].value.trim();
-      let fs = null, dur = null;
-      try { const v = parseFloat(epDiv.dataset.fileSizeBytes); if (Number.isFinite(v) && v >= 0) { fs = Math.round(v); totalBytes += fs; } } catch {}
-      if (isMangaMode()) {
-        let pages = null; try { const v = parseFloat(epDiv.dataset.volumePageCount || epDiv.dataset.VolumePageCount); if (Number.isFinite(v) && v >= 0) { pages = Math.round(v); totalPages += pages; } } catch {}
-        if (t && s) episodes.push({ title: t, src: s, fileSizeBytes: fs, VolumePageCount: pages });
-      } else {
-        try { const v = parseFloat(epDiv.dataset.durationSeconds); if (Number.isFinite(v) && v >= 0) { dur = Math.round(v); totalSecs += dur; } } catch {}
-        if (t && s) episodes.push({ title: t, src: s, fileSizeBytes: fs, durationSeconds: dur });
-      }
+      const info = extractEpisodeDataFromElement(epDiv, { isManga: isMangaLibrary });
+      if (!info || !info.episode) return;
+      episodes.push(info.episode);
+      totalBytes += info.totalFileSize || 0;
+      if (isMangaLibrary) totalPages += info.totalPages || 0;
+      else totalSecs += info.totalDuration || 0;
     });
     if (catTitle) {
-      const separated = !isMangaMode() && cat.dataset && cat.dataset.separated === '1';
+      const separated = !isMangaLibrary && cat.dataset && cat.dataset.separated === '1';
       const categoryPayload = { category: catTitle, episodes };
       if (separated) {
         categoryPayload.separated = 1;
