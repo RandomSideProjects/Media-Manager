@@ -1,7 +1,6 @@
 {
   "title": "Re: Zero",
   "Image": "https://files.catbox.moe/q47b9r.webp",
-  "LatestTime": "2025-10-12T06:27:25.482Z",
   "categories": [
     {
       "category": "Season 1",
@@ -312,8 +311,133 @@
           "durationSeconds": 1772
         }
       ]
+    },
+    {
+      "category": "Season 3",
+      "episodes": [
+        {
+          "title": "Episode 1",
+          "src": "https://files.catbox.moe/bblfjb.mp4",
+          "fileSizeBytes": 434130390,
+          "ItemfileSizeBytes": 434130390,
+          "durationSeconds": 5430,
+          "separated": 1,
+          "seperated": 1,
+          "sources": [
+            {
+              "title": "Part 1",
+              "src": "https://files.catbox.moe/bblfjb.mp4",
+              "fileSizeBytes": 167622953,
+              "durationSeconds": 1812
+            },
+            {
+              "title": "Part 2",
+              "src": "https://files.catbox.moe/06iyxi.mp4",
+              "fileSizeBytes": 138383023,
+              "durationSeconds": 1814
+            },
+            {
+              "title": "Part 3",
+              "src": "https://files.catbox.moe/yjplof.mp4",
+              "fileSizeBytes": 128124414,
+              "durationSeconds": 1804
+            }
+          ]
+        },
+        {
+          "title": "Episode 2",
+          "src": "https://files.catbox.moe/ttmjde.mp4",
+          "fileSizeBytes": 129915203,
+          "durationSeconds": 1420
+        },
+        {
+          "title": "Episode 3",
+          "src": "https://files.catbox.moe/52dqxr.mp4",
+          "fileSizeBytes": 171508368,
+          "durationSeconds": 1420
+        },
+        {
+          "title": "Episode 4",
+          "src": "https://files.catbox.moe/6rw5ic.mp4",
+          "fileSizeBytes": 166690411,
+          "durationSeconds": 1420
+        },
+        {
+          "title": "Episode 5",
+          "src": "https://files.catbox.moe/fqgtp5.mp4",
+          "fileSizeBytes": 174375771,
+          "durationSeconds": 1420
+        },
+        {
+          "title": "Episode 6",
+          "src": "https://files.catbox.moe/kbij9o.mp4",
+          "fileSizeBytes": 127719783,
+          "durationSeconds": 1420
+        },
+        {
+          "title": "Episode 7",
+          "src": "https://files.catbox.moe/v3rwwq.mp4",
+          "fileSizeBytes": 126784429,
+          "durationSeconds": 1770
+        },
+        {
+          "title": "Episode 8",
+          "src": "https://files.catbox.moe/isffmj.mp4",
+          "fileSizeBytes": 92883548,
+          "durationSeconds": 1420
+        },
+        {
+          "title": "Episode 9",
+          "src": "https://files.catbox.moe/22rlcr.mp4",
+          "fileSizeBytes": 166227684,
+          "durationSeconds": 1420
+        },
+        {
+          "title": "Episode 10",
+          "src": "https://files.catbox.moe/z31tvg.mp4",
+          "fileSizeBytes": 131331199,
+          "durationSeconds": 1420
+        },
+        {
+          "title": "Episode 11",
+          "src": "https://files.catbox.moe/902u4d.mp4",
+          "fileSizeBytes": 139873404,
+          "durationSeconds": 1420
+        },
+        {
+          "title": "Episode 12",
+          "src": "https://files.catbox.moe/idjej3.mp4",
+          "fileSizeBytes": 187402261,
+          "durationSeconds": 1690
+        },
+        {
+          "title": "Episode 13",
+          "src": "https://files.catbox.moe/15jn34.mp4",
+          "fileSizeBytes": 175338761,
+          "durationSeconds": 1420
+        },
+        {
+          "title": "Episode 14",
+          "src": "https://files.catbox.moe/0wrctx.mp4",
+          "fileSizeBytes": 175362626,
+          "durationSeconds": 1420
+        },
+        {
+          "title": "Episode 15",
+          "src": "https://files.catbox.moe/dgm0hb.mp4",
+          "fileSizeBytes": 163463723,
+          "durationSeconds": 1420
+        },
+        {
+          "title": "Episode 16",
+          "src": "https://files.catbox.moe/g2duq4.mp4",
+          "fileSizeBytes": 109134632,
+          "durationSeconds": 1440
+        }
+      ]
     }
   ],
-  "totalFileSizeBytes": 6900650843,
-  "totalDurationSeconds": 81280
+  "LatestTime": "2025-10-14T02:09:54.502Z",
+  "totalFileSizeBytes": 9572793036,
+  "totalDurationSeconds": 108650
 }
