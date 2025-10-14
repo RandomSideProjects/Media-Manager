@@ -201,6 +201,7 @@ button:active { transform: scale(0.98); }
 }
 .episode-part-top-row {
   display: flex;
+  align-items: center;
   gap: 0.5em;
 }
 .episode-part-top-row input[type="text"] {
@@ -222,6 +223,29 @@ button:active { transform: scale(0.98); }
   min-height: 1.1em;
   font-size: 0.85em;
   color: #9ecbff;
+}
+.episode-parts-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  margin-top: 0.5em;
+}
+.episode-upload-parts-folder {
+  align-self: flex-start;
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid #2e5aa6;
+  background: #243f6a;
+  color: #f1f5ff;
+  cursor: pointer;
+}
+.episode-upload-parts-folder:hover {
+  background: #2f528d;
+}
+.episode-upload-parts-folder:disabled,
+.episode-add-part:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 .episode-add-part {
   align-self: flex-start;
@@ -276,7 +300,8 @@ button:active { transform: scale(0.98); }
   opacity: 0.7;
 }
 .category.is-dragging,
-.episode.is-dragging {
+.episode.is-dragging,
+.episode-part.is-dragging {
   opacity: 0.6;
   border-style: dashed;
 }

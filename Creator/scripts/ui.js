@@ -719,8 +719,14 @@ function addCategory(data) {
       return;
     }
     e.preventDefault();
-    confirmModal.style.display = 'flex';
-    pendingRemoval = { type: 'category', elem: categoryDiv };
+    queueRemoval({
+      type: 'category',
+      elem: categoryDiv,
+      onConfirm: () => {
+        categoryDiv.remove();
+        updateCategoryButtonVisibility();
+      }
+    });
   });
 
   const categoryHeader = document.createElement('div');
@@ -804,7 +810,14 @@ function addEpisode(container, data) {
   epDiv.addEventListener('contextmenu', (e) => {
     e.preventDefault();
     e.stopPropagation(); // Allow episode deletions without triggering category-level prompts
-    epDiv.remove();
+    queueRemoval({
+      type: 'episode',
+      elem: epDiv,
+      onConfirm: () => {
+        epDiv.remove();
+        normalizeEpisodeTitles();
+      }
+    });
   });
 
   const epTitle = document.createElement('input');
@@ -847,18 +860,54 @@ function addEpisode(container, data) {
   const partsList = document.createElement('div');
   partsList.className = 'episode-parts-list';
 
+  const partsActions = document.createElement('div');
+  partsActions.className = 'episode-parts-actions';
+
+  const uploadPartsFolderBtn = document.createElement('button');
+  uploadPartsFolderBtn.type = 'button';
+  uploadPartsFolderBtn.className = 'episode-upload-parts-folder';
+  uploadPartsFolderBtn.textContent = 'Upload Parts Folder';
+
   const addPartBtn = document.createElement('button');
   addPartBtn.type = 'button';
   addPartBtn.className = 'episode-add-part';
   addPartBtn.textContent = 'Add Part';
 
-  partsContainer.append(partsList, addPartBtn);
+  partsActions.append(uploadPartsFolderBtn, addPartBtn);
+  partsContainer.append(partsList, partsActions);
+
+  const partsFolderInput = document.createElement('input');
+  partsFolderInput.type = 'file';
+  partsFolderInput.multiple = true;
+  partsFolderInput.style.display = 'none';
+  try { partsFolderInput.webkitdirectory = true; } catch {}
+  try {
+    partsFolderInput.setAttribute('webkitdirectory', '');
+    partsFolderInput.setAttribute('directory', '');
+    partsFolderInput.setAttribute('mozdirectory', '');
+  } catch {}
+  epDiv.appendChild(partsFolderInput);
 
   epDiv._separatedToggle = separatedToggle;
   epDiv._separatedToggleWrap = separatedRow;
   epDiv._partsContainer = partsContainer;
   epDiv._partsList = partsList;
   epDiv._partRows = [];
+
+  makeSortable(partsList, { itemSelector: '.episode-part', handleSelector: '.episode-part-top-row .drag-handle' });
+
+  function syncPartRowsFromDom() {
+    if (!partsList || !Array.isArray(epDiv._partRows)) return;
+    const rows = Array.from(partsList.querySelectorAll('.episode-part'));
+    epDiv._partRows.length = 0;
+    epDiv._partRows.push(...rows);
+  }
+
+  partsList.addEventListener('dragend', () => {
+    syncPartRowsFromDom();
+    recalcEpisodeSeparatedTotals();
+    syncEpisodeMainSrc();
+  });
 
   const episodeTopRow = document.createElement('div');
   episodeTopRow.className = 'episode-top-row';
@@ -932,6 +981,96 @@ function addEpisode(container, data) {
         if (baseSeparationMeta.duration) epDiv.dataset.durationSeconds = baseSeparationMeta.duration;
         else delete epDiv.dataset.durationSeconds;
       }
+    }
+  }
+
+  async function handlePartsFolderSelection(event) {
+    const incoming = Array.from((event && event.target && event.target.files) || []);
+    try { partsFolderInput.value = ''; } catch {}
+    if (!incoming.length) return;
+
+    const recognized = incoming.filter(file => /\.(mp4|m4v|mov|webm|mkv)$/i.test(file.name || ''));
+    if (!recognized.length) {
+      if (epError) epError.innerHTML = '<span style="color:red">No video files detected in that folder.</span>';
+      return;
+    }
+
+    const entries = recognized.map(file => {
+      const rel = file.webkitRelativePath || file.name || '';
+      const base = rel.split(/[\\/]/).pop() || file.name || '';
+      let index = NaN;
+      const hashMatch = base.match(/#(\d{1,6})/);
+      if (hashMatch) {
+        index = parseInt(hashMatch[1], 10);
+      } else {
+        const tailMatch = base.match(/(\d+)(?=\D*$)/);
+        if (tailMatch) index = parseInt(tailMatch[1], 10);
+      }
+      return { file, base, index, key: base.toLowerCase() };
+    });
+
+    entries.sort((a, b) => {
+      const aHas = Number.isFinite(a.index);
+      const bHas = Number.isFinite(b.index);
+      if (aHas && bHas) return a.index - b.index;
+      if (aHas) return -1;
+      if (bHas) return 1;
+      return a.key.localeCompare(b.key, undefined, { numeric: true, sensitivity: 'base' });
+    });
+
+    uploadPartsFolderBtn.disabled = true;
+    epDiv.dataset.uploadingParts = '1';
+
+    if (!separatedToggle.checked) {
+      separatedToggle.checked = true;
+      updatePartsVisibility();
+    }
+    captureBaseSeparationMeta();
+
+    if (partsList) partsList.innerHTML = '';
+    if (Array.isArray(epDiv._partRows)) {
+      epDiv._partRows.forEach(row => { try { row.remove(); } catch {} });
+    }
+    epDiv._partRows = [];
+
+    const total = entries.length;
+    let completed = 0;
+    if (epError) {
+      epError.style.color = '';
+      epError.textContent = `Uploading parts… 0 / ${total}`;
+    }
+
+    const createdRows = [];
+    try {
+      for (let i = 0; i < entries.length; i++) {
+        const { file, base } = entries[i];
+        const titleNum = Number.isFinite(entries[i].index) ? entries[i].index + 1 : (i + 1);
+        const partRow = addPartRow({ title: `Part ${titleNum}` });
+        if (!partRow) continue;
+        if (partRow._titleInput) {
+          partRow._titleInput.value = `Part ${titleNum}`;
+        }
+        try {
+          await handlePartFileUpload(partRow, file);
+          completed += 1;
+          if (epError) epError.textContent = `Uploading parts… ${completed} / ${total}`;
+        } catch (err) {
+          console.error('[Creator] Failed to upload part from folder', err);
+        }
+        createdRows.push(partRow);
+      }
+      createdRows.forEach(row => { try { partsList.appendChild(row); } catch {} });
+      syncPartRowsFromDom();
+    } finally {
+      syncPartRowsFromDom();
+      recalcEpisodeSeparatedTotals();
+      syncEpisodeMainSrc();
+      if (epError) {
+        if (completed === total) epError.textContent = '';
+        else epError.textContent = `Uploaded ${completed} of ${total} parts.`;
+      }
+      uploadPartsFolderBtn.disabled = false;
+      delete epDiv.dataset.uploadingParts;
     }
   }
 
@@ -1016,27 +1155,37 @@ function addEpisode(container, data) {
     const partIndex = (epDiv._partRows || []).length + 1;
     const row = document.createElement('div');
     row.className = 'episode-part';
+    row.setAttribute('draggable', 'true');
 
     const topRow = document.createElement('div');
     topRow.className = 'episode-part-top-row';
+    const partHandle = createDragHandle('part');
     const titleInput = document.createElement('input');
     titleInput.type = 'text';
-    titleInput.placeholder = `Part ${partIndex} Title`;
+    titleInput.placeholder = `Part ${partIndex}`;
     titleInput.value = partData && typeof partData.title === 'string' ? partData.title : `Part ${partIndex}`;
 
     const removeBtn = document.createElement('button');
     removeBtn.type = 'button';
     removeBtn.className = 'episode-part-remove';
     removeBtn.textContent = 'Remove';
-    removeBtn.addEventListener('click', () => {
+
+    const confirmPartRemoval = () => {
       const idx = epDiv._partRows.indexOf(row);
       if (idx >= 0) epDiv._partRows.splice(idx, 1);
       try { row.remove(); } catch {}
+      syncPartRowsFromDom();
       recalcEpisodeSeparatedTotals();
       syncEpisodeMainSrc();
+    };
+
+    removeBtn.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      queueRemoval({ type: 'part', elem: row, onConfirm: confirmPartRemoval });
     });
 
-    topRow.append(titleInput, removeBtn);
+    topRow.append(partHandle, titleInput, removeBtn);
 
     const partInputGroup = document.createElement('div');
     partInputGroup.className = 'input-group';
@@ -1084,7 +1233,9 @@ function addEpisode(container, data) {
     }
 
     partsList.appendChild(row);
+    if (!Array.isArray(epDiv._partRows)) epDiv._partRows = [];
     epDiv._partRows.push(row);
+    syncPartRowsFromDom();
     recalcEpisodeSeparatedTotals();
     syncEpisodeMainSrc();
     return row;
@@ -1101,6 +1252,14 @@ function addEpisode(container, data) {
     recalcEpisodeSeparatedTotals();
     syncEpisodeMainSrc();
   });
+
+  uploadPartsFolderBtn.addEventListener('click', () => {
+    if (uploadPartsFolderBtn.disabled) return;
+    try { partsFolderInput.value = ''; } catch {}
+    partsFolderInput.click();
+  });
+
+  partsFolderInput.addEventListener('change', handlePartsFolderSelection);
 
   addPartBtn.addEventListener('click', () => {
     if (!separatedToggle.checked) {
@@ -1708,15 +1867,48 @@ editTabBtn.addEventListener('click', () => {
 homeTabBtn.addEventListener('click', () => { window.location.href = '../index.html'; });
 
 const confirmModal = document.getElementById('confirmModal');
+const confirmPrompt = confirmModal ? confirmModal.querySelector('p') : null;
 const confirmYes = document.getElementById('confirmYes');
 const confirmNo = document.getElementById('confirmNo');
 let pendingRemoval = null;
+
+function queueRemoval(removal) {
+  if (!confirmModal) return;
+  const messages = {
+    category: 'Are you sure you want to delete this category?',
+    episode: 'Are you sure you want to delete this episode?',
+    part: 'Are you sure you want to delete this part?'
+  };
+  if (confirmPrompt) {
+    const text = removal && removal.message ? removal.message : messages[removal.type] || 'Are you sure you want to delete this item?';
+    confirmPrompt.textContent = text;
+  }
+  pendingRemoval = removal;
+  confirmModal.style.display = 'flex';
+}
+
 confirmYes.addEventListener('click', () => {
-  if (pendingRemoval && pendingRemoval.type === 'category') { pendingRemoval.elem.remove(); }
-  confirmModal.style.display = 'none'; pendingRemoval = null;
-  updateCategoryButtonVisibility();
+  if (pendingRemoval) {
+    try {
+      if (typeof pendingRemoval.onConfirm === 'function') {
+        pendingRemoval.onConfirm();
+      } else if (pendingRemoval.type === 'category' && pendingRemoval.elem) {
+        pendingRemoval.elem.remove();
+        updateCategoryButtonVisibility();
+      }
+    } finally {
+      confirmModal.style.display = 'none';
+      pendingRemoval = null;
+    }
+  } else {
+    confirmModal.style.display = 'none';
+  }
 });
-confirmNo.addEventListener('click', () => { confirmModal.style.display = 'none'; pendingRemoval = null; });
+
+confirmNo.addEventListener('click', () => {
+  if (confirmModal) confirmModal.style.display = 'none';
+  pendingRemoval = null;
+});
 
 function normalizeEpisodeTitles() {
   const mangaMode = isMangaMode();
