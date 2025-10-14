@@ -722,8 +722,74 @@ async function downloadSourceFolder(options = {}) {
     return;
   }
 
-  const progressBars = []; const loadedBytes = Array(tasks.length).fill(0); const totalBytes = Array(tasks.length).fill(0);
+  const loadedBytes = Array(tasks.length).fill(0);
+  const totalBytes = Array(tasks.length).fill(0);
   const dataLeftLabels = [];
+  const tooltipEls = [];
+  const rowProgressValues = Array(tasks.length).fill(0);
+  const rowStates = Array(tasks.length).fill('queued');
+  const fallbackTotalBytes = Array(tasks.length).fill(null);
+
+  function applyRowBackground(idx) {
+    const row = rowEls[idx];
+    if (!row) return;
+    const percent = Math.max(0, Math.min(100, rowProgressValues[idx] || 0));
+    const state = rowStates[idx];
+    let fillColor = 'rgba(78, 139, 255, 0.45)';
+    if (state === 'failed') fillColor = 'rgba(255, 107, 107, 0.45)';
+    else if (state === 'complete') fillColor = 'rgba(76, 175, 80, 0.45)';
+    else if (state === 'cancelled') fillColor = 'rgba(224, 192, 99, 0.45)';
+    else if (state === 'queued') fillColor = 'rgba(140, 140, 140, 0.3)';
+    if (percent <= 0) {
+      row.style.background = (state === 'failed' || state === 'cancelled') ? fillColor : '#222';
+      return;
+    }
+    row.style.background = `linear-gradient(90deg, ${fillColor} 0%, ${fillColor} ${percent}%, #222 ${percent}%, #222 100%)`;
+  }
+
+  function setRowProgress(idx, percent, { state } = {}) {
+    const clamped = Math.max(0, Math.min(100, Number(percent) || 0));
+    rowProgressValues[idx] = clamped;
+    if (state) {
+      rowStates[idx] = state;
+    } else if (!rowStates[idx] || rowStates[idx] === 'queued') {
+      rowStates[idx] = 'active';
+    }
+    applyRowBackground(idx);
+    updateHoverDetails(idx);
+  }
+
+  function setStatus(idx, text, { color, title } = {}) {
+    const label = dataLeftLabels[idx];
+    if (!label) return;
+    label.textContent = text;
+    label.style.color = color || '#6ec1e4';
+    label.title = title !== undefined ? (title || '') : '';
+    updateHoverDetails(idx);
+  }
+
+  function updateHoverDetails(idx) {
+    const tooltip = tooltipEls[idx];
+    if (!tooltip) return;
+    let total = Number(totalBytes[idx]);
+    if (!Number.isFinite(total) || total <= 0) {
+      total = Number(fallbackTotalBytes[idx]);
+    }
+    let loaded = Number(loadedBytes[idx]);
+    if (!Number.isFinite(loaded) || loaded < 0) {
+      if (Number.isFinite(total) && total > 0) {
+        loaded = Math.max(0, Math.min(total, (rowProgressValues[idx] / 100) * total));
+      } else {
+        loaded = 0;
+      }
+    }
+    const remaining = (Number.isFinite(total) && total > 0) ? Math.max(0, total - loaded) : NaN;
+    const totalStr = (Number.isFinite(total) && total > 0) ? formatBytes(total) : 'Unknown';
+    const remainingStr = Number.isFinite(remaining) ? formatBytes(remaining) : 'Unknown';
+    const percent = rowProgressValues[idx];
+    const percentStr = Number.isFinite(percent) ? `${percent.toFixed(percent >= 100 || percent === 0 ? 0 : 1)}% complete` : '0% complete';
+    tooltip.textContent = `Total Data: ${totalStr}\nData Left: ${Number.isFinite(remaining) ? remainingStr : 'Unknown'}\n${percentStr}`;
+  }
   rowEls = Array(tasks.length).fill(null);
   rowCompleted = Array(tasks.length).fill(false);
   const REQUEST_IDLE_TIMEOUT_MS = 90000;
@@ -800,7 +866,7 @@ async function downloadSourceFolder(options = {}) {
 
   function updateRemainingLabel() {
     try {
-      const loadedSum = loadedBytes.reduce((a, b) => a + b, 0);
+      const loadedSum = sumBytes(loadedBytes);
       const remainingBytes = Math.max(0, plannedTotalBytes - (loadedSum + totalFailedBytes));
       remainingLabel.textContent = 'Remaining: ' + formatBytes(remainingBytes);
     } catch {
@@ -853,22 +919,17 @@ async function downloadSourceFolder(options = {}) {
     totalBytes[idx] = 0;
     loadedBytes[idx] = 0;
 
-    if (progressBars[idx]) {
-      try { progressBars[idx].style.accentColor = '#ff6b6b'; } catch {}
-      progressBars[idx].value = 0;
-    }
-    if (dataLeftLabels[idx]) {
-      const needsPrefix = !/^failed/i.test(displayMessage) && !/^cancelled/i.test(displayMessage);
-      const text = cancelled ? displayMessage : (needsPrefix ? `Failed – ${displayMessage}` : displayMessage);
-      dataLeftLabels[idx].textContent = text;
-      dataLeftLabels[idx].style.color = cancelled ? '#e0c063' : '#ff6b6b';
-      if (episode && episode.src) dataLeftLabels[idx].title = `${text}\n${episode.src}`;
-    }
+    const needsPrefix = !/^failed/i.test(displayMessage) && !/^cancelled/i.test(displayMessage);
+    const text = cancelled ? displayMessage : (needsPrefix ? `Failed – ${displayMessage}` : displayMessage);
+    setRowProgress(idx, 0, { state: cancelled ? 'cancelled' : 'failed' });
+    const title = (episode && episode.src) ? `${text}\n${episode.src}` : undefined;
+    setStatus(idx, text, { color: cancelled ? '#e0c063' : '#ff6b6b', title });
     if (rowEls[idx]) {
       rowEls[idx].style.outline = cancelled ? '1px solid rgba(224,192,99,0.6)' : '1px solid rgba(255,102,102,0.7)';
     }
 
     updateRemainingLabel();
+    try { updateSpeedAndEta(); } catch {}
   }
   tasks.forEach((task, idx) => {
     const { ci, ei, placeholder, type } = task;
@@ -882,6 +943,9 @@ async function downloadSourceFolder(options = {}) {
     row.style.background = '#222';
     row.style.borderRadius = '6px';
     row.style.fontSize = '0.9em';
+    row.style.position = 'relative';
+    row.style.transition = 'background 0.25s ease';
+    row.tabIndex = 0;
 
     const labelEl = document.createElement('div');
     let labelText = `${catName} · ${epTitle}`;
@@ -896,25 +960,52 @@ async function downloadSourceFolder(options = {}) {
     labelEl.style.flex = '3';
     labelEl.style.minWidth = '120px';
 
-    const progressWrapper = document.createElement('div');
-    progressWrapper.style.flex = '2';
-    const progress = document.createElement('progress');
-    progress.max = 100; progress.value = 0; progress.style.width = '100%';
-    progressWrapper.appendChild(progress);
-
     const statusEl = document.createElement('div');
     statusEl.textContent = 'Queued';
     statusEl.style.minWidth = '110px';
     statusEl.style.color = '#6ec1e4';
+    statusEl.style.marginLeft = 'auto';
+    statusEl.style.textAlign = 'right';
+
+    const tooltip = document.createElement('div');
+    tooltip.textContent = 'Total Data: Unknown\nData Left: Unknown\n0% complete';
+    tooltip.style.position = 'absolute';
+    tooltip.style.top = 'calc(100% + 6px)';
+    tooltip.style.left = '0';
+    tooltip.style.background = '#111';
+    tooltip.style.border = '1px solid #444';
+    tooltip.style.borderRadius = '6px';
+    tooltip.style.padding = '6px 8px';
+    tooltip.style.fontSize = '0.8em';
+    tooltip.style.color = '#f1f1f1';
+    tooltip.style.boxShadow = '0 6px 14px rgba(0,0,0,0.4)';
+    tooltip.style.pointerEvents = 'none';
+    tooltip.style.whiteSpace = 'pre-line';
+    tooltip.style.display = 'none';
+    tooltip.style.zIndex = '5';
+    tooltip.style.maxWidth = '280px';
 
     row.appendChild(labelEl);
-    row.appendChild(progressWrapper);
     row.appendChild(statusEl);
+    row.appendChild(tooltip);
+
+    const showTooltip = () => { tooltip.style.display = 'block'; };
+    const hideTooltip = () => { tooltip.style.display = 'none'; };
+    row.addEventListener('mouseenter', showTooltip);
+    row.addEventListener('mouseleave', hideTooltip);
+    row.addEventListener('focus', showTooltip);
+    row.addEventListener('blur', hideTooltip);
 
     dataLeftLabels[idx] = statusEl;
     rowsContainer.appendChild(row);
-    progressBars[idx] = progress;
     rowEls[idx] = row;
+    tooltipEls[idx] = tooltip;
+    const placeholderSize = Number(placeholder && placeholder.fileSizeBytes);
+    if (Number.isFinite(placeholderSize) && placeholderSize > 0) {
+      fallbackTotalBytes[idx] = placeholderSize;
+    }
+    applyRowBackground(idx);
+    updateHoverDetails(idx);
   });
   applyVisibilityAll();
 
@@ -942,8 +1033,63 @@ async function downloadSourceFolder(options = {}) {
   try { speedLabel.title = `Concurrency: ${concurrency}${devModeEnabled ? ' (dev)' : ''}`; }
   catch {}
   let pointer = 0;
-  let downloadedBytes = 0;
   const downloadStartTime = Date.now();
+  const SPEED_SAMPLE_WINDOW_MS = 5000;
+  const speedSamples = [];
+  const speedNow = (typeof performance === 'object' && performance && typeof performance.now === 'function')
+    ? () => performance.now()
+    : () => Date.now();
+
+  function resetSpeedSamples() {
+    speedSamples.length = 0;
+    speedSamples.push({ time: speedNow(), bytes: 0 });
+  }
+
+  function sumBytes(list) {
+    try {
+      return list.reduce((acc, value) => acc + (Number.isFinite(value) ? value : 0), 0);
+    } catch {
+      return 0;
+    }
+  }
+
+  function updateSpeedAndEta({ totalLoaded, totalTotal } = {}) {
+    const loaded = Number.isFinite(totalLoaded) ? totalLoaded : sumBytes(loadedBytes);
+    const total = Number.isFinite(totalTotal) ? totalTotal : sumBytes(totalBytes);
+    const now = speedNow();
+    speedSamples.push({ time: now, bytes: loaded });
+    const cutoff = now - SPEED_SAMPLE_WINDOW_MS;
+    while (speedSamples.length > 1 && speedSamples[0].time < cutoff) {
+      speedSamples.shift();
+    }
+    let bytesPerSecond = 0;
+    if (speedSamples.length >= 2) {
+      const first = speedSamples[0];
+      const elapsedSec = (now - first.time) / 1000;
+      const deltaBytes = loaded - first.bytes;
+      if (elapsedSec > 0.05 && deltaBytes >= 0) {
+        bytesPerSecond = deltaBytes / elapsedSec;
+      }
+    }
+    if (bytesPerSecond <= 0 && speedSamples.length < 2) {
+      const elapsedSec = Math.max(0.001, (Date.now() - downloadStartTime) / 1000);
+      bytesPerSecond = loaded / elapsedSec;
+    }
+    if (!Number.isFinite(bytesPerSecond) || bytesPerSecond < 0) bytesPerSecond = 0;
+    const speedMBps = bytesPerSecond / (1024 * 1024);
+    try { speedLabel.textContent = `Speed: ${speedMBps.toFixed(2)} MB/s`; } catch {}
+    const remaining = total - loaded;
+    let etaText = '';
+    if (Number.isFinite(remaining) && remaining > 0 && bytesPerSecond > 0) {
+      const seconds = remaining / bytesPerSecond;
+      const minutes = Math.floor(seconds / 60);
+      const secs = Math.round(seconds % 60);
+      etaText = `ETA: ${minutes}m ${secs}s`;
+    }
+    try { etaLabel.textContent = etaText; } catch {}
+  }
+
+  resetSpeedSamples();
 
   async function computeBlobDurationSeconds(blob) {
     return new Promise((resolve) => { try { const url = URL.createObjectURL(blob); const v = document.createElement('video'); v.preload = 'metadata'; const done = () => { try { URL.revokeObjectURL(url); } catch {} const d = isFinite(v.duration) ? v.duration : NaN; resolve(d); }; v.onloadedmetadata = done; v.onerror = done; v.src = url; } catch { resolve(NaN); } });
@@ -963,10 +1109,7 @@ async function downloadSourceFolder(options = {}) {
       const task = tasks[idx];
       const { ci, ei, episode, placeholder, type } = task;
       try {
-        if (dataLeftLabels[idx]) {
-          dataLeftLabels[idx].textContent = 'Starting…';
-          dataLeftLabels[idx].style.color = '#6ec1e4';
-        }
+        setStatus(idx, 'Starting…', { color: '#6ec1e4' });
         if (type === 'json') {
           // JSON volume: fetch JSON, inline remote links as base64 data URIs, save JSON
           const epObj = catObjs[ci].episodes[ei];
@@ -1053,7 +1196,7 @@ async function downloadSourceFolder(options = {}) {
                 if (e.lengthComputable) {
                   // Map network progress to a small early bump (0-10%)
                   const pct = Math.min(10, (e.loaded / Math.max(1, e.total)) * 10);
-                  try { progressBars[idx].value = pct; } catch {}
+                  setRowProgress(idx, pct);
                 }
               };
               xhr.onload = () => {
@@ -1098,11 +1241,10 @@ async function downloadSourceFolder(options = {}) {
           const totalLinks = pageUrls.length;
           let completed = 0;
           function updateProgress() {
-            try {
-              const pct = totalLinks > 0 ? (completed / totalLinks) * 100 : 100;
-              progressBars[idx].value = pct;
-              dataLeftLabels[idx].textContent = totalLinks > 0 ? `${completed}/${totalLinks} files` : '';
-            } catch {}
+            const pct = totalLinks > 0 ? (completed / totalLinks) * 100 : 100;
+            setRowProgress(idx, pct);
+            const text = totalLinks > 0 ? `${completed}/${totalLinks} files` : '';
+            setStatus(idx, text, { color: '#6ec1e4' });
           }
           updateProgress();
 
@@ -1143,16 +1285,19 @@ async function downloadSourceFolder(options = {}) {
           } catch {}
           epObj.fileSizeBytes = measuredSize;
           if (Number.isFinite(measuredSize) && measuredSize >= 0) {
-            downloadedBytes += measuredSize;
             loadedBytes[idx] = measuredSize;
             totalBytes[idx] = measuredSize;
             updateRemainingLabel();
+            updateSpeedAndEta();
           }
           epObj.VolumePageCount = pageList.length;
           epObj.durationSeconds = null;
 
           // Mark row completed
-          try { progressBars[idx].value = 100; dataLeftLabels[idx].textContent = 'Done'; rowCompleted[idx] = true; applyVisibilityAll(); } catch {}
+          setRowProgress(idx, 100, { state: 'complete' });
+          setStatus(idx, 'Done', { color: '#7fe7a9' });
+          rowCompleted[idx] = true;
+          applyVisibilityAll();
         } else if (type === 'separated') {
           const epObj = catObjs[ci].episodes[ei];
           const partPlans = Array.isArray(task.parts) ? task.parts : [];
@@ -1183,30 +1328,18 @@ async function downloadSourceFolder(options = {}) {
                 if (e.lengthComputable) {
                   const partProgress = Math.max(0, Math.min(1, e.loaded / Math.max(1, e.total)));
                   const overallProgress = ((completedParts + partProgress) / partPlans.length) * 100;
-                  try { progressBars[idx].value = overallProgress; } catch {}
+                  setRowProgress(idx, overallProgress);
                   loadedBytes[idx] = accumulatedBytes + e.loaded;
                   totalBytes[idx] = accumulatedBytes + e.total;
                   updateRemainingLabel();
-                  const totalLoaded = loadedBytes.reduce((a, b) => a + b, 0);
-                  const totalTotal = totalBytes.reduce((a, b) => a + b, 0);
-                  const elapsedSeconds = Math.max(0.001, (Date.now() - downloadStartTime) / 1000);
-                  const averageSpeedBytes = downloadedBytes / elapsedSeconds;
-                  const remaining = totalTotal - totalLoaded;
-                  let eta = '';
-                  if (averageSpeedBytes > 0 && remaining > 0) {
-                    const seconds = remaining / averageSpeedBytes;
-                    const min = Math.floor(seconds / 60);
-                    const sec = Math.round(seconds % 60);
-                    eta = `ETA: ${min}m ${sec}s`;
-                  }
-                  etaLabel.textContent = eta;
-                  const speedMBps = (averageSpeedBytes / (1024 * 1024)).toFixed(2);
-                  speedLabel.textContent = `Speed: ${speedMBps} MB/s`;
+                  const totalLoaded = sumBytes(loadedBytes);
+                  const totalTotal = sumBytes(totalBytes);
+                  updateSpeedAndEta({ totalLoaded, totalTotal });
                   const remainingBytesPart = e.total - e.loaded;
                   const remainingMB = (remainingBytesPart / (1024 * 1024)).toFixed(2);
-                  dataLeftLabels[idx].textContent = `${remainingMB} MB left (Part ${partIndex + 1}/${partPlans.length})`;
-                } else if (dataLeftLabels[idx]) {
-                  dataLeftLabels[idx].textContent = `Part ${partIndex + 1}/${partPlans.length}…`;
+                  setStatus(idx, `${remainingMB} MB left (Part ${partIndex + 1}/${partPlans.length})`, { color: '#6ec1e4' });
+                } else {
+                  setStatus(idx, `Part ${partIndex + 1}/${partPlans.length}…`, { color: '#6ec1e4' });
                 }
               });
               xhr.onload = () => {
@@ -1231,10 +1364,10 @@ async function downloadSourceFolder(options = {}) {
             const partSize = Number(partBlob && partBlob.size);
             if (Number.isFinite(partSize) && partSize >= 0) {
               accumulatedBytes += partSize;
-              downloadedBytes += partSize;
               loadedBytes[idx] = accumulatedBytes;
               totalBytes[idx] = accumulatedBytes;
               updateRemainingLabel();
+              updateSpeedAndEta();
               if (placeholder && Array.isArray(placeholder.sources) && placeholder.sources[partIndex]) {
                 placeholder.sources[partIndex].fileSizeBytes = Math.round(partSize);
               }
@@ -1249,10 +1382,12 @@ async function downloadSourceFolder(options = {}) {
               }
             } catch {}
             completedParts += 1;
-            try {
-              progressBars[idx].value = (completedParts / partPlans.length) * 100;
-              dataLeftLabels[idx].textContent = completedParts === partPlans.length ? 'Finalizing…' : `Part ${completedParts}/${partPlans.length}`;
-            } catch {}
+            {
+              const pct = (completedParts / partPlans.length) * 100;
+              setRowProgress(idx, pct);
+              const status = completedParts === partPlans.length ? 'Finalizing…' : `Part ${completedParts}/${partPlans.length}`;
+              setStatus(idx, status, { color: '#6ec1e4' });
+            }
           }
           if (accumulatedBytes > 0) {
             epObj.fileSizeBytes = Math.round(accumulatedBytes);
@@ -1261,7 +1396,10 @@ async function downloadSourceFolder(options = {}) {
           if (accumulatedDuration > 0) {
             epObj.durationSeconds = Math.round(accumulatedDuration);
           }
-          try { progressBars[idx].value = 100; dataLeftLabels[idx].textContent = 'Done'; rowCompleted[idx] = true; applyVisibilityAll(); } catch {}
+          setRowProgress(idx, 100, { state: 'complete' });
+          setStatus(idx, 'Done', { color: '#7fe7a9' });
+          rowCompleted[idx] = true;
+          applyVisibilityAll();
         } else {
           const fileName = task.fileName;
           const isCbz = type === 'cbz';
@@ -1282,26 +1420,18 @@ async function downloadSourceFolder(options = {}) {
             xhr.open('GET', episode.src); xhr.responseType = 'blob';
             xhr.addEventListener('progress', e => {
               if (e.lengthComputable) {
-                progressBars[idx].value = (e.loaded / e.total) * 100; loadedBytes[idx] = e.loaded; totalBytes[idx] = e.total;
-                const totalLoaded = loadedBytes.reduce((a, b) => a + b, 0);
-                const totalTotal = totalBytes.reduce((a, b) => a + b, 0);
-                const elapsedSeconds = Math.max(0.001, (Date.now() - downloadStartTime) / 1000);
-                const averageSpeedBytes = downloadedBytes / elapsedSeconds;
-                const remaining = totalTotal - totalLoaded;
-                let eta = '';
-                if (averageSpeedBytes > 0 && remaining > 0) {
-                  const seconds = remaining / averageSpeedBytes;
-                  const min = Math.floor(seconds / 60);
-                  const sec = Math.round(seconds % 60);
-                  eta = `ETA: ${min}m ${sec}s`;
-                }
-                etaLabel.textContent = eta;
-                const speedMBps = (averageSpeedBytes / (1024 * 1024)).toFixed(2);
-                speedLabel.textContent = `Speed: ${speedMBps} MB/s`;
-                const remainingBytes = totalBytes[idx] - loadedBytes[idx]; const remainingMB = (remainingBytes / (1024 * 1024)).toFixed(2); dataLeftLabels[idx].textContent = `${remainingMB} MB left`;
+                setRowProgress(idx, (e.loaded / Math.max(1, e.total)) * 100);
+                loadedBytes[idx] = e.loaded;
+                totalBytes[idx] = e.total;
+                const totalLoaded = sumBytes(loadedBytes);
+                const totalTotal = sumBytes(totalBytes);
+                updateSpeedAndEta({ totalLoaded, totalTotal });
+                const remainingBytes = totalBytes[idx] - loadedBytes[idx];
+                const remainingMB = (remainingBytes / (1024 * 1024)).toFixed(2);
+                setStatus(idx, `${remainingMB} MB left`, { color: '#6ec1e4' });
                 updateRemainingLabel();
-              } else if (dataLeftLabels[idx]) {
-                dataLeftLabels[idx].textContent = `${formatBytes(e.loaded)} downloaded`;
+              } else {
+                setStatus(idx, `${formatBytes(e.loaded)} downloaded`, { color: '#6ec1e4' });
               }
             });
             // Treat status 0 as success for opaque/file responses (matches player.js behavior)
@@ -1334,10 +1464,10 @@ async function downloadSourceFolder(options = {}) {
             const sz = Number(blob && blob.size);
             if (Number.isFinite(sz) && sz >= 0) {
               epObj.fileSizeBytes = sz;
-              downloadedBytes += sz;
               loadedBytes[idx] = sz;
               totalBytes[idx] = sz;
               updateRemainingLabel();
+              updateSpeedAndEta();
             }
           } catch {}
           // Set per-item metadata by type
@@ -1349,7 +1479,10 @@ async function downloadSourceFolder(options = {}) {
           }
 
           // Mark row completed
-          try { progressBars[idx].value = 100; dataLeftLabels[idx].textContent = 'Done'; rowCompleted[idx] = true; applyVisibilityAll(); } catch {}
+          setRowProgress(idx, 100, { state: 'complete' });
+          setStatus(idx, 'Done', { color: '#7fe7a9' });
+          rowCompleted[idx] = true;
+          applyVisibilityAll();
         }
       } catch (err) {
         const errorContext = type === 'separated'

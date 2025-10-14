@@ -36,7 +36,14 @@
         <span id="downloadConcurrencyValue">2</span>
       </div>
       <div class="setting-row">
-        <button id="clearStorageOpenBtn" class="danger-button">CLEAR STORAGE</button>
+        <div class="storage-menu">
+          <button id="storageMenuBtn" type="button">Storage</button>
+          <div id="storageMenuPanel" class="storage-menu-panel" role="menu" aria-hidden="true">
+            <button id="storageDeleteBtn" type="button" class="danger-button storage-menu-item">Delete storage</button>
+            <button id="storageExportBtn" type="button" class="storage-menu-item">Export</button>
+            <button id="storageImportBtn" type="button" class="storage-menu-item">Import</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -136,6 +143,24 @@
       </div>
     </div>
   </div>
+  <div id="storageImportOverlay">
+    <div id="storageImportPanel">
+      <button id="storageImportCloseBtn" class="overlay-close" type="button" aria-label="Close import dialog">✕</button>
+      <div class="setting-row">
+        <h3>Import Settings</h3>
+      </div>
+      <p>Importing will replace all existing settings with the new ones.</p>
+      <label for="storageImportCodeInput" class="import-label">Catbox code or URL</label>
+      <input id="storageImportCodeInput" type="text" placeholder="abc123 or https://files.catbox.moe/abc123.json">
+      <div class="import-divider">or</div>
+      <label for="storageImportFileInput" class="import-label">Import JSON file</label>
+      <input id="storageImportFileInput" type="file" accept="application/json">
+      <div class="setting-row import-actions">
+        <button id="storageImportConfirmBtn" type="button">Import</button>
+        <button id="storageImportCancelBtn" type="button">Cancel</button>
+      </div>
+    </div>
+  </div>
   <div id="clipOverlay">
     <div id="clipOverlayContent">
       <button id="clipOverlayCloseBtn" class="overlay-close" type="button" aria-label="Close clip dialog">✕</button>
@@ -189,6 +214,7 @@
       <progress id="clipProgressBar" max="100" value="0"></progress>
     </div>
   </div>
+  <div id="storageNoticeStack" class="storage-notice-stack" aria-live="polite" aria-atomic="true"></div>
   <a href="https://github.com/RandomSideProjects" target="_blank" id="githubLink">
     <span>RandomSideProjects</span>
     <img src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png" alt="GitHub">

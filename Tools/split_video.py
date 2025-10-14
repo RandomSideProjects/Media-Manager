@@ -244,7 +244,8 @@ def launch_gui() -> None:  # pragma: no cover - GUI interaction is manual
                     )
                     self.root.after(0, lambda: messagebox.showinfo("Complete", "Splitting finished successfully."))
                 except Exception as exc:
-                    self.root.after(0, lambda: messagebox.showerror("Error", str(exc) or "Unexpected error."))
+                    error_message = str(exc) or "Unexpected error."
+                    self.root.after(0, lambda msg=error_message: messagebox.showerror("Error", msg))
                 finally:
                     self.root.after(0, lambda: self.run_button.config(state="normal"))
 
