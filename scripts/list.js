@@ -13,7 +13,7 @@ function coerceSeparatedFlag(value) {
 }
 
 function normalizeSeparatedEpisode(entry, context) {
-  const separatedFlag = coerceSeparatedFlag(entry.separated ?? entry.seperated);
+  let separatedFlag = coerceSeparatedFlag(entry.separated ?? entry.seperated);
   let rawParts = Array.isArray(entry.sources)
     ? entry.sources
     : Array.isArray(entry.parts)
@@ -23,6 +23,9 @@ function normalizeSeparatedEpisode(entry, context) {
         : [];
   if ((!rawParts || rawParts.length === 0) && Array.isArray(entry.__separatedParts)) {
     rawParts = entry.__separatedParts;
+  }
+  if (!separatedFlag && rawParts.length >= 2) {
+    separatedFlag = true;
   }
   if (!separatedFlag || rawParts.length === 0) return entry;
 
