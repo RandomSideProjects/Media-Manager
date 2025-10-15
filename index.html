@@ -117,6 +117,7 @@
   </div>
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.0/jszip.min.js"></script>
   <script defer src="scripts/constants.js"></script>
+  <script defer src="scripts/alerts.js"></script>
   <script defer src="scripts/dom.js"></script>
   <script defer src="scripts/player.js"></script>
   <script defer src="scripts/popout.js"></script>
@@ -127,12 +128,11 @@
   <script defer src="scripts/theme.js"></script>
   <script defer src="scripts/init.js"></script>
   <script defer src="scripts/local-folder.js"></script>
-  <script defer src="scripts/clear-storage.js"></script>
+  <script defer src="scripts/storage.js"></script>
   <script defer src="scripts/version.js"></script>
   <!-- Clear Storage Confirm Overlay moved outside nav for full-screen coverage -->
   <div id="clearStorageOverlay">
     <div id="clearStoragePanel">
-      <button id="clearStorageCloseBtn" class="overlay-close" type="button" aria-label="Close clear storage dialog">✕</button>
       <div class="setting-row">
         <h3>Confirm Clear Storage</h3>
       </div>
@@ -145,17 +145,16 @@
   </div>
   <div id="storageImportOverlay">
     <div id="storageImportPanel">
-      <button id="storageImportCloseBtn" class="overlay-close" type="button" aria-label="Close import dialog">✕</button>
       <div class="setting-row">
         <h3>Import Settings</h3>
       </div>
-      <p>Importing will replace all existing settings with the new ones.</p>
+      <p>Select a Catbox code or JSON file to load settings.</p>
       <label for="storageImportCodeInput" class="import-label">Catbox code or URL</label>
       <input id="storageImportCodeInput" type="text" placeholder="abc123 or https://files.catbox.moe/abc123.json">
       <div class="import-divider">or</div>
       <label for="storageImportFileInput" class="import-label">Import JSON file</label>
       <input id="storageImportFileInput" type="file" accept="application/json">
-      <div class="setting-row import-actions">
+      <div id="storageImportActionsRow" class="setting-row import-actions">
         <button id="storageImportConfirmBtn" type="button">Import</button>
         <button id="storageImportCancelBtn" type="button">Cancel</button>
       </div>
@@ -214,7 +213,6 @@
       <progress id="clipProgressBar" max="100" value="0"></progress>
     </div>
   </div>
-  <div id="storageNoticeStack" class="storage-notice-stack" aria-live="polite" aria-atomic="true"></div>
   <a href="https://github.com/RandomSideProjects" target="_blank" id="githubLink">
     <span>RandomSideProjects</span>
     <img src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png" alt="GitHub">

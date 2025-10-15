@@ -21,18 +21,25 @@ function hashStringToKey(value) {
 
 function deriveSourceKey(rawValue, options) {
   const opts = options || {};
-  const prefix = typeof opts.prefix === 'string' && opts.prefix.trim() ? opts.prefix.trim().toLowerCase() : 'source';
-  const raw = typeof rawValue === 'string' ? rawValue.trim() : String(rawValue || '').trim();
-  if (!raw) return `${prefix}-anon`;
+  const rawInput = typeof rawValue === 'string' ? rawValue.trim() : String(rawValue || '').trim();
+  if (!rawInput) {
+    const fallbackPrefix = typeof opts.prefix === 'string' && opts.prefix.trim() ? opts.prefix.trim().toLowerCase() : 'source';
+    return `${fallbackPrefix}-anon`;
+  }
 
-  const cleaned = raw.replace(/[^A-Za-z0-9._-]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').toLowerCase();
+  if (opts.useRawKey === true) {
+    return rawInput;
+  }
+
+  const prefix = typeof opts.prefix === 'string' && opts.prefix.trim() ? opts.prefix.trim().toLowerCase() : 'source';
+  const cleaned = rawInput.replace(/[^A-Za-z0-9._-]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').toLowerCase();
   const maxLen = 48;
   if (cleaned && cleaned.length <= maxLen) {
     return `${prefix}-${cleaned}`;
   }
 
   const slug = cleaned ? cleaned.slice(0, Math.max(8, Math.min(24, cleaned.length))) : 'src';
-  const hash = hashStringToKey(raw);
+  const hash = hashStringToKey(rawInput);
   return `${prefix}-${slug}-${hash}`;
 }
 

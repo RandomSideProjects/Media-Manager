@@ -4,6 +4,32 @@
 // none
 
 function showHostFailure(container, codeText) {
+  const codeDisplay = typeof codeText === 'undefined' || codeText === null ? 'Unknown' : String(codeText);
+  const resume = () => {
+    window.MM_BLOCKED = false;
+    if (typeof startAutoUploadPolling === 'function' && !window.MM_POLL_TIMER) {
+      startAutoUploadPolling();
+    }
+    const ov = document.getElementById('serverFailOverlay');
+    if (ov) ov.remove();
+  };
+
+  window.MM_BLOCKED = true;
+
+  if (typeof window.showStorageNotice === 'function') {
+    window.showStorageNotice({
+      title: 'Source Host Offline',
+      message: `Unfortunately, our public source host is currently unavailable.\nPlease try again.\nHTTP Code: ${codeDisplay}`,
+      tone: 'error',
+      autoCloseMs: null,
+      copyText: codeDisplay,
+      copyLabel: 'Copy code',
+      dismissLabel: 'Continue',
+      onClose: resume
+    });
+    return;
+  }
+
   let overlay = document.getElementById('serverFailOverlay');
   if (!overlay) {
     overlay = document.createElement('div');
@@ -21,7 +47,7 @@ function showHostFailure(container, codeText) {
           Unfortunately, our public source host is currently unavailable.\nPlease try again.
         </div>
         <div style="margin-top:10px;">
-          <code style="background:#000; display:inline-block; padding:0.6em 0.8em; border-radius:8px; color:#fff;">HTTP Code : ${codeText}</code>
+          <code style="background:#000; display:inline-block; padding:0.6em 0.8em; border-radius:8px; color:#fff;">HTTP Code : ${codeDisplay}</code>
         </div>
         <div style="margin-top:14px; display:flex; gap:10px; justify-content:center;">
           <button id="serverContinueBtn" style="padding:8px 14px; border:none; border-radius:8px; background:#007bff; color:#fff; cursor:pointer;">Continue</button>
@@ -30,23 +56,13 @@ function showHostFailure(container, codeText) {
     document.body.appendChild(overlay);
   } else {
     const codeEl = overlay.querySelector('code');
-    if (codeEl) codeEl.textContent = `HTTP Code : ${codeText}`;
+    if (codeEl) codeEl.textContent = `HTTP Code : ${codeDisplay}`;
   }
-
-  // Block functionality until user continues
-  window.MM_BLOCKED = true;
 
   const btn = document.getElementById('serverContinueBtn');
   if (btn && !btn.dataset.bound) {
     btn.dataset.bound = '1';
-    btn.addEventListener('click', () => {
-      window.MM_BLOCKED = false;
-      if (typeof startAutoUploadPolling === 'function' && !window.MM_POLL_TIMER) {
-        startAutoUploadPolling();
-      }
-      const ov = document.getElementById('serverFailOverlay');
-      if (ov) ov.remove();
-    });
+    btn.addEventListener('click', resume);
   }
 }
 

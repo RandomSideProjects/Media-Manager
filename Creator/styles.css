@@ -535,3 +535,108 @@ html::-webkit-scrollbar,
 body::-webkit-scrollbar {
   display: none;
 }
+
+.storage-notice-overlay {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.65);
+  backdrop-filter: blur(2px);
+  z-index: 11000;
+  padding: clamp(1.5rem, 2vw, 3rem);
+}
+.storage-notice-overlay.is-visible {
+  display: flex;
+}
+body.mm-notice-open {
+  overflow: hidden;
+}
+.storage-notice-stack {
+  width: min(420px, 90vw);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: stretch;
+}
+.storage-notice {
+  background: #1f1f1f;
+  color: #f1f1f1;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.1);
+  padding: 1.15rem 1.5rem 1.15rem 1.2rem;
+  box-shadow: 0 24px 48px -22px rgba(0,0,0,0.65);
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  position: relative;
+  pointer-events: auto;
+}
+.storage-notice::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  border-left: 4px solid transparent;
+  pointer-events: none;
+}
+.storage-notice--success::before { border-left-color: #22c55e; }
+.storage-notice--error::before { border-left-color: #ef4444; }
+.storage-notice--warning::before { border-left-color: #f59e0b; }
+.storage-notice--info::before { border-left-color: #3b82f6; }
+.storage-notice__close {
+  position: absolute;
+  top: 0.65rem;
+  right: 0.65rem;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0.3rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+.storage-notice__close:hover,
+.storage-notice__close:focus-visible {
+  background: rgba(255,255,255,0.12);
+  outline: none;
+}
+.storage-notice__title {
+  font-weight: 700;
+  margin: 0;
+  font-size: 1rem;
+}
+.storage-notice__message {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.35;
+  white-space: pre-line;
+}
+.storage-notice__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+.storage-notice__btn {
+  background: transparent;
+  color: inherit;
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 999px;
+  padding: 0.35rem 0.9rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+.storage-notice__btn:hover {
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.35);
+}
+.storage-notice__btn:focus-visible {
+  outline: 2px solid #5ab8ff;
+  outline-offset: 2px;
+}

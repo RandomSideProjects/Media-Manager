@@ -19,6 +19,20 @@ let lastPointerId = null;
 const CLIP_HISTORY_KEY = 'clipHistory';
 const MAX_CLIP_HISTORY = 6;
 
+function showClipNotice(message, tone = 'warning') {
+  if (!message) return;
+  if (typeof window.showStorageNotice === 'function') {
+    window.showStorageNotice({
+      title: 'Clip Tool',
+      message,
+      tone,
+      autoCloseMs: null
+    });
+  } else if (typeof window.alert === 'function') {
+    window.alert(message);
+  }
+}
+
 function loadClipPresets() {
   try {
     const stored = JSON.parse(localStorage.getItem('clipPresets') || 'null');
@@ -686,13 +700,13 @@ if (clipPresetOverlay) {
 if (clipCustomStartBtn) {
   clipCustomStartBtn.addEventListener('click', () => {
     if (!video) {
-      alert('Clip playback is not ready yet.');
+      showClipNotice('Clip playback is not ready yet.', 'warning');
       return;
     }
     const clampedStart = trimState.start;
     const clampedEnd = trimState.end;
     if (clampedEnd - clampedStart < 0.5) {
-      alert('Clip length must be at least half a second.');
+      showClipNotice('Clip length must be at least half a second.', 'error');
       return;
     }
     const remember = clipRememberPreset && clipRememberPreset.checked;

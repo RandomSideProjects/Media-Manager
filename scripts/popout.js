@@ -10,10 +10,17 @@ if (theaterBtn && video) {
       const msg = 'Pop-out blocked by your browser. Please allow pop-ups for this site to enable the theater window.';
       try { video.play(); } catch {}
       try {
-        if (typeof showPlayerAlert === 'function') {
+        if (typeof window.showStorageNotice === 'function') {
+          window.showStorageNotice({
+            title: 'Pop-out blocked',
+            message: msg,
+            tone: 'warning',
+            autoCloseMs: null
+          });
+        } else if (typeof showPlayerAlert === 'function') {
           showPlayerAlert(msg);
-        } else {
-          alert(msg);
+        } else if (typeof window.alert === 'function') {
+          window.alert(msg);
         }
       } catch {}
       return;

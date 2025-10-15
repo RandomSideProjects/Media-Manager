@@ -835,6 +835,25 @@ function loadVideo(index) {
 }
 
 function showPlayerAlert(message) {
+  const text = message || 'Playback error.';
+  if (typeof window.showStorageNotice === 'function') {
+    window.showStorageNotice({
+      title: 'Playback Error',
+      message: text,
+      tone: 'error',
+      autoCloseMs: null,
+      onClose: () => {
+        try {
+          const legacy = document.getElementById('playerFailOverlay');
+          if (legacy) legacy.remove();
+        } catch {}
+        try {
+          if (typeof backBtn !== 'undefined' && backBtn) backBtn.click();
+        } catch {}
+      }
+    });
+    return;
+  }
   let overlay = document.getElementById('playerFailOverlay');
   if (!overlay) {
     overlay = document.createElement('div');
@@ -858,7 +877,7 @@ function showPlayerAlert(message) {
     box.append(p, btn); overlay.appendChild(box); document.body.appendChild(overlay);
   }
   const msgEl = document.getElementById('playerFailMessage');
-  if (msgEl) msgEl.textContent = message;
+  if (msgEl) msgEl.textContent = text;
 }
 
 if (video) {

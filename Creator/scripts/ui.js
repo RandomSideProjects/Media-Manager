@@ -24,6 +24,20 @@ let isFolderUploading = false;
 if (typeof window !== 'undefined') {
   window.isFolderUploading = false;
 }
+
+function showCreatorNotice(message, tone = 'info', title = 'Directory Creator') {
+  if (!message) return;
+  if (typeof window.showStorageNotice === 'function') {
+    window.showStorageNotice({
+      title,
+      message,
+      tone,
+      autoCloseMs: null
+    });
+  } else if (typeof window.alert === 'function') {
+    window.alert(message);
+  }
+}
 let __currentCreatorMode = (function(){ try { const p = JSON.parse(localStorage.getItem('mm_upload_settings')||'{}'); return (p.libraryMode === 'manga') ? 'manga' : 'anime'; } catch { return 'anime'; } })();
 function getCreatorMode(){
   try { const p = JSON.parse(localStorage.getItem('mm_upload_settings')||'{}'); return (p.libraryMode === 'manga') ? 'manga' : 'anime'; } catch { return 'anime'; }
@@ -1942,7 +1956,7 @@ async function refreshAllEpisodeMetadata() {
     }
   });
   if (!tasks.length) {
-    alert('No missing metadata detected.');
+    showCreatorNotice('No missing metadata detected.', 'info', 'Metadata');
     return;
   }
   let successCount = 0;
@@ -1954,7 +1968,7 @@ async function refreshAllEpisodeMetadata() {
       console.warn('[Creator] Metadata fetch failed for an item', err);
     }
   }
-  alert(`Metadata refreshed for ${successCount} item(s).`);
+  showCreatorNotice(`Metadata refreshed for ${successCount} item(s).`, 'success', 'Metadata');
 }
 
 // Local JSON download on A/Z keypress
@@ -2011,19 +2025,19 @@ async function uploadDirectoryToGithub() {
   if (typeof window !== 'undefined' && window.DevMode !== true) return;
   const workerUrlRaw = getGithubWorkerUrl();
   if (!workerUrlRaw) {
-    alert('Set the GitHub Worker URL in Upload Settings before uploading to GitHub.');
+    showCreatorNotice('Set the GitHub Worker URL in Upload Settings before uploading to GitHub.', 'warning', 'GitHub Upload');
     return;
   }
   const githubToken = getGithubToken();
   if (!githubToken) {
-    alert('Set the GitHub token in Upload Settings before uploading to GitHub.');
+    showCreatorNotice('Set the GitHub token in Upload Settings before uploading to GitHub.', 'warning', 'GitHub Upload');
     return;
   }
   let workerUrl;
   try {
     workerUrl = new URL(workerUrlRaw);
   } catch (err) {
-    alert('GitHub Worker URL is not a valid URL.');
+    showCreatorNotice('GitHub Worker URL is not a valid URL.', 'error', 'GitHub Upload');
     return;
   }
 
@@ -2050,7 +2064,7 @@ async function uploadDirectoryToGithub() {
     if (!response.ok || !data || data.ok !== true) {
       const message = data && data.error ? data.error : `HTTP ${response.status}`;
       const details = data && data.details ? `\n${data.details}` : '';
-      alert(`GitHub upload failed: ${message}${details}`);
+      showCreatorNotice(`GitHub upload failed: ${message}${details}`, 'error', 'GitHub Upload');
       return;
     }
     githubUploadUrl = data.pullRequestUrl || data.fileUrl || data.rawUrl || '';
@@ -2060,13 +2074,13 @@ async function uploadDirectoryToGithub() {
     if (data.commitUrl) console.info('[Creator] GitHub upload commit:', data.commitUrl);
     if (data.commitType === 'pull_request' && data.pullRequestUrl) {
       console.info('[Creator] GitHub upload pull request:', data.pullRequestUrl);
-      alert(`Pull request created: ${data.pullRequestUrl}`);
+      showCreatorNotice(`Pull request created: ${data.pullRequestUrl}`, 'success', 'GitHub Upload');
     } else {
-      alert(`Uploaded to GitHub: ${data.path || 'success'}`);
+      showCreatorNotice(`Uploaded to GitHub: ${data.path || 'success'}`, 'success', 'GitHub Upload');
     }
   } catch (err) {
     console.error('[Creator] GitHub upload error', err);
-    alert(`GitHub upload failed: ${err && err.message ? err.message : err}`);
+    showCreatorNotice(`GitHub upload failed: ${err && err.message ? err.message : err}`, 'error', 'GitHub Upload');
   } finally {
     isGithubUploadInFlight = false;
   }

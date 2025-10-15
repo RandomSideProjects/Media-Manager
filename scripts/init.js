@@ -57,7 +57,15 @@ async function loadSource(rawInput) {
     srcUrl = decodedRaw.endsWith('.json') ? decodedRaw : `./${decodedRaw}.json`;
     keyPrefix = 'path';
   }
-  if (!directJson) setSourceKey(decodedRaw, { prefix: keyPrefix });
+  if (!directJson) {
+    const useRawKey = keyPrefix === 'path';
+    let keyInput = decodedRaw;
+    if (useRawKey) {
+      keyInput = keyInput.replace(/^[./\\]+/, '');
+      keyInput = keyInput.replace(/\\/g, '/');
+    }
+    setSourceKey(keyInput, { prefix: keyPrefix, useRawKey });
+  }
 
   try {
     let json = directJson;

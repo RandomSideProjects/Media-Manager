@@ -71,7 +71,18 @@
       }
     }
     if (!episodesDiv) {
-      alert('Could not prepare a category for folder upload. Please add one and try again.');
+      if (typeof showCreatorNotice === 'function') {
+        showCreatorNotice('Could not prepare a category for folder upload. Please add one and try again.', 'error', 'Folder Upload');
+      } else if (typeof window.showStorageNotice === 'function') {
+        window.showStorageNotice({
+          title: 'Folder Upload',
+          message: 'Could not prepare a category for folder upload. Please add one and try again.',
+          tone: 'error',
+          autoCloseMs: null
+        });
+      } else if (typeof window.alert === 'function') {
+        window.alert('Could not prepare a category for folder upload. Please add one and try again.');
+      }
       try { window.isFolderUploading = false; } catch {}
       return;
     }

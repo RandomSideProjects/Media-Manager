@@ -5,104 +5,24 @@
   const CATBOX_UPLOAD_ENDPOINT = 'https://catbox.moe/user/api.php';
   const EXPORT_SCHEMA = 'rsp-media-manager-settings';
   const ESCAPE_KEY = 'Escape';
-  const NOTICE_STACK_ID = 'storageNoticeStack';
-  const NOTICE_TONES = new Set(['success', 'error', 'warning', 'info']);
-  const DEFAULT_NOTICE_TIMEOUT_MS = 8000;
 
   let clearOverlayVisible = false;
   let importOverlayVisible = false;
+  let pendingImportData = null;
+  let pendingImportNotice = null;
 
-  function ensureNoticeStack() {
-    let stack = document.getElementById(NOTICE_STACK_ID);
-    if (!stack) {
-      stack = document.createElement('div');
-      stack.id = NOTICE_STACK_ID;
-      stack.className = 'storage-notice-stack';
-      stack.setAttribute('aria-live', 'polite');
-      stack.setAttribute('aria-atomic', 'true');
-      document.body.appendChild(stack);
+  function showStorageNotice(options = {}) {
+    const hasNotifier = window.mmNotices && typeof window.mmNotices.show === 'function';
+    if (hasNotifier) {
+      return window.mmNotices.show(options);
     }
-    return stack;
-  }
-
-  function showStorageNotice({ title, message, tone = 'info', copyText = null, copyLabel = 'Copy', autoCloseMs = DEFAULT_NOTICE_TIMEOUT_MS, onClose } = {}) {
-    if (!message) return null;
-    const stack = ensureNoticeStack();
-    const normalizedTone = NOTICE_TONES.has(tone) ? tone : 'info';
-    const notice = document.createElement('div');
-    notice.className = `storage-notice storage-notice--${normalizedTone}`;
-
-    if (title) {
-      const titleEl = document.createElement('p');
-      titleEl.className = 'storage-notice__title';
-      titleEl.textContent = title;
-      notice.appendChild(titleEl);
+    const message = options && typeof options.message !== 'undefined'
+      ? String(options.message)
+      : '';
+    if (message) {
+      try { window.alert(message); } catch {}
     }
-
-    const messageEl = document.createElement('p');
-    messageEl.className = 'storage-notice__message';
-    messageEl.textContent = message;
-    notice.appendChild(messageEl);
-
-    const actionsRow = document.createElement('div');
-    actionsRow.className = 'storage-notice__actions';
-
-    const removeNotice = () => {
-      if (!notice.parentNode) return;
-      try { notice.parentNode.removeChild(notice); } catch {}
-      if (typeof onClose === 'function') {
-        try { onClose(); } catch {}
-      }
-    };
-
-    if (copyText) {
-      const copyBtn = document.createElement('button');
-      copyBtn.type = 'button';
-      copyBtn.className = 'storage-notice__btn';
-      copyBtn.textContent = copyLabel || 'Copy';
-      copyBtn.addEventListener('click', async () => {
-        const original = copyBtn.textContent;
-        try {
-          if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
-            await navigator.clipboard.writeText(copyText);
-            copyBtn.textContent = 'Copied!';
-          } else {
-            const textarea = document.createElement('textarea');
-            textarea.value = copyText;
-            textarea.setAttribute('readonly', '');
-            textarea.style.position = 'absolute';
-            textarea.style.left = '-9999px';
-            document.body.appendChild(textarea);
-            textarea.select();
-            document.execCommand('copy');
-            document.body.removeChild(textarea);
-            copyBtn.textContent = 'Copied!';
-          }
-        } catch (err) {
-          console.error('[Storage] Clipboard copy failed', err);
-          copyBtn.textContent = 'Copy failed';
-        } finally {
-          setTimeout(() => { copyBtn.textContent = original; }, 1600);
-        }
-      });
-      actionsRow.appendChild(copyBtn);
-    }
-
-    const closeBtn = document.createElement('button');
-    closeBtn.type = 'button';
-    closeBtn.className = 'storage-notice__btn';
-    closeBtn.textContent = 'Close';
-    closeBtn.addEventListener('click', removeNotice);
-    actionsRow.appendChild(closeBtn);
-
-    notice.appendChild(actionsRow);
-    stack.insertBefore(notice, stack.firstChild || null);
-
-    if (Number.isFinite(autoCloseMs) && autoCloseMs > 0) {
-      setTimeout(removeNotice, autoCloseMs);
-    }
-
-    return { notice, close: removeNotice };
+    return null;
   }
 
   function isDevOnlyKey(key) {
@@ -191,6 +111,27 @@
     }, 0);
   }
 
+  function parseTimeValue(raw) {
+    if (raw === null || typeof raw === 'undefined') return null;
+    if (typeof raw === 'number' && Number.isFinite(raw)) return raw;
+    const str = String(raw).trim();
+    if (!str) return null;
+    const numeric = Number(str);
+    if (Number.isFinite(numeric)) return numeric;
+    if (!/^\d+(?::\d{1,2}){1,2}$/.test(str)) return null;
+    const parts = str.split(':').map((segment) => Number(segment));
+    if (parts.some((part) => !Number.isFinite(part))) return null;
+    let seconds = 0;
+    if (parts.length === 2) {
+      seconds = (parts[0] * 60) + parts[1];
+    } else if (parts.length === 3) {
+      seconds = (parts[0] * 3600) + (parts[1] * 60) + parts[2];
+    } else {
+      return null;
+    }
+    return seconds;
+  }
+
   function resolveCatboxUrl(rawInput) {
     if (typeof rawInput !== 'string') return null;
     const trimmed = rawInput.trim();
@@ -239,16 +180,43 @@
     return payload;
   }
 
-  function applyImportedSettings(data) {
+  function applyImportedSettings(data, mode = 'replace') {
+    const normalizedMode = mode === 'merge' ? 'merge' : 'replace';
     const entries = Object.entries(data || {}).filter(([key]) => typeof key === 'string' && key);
-    try {
-      localStorage.clear();
-    } catch (err) {
-      throw new Error('Unable to clear existing settings.');
+    if (!entries.length) return;
+    if (normalizedMode === 'replace') {
+      try {
+        localStorage.clear();
+      } catch (err) {
+        throw new Error('Unable to clear existing settings.');
+      }
     }
     const failed = [];
     entries.forEach(([key, value]) => {
+      if (isDevOnlyKey(key)) return;
       const serialized = typeof value === 'string' ? value : JSON.stringify(value);
+      if (normalizedMode === 'merge') {
+        let existing;
+        try {
+          existing = localStorage.getItem(key);
+        } catch (err) {
+          console.error('[Storage] Failed to read existing key during merge', key, err);
+          existing = null;
+        }
+        if (existing !== null && typeof existing !== 'undefined') {
+          const existingTime = parseTimeValue(existing);
+          const incomingTime = parseTimeValue(serialized);
+          if (existingTime !== null && incomingTime !== null) {
+            if (!(incomingTime > existingTime)) return;
+          } else {
+            if (existing === serialized) return;
+            const trimmedIncoming = serialized.trim().toLowerCase();
+            if (!trimmedIncoming || trimmedIncoming === 'null' || trimmedIncoming === 'undefined' || trimmedIncoming === 'nan') {
+              return;
+            }
+          }
+        }
+      }
       try {
         localStorage.setItem(key, serialized);
       } catch (err) {
@@ -285,10 +253,8 @@
     const clearOverlay = document.getElementById('clearStorageOverlay');
     const clearConfirmBtn = document.getElementById('clearStorageConfirmBtn');
     const clearCancelBtn = document.getElementById('clearStorageCancelBtn');
-    const clearCloseBtn = document.getElementById('clearStorageCloseBtn');
 
     const importOverlay = document.getElementById('storageImportOverlay');
-    const importCloseBtn = document.getElementById('storageImportCloseBtn');
     const importCancelBtn = document.getElementById('storageImportCancelBtn');
     const importConfirmBtn = document.getElementById('storageImportConfirmBtn');
     const importCodeInput = document.getElementById('storageImportCodeInput');
@@ -296,6 +262,82 @@
 
     const closeMenu = () => closeStorageMenu(storageMenuPanel, storageMenuBtn);
     const openMenu = () => openStorageMenu(storageMenuPanel, storageMenuBtn);
+
+    const clearPendingImportPrompt = () => {
+      pendingImportData = null;
+      if (pendingImportNotice && typeof pendingImportNotice.close === 'function') {
+        try { pendingImportNotice.close(); }
+        catch {}
+      }
+      pendingImportNotice = null;
+    };
+
+    const finalizePendingImport = (mode) => {
+      if (!pendingImportData) {
+        showStorageNotice({
+          title: 'Import',
+          message: 'No imported settings to apply.',
+          tone: 'warning'
+        });
+        return;
+      }
+      const data = pendingImportData;
+      clearPendingImportPrompt();
+      try {
+        applyImportedSettings(data, mode);
+        closeImportOverlay();
+        const successMessage = mode === 'merge'
+          ? 'Settings merged. Newer progress wins. Reloading to apply changes…'
+          : 'Settings replaced. Reloading to apply changes…';
+        showStorageNotice({
+          title: 'Import complete',
+          message: successMessage,
+          tone: 'success',
+          autoCloseMs: 2000
+        });
+        setTimeout(() => {
+          try { window.location.reload(); } catch {}
+        }, 900);
+      } catch (err) {
+        console.error('[Storage] Import apply failed', err);
+        showStorageNotice({
+          title: 'Import failed',
+          message: err && err.message ? err.message : String(err),
+          tone: 'error'
+        });
+      }
+    };
+
+    const presentImportModePrompt = (data) => {
+      clearPendingImportPrompt();
+      pendingImportData = data;
+      pendingImportNotice = showStorageNotice({
+        title: 'Import ready',
+        message: 'Choose Replace or Merge to apply these settings.',
+        tone: 'info',
+        autoCloseMs: null,
+        dismissLabel: null,
+        actions: [
+          {
+            label: 'Replace',
+            className: 'storage-notice__btn--danger',
+            closeOnClick: false,
+            onClick: () => finalizePendingImport('replace')
+          },
+          {
+            label: 'Merge',
+            className: 'storage-notice__btn--primary',
+            closeOnClick: false,
+            onClick: () => finalizePendingImport('merge')
+          },
+          {
+            label: 'Cancel',
+            className: 'storage-notice__btn--secondary',
+            onClick: () => { clearPendingImportPrompt(); }
+          }
+        ]
+      });
+    };
 
     const openClearOverlay = () => {
       if (!clearOverlay) return;
@@ -311,10 +353,12 @@
     const resetImportInputs = () => {
       if (importCodeInput) importCodeInput.value = '';
       if (importFileInput) importFileInput.value = '';
+      clearPendingImportPrompt();
     };
 
     const openImportOverlay = () => {
       if (!importOverlay) return;
+      clearPendingImportPrompt();
       importOverlay.style.display = 'flex';
       importOverlayVisible = true;
       setTimeout(() => {
@@ -327,6 +371,7 @@
       if (!importOverlay) return;
       importOverlay.style.display = 'none';
       importOverlayVisible = false;
+      clearPendingImportPrompt();
       resetImportInputs();
     };
 
@@ -415,8 +460,6 @@
       });
     }
     if (clearCancelBtn) clearCancelBtn.addEventListener('click', closeClearOverlay);
-    if (clearCloseBtn) clearCloseBtn.addEventListener('click', closeClearOverlay);
-
     if (clearConfirmBtn) {
       clearConfirmBtn.addEventListener('click', () => {
         let cleared = false;
@@ -451,11 +494,11 @@
         if (event.target === importOverlay) closeImportOverlay();
       });
     }
-    if (importCloseBtn) importCloseBtn.addEventListener('click', closeImportOverlay);
     if (importCancelBtn) importCancelBtn.addEventListener('click', closeImportOverlay);
 
     if (importConfirmBtn) {
       importConfirmBtn.addEventListener('click', async () => {
+        clearPendingImportPrompt();
         importConfirmBtn.disabled = true;
         try {
           const catboxInput = importCodeInput ? importCodeInput.value.trim() : '';
@@ -485,18 +528,9 @@
             throw new Error('Imported file is not valid JSON.');
           }
           const data = extractDataFromImportPayload(payload);
-          applyImportedSettings(data);
-          closeImportOverlay();
-          showStorageNotice({
-            title: 'Import complete',
-            message: 'New settings applied. Reloading to finish up…',
-            tone: 'success',
-            autoCloseMs: 2000
-          });
-          setTimeout(() => {
-            try { window.location.reload(); } catch {}
-          }, 900);
+          presentImportModePrompt(data);
         } catch (err) {
+          clearPendingImportPrompt();
           console.error('[Storage] Import failed', err);
           showStorageNotice({
             title: 'Import failed',
