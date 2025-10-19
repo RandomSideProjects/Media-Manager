@@ -355,9 +355,11 @@
       "path": "./Files/Anime/Quintuplets.json",
       "title": "Quintessential Quintuplets",
       "poster": "./Posters/Anime/Quintessential_Quintuplets.webp",
-      "categoryCount": 3,
-      "episodeCount": 31,
+      "categoryCount": 2,
+      "episodeCount": 24,
       "itemCount": 31,
+      "separatedCategoryCount": 1,
+      "separatedItemCount": 7,
       "totalFileSizeBytes": 4732678956,
       "totalDurationSeconds": 42855,
       "LatestTime": "2025-08-15T00:53:37.020Z"
