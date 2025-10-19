@@ -10,8 +10,7 @@ const fbCount = document.getElementById('fbCount');
 const fbSend = document.getElementById('fbSend');
 const fbCancel = document.getElementById('fbCancel');
 const fbStatus = document.getElementById('fbStatus');
-
-// Encrypted Discord webhook (AES‑GCM)
+// Encryption data
 const WH_KEY_B64 = 'aJB+40k8AaWDi1xFQdEk5g==';
 const WH_IV_B64  = 'vlPG0OOvVmnKNG15';
 const WH_CT_B64  = 't5v0smddP9dkGZ8fs/4AI0zVO0M1PQsT4OmxAq42GPeNRbRQdYkIfzFAEVrEyEavXwcHT34Hz7G/dLN95Qt7RQMrFlcNpHiKC1yQOcsPONnGN55fCrQnwyQiVFdPbgZsZ7ddpbLcZNW8HnA3DEEqToVKBMHwdlOM0yK8Uy8yLBSCREeVQa7bZIM=';
