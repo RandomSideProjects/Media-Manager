@@ -157,7 +157,7 @@
       ]
     },
     {
-      "category": "Movie (Split into 7 Parts)",
+      "category": "Movie",
       "episodes": [
         {
           "title": "Part 1",
@@ -201,7 +201,8 @@
           "fileSizeBytes": 59984029,
           "durationSeconds": 424
         }
-      ]
+      ],
+      "separated": 1
     }
   ],
   "LatestTime": "2025-08-15T00:53:37.020Z",

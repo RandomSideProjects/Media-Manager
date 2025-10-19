@@ -43,6 +43,11 @@
 
   const onChange = async (e) => {
     try {
+      if (typeof window !== 'undefined' && typeof window.mmBuildSeasonEntries === 'function') {
+        return;
+      }
+    } catch {}
+    try {
       e.stopImmediatePropagation();
       e.stopPropagation();
       e.preventDefault();

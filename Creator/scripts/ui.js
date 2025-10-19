@@ -142,6 +142,228 @@ function updateEpisodeSeparatedUi(epDiv) {
   }
 }
 
+function buildSeasonEntriesFromFiles(files, { isManga } = {}) {
+  const isMangaLibrary = (typeof isManga === 'boolean') ? isManga : isMangaMode();
+  const labelHelper = (num) => (isMangaLibrary ? `Volume ${num}` : `Episode ${num}`);
+  const episodeFolderPatterns = [
+    /(?:^|\b)e\s*0?(\d{1,4})(?:\b|$)/i,
+    /(?:^|\b)ep\s*0?(\d{1,4})(?:\b|$)/i,
+    /(?:^|\b)episode\s*0?(\d{1,4})(?:\b|$)/i
+  ];
+  const partIndexFromName = (baseName) => {
+    if (!baseName) return NaN;
+    const hashMatch = baseName.match(/#(\d{1,6})/);
+    if (hashMatch) return parseInt(hashMatch[1], 10);
+    const partMatch = baseName.match(/part[_\-\s]*(\d{1,4})/i);
+    if (partMatch) return parseInt(partMatch[1], 10);
+    const tailMatch = baseName.match(/(\d+)(?=\D*$)/);
+    if (tailMatch) return parseInt(tailMatch[1], 10);
+    return NaN;
+  };
+  const matchEpisodeFolderSegment = (segment) => {
+    if (typeof segment !== 'string') return null;
+    const trimmed = segment.trim();
+    if (!trimmed) return null;
+    for (const pattern of episodeFolderPatterns) {
+      const match = trimmed.match(pattern);
+      if (match) {
+        const num = parseInt(match[1], 10);
+        if (Number.isFinite(num)) {
+          return { raw: trimmed, number: num };
+        }
+      }
+    }
+    return null;
+  };
+
+  const rawEntries = files.map((file, idx) => {
+    const relPath = file && (file.webkitRelativePath || file.name) || '';
+    const segments = relPath.split(/[\\/]/).filter(Boolean);
+    const base = segments[segments.length - 1] || (file && file.name) || '';
+    let num = idx + 1;
+    let label = null;
+    if (isMangaLibrary) {
+      const mc = base.match(/\bchapter\s*(\d{1,4})\b/i) || base.match(/\bc\s*0?(\d{1,4})\b/i);
+      if (mc) {
+        num = parseInt(mc[1], 10);
+        label = `Chapter ${num}`;
+      } else {
+        const ms = base.match(/ (0?\d{1,4})\b/);
+        if (ms) { num = parseInt(ms[1], 10); label = `Chapter ${num}`; }
+        else {
+          const mv = base.match(/(?:\bvol(?:ume)?\s*|\bv\s*)(\d{1,3})/i);
+          if (mv) { num = parseInt(mv[1], 10); label = `Volume ${num}`; }
+        }
+      }
+    } else {
+      const me = base.match(/E0?(\d{1,4})/i);
+      if (me) num = parseInt(me[1], 10);
+    }
+    let folderInfo = null;
+    if (!isMangaLibrary && segments.length > 1) {
+      const parentSegments = segments.slice(0, -1);
+      for (let i = parentSegments.length - 1; i >= 0; i -= 1) {
+        const match = matchEpisodeFolderSegment(parentSegments[i]);
+        if (match) {
+          const normalizedSegments = parentSegments.slice(0, i + 1).map((seg) => (typeof seg === 'string' ? seg.trim() : seg));
+          const joinedPath = normalizedSegments.join('/');
+          folderInfo = {
+            folderName: match.raw,
+            folderNumber: match.number,
+            folderKey: joinedPath,
+            folderKeyLower: joinedPath.toLowerCase()
+          };
+          break;
+        }
+      }
+    }
+    const partIndex = partIndexFromName(base);
+    return { file, num, label, base, relPath, segments, folderInfo, partIndex, originalIndex: idx };
+  });
+
+  const separatedGroups = new Map();
+  const singles = [];
+
+  rawEntries.forEach((entry) => {
+    if (!isMangaLibrary && entry.folderInfo) {
+      const key = entry.folderInfo.folderKeyLower;
+      const existing = separatedGroups.get(key);
+      if (!existing) {
+        separatedGroups.set(key, {
+          key,
+          folderName: entry.folderInfo.folderName,
+          parts: [entry],
+          num: Number.isFinite(entry.folderInfo.folderNumber) ? entry.folderInfo.folderNumber : entry.num,
+          label: entry.label || null,
+          originalIndex: entry.originalIndex
+        });
+      } else {
+        existing.parts.push(entry);
+        existing.originalIndex = Math.min(existing.originalIndex, entry.originalIndex);
+        if (!existing.label && entry.label) existing.label = entry.label;
+        if (!Number.isFinite(existing.num) && Number.isFinite(entry.folderInfo.folderNumber)) existing.num = entry.folderInfo.folderNumber;
+      }
+      return;
+    }
+    singles.push(entry);
+  });
+
+  const seasonEntries = [
+    ...singles.map((entry) => ({
+      type: 'single',
+      file: entry.file,
+      num: entry.num,
+      label: entry.label,
+      title: entry.label || labelHelper(entry.num),
+      originalIndex: entry.originalIndex
+    })),
+    ...Array.from(separatedGroups.values()).map((group) => {
+      const sortedParts = group.parts.slice().sort((a, b) => {
+        const aHas = Number.isFinite(a.partIndex);
+        const bHas = Number.isFinite(b.partIndex);
+        if (aHas && bHas && a.partIndex !== b.partIndex) return a.partIndex - b.partIndex;
+        if (aHas) return -1;
+        if (bHas) return 1;
+        if (a.originalIndex !== b.originalIndex) return a.originalIndex - b.originalIndex;
+        return a.base.localeCompare(b.base, undefined, { numeric: true, sensitivity: 'base' });
+      });
+      const fallbackNum = Number.isFinite(group.num)
+        ? group.num
+        : (sortedParts.find((part) => Number.isFinite(part.num))?.num ?? NaN);
+      const fallbackTitle = group.label
+        || (Number.isFinite(fallbackNum) ? labelHelper(fallbackNum) : null)
+        || (group.folderName ? group.folderName : null)
+        || 'Episode';
+      return {
+        type: 'separated',
+        num: Number.isFinite(group.num) ? group.num : fallbackNum,
+        label: group.label,
+        title: fallbackTitle,
+        folderName: group.folderName || null,
+        key: group.key,
+        parts: sortedParts,
+        originalIndex: group.originalIndex
+      };
+    })
+  ];
+
+  seasonEntries.sort((a, b) => {
+    const aHas = Number.isFinite(a.num);
+    const bHas = Number.isFinite(b.num);
+    if (aHas && bHas && a.num !== b.num) return a.num - b.num;
+    if (aHas && !bHas) return -1;
+    if (!aHas && bHas) return 1;
+    return a.originalIndex - b.originalIndex;
+  });
+
+  if (!isMangaLibrary && separatedGroups.size > 0) {
+    const detectedFolders = Array.from(separatedGroups.values()).map((group) => group.folderName || group.key);
+    console.debug('[Creator] Detected separated episode folders', detectedFolders);
+  }
+
+  return {
+    entries: seasonEntries,
+    hasSeparated: !isMangaLibrary && separatedGroups.size > 0
+  };
+}
+
+function deriveFilesInSeason(files, { isManga } = {}) {
+  const isMangaLibrary = (typeof isManga === 'boolean') ? isManga : isMangaMode();
+  return files
+    .map((file, idx) => {
+      const name = (file.webkitRelativePath || file.name || '').split('/').pop();
+      let num = idx + 1;
+      let label = null;
+      if (isMangaLibrary) {
+        const mc = name.match(/\bchapter\s*(\d{1,4})\b/i) || name.match(/\bc\s*0?(\d{1,4})\b/i);
+        if (mc) {
+          num = parseInt(mc[1], 10);
+          label = `Chapter ${num}`;
+        } else {
+          const ms = name.match(/ (0?\d{1,4})\b/);
+          if (ms) { num = parseInt(ms[1], 10); label = `Chapter ${num}`; }
+          else {
+            const mv = name.match(/(?:\bvol(?:ume)?\s*|\bv\s*)(\d{1,3})/i);
+            if (mv) { num = parseInt(mv[1], 10); label = `Volume ${num}`; }
+          }
+        }
+      } else {
+        const me = name.match(/E0?(\d{1,4})/i);
+        if (me) num = parseInt(me[1], 10);
+      }
+      return { file, num, label };
+    })
+    .sort((a, b) => a.num - b.num);
+}
+
+if (typeof window !== 'undefined') {
+  try {
+    window.mmBuildSeasonEntries = (files, options) => buildSeasonEntriesFromFiles(
+      Array.isArray(files) ? files : [],
+      options && typeof options === 'object' ? options : { isManga: isMangaMode() }
+    );
+  } catch {}
+}
+
+function measureLocalFileDuration(file) {
+  return new Promise((resolve) => {
+    try {
+      const url = URL.createObjectURL(file);
+      const video = document.createElement('video');
+      video.preload = 'metadata';
+      const finalize = () => {
+        try { URL.revokeObjectURL(url); } catch {}
+        resolve(Number.isFinite(video.duration) ? video.duration : NaN);
+      };
+      video.onloadedmetadata = finalize;
+      video.onerror = () => resolve(NaN);
+      video.src = url;
+    } catch {
+      resolve(NaN);
+    }
+  });
+}
+
 // Ensure the Upload Settings close button always hides the panel (safety net if settings.js has not bound yet)
 const mmCloseFallbackBtn = document.getElementById('mmCloseUploadSettings');
 if (mmCloseFallbackBtn && !mmCloseFallbackBtn.dataset.mmUiBound) {
@@ -149,10 +371,19 @@ if (mmCloseFallbackBtn && !mmCloseFallbackBtn.dataset.mmUiBound) {
   mmCloseFallbackBtn.addEventListener('click', () => {
     const panel = document.getElementById('mmUploadSettingsPanel');
     if (panel) panel.style.display = 'none';
-    if (separatedToggle.checked) {
-      recalcEpisodeSeparatedTotals();
-      syncEpisodeMainSrc();
-    }
+    refreshAllSeparationToggles();
+    const episodes = document.querySelectorAll('.episode');
+    episodes.forEach((epDiv) => {
+      const toggle = epDiv && epDiv._separatedToggle;
+      if (!toggle || !toggle.checked) return;
+      try {
+        toggle.dispatchEvent(new Event('change', { bubbles: true }));
+      } catch {
+        const changeEvent = document.createEvent('Event');
+        changeEvent.initEvent('change', true, true);
+        toggle.dispatchEvent(changeEvent);
+      }
+    });
   });
 }
 
@@ -537,15 +768,24 @@ if (posterChangeBtn) posterChangeBtn.addEventListener('click', () => {
 
 // Folder selection and bulk upload
 folderInput.addEventListener('change', async (e) => {
+  if (typeof window !== 'undefined') {
+    window.mmLastFolderUploadEvent = Date.now();
+  }
+  console.debug('[Creator] Folder input change triggered');
+  let folderOverlay = null;
+  let folderUploadList = null;
+  let folderUploadSummary = null;
   try {
     isFolderUploading = true;
     if (typeof window !== 'undefined') {
       window.isFolderUploading = true;
     }
+    const files = Array.from((e && e.target && e.target.files) || []);
     folderInput.value = '';
-
-    const files = Array.from(e.target.files || []);
-    if (!files.length) return;
+    if (!files.length) {
+      console.warn('[Creator] Folder upload aborted – no files provided from input change.');
+      return;
+    }
 
     // Prompt for season/collection index or create new
     const seasonIndex = categoriesEl.children.length + 1;
@@ -554,6 +794,9 @@ folderInput.addEventListener('change', async (e) => {
     const categoryDiv = categoriesEl.lastElementChild;
     if (!categoryDiv) {
       console.error('[Creator] Failed to create category container for folder upload.');
+      if (typeof showCreatorNotice === 'function') {
+        showCreatorNotice('Could not create a category for the folder upload. Check console for details.', 'error', 'Folder Upload');
+      }
       return;
     }
     const titleInput = categoryDiv.querySelector('.category-header input[type="text"]');
@@ -564,36 +807,17 @@ folderInput.addEventListener('change', async (e) => {
       return;
     }
 
-    // Derive numbers and labels from filenames
-    const filesInSeason = files
-      .map((file, idx) => {
-        const name = (file.webkitRelativePath || file.name || '').split('/').pop();
-        let num = idx + 1;
-        let label = null;
-        if (isMangaMode()) {
-          // Prefer Chapter detection: matches "Chapter ###", "c###", or a standalone number with a preceding space " ###"
-          const mc = name.match(/\bchapter\s*(\d{1,4})\b/i) || name.match(/\bc\s*0?(\d{1,4})\b/i);
-          if (mc) {
-            num = parseInt(mc[1], 10);
-            label = `Chapter ${num}`;
-          } else {
-            const ms = name.match(/ (0?\d{1,4})\b/);
-            if (ms) { num = parseInt(ms[1], 10); label = `Chapter ${num}`; }
-            else {
-              const mv = name.match(/(?:\bvol(?:ume)?\s*|\bv\s*)(\d{1,3})/i);
-              if (mv) { num = parseInt(mv[1], 10); label = `Volume ${num}`; }
-            }
-          }
-        } else {
-          const me = name.match(/E0?(\d{1,3})/i);
-          if (me) num = parseInt(me[1], 10);
-        }
-        return { file, num, label };
-      })
-      .sort((a, b) => a.num - b.num);
+    const { entries: seasonEntries, hasSeparated } = buildSeasonEntriesFromFiles(files, { isManga: isMangaMode() });
+    const normalEntries = deriveFilesInSeason(files, { isManga: isMangaMode() });
+
+    console.debug('[Creator] Folder upload detected', {
+      totalFiles: files.length,
+      hasSeparated,
+      groupedEntries: seasonEntries.length
+    });
 
     // Overlay UI for progress
-    let folderOverlay = document.getElementById('folderUploadOverlay');
+    folderOverlay = document.getElementById('folderUploadOverlay');
     if (!folderOverlay) {
       folderOverlay = document.createElement('div');
       folderOverlay.id = 'folderUploadOverlay';
@@ -613,27 +837,144 @@ folderInput.addEventListener('change', async (e) => {
       </div>
     `;
     document.body.appendChild(folderOverlay);
-    const folderUploadList = folderOverlay.querySelector('#folderUploadList');
-    const folderUploadSummary = folderOverlay.querySelector('#folderUploadSummary');
-    folderUploadSummary.textContent = `0 / ${filesInSeason.length} completed`;
+    folderUploadList = folderOverlay.querySelector('#folderUploadList');
+    folderUploadSummary = folderOverlay.querySelector('#folderUploadSummary');
 
     const taskFns = [];
     const maxAttempts = 5;
     let completedCount = 0;
 
-    filesInSeason.forEach(async ({ file, num, label }) => {
-      addEpisode(episodesDiv, { title: label || labelForUnit(num), src: '' });
-      const epDiv = episodesDiv.lastElementChild;
-      try { epDiv.dataset.fileSizeBytes = String(file.size); } catch {}
-      if (isMangaMode() && /\.cbz$/i.test(file.name||'')) {
-        try { const ab = await file.arrayBuffer(); const zip = await JSZip.loadAsync(ab); const names = Object.keys(zip.files).filter(n => /\.(jpe?g|png|gif|webp|bmp)$/i.test(n)); epDiv.dataset.VolumePageCount = String(names.length); epDiv.dataset.volumePageCount = String(names.length); } catch {}
-      } else {
-        try { computeLocalFileDurationSeconds(file).then(d => { if (!Number.isNaN(d) && d > 0) epDiv.dataset.durationSeconds = String(Math.round(d)); }); } catch {}
+    async function runWithConcurrency(fns, limit) {
+      let idx = 0;
+      const workers = Array.from({ length: Math.min(limit, fns.length) }, async () => {
+        while (idx < fns.length) {
+          const current = fns[idx++];
+          await current();
+        }
+      });
+      await Promise.all(workers);
+    }
+
+    if (!hasSeparated) {
+      folderUploadSummary.textContent = `0 / ${normalEntries.length} completed`;
+
+      normalEntries.forEach(({ file, num, label }) => {
+        console.debug('[Creator] Normal folder upload item', { label, size: file.size });
+        addEpisode(episodesDiv, { title: label || labelForUnit(num), src: '' });
+        const epDiv = episodesDiv.lastElementChild;
+        if (!epDiv) return;
+        try { epDiv.dataset.fileSizeBytes = String(file.size); } catch {}
+        if (isMangaMode() && /\.cbz$/i.test(file.name || '')) {
+          (async () => {
+            try {
+              const ab = await file.arrayBuffer();
+              const zip = await JSZip.loadAsync(ab);
+              const names = Object.keys(zip.files).filter((n) => /\.(jpe?g|png|gif|webp|bmp)$/i.test(n));
+              epDiv.dataset.VolumePageCount = String(names.length);
+              epDiv.dataset.volumePageCount = String(names.length);
+            } catch {}
+          })();
+        } else {
+          measureLocalFileDuration(file).then((d) => {
+            if (!Number.isNaN(d) && d > 0) {
+              epDiv.dataset.durationSeconds = String(Math.round(d));
+            }
+          }).catch(() => {});
+        }
+
+        const inputs = epDiv.querySelectorAll('input[type="text"]');
+        const epSrcInput = inputs[1];
+        const epError = epDiv.querySelector('.ep-error');
+        if (epError) epError.textContent = '';
+
+        const row = document.createElement('div');
+        row.style.display = 'flex';
+        row.style.alignItems = 'center';
+        row.style.gap = '0.75em';
+        row.style.padding = '6px 8px';
+        row.style.background = '#222';
+        row.style.borderRadius = '6px';
+        row.style.fontSize = '0.9em';
+        const labelEl = document.createElement('div');
+        labelEl.textContent = label || labelForUnit(num);
+        labelEl.style.flex = '1';
+        const status = document.createElement('div');
+        status.textContent = 'Queued';
+        status.style.minWidth = '110px';
+        const progressWrapper = document.createElement('div');
+        progressWrapper.style.flex = '2';
+        const prog = document.createElement('progress');
+        prog.max = 100;
+        prog.value = 0;
+        prog.style.width = '100%';
+        progressWrapper.appendChild(prog);
+        row.appendChild(labelEl);
+        row.appendChild(progressWrapper);
+        row.appendChild(status);
+        folderUploadList.appendChild(row);
+
+        const fn = async () => {
+          for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+            status.textContent = (attempt === 1) ? 'Uploading' : `Retry ${attempt} of ${maxAttempts}`;
+            prog.value = 0;
+            try {
+              const url = await uploadToCatboxWithProgress(file, (pct) => { prog.value = pct; }, { context: 'batch' });
+              epSrcInput.value = url;
+              if (epError) epError.textContent = '';
+              status.textContent = 'Done';
+              status.style.color = '#6ec1e4';
+              prog.value = 100;
+              completedCount++;
+              folderUploadSummary.textContent = `${completedCount} / ${normalEntries.length} completed`;
+              return;
+            } catch (err) {
+              if (attempt < maxAttempts) {
+                const base = 800 * Math.pow(2, attempt - 1);
+                const jitter = base * (0.3 + Math.random() * 0.4);
+                await sleep(base + jitter);
+                continue;
+              }
+              status.textContent = 'Failed';
+              status.style.color = '#ff4444';
+              if (epError) epError.innerHTML = '<span style="color:red">Upload failed</span>';
+              return;
+            }
+          }
+        };
+        taskFns.push(fn);
+      });
+
+      await runWithConcurrency(taskFns, getUploadConcurrency());
+      if (folderOverlay) folderOverlay.remove();
+      return;
+    }
+
+    const processEntries = seasonEntries.filter((entry) => entry && (entry.type === 'separated' || entry.file));
+    if (!processEntries.length) {
+      folderUploadSummary.textContent = 'No usable files detected';
+      return;
+    }
+    console.debug('[Creator] Separated folder upload entry count', processEntries.length);
+    folderUploadSummary.textContent = `0 / ${processEntries.length} completed`;
+
+    processEntries.forEach((entry, index) => {
+      if (!entry) return;
+      if (!hasSeparated && entry.type !== 'single') return;
+      const title = entry.title || labelForUnit(entry.num);
+      const createdEpisode = addEpisode(episodesDiv, { title, src: '' });
+      const epDiv = createdEpisode || (episodesDiv ? episodesDiv.lastElementChild : null);
+      if (!epDiv) return;
+
+      let epSrcInput = epDiv._srcInput || null;
+      if (!epSrcInput) {
+        const inputs = epDiv.querySelectorAll('input[type="text"]');
+        if (inputs.length > 1) epSrcInput = inputs[1];
       }
-      const inputs = epDiv.querySelectorAll('input[type="text"]');
-      const epSrcInput = inputs[1];
-      const epError = epDiv.querySelector('.ep-error');
-      epError.textContent = '';
+      const epError = epDiv._errorEl || epDiv.querySelector('.ep-error');
+      if (epError) {
+        epError.textContent = '';
+        epError.style.color = '';
+      }
 
       const row = document.createElement('div');
       row.style.display = 'flex';
@@ -644,7 +985,7 @@ folderInput.addEventListener('change', async (e) => {
       row.style.borderRadius = '6px';
       row.style.fontSize = '0.9em';
       const labelEl = document.createElement('div');
-      labelEl.textContent = label || labelForUnit(num);
+      labelEl.textContent = title;
       labelEl.style.flex = '1';
       const status = document.createElement('div');
       status.textContent = 'Queued';
@@ -652,26 +993,121 @@ folderInput.addEventListener('change', async (e) => {
       const progressWrapper = document.createElement('div');
       progressWrapper.style.flex = '2';
       const prog = document.createElement('progress');
-      prog.max = 100; prog.value = 0; prog.style.width = '100%';
+      prog.max = 100;
+      prog.value = 0;
+      prog.style.width = '100%';
       progressWrapper.appendChild(prog);
       row.appendChild(labelEl);
       row.appendChild(progressWrapper);
       row.appendChild(status);
       folderUploadList.appendChild(row);
 
-      const fn = async () => {
-        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-          status.textContent = (attempt === 1) ? 'Uploading' : `Retry ${attempt} of ${maxAttempts}`;
-          prog.value = 0;
-          try {
-            const url = await uploadToCatboxWithProgress(file, pct => { prog.value = pct; }, { context: 'batch' });
-            epSrcInput.value = url;
-            epError.textContent = '';
+      if (hasSeparated && entry.type === 'separated') {
+        const videoParts = entry.parts.filter((part) => /\.(mp4|m4v|mov|webm|mkv)$/i.test((part.base || part.file.name || '')));
+        console.debug('[Creator] Preparing separated episode', {
+          title,
+          partCount: videoParts.length,
+          folder: entry.folderName || entry.key || null
+        });
+        if (epDiv._separatedToggle) epDiv._separatedToggle.checked = true;
+        if (typeof epDiv._captureBaseSeparationMeta === 'function') epDiv._captureBaseSeparationMeta();
+        if (epDiv._partsList) epDiv._partsList.innerHTML = '';
+        if (Array.isArray(epDiv._partRows)) epDiv._partRows.length = 0;
+        if (typeof epDiv._updatePartsVisibility === 'function') epDiv._updatePartsVisibility();
+        const totalSize = videoParts.reduce((sum, part) => sum + (part.file.size || 0), 0);
+        if (Number.isFinite(totalSize) && totalSize > 0) {
+          try { epDiv.dataset.fileSizeBytes = String(totalSize); } catch {}
+        }
+        const partRows = [];
+        videoParts.forEach((part, idx) => {
+          const displayIndex = Number.isFinite(part.partIndex) ? part.partIndex : (idx + 1);
+          const partLabel = `Part ${displayIndex}`;
+          const partRow = typeof epDiv._addPartRow === 'function'
+            ? epDiv._addPartRow({ title: partLabel })
+            : null;
+          if (partRow && partRow._titleInput) partRow._titleInput.value = partLabel;
+          if (partRow) partRows.push({ row: partRow, file: part.file });
+        });
+        if (typeof epDiv._recalcSeparatedTotals === 'function') epDiv._recalcSeparatedTotals();
+        if (typeof epDiv._updatePartsVisibility === 'function') epDiv._updatePartsVisibility();
+
+        const fn = async () => {
+          if (!partRows.length) {
+            status.textContent = 'No video parts detected';
+            status.style.color = '#ffb347';
+            return;
+          }
+          let uploadedParts = 0;
+          for (let i = 0; i < partRows.length; i += 1) {
+            const current = partRows[i];
+            status.textContent = `Part ${i + 1} / ${partRows.length}`;
+            try {
+              if (typeof epDiv._handlePartFileUpload === 'function') {
+                await epDiv._handlePartFileUpload(current.row, current.file);
+              }
+            } catch (err) {
+              console.error('[Creator] Failed to upload part from folder', err);
+            }
+            const uploaded = current.row && current.row._srcInput && current.row._srcInput.value.trim();
+            if (uploaded) uploadedParts += 1;
+            prog.value = Math.round((uploadedParts / partRows.length) * 100);
+          }
+          if (uploadedParts === partRows.length) {
             status.textContent = 'Done';
             status.style.color = '#6ec1e4';
             prog.value = 100;
             completedCount++;
-            folderUploadSummary.textContent = `${completedCount} / ${filesInSeason.length} completed`;
+            folderUploadSummary.textContent = `${completedCount} / ${processEntries.length} completed`;
+          } else {
+            status.textContent = `Uploaded ${uploadedParts} of ${partRows.length}`;
+            status.style.color = '#ff4444';
+          }
+          if (typeof epDiv._recalcSeparatedTotals === 'function') epDiv._recalcSeparatedTotals();
+          if (typeof epDiv._syncEpisodeMainSrc === 'function') epDiv._syncEpisodeMainSrc();
+        };
+        taskFns.push(fn);
+        return;
+      }
+
+      const fileForUpload = entry.file;
+      if (!fileForUpload) {
+        status.textContent = 'No file detected';
+        status.style.color = '#ffb347';
+        prog.value = 0;
+        return;
+      }
+      if (fileForUpload && fileForUpload.size != null) {
+        try { epDiv.dataset.fileSizeBytes = String(fileForUpload.size); } catch {}
+        if (!isMangaMode() && typeof epDiv._computeLocalFileDurationSeconds === 'function') {
+          epDiv._computeLocalFileDurationSeconds(fileForUpload).then((d) => {
+            if (!Number.isNaN(d) && d > 0) epDiv.dataset.durationSeconds = String(Math.round(d));
+          }).catch(() => {});
+        }
+      }
+
+      const fn = async () => {
+        for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+          status.textContent = (attempt === 1) ? 'Uploading' : `Retry ${attempt} of ${maxAttempts}`;
+          status.style.color = '';
+          prog.value = 0;
+          try {
+            if (isMangaMode() && fileForUpload && /\.cbz$/i.test(fileForUpload.name || '')) {
+              try {
+                const ab = await fileForUpload.arrayBuffer();
+                const zip = await JSZip.loadAsync(ab);
+                const names = Object.keys(zip.files).filter((n) => /\.(jpe?g|png|gif|webp|bmp)$/i.test(n));
+                epDiv.dataset.VolumePageCount = String(names.length);
+                epDiv.dataset.volumePageCount = String(names.length);
+              } catch {}
+            }
+            const url = await uploadToCatboxWithProgress(fileForUpload, (pct) => { prog.value = pct; }, { context: 'batch' });
+            if (epSrcInput) epSrcInput.value = url;
+            if (epError) epError.textContent = '';
+            status.textContent = 'Done';
+            status.style.color = '#6ec1e4';
+            prog.value = 100;
+            completedCount++;
+            folderUploadSummary.textContent = `${completedCount} / ${processEntries.length} completed`;
             return;
           } catch (err) {
             if (attempt < maxAttempts) {
@@ -682,7 +1118,7 @@ folderInput.addEventListener('change', async (e) => {
             }
             status.textContent = 'Failed';
             status.style.color = '#ff4444';
-            epError.innerHTML = '<span style="color:red">Upload failed</span>';
+            if (epError) epError.innerHTML = '<span style="color:red">Upload failed</span>';
             return;
           }
         }
@@ -690,30 +1126,29 @@ folderInput.addEventListener('change', async (e) => {
       taskFns.push(fn);
     });
 
-    const runWithConcurrency = async (fns, limit) => {
-      let idx = 0;
-      const workers = Array.from({ length: Math.min(limit, fns.length) }, async () => {
-        while (idx < fns.length) {
-          const current = fns[idx++];
-          await current();
-        }
+    await runWithConcurrency(taskFns, getUploadConcurrency());
+  } catch (err) {
+    console.error('[Creator] Folder upload failed', err);
+    if (folderOverlay) folderOverlay.remove();
+    if (typeof showCreatorNotice === 'function') {
+      showCreatorNotice('Folder upload failed unexpectedly. Check console for details and try again.', 'error', 'Folder Upload');
+    } else if (typeof window.showStorageNotice === 'function') {
+      window.showStorageNotice({
+        title: 'Folder Upload',
+        message: 'Folder upload failed unexpectedly. Check console for details and try again.',
+        tone: 'error',
+        autoCloseMs: null
       });
-      await Promise.all(workers);
-    };
-
-    try {
-      await runWithConcurrency(taskFns, getUploadConcurrency());
-    } finally {
-      isFolderUploading = false;
-      if (typeof window !== 'undefined') {
-        window.isFolderUploading = false;
-      }
-      if (folderOverlay) folderOverlay.remove();
+    } else if (typeof window.alert === 'function') {
+      window.alert('Folder upload failed unexpectedly. Check console for details and try again.');
     }
   } finally {
     isFolderUploading = false;
     if (typeof window !== 'undefined') {
       window.isFolderUploading = false;
+    }
+    if (folderOverlay && folderOverlay.parentNode) {
+      try { folderOverlay.remove(); } catch {}
     }
   }
 });
@@ -1290,17 +1725,7 @@ function addEpisode(container, data) {
   updatePartsVisibility();
 
   async function computeLocalFileDurationSeconds(file) {
-    return new Promise((resolve) => {
-      try {
-        const url = URL.createObjectURL(file);
-        const v = document.createElement('video');
-        v.preload = 'metadata';
-        const done = () => { try { URL.revokeObjectURL(url); } catch {} resolve(isFinite(v.duration) ? v.duration : NaN); };
-        v.onloadedmetadata = done;
-        v.onerror = () => resolve(NaN);
-        v.src = url;
-      } catch { resolve(NaN); }
-    });
+    return measureLocalFileDuration(file);
   }
 
   epFile.addEventListener('change', async (e) => {
@@ -1583,8 +2008,16 @@ function addEpisode(container, data) {
   epDiv._srcInput = epSrc;
   epDiv._errorEl = epError;
   epDiv._fetchMeta = maybeFetchUrlMetadata;
+  epDiv._addPartRow = addPartRow;
+  epDiv._handlePartFileUpload = handlePartFileUpload;
+  epDiv._recalcSeparatedTotals = recalcEpisodeSeparatedTotals;
+  epDiv._syncEpisodeMainSrc = syncEpisodeMainSrc;
+  epDiv._captureBaseSeparationMeta = captureBaseSeparationMeta;
+  epDiv._updatePartsVisibility = updatePartsVisibility;
+  epDiv._computeLocalFileDurationSeconds = computeLocalFileDurationSeconds;
   container.appendChild(epDiv);
   updateEpisodeSeparatedUi(epDiv);
+  return epDiv;
 }
 
 function extractEpisodeDataFromElement(epDiv, { isManga } = {}) {

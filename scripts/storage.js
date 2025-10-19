@@ -2,7 +2,6 @@
 
 (function () {
   const DEV_ONLY_KEYS = new Set(['rsp_dev_mode']);
-  const CATBOX_UPLOAD_ENDPOINT = 'https://catbox.moe/user/api.php';
   const EXPORT_SCHEMA = 'rsp-media-manager-settings';
   const ESCAPE_KEY = 'Escape';
 
@@ -77,12 +76,25 @@
     return { json: JSON.stringify(payload, null, 2), fileName: makeFileName(), count };
   }
 
+  async function resolveCatboxUploadEndpoint() {
+    if (typeof window !== 'undefined' && window.MM_catbox && typeof window.MM_catbox.getUploadUrl === 'function') {
+      try {
+        const resolved = await window.MM_catbox.getUploadUrl();
+        if (typeof resolved === 'string' && resolved.trim()) return resolved.trim();
+      } catch (err) {
+        console.warn('[Storage] Falling back to direct Catbox endpoint', err);
+      }
+    }
+    return 'https://catbox.moe/user/api.php';
+  }
+
   async function uploadJsonToCatbox(json, fileName) {
     const blob = new Blob([json], { type: 'application/json' });
     const formData = new FormData();
     formData.append('reqtype', 'fileupload');
     formData.append('fileToUpload', blob, fileName);
-    const response = await fetch(CATBOX_UPLOAD_ENDPOINT, {
+    const endpoint = await resolveCatboxUploadEndpoint();
+    const response = await fetch(endpoint, {
       method: 'POST',
       body: formData
     });
@@ -406,6 +418,14 @@
         storageExportBtn.disabled = true;
         try {
           const { json, fileName } = buildExportPayload();
+          const downloadAction = {
+            label: 'Download',
+            className: 'storage-notice__btn--primary',
+            closeOnClick: false,
+            onClick: () => {
+              triggerDownload(json, fileName);
+            }
+          };
           try {
             const url = await uploadJsonToCatbox(json, fileName);
             const code = extractCatboxCode(url);
@@ -423,7 +443,8 @@
                 : (code ? `Catbox code: ${code}` : 'Catbox export succeeded.'),
               tone: 'success',
               copyText: (!copied && code) ? code : null,
-              copyLabel: code ? 'Copy code' : 'Copy'
+              copyLabel: code ? 'Copy code' : 'Copy',
+              actions: [downloadAction]
             });
           } catch (err) {
             console.error('[Storage] Catbox upload failed, initiating download fallback.', err);
@@ -431,7 +452,8 @@
             showStorageNotice({
               title: 'Export ready',
               message: 'Upload to Catbox failed. Started a download of your settings instead.',
-              tone: 'warning'
+              tone: 'warning',
+              actions: [downloadAction]
             });
           }
         } catch (err) {

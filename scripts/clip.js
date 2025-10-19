@@ -19,6 +19,18 @@ let lastPointerId = null;
 const CLIP_HISTORY_KEY = 'clipHistory';
 const MAX_CLIP_HISTORY = 6;
 
+async function resolveClipUploadEndpoint() {
+  if (typeof window !== 'undefined' && window.MM_catbox && typeof window.MM_catbox.getUploadUrl === 'function') {
+    try {
+      const resolved = await window.MM_catbox.getUploadUrl();
+      if (typeof resolved === 'string' && resolved.trim()) return resolved.trim();
+    } catch (err) {
+      console.warn('[Clip] Falling back to direct Catbox endpoint', err);
+    }
+  }
+  return 'https://catbox.moe/user/api.php';
+}
+
 function showClipNotice(message, tone = 'warning') {
   if (!message) return;
   if (typeof window.showStorageNotice === 'function') {
@@ -298,9 +310,10 @@ function hideClipOverlay() {
 }
 
 async function uploadClipToCatboxWithProgress(blob, onProgress, fileName) {
+  const endpoint = await resolveClipUploadEndpoint();
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
-    xhr.open('POST', 'https://catbox.moe/user/api.php');
+    xhr.open('POST', endpoint);
     const form = new FormData();
     form.append('reqtype', 'fileupload');
     const uploadName = (typeof fileName === 'string' && fileName.trim()) ? fileName.trim() : 'clip.webm';
