@@ -13,3 +13,9 @@ let SOURCES_MODE = (function(){
   const m = (localStorage.getItem('sources_mode') || 'anime').toLowerCase();
   return (m === 'manga') ? 'manga' : 'anime';
 })();
+let SOURCES_SHARE_LOCATION = (function(){
+  const v = localStorage.getItem('sources_shareFeedbackLocation');
+  if (v === '0') return false;
+  if (v === '1') return true;
+  return true;
+})();

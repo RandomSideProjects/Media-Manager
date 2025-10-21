@@ -52,7 +52,11 @@
   </div>
   <!-- Feedback overlay -->
   <div id="feedbackOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); align-items:center; justify-content:center; z-index:1002;">
-    <div id="feedbackPanel" role="dialog" aria-modal="true" aria-labelledby="feedbackTitle" style="background:#1a1a1a; color:#f1f1f1; border:1px solid #333; border-radius:12px; width:480px; max-width:calc(100vw - 40px); padding:16px 18px; box-shadow:0 16px 40px rgba(0,0,0,0.6);">
+    <div id="feedbackPanel" role="dialog" aria-modal="true" aria-labelledby="feedbackTitle" style="background:#1a1a1a; color:#f1f1f1; border:1px solid #333; border-radius:12px; width:480px; max-width:calc(100vw - 40px); padding:16px 18px; box-shadow:0 16px 40px rgba(0,0,0,0.6); position:relative;">
+      <div style="position:absolute; top:16px; right:16px; display:flex; align-items:center; gap:6px; font-size:.75em; opacity:.75;">
+        <label for="fbShareLocation" style="cursor:pointer;">Analytics</label>
+        <input id="fbShareLocation" type="checkbox" checked title="Share approximate location (IP-based) for this message." style="width:14px; height:14px;">
+      </div>
       <h3 id="feedbackTitle" style="margin:0 0 10px 0;">Feedback & Bugs</h3>
       <div class="settings-row" style="flex-direction:column; align-items:stretch; gap:6px;">
         <label for="fbSubject">Subject (10 words max)</label>
