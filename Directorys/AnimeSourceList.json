@@ -66,11 +66,11 @@
       "title": "Call Of The Night",
       "poster": "./Posters/Anime/Call_Of_The_Night.webp",
       "categoryCount": 2,
-      "episodeCount": 20,
-      "itemCount": 20,
-      "totalFileSizeBytes": 2736089506,
-      "totalDurationSeconds": 27824,
-      "LatestTime": "2025-10-15T22:59:56.430Z"
+      "episodeCount": 21,
+      "itemCount": 21,
+      "totalFileSizeBytes": 3294802161,
+      "totalDurationSeconds": 29958,
+      "LatestTime": "2025-10-22T20:26:56.116Z"
     },
     {
       "file": "ChillinLvl2SCP.json",
@@ -282,7 +282,7 @@
       "file": "My_Deer_Friend_Nokotan.json",
       "path": "./Files/Anime/My_Deer_Friend_Nokotan.json",
       "title": "My Deer Friend Nokotan",
-      "poster": "./Posters/Anime/My_Deer_Friend_Nokotan.webp",
+      "poster": null,
       "categoryCount": 1,
       "episodeCount": 12,
       "itemCount": 12,
