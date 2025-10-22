@@ -1,62 +1,44 @@
-# Simple workflow for deploying static content to GitHub Pages
-name: Deploy static content to Pages
+# Static Workflow
+
+name: Static
 
 on:
-  # Runs on pushes targeting the default branch
   push:
-    branches: ["main"]
-    paths-ignore:
-      - 'Directorys/Files/**'
-
-  # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
-
-permissions:
-  # Allow repo writes so the LastUpdated maintainer can push its stamp
-  contents: write
-  pages: write
-  id-token: write
-
-# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
-# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
-concurrency:
-  group: "pages"
-  cancel-in-progress: false
+    branches:
+      - main
 
 jobs:
-  # Single deploy job since we're just deploying
-  deploy:
-    if: github.actor != 'github-actions[bot]'
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Update LastUpdated.txt
-        shell: bash
-        run: |
-          set -euo pipefail
-          FILE="Assets/LastUpdated.txt"
-          DATE_STR=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
-          echo "$DATE_STR" > "$FILE"
-          if git diff --quiet -- "$FILE"; then
-            echo "No changes to $FILE"
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add "$FILE"
-          git commit -m "chore: update LastUpdated.txt [skip ci]"
-          git push
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
         with:
-          # Upload entire repository
-          path: '.'
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          node-version: '14'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Add git pull before push and retry logic
+        run: |
+          set -e
+          max_attempts=5
+          attempt=0
+          until [ $attempt -ge $max_attempts ]; do
+            git pull origin main && break || true
+            attempt=$((attempt+1))
+            echo "Retrying in 5 seconds..."
+            sleep 5
+          done
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Push changes
+        run: git push origin main
