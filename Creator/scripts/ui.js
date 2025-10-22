@@ -1493,7 +1493,8 @@ function addEpisode(container, data) {
     try {
       for (let i = 0; i < entries.length; i++) {
         const { file, base } = entries[i];
-        const titleNum = Number.isFinite(entries[i].index) ? entries[i].index + 1 : (i + 1);
+        const rawIndex = entries[i].index;
+        const titleNum = Number.isFinite(rawIndex) && rawIndex > 0 ? rawIndex : (i + 1);
         const partRow = addPartRow({ title: `Part ${titleNum}` });
         if (!partRow) continue;
         if (partRow._titleInput) {
