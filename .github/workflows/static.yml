@@ -34,8 +34,5 @@ jobs:
             sleep 5
           done
 
-      - name: Build
-        run: npm run build
-
       - name: Push changes
         run: git push origin main
