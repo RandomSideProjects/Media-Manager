@@ -68,9 +68,9 @@
       "categoryCount": 2,
       "episodeCount": 21,
       "itemCount": 21,
-      "totalFileSizeBytes": 3294802161,
-      "totalDurationSeconds": 29958,
-      "LatestTime": "2025-10-22T20:26:56.116Z"
+      "totalFileSizeBytes": 2922934948,
+      "totalDurationSeconds": 29201,
+      "LatestTime": "2025-10-22T21:54:39.322Z"
     },
     {
       "file": "ChillinLvl2SCP.json",
@@ -282,7 +282,7 @@
       "file": "My_Deer_Friend_Nokotan.json",
       "path": "./Files/Anime/My_Deer_Friend_Nokotan.json",
       "title": "My Deer Friend Nokotan",
-      "poster": null,
+      "poster": "./Posters/Anime/My_Deer_Friend_Nokotan.webp",
       "categoryCount": 1,
       "episodeCount": 12,
       "itemCount": 12,
