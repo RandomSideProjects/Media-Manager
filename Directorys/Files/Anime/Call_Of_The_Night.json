@@ -1,61 +1,61 @@
 {
   "title": "Call Of The Night",
   "Image": "https://files.catbox.moe/xctgbl.webp",
-  "LatestTime": "2025-10-22T20:26:56.116Z",
+  "LatestTime": "2025-10-22T21:54:39.322Z",
   "categories": [
     {
       "category": "Season 1",
       "episodes": [
         {
-          "title": "Episode 1",
+          "title": "Episode 01",
           "src": "https://files.catbox.moe/6czzk1.mp4",
           "fileSizeBytes": 127385770,
           "durationSeconds": 1403
         },
         {
-          "title": "Episode 2",
+          "title": "Episode 02",
           "src": "https://files.catbox.moe/y4i4ka.mp4",
           "fileSizeBytes": 111851173,
           "durationSeconds": 1402
         },
         {
-          "title": "Episode 3",
+          "title": "Episode 03",
           "src": "https://files.catbox.moe/6ytfzy.mp4",
           "fileSizeBytes": 96930883,
           "durationSeconds": 1402
         },
         {
-          "title": "Episode 4",
+          "title": "Episode 04",
           "src": "https://files.catbox.moe/8kl8rg.mp4",
           "fileSizeBytes": 105355069,
           "durationSeconds": 1402
         },
         {
-          "title": "Episode 5",
+          "title": "Episode 05",
           "src": "https://files.catbox.moe/m6130l.mp4",
           "fileSizeBytes": 97423919,
           "durationSeconds": 1389
         },
         {
-          "title": "Episode 6",
+          "title": "Episode 06",
           "src": "https://files.catbox.moe/xzl8ax.mp4",
           "fileSizeBytes": 121558535,
           "durationSeconds": 1402
         },
         {
-          "title": "Episode 7",
+          "title": "Episode 07",
           "src": "https://files.catbox.moe/fq30ju.mp4",
           "fileSizeBytes": 110769011,
           "durationSeconds": 1402
         },
         {
-          "title": "Episode 8",
+          "title": "Episode 08",
           "src": "https://files.catbox.moe/yqp7gd.mp4",
           "fileSizeBytes": 113790916,
           "durationSeconds": 1402
         },
         {
-          "title": "Episode 9",
+          "title": "Episode 09",
           "src": "https://files.catbox.moe/2ppjcu.mp4",
           "fileSizeBytes": 106774695,
           "durationSeconds": 1402
@@ -90,88 +90,56 @@
       "category": "Season 2",
       "episodes": [
         {
-          "title": "Episode 1",
+          "title": "Episode 01",
           "src": "https://files.catbox.moe/2860j7.mp4",
           "fileSizeBytes": 185684171,
           "durationSeconds": 1377
         },
         {
-          "title": "Episode 2",
+          "title": "Episode 02",
           "src": "https://files.catbox.moe/0ttkh0.mp4",
           "fileSizeBytes": 186598225,
           "durationSeconds": 1377
         },
         {
-          "title": "Episode 3",
+          "title": "Episode 03",
           "src": "https://files.catbox.moe/m7skr2.mp4",
           "fileSizeBytes": 186732035,
           "durationSeconds": 1377
         },
         {
-          "title": "Episode 4",
+          "title": "Episode 04",
           "src": "https://files.catbox.moe/clzwrb.mp4",
           "fileSizeBytes": 187004179,
           "durationSeconds": 1377
         },
         {
-          "title": "Episode 5",
+          "title": "Episode 05",
           "src": "https://files.catbox.moe/hvp4we.mp4",
           "fileSizeBytes": 186725363,
           "durationSeconds": 1377
         },
         {
-          "title": "Episode 6",
+          "title": "Episode 06",
           "src": "https://files.catbox.moe/0mpvhg.mp4",
           "fileSizeBytes": 186820803,
           "durationSeconds": 1377
         },
         {
-          "title": "Episode 7",
+          "title": "Episode 07",
           "src": "https://files.catbox.moe/w28215.mp4",
           "fileSizeBytes": 186635141,
           "durationSeconds": 1377
         },
         {
           "title": "Episode 8",
-          "src": "https://files.catbox.moe/2gv39u.mp4",
-          "fileSizeBytes": 558712655,
-          "durationSeconds": 2134,
-          "sources": [
-            {
-              "title": "Part 1",
-              "src": "https://files.catbox.moe/2gv39u.mp4",
-              "fileSizeBytes": 110257452,
-              "durationSeconds": 436
-            },
-            {
-              "title": "Part 2",
-              "src": "https://files.catbox.moe/qcqki2.mp4",
-              "fileSizeBytes": 80927145,
-              "durationSeconds": 404
-            },
-            {
-              "title": "Part 3",
-              "src": "https://files.catbox.moe/67qqv8.mp4",
-              "fileSizeBytes": 101087509,
-              "durationSeconds": 747
-            },
-            {
-              "title": "Part 4",
-              "src": "https://files.catbox.moe/pf0p82.mp4",
-              "fileSizeBytes": 105731639,
-              "durationSeconds": 278
-            },
-            {
-              "title": "Part 5",
-              "src": "https://files.catbox.moe/ofpq5g.mp4",
-              "fileSizeBytes": 160708910,
-              "durationSeconds": 269
-            }
-          ]
+          "src": "https://files.catbox.moe/qt8mbu.mp4",
+          "fileSizeBytes": 186845442,
+          "durationSeconds": 1377
         }
       ]
     }
   ],
-  "totalFileSizeBytes": 3294802161,
-  "totalDurationSeconds": 29958
+  "totalFileSizeBytes": 2922934948,
+  "totalDurationSeconds": 29201
 }
