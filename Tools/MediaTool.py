@@ -291,6 +291,48 @@ def collect_video_files(source: pathlib.Path) -> tuple[list[pathlib.Path], list[
     raise RuntimeError("Source path must be a file or directory.")
 
 
+def prune_trailing_empty_segments(
+    segments: list[pathlib.Path],
+    log: Callable[[str], None],
+    *,
+    duration_threshold: float = 0.5,
+    size_threshold: int = 512 * 1024,
+) -> int:
+    """
+    Drop trailing segments that contain no real video. FFmpeg occasionally emits
+    a final container with headers only; those appear as near-zero duration and
+    very small size. We only touch the newest outputs so we do not interfere
+    with pre-existing files.
+    """
+    if len(segments) <= 1:
+        return 0
+
+    removed = 0
+    for path in reversed(segments):
+        try:
+            size = path.stat().st_size
+        except OSError:
+            continue
+
+        if size == 0 or size <= size_threshold:
+            try:
+                duration = run_ffprobe_duration(path) if size else 0.0
+            except Exception:
+                duration = 0.0
+            if size == 0 or duration <= duration_threshold:
+                try:
+                    path.unlink()
+                    removed += 1
+                except OSError as exc:
+                    log(f"Warning: failed to delete empty segment {path.name} ({exc}).")
+                    break
+                continue
+
+        break
+
+    return removed
+
+
 def split_video(
     video: pathlib.Path,
     target_size_mb: float,
@@ -322,8 +364,18 @@ def split_video(
     log(f"Segment duration target: {segment_seconds:.2f} seconds per chunk")
 
     output_dir.mkdir(parents=True, exist_ok=True)
+    existing_files = {child.name for child in output_dir.iterdir() if child.is_file()}
     suffix = video.suffix or ".mp4"
     output_pattern = output_dir / f"Part_#%03d{suffix}"
+    glob_pattern = output_pattern.name
+    if "%" in glob_pattern:
+        percent = glob_pattern.index("%")
+        end = percent
+        while end < len(glob_pattern) and glob_pattern[end].lower() != "d":
+            end += 1
+        if end < len(glob_pattern):
+            glob_pattern = f"{glob_pattern[:percent]}*{glob_pattern[end + 1 :]}"
+    start_time = time.time()
 
     cmd = [
         "ffmpeg",
@@ -355,6 +407,25 @@ def split_video(
         total_duration=duration,
         progress_cb=progress_cb,
     )
+
+    produced_parts = sorted(
+        (
+            child
+            for child in output_dir.iterdir()
+            if child.is_file()
+            and (
+                child.name not in existing_files
+                or child.stat().st_mtime >= start_time - 1.0
+            )
+            and child.match(glob_pattern)
+        ),
+        key=lambda item: item.name,
+    )
+
+    removed = prune_trailing_empty_segments(produced_parts, log)
+    if removed:
+        plural = "s" if removed != 1 else ""
+        log(f"Removed {removed} trailing empty segment{plural}.")
 
     if suppressed:
         log(
