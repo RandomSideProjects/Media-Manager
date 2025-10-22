@@ -1,7 +1,7 @@
 {
   "title": "Call Of The Night",
   "Image": "https://files.catbox.moe/xctgbl.webp",
-  "LatestTime": "2025-10-15T22:59:56.430Z",
+  "LatestTime": "2025-10-22T20:26:56.116Z",
   "categories": [
     {
       "category": "Season 1",
@@ -130,10 +130,48 @@
           "src": "https://files.catbox.moe/w28215.mp4",
           "fileSizeBytes": 186635141,
           "durationSeconds": 1377
+        },
+        {
+          "title": "Episode 8",
+          "src": "https://files.catbox.moe/2gv39u.mp4",
+          "fileSizeBytes": 558712655,
+          "durationSeconds": 2134,
+          "sources": [
+            {
+              "title": "Part 1",
+              "src": "https://files.catbox.moe/2gv39u.mp4",
+              "fileSizeBytes": 110257452,
+              "durationSeconds": 436
+            },
+            {
+              "title": "Part 2",
+              "src": "https://files.catbox.moe/qcqki2.mp4",
+              "fileSizeBytes": 80927145,
+              "durationSeconds": 404
+            },
+            {
+              "title": "Part 3",
+              "src": "https://files.catbox.moe/67qqv8.mp4",
+              "fileSizeBytes": 101087509,
+              "durationSeconds": 747
+            },
+            {
+              "title": "Part 4",
+              "src": "https://files.catbox.moe/pf0p82.mp4",
+              "fileSizeBytes": 105731639,
+              "durationSeconds": 278
+            },
+            {
+              "title": "Part 5",
+              "src": "https://files.catbox.moe/ofpq5g.mp4",
+              "fileSizeBytes": 160708910,
+              "durationSeconds": 269
+            }
+          ]
         }
       ]
     }
   ],
-  "totalFileSizeBytes": 2736089506,
-  "totalDurationSeconds": 27824
+  "totalFileSizeBytes": 3294802161,
+  "totalDurationSeconds": 29958
 }
