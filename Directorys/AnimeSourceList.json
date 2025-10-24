@@ -73,6 +73,18 @@
       "LatestTime": "2025-10-22T21:54:39.322Z"
     },
     {
+      "file": "Campfire_Cooking_In_Another_World_With_My_Absurd_Skill.json",
+      "path": "./Files/Anime/Campfire_Cooking_In_Another_World_With_My_Absurd_Skill.json",
+      "title": "Campfire Cooking in Another World with My Absurd Skill",
+      "poster": "./Posters/Anime/Campfire_Cooking_in_Another_World_with_My_Absurd_Skill.webp",
+      "categoryCount": 1,
+      "episodeCount": 12,
+      "itemCount": 12,
+      "totalFileSizeBytes": 2007448081,
+      "totalDurationSeconds": 17232,
+      "LatestTime": "2025-10-24T04:12:22.124Z"
+    },
+    {
       "file": "ChillinLvl2SCP.json",
       "path": "./Files/Anime/ChillinLvl2SCP.json",
       "title": "Chillin' In A World With Level 2 Super Powers",
@@ -227,6 +239,18 @@
       "totalFileSizeBytes": 4767720497,
       "totalDurationSeconds": 57018,
       "LatestTime": "2025-08-22T03:48:20.383Z"
+    },
+    {
+      "file": "Kill_La_Kill.json",
+      "path": "./Files/Anime/Kill_La_Kill.json",
+      "title": "Kill La Kill",
+      "poster": "./Posters/Anime/Kill_La_Kill.webp",
+      "categoryCount": 1,
+      "episodeCount": 21,
+      "itemCount": 21,
+      "totalFileSizeBytes": 4744749099,
+      "totalDurationSeconds": 30883,
+      "LatestTime": "2025-10-23T16:38:29.400Z"
     },
     {
       "file": "Konosuba_God_S_Blessing_On_This_Wonderful_World.json",
