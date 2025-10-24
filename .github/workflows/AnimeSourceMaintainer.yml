@@ -41,19 +41,26 @@ jobs:
       - name: Install image processor (sharp)
         run: npm install sharp@0.33
 
-      - name: Generate Directorys/AnimeSourceList.json
+      - name: Generate and push anime sources
         shell: bash
+        env:
+          COMMIT_MESSAGE: 'chore: update Directorys/AnimeSourceList.json and anime posters'
+          COMMIT_USER_NAME: github-actions[bot]
+          COMMIT_USER_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
         run: |
           set -euo pipefail
+          BRANCH="${GITHUB_REF_NAME:-$(git rev-parse --abbrev-ref HEAD)}"
           FILE_DIR="Directorys/Files/Anime"
           INDEX_FILE="Directorys/AnimeSourceList.json"
+          POSTERS_DIR="Directorys/Posters/Anime"
 
           if [[ ! -d "$FILE_DIR" ]]; then
             echo "Directory '$FILE_DIR' does not exist; nothing to index."
             exit 0
           fi
 
-          node <<'NODE'
+          generate_sources() {
+            node <<'NODE'
           const fs = require('fs');
           const path = require('path');
           const http = require('http');
@@ -333,10 +340,58 @@ jobs:
             fs.writeFileSync(INDEX_FILE, JSON.stringify(result, null, 2));
           })().catch(err => { console.error(err); process.exit(1); });
           NODE
+          }
 
-      - name: Commit and push changes
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          branch: ${{ github.ref_name }}
-          commit_message: 'chore: update Directorys/AnimeSourceList.json and anime posters'
-          file_pattern: 'Directorys/AnimeSourceList.json Directorys/Posters/Anime/**'
+          attempts=0
+          max_attempts=3
+          while [ "$attempts" -lt "$max_attempts" ]; do
+            attempts=$((attempts + 1))
+            echo "Attempt ${attempts}/${max_attempts}: syncing repository and regenerating assets."
+
+            git fetch --no-tags --prune origin "$BRANCH"
+            git checkout "$BRANCH"
+            git reset --hard "origin/$BRANCH"
+
+            if [ -d "$POSTERS_DIR" ]; then
+              git clean -fd -- "$POSTERS_DIR"
+            fi
+
+            base_commit=$(git rev-parse HEAD)
+
+            generate_sources
+
+            status_paths=("$INDEX_FILE")
+            if [ -d "$POSTERS_DIR" ]; then
+              status_paths+=("$POSTERS_DIR")
+            fi
+
+            if [ -z "$(git status --porcelain -- "${status_paths[@]}")" ]; then
+              echo "No changes detected for $INDEX_FILE or $POSTERS_DIR; nothing to commit."
+              exit 0
+            fi
+
+            git config user.name "$COMMIT_USER_NAME"
+            git config user.email "$COMMIT_USER_EMAIL"
+
+            git add --all -- "${status_paths[@]}"
+
+            git commit -m "$COMMIT_MESSAGE"
+
+            git fetch --no-tags --prune origin "$BRANCH"
+            remote_head=$(git rev-parse "origin/$BRANCH")
+
+            if [ "$remote_head" != "$base_commit" ]; then
+              echo "origin/$BRANCH advanced from $base_commit to $remote_head before push; retrying."
+              continue
+            fi
+
+            if git push --force-with-lease=refs/heads/$BRANCH:$base_commit origin HEAD:"$BRANCH"; then
+              echo "Updates pushed successfully."
+              exit 0
+            fi
+
+            echo "Push failed; retrying..."
+          done
+
+          echo "Failed to push updates after $max_attempts attempts." >&2
+          exit 1
