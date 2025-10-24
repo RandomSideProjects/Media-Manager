@@ -37,6 +37,8 @@ SUPPORTED_VIDEO_SUFFIXES = {
     ".webm",
 }
 
+MAX_SEGMENT_OVERSHOOT_RATIO = 1.05  # Allow up to 5% container overhead.
+
 
 def format_timespan(seconds: float) -> str:
     """Return a human-friendly mm:ss or hh:mm:ss string."""
@@ -166,6 +168,8 @@ def run_ffmpeg_command(
 
     log("Running: " + " ".join(cmd_local))
 
+    started_at = time.time()
+
     try:
         process = subprocess.Popen(
             cmd_local,
@@ -175,10 +179,31 @@ def run_ffmpeg_command(
             bufsize=1,
         )
     except FileNotFoundError as exc:
+        log("Failed to launch ffmpeg; is it installed and on PATH?")
         raise RuntimeError("ffmpeg not found on PATH.") from exc
 
     filtered_messages = 0
-    remaining_messages: list[str] = []
+    stderr_messages: list[str] = []
+    stderr_error: Optional[BaseException] = None
+
+    def drain_stderr() -> None:
+        nonlocal filtered_messages, stderr_error
+        try:
+            if process.stderr is None:
+                return
+            for raw_line in iter(process.stderr.readline, ""):
+                line = raw_line.strip()
+                if not line or line.startswith("frame="):
+                    continue
+                if any(token in line for token in suppress_tokens):
+                    filtered_messages += 1
+                    continue
+                stderr_messages.append(line)
+        except BaseException as exc:  # noqa: BLE001
+            stderr_error = exc
+
+    stderr_thread = threading.Thread(target=drain_stderr, daemon=True)
+    stderr_thread.start()
 
     try:
         if process.stdout is not None:
@@ -211,24 +236,17 @@ def run_ffmpeg_command(
                             progress_cb(total_duration, total_duration)
         process.wait()
 
-        stderr_output = process.stderr.read() if process.stderr else ""
-        if stderr_output:
-            for raw_line in stderr_output.splitlines():
-                line = raw_line.strip()
-                if not line:
-                    continue
-                if line.startswith("frame="):
-                    continue
-                if any(token in line for token in suppress_tokens):
-                    filtered_messages += 1
-                    continue
-                remaining_messages.append(line)
-
-        for message in remaining_messages:
+        stderr_thread.join()
+        for message in stderr_messages:
             log(message)
+
+        elapsed = time.time() - started_at
+        log(f"FFmpeg exited with code {process.returncode} after {elapsed:.1f}s.")
 
         if process.returncode != 0:
             raise RuntimeError(f"FFmpeg reported an error (exit code {process.returncode}).")
+        if stderr_error is not None:
+            raise RuntimeError(f"Failed to read ffmpeg stderr: {stderr_error}")
     finally:
         if process.stdout:
             process.stdout.close()
@@ -321,6 +339,11 @@ def prune_trailing_empty_segments(
                 duration = 0.0
             if size == 0 or duration <= duration_threshold:
                 try:
+                    size_mb = size / (1024 * 1024)
+                    log(
+                        f"Removing trailing segment {path.name}: "
+                        f"size {size_mb:.3f} MB, duration {duration:.2f}s."
+                    )
                     path.unlink()
                     removed += 1
                 except OSError as exc:
@@ -348,8 +371,14 @@ def split_video(
         else:
             print(message)
 
+    overall_started_at = time.time()
+
     video_size = video.stat().st_size
     target_bytes = target_size_mb * 1024 * 1024
+    video_size_mb = video_size / (1024 * 1024)
+
+    log(f"Preparing to split {video} ({video_size_mb:.2f} MB).")
+    log(f"Target chunk size: {target_size_mb:.2f} MB; writing parts to: {output_dir}")
 
     if video_size <= target_bytes:
         log("The file is already within the requested size; nothing to split.")
@@ -359,9 +388,9 @@ def split_video(
     chunk_count = max(2, math.ceil(video_size / target_bytes))
     segment_seconds = max(duration / chunk_count, 1.0)
 
-    log(f"Video size: {video_size / (1024 * 1024):.2f} MB")
-    log(f"Estimated chunk count: {chunk_count}")
-    log(f"Segment duration target: {segment_seconds:.2f} seconds per chunk")
+    log(f"Source duration: {format_timespan(duration)} ({duration:.2f}s).")
+    log(f"Estimated chunk count: {chunk_count} part(s).")
+    log(f"Segment duration target: {segment_seconds:.2f}s per chunk.")
 
     output_dir.mkdir(parents=True, exist_ok=True)
     existing_files = {child.name for child in output_dir.iterdir() if child.is_file()}
@@ -375,7 +404,8 @@ def split_video(
             end += 1
         if end < len(glob_pattern):
             glob_pattern = f"{glob_pattern[:percent]}*{glob_pattern[end + 1 :]}"
-    start_time = time.time()
+    log(f"Output filename pattern: {output_pattern}")
+    ffmpeg_started_at = time.time()
 
     cmd = [
         "ffmpeg",
@@ -407,6 +437,8 @@ def split_video(
         total_duration=duration,
         progress_cb=progress_cb,
     )
+    ffmpeg_elapsed = time.time() - ffmpeg_started_at
+    log(f"FFmpeg processing finished in {ffmpeg_elapsed:.1f}s; collecting generated segments.")
 
     produced_parts = sorted(
         (
@@ -415,24 +447,61 @@ def split_video(
             if child.is_file()
             and (
                 child.name not in existing_files
-                or child.stat().st_mtime >= start_time - 1.0
+                or child.stat().st_mtime >= ffmpeg_started_at - 1.0
             )
             and child.match(glob_pattern)
         ),
         key=lambda item: item.name,
     )
+    parts_count = len(produced_parts)
+    log(f"Detected {parts_count} candidate segment file(s).")
 
     removed = prune_trailing_empty_segments(produced_parts, log)
     if removed:
         plural = "s" if removed != 1 else ""
         log(f"Removed {removed} trailing empty segment{plural}.")
+    final_segments = [part for part in produced_parts if part.exists()]
+    final_count = len(final_segments)
+
+    segment_sizes: list[tuple[pathlib.Path, float]] = []
+    oversize_segments: list[tuple[pathlib.Path, float]] = []
+    for part in final_segments:
+        try:
+            size_bytes = part.stat().st_size
+        except OSError as exc:
+            log(f"Warning: could not determine size for {part.name} ({exc}).")
+            continue
+        size_mb = size_bytes / (1024 * 1024)
+        segment_sizes.append((part, size_mb))
+        log(f"{part.name}: {size_mb:.2f} MB")
+        if size_bytes > target_bytes * MAX_SEGMENT_OVERSHOOT_RATIO:
+            oversize_segments.append((part, size_mb))
+
+    if segment_sizes:
+        largest_part, largest_size = max(segment_sizes, key=lambda item: item[1])
+        smallest_part, smallest_size = min(segment_sizes, key=lambda item: item[1])
+        log(
+            "Segment size summary — largest: "
+            f"{largest_part.name} ({largest_size:.2f} MB); "
+            f"smallest: {smallest_part.name} ({smallest_size:.2f} MB)."
+        )
+
+    if oversize_segments:
+        summary = ", ".join(f"{part.name}={size:.2f} MB" for part, size in oversize_segments[:5])
+        if len(oversize_segments) > 5:
+            summary += f", ... ({len(oversize_segments) - 5} more)"
+        raise RuntimeError(
+            f"Segment size limit exceeded (target {target_size_mb:.2f} MB): {summary}. "
+            "Consider increasing the target size or re-encoding to a lower bitrate."
+        )
 
     if suppressed:
         log(
             f"Suppressed {suppressed} corrupted packet warnings from FFmpeg; damaged frames were skipped."
         )
 
-    log(f"Done! Parts saved under: {output_dir}")
+    overall_elapsed = time.time() - overall_started_at
+    log(f"Done! {final_count} part(s) saved under: {output_dir} ({overall_elapsed:.1f}s total).")
 
 
 def split_source(
@@ -460,6 +529,12 @@ def split_source(
             raise RuntimeError(f"No valid video files to split. Skipped {len(ignored)} item(s): {skipped_summary}")
         raise RuntimeError("No video files to split.")
 
+    source_type = "directory" if source.exists() and source.is_dir() else "file"
+    log(f"Preparing to split {source_type}: {source}")
+    log(f"Target chunk size: {target_size_mb:.2f} MB; output directory: {output_dir}")
+    if delete_source:
+        log("Source file(s) will be deleted after successful splitting.")
+
     total = len(videos)
     multiple = total > 1
 
@@ -474,6 +549,8 @@ def split_source(
 
     if multiple:
         log(f"Found {total} videos to process in {source}.")
+    else:
+        log(f"Processing single video: {videos[0].name}")
 
     used_folder_names: set[str] = set()
     failures: list[tuple[pathlib.Path, str]] = []
@@ -494,6 +571,7 @@ def split_source(
         else:
             child_cb = status_cb
             video_output = output_dir
+        message_cb = child_cb or log
 
         if progress_cb:
 
@@ -501,6 +579,13 @@ def split_source(
                 progress_cb(video_path, processed, total)
         else:
             progress_wrapper = None
+
+        try:
+            size_mb = video.stat().st_size / (1024 * 1024)
+            message_cb(f"Input size: {size_mb:.2f} MB")
+        except OSError:
+            message_cb("Could not determine file size before splitting.")
+        message_cb(f"Planned output directory: {video_output}")
 
         try:
             split_video(
@@ -518,7 +603,6 @@ def split_source(
             continue
 
         if delete_source and video.is_file():
-            message_cb = child_cb or log
             try:
                 video.unlink()
                 if multiple:
@@ -643,6 +727,12 @@ def convert_source(
             raise RuntimeError(f"No valid video files to convert. Skipped {len(ignored)} item(s): {skipped_summary}")
         raise RuntimeError("No video files to convert.")
 
+    source_type = "directory" if source.exists() and source.is_dir() else "file"
+    log(f"Preparing to convert {source_type}: {source}")
+    log(f"Target format: {target_format}; replace existing: {'yes' if replace_existing else 'no'}")
+    if output_dir is not None:
+        log(f"Output base directory: {output_dir}")
+
     total = len(videos)
     multiple = total > 1
 
@@ -654,6 +744,8 @@ def convert_source(
 
     if multiple:
         log(f"Found {total} videos to process in {source}.")
+    else:
+        log(f"Processing single video: {videos[0].name}")
 
     if not replace_existing and output_dir is not None:
         output_dir.mkdir(parents=True, exist_ok=True)
@@ -668,12 +760,21 @@ def convert_source(
             child_cb: StatusCallback = lambda msg, name=video.name: log(f"{name}: {msg}")
         else:
             child_cb = status_cb
+        message_cb = child_cb or log
 
         def child_log(message: str) -> None:
             if child_cb:
                 child_cb(message)
             else:
                 log(message)
+
+        try:
+            size_mb = video.stat().st_size / (1024 * 1024)
+            message_cb(f"Input size: {size_mb:.2f} MB")
+        except OSError:
+            message_cb("Could not determine file size before conversion.")
+        if replace_existing:
+            message_cb("Conversion will replace the original file after success.")
 
         try:
             duration = run_ffprobe_duration(video)
@@ -686,6 +787,7 @@ def convert_source(
 
             if progress_wrapper and duration > 0:
                 progress_wrapper(0.0, duration)
+            message_cb(f"Source duration: {format_timespan(duration)} ({duration:.2f}s).")
             if replace_existing:
                 current_ext = video.suffix.lower().lstrip(".")
                 if current_ext == target_format:
@@ -695,6 +797,11 @@ def convert_source(
                     final_path = video.with_suffix(f".{target_format}")
                     temp_path = final_path
                 destination = temp_path
+                if destination != final_path:
+                    message_cb(f"Temporary destination path: {destination}")
+                else:
+                    message_cb(f"Destination path: {destination}")
+                message_cb(f"Final output path will be: {final_path}")
             else:
                 if output_dir is None:
                     dest_dir = video.parent if not multiple else video.parent
@@ -702,6 +809,7 @@ def convert_source(
                     dest_dir = output_dir
 
                 dest_dir.mkdir(parents=True, exist_ok=True)
+                message_cb(f"Using output directory: {dest_dir}")
                 candidate = dest_dir / f"{video.stem}.{target_format}"
                 counter = 1
                 while candidate in used_output_names or candidate.exists():
@@ -710,6 +818,9 @@ def convert_source(
                 used_output_names.add(candidate)
                 final_path = candidate
                 destination = candidate
+                message_cb(f"Destination path: {destination}")
+                if destination != final_path:
+                    message_cb(f"Final output path will be: {final_path}")
 
             destination.parent.mkdir(parents=True, exist_ok=True)
             cmd = build_conversion_command(video, target_format, destination)
