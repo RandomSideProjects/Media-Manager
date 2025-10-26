@@ -73,18 +73,35 @@ body {
   font-size: clamp(0.85rem, 0.6rem + 0.55vw, 1rem);
 }
 
-.recent-sources[data-placement="top"],
+  .recent-sources[data-placement="bottom"] {
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+
 .recent-sources[data-placement="bottom"] {
+  bottom: 20px;
   left: 50%;
   transform: translateX(-50%);
+  width: min(960px, calc(100vw - clamp(1rem, 3vw, 3rem)));
+  padding: clamp(0.6rem, 0.5rem + 0.3vw, 1rem);
+  font-size: clamp(0.8rem, 0.55rem + 0.45vw, 0.95rem);
 }
 
-.recent-sources[data-placement="top"] {
-  top: 80px;
+.recent-sources[data-placement="bottom"] .source-card {
+  min-height: clamp(150px, 18vh, 210px);
+  padding: clamp(0.75rem, 0.5rem + 0.5vw, 1rem);
 }
-
-.recent-sources[data-placement="bottom"] {
-  bottom: 32px;
+.recent-sources[data-placement="bottom"] .source-thumb {
+  width: clamp(90px, 6vw, 120px);
+  height: clamp(130px, 9vw, 170px);
+}
+.recent-sources[data-placement="bottom"] .source-right h3 {
+  font-size: clamp(0.95rem, 0.55rem + 0.5vw, 1.15rem);
+  line-height: 1.3;
+}
+.recent-sources[data-placement="bottom"] .pill-button {
+  font-size: clamp(0.8rem, 0.6rem + 0.3vw, 0.95rem);
 }
 
 .recent-sources[data-placement="left"],

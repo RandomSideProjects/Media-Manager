@@ -132,7 +132,7 @@
       recentSourcesPlacementRow.style.display = featureEnabled ? "" : "none";
     }
     if (recentSourcesPlacementSelect) {
-      const placement = api && typeof api.getPlacement === "function" ? api.getPlacement() : "top";
+      const placement = api && typeof api.getPlacement === "function" ? api.getPlacement() : "bottom";
       recentSourcesPlacementSelect.value = placement;
       recentSourcesPlacementSelect.disabled = !devEnabled || !featureEnabled;
     }

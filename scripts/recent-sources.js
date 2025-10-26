@@ -8,11 +8,11 @@
   const PLACEMENT_KEY = "rsp_recent_sources_placement";
   const INLINE_PREFIX = "rsp_recent_inline_payload:";
   const STORAGE_LIMIT = 6;
-  const VERTICAL_DISPLAY_LIMIT = 6;
+  const VERTICAL_DISPLAY_LIMIT = 3;
   const HORIZONTAL_DISPLAY_LIMIT = 3;
-  const VALID_PLACEMENTS = new Set(["top", "bottom", "left", "right"]);
-  const DEFAULT_PLACEMENT = "top";
-  const INLINE_MAX_LENGTH = 150000; // ~150 KB guardrail
+  const VALID_PLACEMENTS = new Set(["bottom", "left", "right"]);
+  const DEFAULT_PLACEMENT = "bottom";
+  const INLINE_MAX_LENGTH = 150000; // 150 KB guardrail so it dont kill itself :/ should be plenty for most uses, will probably add an function to auto delete old ones later if i get around to it
   const recentRail = (typeof recentSourcesRail !== "undefined" && recentSourcesRail) ? recentSourcesRail : document.getElementById("recentSourcesRail");
   const urlInputField = (typeof urlInput !== "undefined" && urlInput) ? urlInput : document.getElementById("urlInput");
   const POINTER_COARSE_QUERY = (typeof window !== "undefined" && typeof window.matchMedia === "function")
