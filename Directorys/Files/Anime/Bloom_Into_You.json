@@ -1,0 +1,92 @@
+{
+  "title": "Bloom Into You",
+  "Image": "https://files.catbox.moe/ycrqr2.webp",
+  "LatestTime": "2025-10-26T13:23:08.499Z",
+  "categories": [
+    {
+      "category": "Season 1",
+      "episodes": [
+        {
+          "title": "Episode 1",
+          "src": "https://files.catbox.moe/w15xyl.mp4",
+          "fileSizeBytes": 116520105,
+          "durationSeconds": 1422
+        },
+        {
+          "title": "Episode 2",
+          "src": "https://files.catbox.moe/vvfawd.mp4",
+          "fileSizeBytes": 113086361,
+          "durationSeconds": 1422
+        },
+        {
+          "title": "Episode 3",
+          "src": "https://files.catbox.moe/bvyvk6.mp4",
+          "fileSizeBytes": 120493218,
+          "durationSeconds": 1422
+        },
+        {
+          "title": "Episode 4",
+          "src": "https://files.catbox.moe/12f2dn.mp4",
+          "fileSizeBytes": 148921181,
+          "durationSeconds": 1422
+        },
+        {
+          "title": "Episode 5",
+          "src": "https://files.catbox.moe/79mm7o.mp4",
+          "fileSizeBytes": 132120576,
+          "durationSeconds": 1422
+        },
+        {
+          "title": "Episode 6",
+          "src": "https://files.catbox.moe/7sdthg.mp4",
+          "fileSizeBytes": 157482768,
+          "durationSeconds": 1422
+        },
+        {
+          "title": "Episode 7",
+          "src": "https://files.catbox.moe/wf43sa.mp4",
+          "fileSizeBytes": 144991015,
+          "durationSeconds": 1422
+        },
+        {
+          "title": "Episode 8",
+          "src": "https://files.catbox.moe/6g2mdy.mp4",
+          "fileSizeBytes": 130604025,
+          "durationSeconds": 1422
+        },
+        {
+          "title": "Episode 9",
+          "src": "https://files.catbox.moe/kfddv0.mp4",
+          "fileSizeBytes": 140894726,
+          "durationSeconds": 1422
+        },
+        {
+          "title": "Episode 10",
+          "src": "https://files.catbox.moe/wz3l11.mp4",
+          "fileSizeBytes": 127351429,
+          "durationSeconds": 1422
+        },
+        {
+          "title": "Episode 11",
+          "src": "https://files.catbox.moe/ti1xb9.mp4",
+          "fileSizeBytes": 132256646,
+          "durationSeconds": 1422
+        },
+        {
+          "title": "Episode 12",
+          "src": "https://files.catbox.moe/f4a5aw.mp4",
+          "fileSizeBytes": 91089246,
+          "durationSeconds": 1422
+        },
+        {
+          "title": "Episode 13",
+          "src": "https://files.catbox.moe/lacgfa.mp4",
+          "fileSizeBytes": 113791803,
+          "durationSeconds": 1422
+        }
+      ]
+    }
+  ],
+  "totalFileSizeBytes": 1669603099,
+  "totalDurationSeconds": 18486
+}
