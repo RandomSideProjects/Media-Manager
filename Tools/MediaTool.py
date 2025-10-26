@@ -146,6 +146,7 @@ def run_ffprobe_duration(video: pathlib.Path) -> float:
 DEFAULT_SUPPRESS_TOKENS = (
     "Invalid NAL unit size",
     "missing picture in access unit",
+    "Referenced QT chapter track not found",
 )
 
 
@@ -385,12 +386,7 @@ def split_video(
         return
 
     duration = run_ffprobe_duration(video)
-    chunk_count = max(2, math.ceil(video_size / target_bytes))
-    segment_seconds = max(duration / chunk_count, 1.0)
-
     log(f"Source duration: {format_timespan(duration)} ({duration:.2f}s).")
-    log(f"Estimated chunk count: {chunk_count} part(s).")
-    log(f"Segment duration target: {segment_seconds:.2f}s per chunk.")
 
     output_dir.mkdir(parents=True, exist_ok=True)
     existing_files = {child.name for child in output_dir.iterdir() if child.is_file()}
@@ -405,99 +401,134 @@ def split_video(
         if end < len(glob_pattern):
             glob_pattern = f"{glob_pattern[:percent]}*{glob_pattern[end + 1 :]}"
     log(f"Output filename pattern: {output_pattern}")
-    ffmpeg_started_at = time.time()
+    chunk_count = max(2, math.ceil(video_size / target_bytes))
+    log(f"Estimated chunk count: {chunk_count} part(s).")
 
-    cmd = [
-        "ffmpeg",
-        "-hide_banner",
-        "-y",
-        "-i",
-        str(video),
-        "-c",
-        "copy",
-        "-map",
-        "0",
-        "-f",
-        "segment",
-        "-segment_time",
-        f"{segment_seconds:.2f}",
-        "-reset_timestamps",
-        "1",
-        "-segment_start_number",
-        "1",
-        str(output_pattern),
-    ]
+    attempt = 1
+    max_attempts = 5
+    suppressed_total = 0
+    final_segments: list[pathlib.Path] = []
 
-    if progress_cb and duration > 0:
-        progress_cb(0.0, duration)
-
-    suppressed = run_ffmpeg_command(
-        cmd,
-        log,
-        total_duration=duration,
-        progress_cb=progress_cb,
-    )
-    ffmpeg_elapsed = time.time() - ffmpeg_started_at
-    log(f"FFmpeg processing finished in {ffmpeg_elapsed:.1f}s; collecting generated segments.")
-
-    produced_parts = sorted(
-        (
-            child
-            for child in output_dir.iterdir()
-            if child.is_file()
-            and (
-                child.name not in existing_files
-                or child.stat().st_mtime >= ffmpeg_started_at - 1.0
+    while True:
+        segment_seconds = max(duration / chunk_count, 1.0)
+        if attempt == 1:
+            log(f"Segment duration target: {segment_seconds:.2f}s per chunk.")
+        else:
+            log(
+                f"Retrying with smaller segments (attempt {attempt}) — "
+                f"targeting {chunk_count} part(s) at ~{segment_seconds:.2f}s each."
             )
-            and child.match(glob_pattern)
-        ),
-        key=lambda item: item.name,
-    )
-    parts_count = len(produced_parts)
-    log(f"Detected {parts_count} candidate segment file(s).")
 
-    removed = prune_trailing_empty_segments(produced_parts, log)
-    if removed:
-        plural = "s" if removed != 1 else ""
-        log(f"Removed {removed} trailing empty segment{plural}.")
-    final_segments = [part for part in produced_parts if part.exists()]
-    final_count = len(final_segments)
+        ffmpeg_started_at = time.time()
 
-    segment_sizes: list[tuple[pathlib.Path, float]] = []
-    oversize_segments: list[tuple[pathlib.Path, float]] = []
-    for part in final_segments:
-        try:
-            size_bytes = part.stat().st_size
-        except OSError as exc:
-            log(f"Warning: could not determine size for {part.name} ({exc}).")
-            continue
-        size_mb = size_bytes / (1024 * 1024)
-        segment_sizes.append((part, size_mb))
-        log(f"{part.name}: {size_mb:.2f} MB")
-        if size_bytes > target_bytes * MAX_SEGMENT_OVERSHOOT_RATIO:
-            oversize_segments.append((part, size_mb))
+        cmd = [
+            "ffmpeg",
+            "-hide_banner",
+            "-y",
+            "-i",
+            str(video),
+            "-c",
+            "copy",
+            "-map",
+            "0",
+            "-f",
+            "segment",
+            "-segment_time",
+            f"{segment_seconds:.2f}",
+            "-reset_timestamps",
+            "1",
+            "-segment_start_number",
+            "1",
+            str(output_pattern),
+        ]
 
-    if segment_sizes:
-        largest_part, largest_size = max(segment_sizes, key=lambda item: item[1])
-        smallest_part, smallest_size = min(segment_sizes, key=lambda item: item[1])
-        log(
-            "Segment size summary — largest: "
-            f"{largest_part.name} ({largest_size:.2f} MB); "
-            f"smallest: {smallest_part.name} ({smallest_size:.2f} MB)."
+        if progress_cb and duration > 0:
+            progress_cb(0.0, duration)
+
+        suppressed = run_ffmpeg_command(
+            cmd,
+            log,
+            total_duration=duration,
+            progress_cb=progress_cb,
         )
+        suppressed_total += suppressed
 
-    if oversize_segments:
+        ffmpeg_elapsed = time.time() - ffmpeg_started_at
+        log(f"FFmpeg processing finished in {ffmpeg_elapsed:.1f}s; collecting generated segments.")
+
+        produced_parts = sorted(
+            (
+                child
+                for child in output_dir.iterdir()
+                if child.is_file()
+                and (
+                    child.name not in existing_files
+                    or child.stat().st_mtime >= ffmpeg_started_at - 1.0
+                )
+                and child.match(glob_pattern)
+            ),
+            key=lambda item: item.name,
+        )
+        parts_count = len(produced_parts)
+        log(f"Detected {parts_count} candidate segment file(s).")
+
+        removed = prune_trailing_empty_segments(produced_parts, log)
+        if removed:
+            plural = "s" if removed != 1 else ""
+            log(f"Removed {removed} trailing empty segment{plural}.")
+        final_segments = [part for part in produced_parts if part.exists()]
+        final_count = len(final_segments)
+
+        segment_sizes: list[tuple[pathlib.Path, float]] = []
+        oversize_segments: list[tuple[pathlib.Path, float]] = []
+        for part in final_segments:
+            try:
+                size_bytes = part.stat().st_size
+            except OSError as exc:
+                log(f"Warning: could not determine size for {part.name} ({exc}).")
+                continue
+            size_mb = size_bytes / (1024 * 1024)
+            segment_sizes.append((part, size_mb))
+            log(f"{part.name}: {size_mb:.2f} MB")
+            if size_bytes > target_bytes * MAX_SEGMENT_OVERSHOOT_RATIO:
+                oversize_segments.append((part, size_mb))
+
+        if segment_sizes:
+            largest_part, largest_size = max(segment_sizes, key=lambda item: item[1])
+            smallest_part, smallest_size = min(segment_sizes, key=lambda item: item[1])
+            log(
+                "Segment size summary — largest: "
+                f"{largest_part.name} ({largest_size:.2f} MB); "
+                f"smallest: {smallest_part.name} ({smallest_size:.2f} MB)."
+            )
+
+        if not oversize_segments:
+            break
+
         summary = ", ".join(f"{part.name}={size:.2f} MB" for part, size in oversize_segments[:5])
         if len(oversize_segments) > 5:
             summary += f", ... ({len(oversize_segments) - 5} more)"
-        raise RuntimeError(
-            f"Segment size limit exceeded (target {target_size_mb:.2f} MB): {summary}. "
-            "Consider increasing the target size or re-encoding to a lower bitrate."
-        )
 
-    if suppressed:
+        for part in final_segments:
+            try:
+                part.unlink()
+            except OSError as exc:
+                log(f"Warning: failed to remove oversize segment {part.name} ({exc}).")
+
+        if attempt >= max_attempts:
+            raise RuntimeError(
+                f"Segment size limit exceeded after {attempt} attempt(s) (target {target_size_mb:.2f} MB): {summary}. "
+                "Consider increasing the target size or re-encoding to a lower bitrate."
+            )
+
+        largest_size = max(size for _, size in oversize_segments)
+        overshoot_ratio = max(1.2, (largest_size / target_size_mb) * 1.1)
+        chunk_count = max(chunk_count + 1, math.ceil(chunk_count * overshoot_ratio))
+        attempt += 1
+
+    if suppressed_total:
         log(
-            f"Suppressed {suppressed} corrupted packet warnings from FFmpeg; damaged frames were skipped."
+            f"Suppressed {suppressed_total} corrupted packet warnings from FFmpeg; damaged frames were skipped."
         )
 
     overall_elapsed = time.time() - overall_started_at

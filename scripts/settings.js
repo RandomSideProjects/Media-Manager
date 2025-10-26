@@ -33,30 +33,12 @@ if (selectiveDownloadToggle) selectiveDownloadToggle.checked = selectiveDownload
 
 const MAX_UI_DL_CONCURRENCY = 8;
 const DEFAULT_DL_CONCURRENCY = 2;
-const DEV_MODE_LS_KEY = 'rsp_dev_mode';
-let rspDevModeFlag = false;
-
-function readStoredDevMode() {
-  try {
-    const raw = localStorage.getItem(DEV_MODE_LS_KEY);
-    return raw === 'true';
-  } catch {
-    return false;
-  }
-}
-
-function persistDevMode(value) {
-  try {
-    if (value) {
-      localStorage.setItem(DEV_MODE_LS_KEY, 'true');
-    } else {
-      localStorage.removeItem(DEV_MODE_LS_KEY);
-    }
-  } catch {}
-}
 
 function isDevModeEnabled() {
-  return rspDevModeFlag;
+  if (typeof window === 'undefined') return false;
+  if (!window.RSPDev || typeof window.RSPDev.isEnabled !== 'function') return false;
+  try { return window.RSPDev.isEnabled() === true; }
+  catch { return false; }
 }
 
 function readStoredConcurrency() {
@@ -117,84 +99,9 @@ if (downloadConcurrencyRange && !downloadConcurrencyRange.dataset.bound) {
 }
 
 if (typeof window !== 'undefined') {
-  const descriptor = Object.getOwnPropertyDescriptor(window, 'DevMode');
-  let initial = readStoredDevMode();
-  if (descriptor) {
-    try {
-      initial = descriptor.get ? descriptor.get.call(window) === true : descriptor.value === true;
-    } catch {
-      initial = false;
-    }
-    if (!descriptor.configurable) {
-      rspDevModeFlag = initial;
-    } else {
-      Object.defineProperty(window, 'DevMode', {
-        configurable: true,
-        enumerable: true,
-        get() { return rspDevModeFlag; },
-        set(value) {
-          const next = value === true;
-          const changed = next !== rspDevModeFlag;
-          rspDevModeFlag = next;
-          persistDevMode(next);
-          try {
-            applyDownloadConcurrencyUI();
-            if (changed && typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
-              window.dispatchEvent(new CustomEvent('rsp:dev-mode-changed', { detail: { enabled: next } }));
-            }
-          }
-          catch (err) { console.error('[RSP] DevMode update failed', err); }
-        }
-      });
-      rspDevModeFlag = initial;
-    }
-  } else {
-    Object.defineProperty(window, 'DevMode', {
-      configurable: true,
-      enumerable: true,
-      get() { return rspDevModeFlag; },
-      set(value) {
-        const next = value === true;
-        const changed = next !== rspDevModeFlag;
-        rspDevModeFlag = next;
-        persistDevMode(next);
-        try {
-          applyDownloadConcurrencyUI();
-          if (changed && typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
-            window.dispatchEvent(new CustomEvent('rsp:dev-mode-changed', { detail: { enabled: next } }));
-          }
-        }
-        catch (err) { console.error('[RSP] DevMode update failed', err); }
-      }
-    });
-    rspDevModeFlag = readStoredDevMode();
-  }
-} else {
-  rspDevModeFlag = readStoredDevMode();
-}
-
-if (typeof window !== 'undefined') {
-  // Toggle dev mode when the O+P key combo is pressed.
-  const devModeCombo = new Set(['o', 'p']);
-  let devModeSequence = [];
-  const resetSequence = () => { devModeSequence = []; };
-  window.addEventListener('keydown', (event) => {
-    if (event.repeat) return;
-    const key = (event.key || '').toLowerCase();
-    if (!devModeCombo.has(key)) {
-      resetSequence();
-      return;
-    }
-    if (devModeSequence.length && devModeSequence[devModeSequence.length - 1] === key) return;
-    devModeSequence.push(key);
-    if (devModeSequence.length > devModeCombo.size) devModeSequence.shift();
-    const unique = new Set(devModeSequence);
-    if (unique.size === devModeCombo.size && devModeSequence.length === devModeCombo.size) {
-      window.DevMode = !(window.DevMode === true);
-      resetSequence();
-    }
+  window.addEventListener('rsp:dev-mode-changed', () => {
+    applyDownloadConcurrencyUI();
   });
-  window.addEventListener('blur', resetSequence);
 }
 
 applyDownloadConcurrencyUI();

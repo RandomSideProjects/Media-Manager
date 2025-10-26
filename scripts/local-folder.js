@@ -204,6 +204,20 @@ async function handleFolderUpload(event) {
   selectorScreen.style.display = "flex";
   renderEpisodeList();
   showResumeMessage();
+  if (window.RSPRecentSources && typeof window.RSPRecentSources.setSourceActive === 'function') {
+    try { window.RSPRecentSources.setSourceActive(true); } catch {}
+  }
+  if (window.RSPRecentSources && typeof window.RSPRecentSources.record === 'function') {
+    try {
+      window.RSPRecentSources.record(json, {
+        sourceKey: localId,
+        openValue: `local::${localId}`,
+        kind: 'local'
+      });
+    } catch (err) {
+      console.warn('[RecentSources] Unable to record local source', err);
+    }
+  }
 }
 
 if (folderInput) folderInput.addEventListener("change", handleFolderUpload);

@@ -45,6 +45,10 @@
           </div>
         </div>
       </div>
+      <div class="setting-row" id="devMenuRow" style="display:none;">
+        <button id="devMenuBtn" type="button">Dev Menu</button>
+        <span class="dev-menu-status" id="devMenuStatus">Developer tools</span>
+      </div>
     </div>
   </div>
     <button onclick="location.href='./index.html'" class="tab-button">Home</button>
@@ -57,12 +61,14 @@
     </div>
   </nav>
   <header>RSP Media Manager</header>
-  <div class="container">
-    <div id="urlInputContainer">
-      <div id="errorMessage">Unfortunately, there was no directory given. Please try again or enter directory below.</div>
-      <input type="text" id="urlInput" placeholder="https://example.com/list.json, Catbox ID, or Select Folder for local">
-      <button id="goBtn">Go</button>
-      <label for="folderInput" class="folder-button">Select Folder</label>
+  <div id="homeMainRegion">
+    <section id="recentSourcesRail" class="recent-sources" aria-label="Recent sources" hidden></section>
+    <div class="container" id="playerContainer">
+      <div id="urlInputContainer">
+        <div id="errorMessage">Unfortunately, there was no directory given. Please try again or enter directory below.</div>
+        <input type="text" id="urlInput" placeholder="https://example.com/list.json, Catbox ID, or Select Folder for local">
+        <button id="goBtn">Go</button>
+        <label for="folderInput" class="folder-button">Select Folder</label>
       <input type="file" id="folderInput" webkitdirectory multiple style="display:none">
     </div>
     <div id="directoryHeader" class="directory-header">
@@ -115,10 +121,13 @@
       <button id="nextBtn">Next Item</button>
     </div>
   </div>
+  </div>
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.0/jszip.min.js"></script>
   <script defer src="scripts/constants.js"></script>
   <script defer src="scripts/alerts.js"></script>
+  <script defer src="scripts/dev-core.js"></script>
   <script defer src="scripts/dom.js"></script>
+  <script defer src="scripts/recent-sources.js"></script>
   <script defer src="scripts/player.js"></script>
   <script defer src="scripts/popout.js"></script>
   <script defer src="scripts/list.js"></script>
@@ -126,6 +135,7 @@
   <script defer src="scripts/catbox.js"></script>
   <script defer src="scripts/clip.js"></script>
   <script defer src="scripts/settings.js"></script>
+  <script defer src="scripts/dev-menu.js"></script>
   <script defer src="scripts/theme.js"></script>
   <script defer src="scripts/init.js"></script>
   <script defer src="scripts/local-folder.js"></script>
@@ -158,6 +168,90 @@
       <div id="storageImportActionsRow" class="setting-row import-actions">
         <button id="storageImportConfirmBtn" type="button">Import</button>
         <button id="storageImportCancelBtn" type="button">Cancel</button>
+      </div>
+    </div>
+  </div>
+  <div id="devMenuOverlay" aria-hidden="true">
+    <div id="devMenuPanel" role="dialog" aria-modal="true" aria-labelledby="devMenuTitle" tabindex="-1">
+      <div class="dev-menu-header">
+        <h3 id="devMenuTitle">Developer Menu</h3>
+        <button id="devMenuCloseBtn" type="button">Close</button>
+      </div>
+      <div class="dev-menu-content">
+        <section class="dev-menu-section" aria-labelledby="devMenuModeHeading">
+          <h4 id="devMenuModeHeading">Mode</h4>
+          <label class="dev-menu-toggle" for="devModeToggle">
+            <input type="checkbox" id="devModeToggle">
+            <span>Enable developer mode</span>
+          </label>
+          <p class="dev-menu-hint">Toggle with O + P at any time.</p>
+        </section>
+        <section class="dev-menu-section" aria-labelledby="devMenuSettingsHeading">
+          <h4 id="devMenuSettingsHeading">Dev Settings</h4>
+          <div class="dev-field">
+            <label for="devConcurrencyInput">Download concurrency</label>
+            <div class="dev-field-controls">
+              <input id="devConcurrencyInput" type="number" min="1" step="1" inputmode="numeric">
+              <button id="devConcurrencyResetBtn" type="button">Reset</button>
+            </div>
+            <p class="dev-menu-hint">Applies instantly. Dev mode removes the usual UI limit.</p>
+          </div>
+        </section>
+        <section class="dev-menu-section" aria-labelledby="devMenuExperimentalHeading">
+          <h4 id="devMenuExperimentalHeading">Experimental settings</h4>
+          <label class="dev-menu-toggle" for="devRecentSourcesToggle">
+            <input type="checkbox" id="devRecentSourcesToggle">
+            <span>Show recent sources on home</span>
+          </label>
+          <div class="dev-field" id="devRecentSourcesPlacementRow">
+            <label for="devRecentSourcesPlacement">Placement</label>
+            <select id="devRecentSourcesPlacement">
+              <option value="top">Top</option>
+              <option value="bottom">Bottom</option>
+              <option value="left">Left</option>
+              <option value="right">Right</option>
+            </select>
+          </div>
+          <p class="dev-menu-hint">Displays the last 6 sources using SourceList cards.</p>
+        </section>
+        <section class="dev-menu-section" aria-labelledby="devMenuActionsHeading">
+          <h4 id="devMenuActionsHeading">System Triggers</h4>
+          <div class="dev-action-grid" id="devActionGrid">
+            <button type="button" data-dev-action="notice:info">Show info notice</button>
+            <button type="button" data-dev-action="notice:error">Show error notice</button>
+            <button type="button" data-dev-action="storage:menu">Open storage menu</button>
+            <button type="button" data-dev-action="storage:clear">Confirm clear storage</button>
+            <button type="button" data-dev-action="storage:import">Open import overlay</button>
+            <button type="button" data-dev-action="catbox:detect">Run Catbox detection</button>
+            <button type="button" data-dev-action="clip:preset">Open clip presets</button>
+            <button type="button" data-dev-action="clip:overlay">Show clip overlay</button>
+            <button type="button" data-dev-action="player:popout">Trigger pop-out</button>
+          </div>
+        </section>
+        <section class="dev-menu-section" aria-labelledby="devMenuDiagnosticsHeading">
+          <div class="dev-menu-diagnostics-header">
+            <h4 id="devMenuDiagnosticsHeading">Diagnostics</h4>
+            <button id="devDiagnosticsRefreshBtn" type="button">Refresh</button>
+          </div>
+          <dl class="dev-stats">
+            <div class="dev-stat">
+              <dt>Dev mode</dt>
+              <dd id="devModeStateLabel">Off</dd>
+            </div>
+            <div class="dev-stat">
+              <dt>Download concurrency</dt>
+              <dd id="devConcurrencyStateLabel">—</dd>
+            </div>
+            <div class="dev-stat">
+              <dt>Active Catbox endpoint</dt>
+              <dd id="devCatboxEndpointLabel">Pending</dd>
+            </div>
+            <div class="dev-stat">
+              <dt>Source key</dt>
+              <dd id="devSourceKeyLabel">Not loaded</dd>
+            </div>
+          </dl>
+        </section>
       </div>
     </div>
   </div>

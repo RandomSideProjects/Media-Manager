@@ -43,6 +43,10 @@
           <label><input type="radio" name="mode" value="manga"> Manga</label>
         </div>
       </div>
+      <div class="section dev-menu-row" id="devMenuRow" style="display:none;">
+        <button id="devMenuBtn" type="button" class="btn-primary">Dev Menu</button>
+        <span class="dev-menu-status" id="devMenuStatus">Developer tools</span>
+      </div>
       <div class="settings-actions">
         <button id="settingsCancel" class="btn-ghost">Close</button>
         <button id="settingsApply" class="btn-primary">Apply</button>
@@ -74,10 +78,64 @@
       <div id="fbStatus" style="margin-top:8px; font-size:.9em; min-height:1.2em; opacity:.9;"></div>
     </div>
   </div>
+  <div id="devMenuOverlay" aria-hidden="true">
+    <div id="devMenuPanel" role="dialog" aria-modal="true" aria-labelledby="devMenuTitle" tabindex="-1">
+      <div class="dev-menu-header">
+        <h3 id="devMenuTitle">Developer Menu</h3>
+        <button id="devMenuCloseBtn" type="button" class="btn-ghost">Close</button>
+      </div>
+      <div class="dev-menu-content">
+        <section class="dev-menu-section" aria-labelledby="devMenuModeHeading">
+          <h4 id="devMenuModeHeading">Mode</h4>
+          <label class="dev-menu-toggle" for="devModeToggle">
+            <input type="checkbox" id="devModeToggle">
+            <span>Enable developer mode</span>
+          </label>
+          <p class="dev-menu-hint">Toggle with O + P anywhere.</p>
+        </section>
+        <section class="dev-menu-section">
+          <h4>Quick Actions</h4>
+          <div class="dev-action-grid" id="devActionGrid">
+            <button type="button" data-dev-action="notice:info">Show info notice</button>
+            <button type="button" data-dev-action="notice:error">Show error notice</button>
+            <button type="button" data-dev-action="sources:reload">Reload sources</button>
+            <button type="button" data-dev-action="sources:open-settings">Open settings</button>
+            <button type="button" data-dev-action="sources:feedback">Open feedback</button>
+          </div>
+        </section>
+        <section class="dev-menu-section">
+          <div class="dev-menu-diagnostics-header">
+            <h4>Diagnostics</h4>
+            <button id="devDiagnosticsRefreshBtn" type="button" class="btn-ghost">Refresh</button>
+          </div>
+          <dl class="dev-stats">
+            <div class="dev-stat">
+              <dt>Dev mode</dt>
+              <dd id="devModeStateLabel">Off</dd>
+            </div>
+            <div class="dev-stat">
+              <dt>Download concurrency</dt>
+              <dd id="devConcurrencyStateLabel">—</dd>
+            </div>
+            <div class="dev-stat">
+              <dt>Active Catbox endpoint</dt>
+              <dd id="devCatboxEndpointLabel">Pending</dd>
+            </div>
+            <div class="dev-stat">
+              <dt>Source key</dt>
+              <dd id="devSourceKeyLabel">Not set</dd>
+            </div>
+          </dl>
+        </section>
+      </div>
+    </div>
+  </div>
   <div class="container" id="sourcesContainer">
     <!-- Cards will be injected here -->
   </div>
 
+  <script src="../scripts/alerts.js"></script>
+  <script src="../scripts/dev-core.js"></script>
   <script src="scripts/constants.js"></script>
   <script src="scripts/utils.js"></script>
   <script src="scripts/render.js"></script>
@@ -85,5 +143,6 @@
   <script src="scripts/feedback.js"></script>
   <script src="scripts/loader.js"></script>
   <script src="scripts/temp-sources.js"></script>
+  <script src="../scripts/dev-menu.js"></script>
 </body>
 </html>

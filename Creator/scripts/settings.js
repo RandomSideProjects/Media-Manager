@@ -177,6 +177,8 @@ const mmCbzExpandBatch = document.getElementById('mmCbzExpandBatch');
 const mmCbzExpandManual = document.getElementById('mmCbzExpandManual');
 const mmPosterCompressToggle = document.getElementById('mmPosterCompressToggle');
 const mmSeparationToggle = document.getElementById('mmSeparationToggle');
+const devMenuRow = document.getElementById('devMenuRow');
+const devMenuStatus = document.getElementById('devMenuStatus');
 // No per-flow anon controls; only userhash visibility when anonymous is off
 
 function updateDevModeRowsVisibility(force) {
@@ -185,6 +187,10 @@ function updateDevModeRowsVisibility(force) {
     : (typeof window !== 'undefined' && window.DevMode === true);
   if (mmGithubWorkerRow) mmGithubWorkerRow.style.display = enabled ? '' : 'none';
   if (mmCatboxRow) mmCatboxRow.style.display = enabled ? '' : 'none';
+  if (devMenuRow) devMenuRow.style.display = enabled ? '' : 'none';
+  if (devMenuStatus) {
+    devMenuStatus.textContent = enabled ? 'Developer tools' : 'Enable Dev Mode (O + P)';
+  }
 }
 
 if (typeof window !== 'undefined') {

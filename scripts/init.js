@@ -1,5 +1,13 @@
 "use strict";
 
+function setRecentSourcesActive(flag) {
+  if (window.RSPRecentSources && typeof window.RSPRecentSources.setSourceActive === 'function') {
+    try {
+      window.RSPRecentSources.setSourceActive(flag);
+    } catch {}
+  }
+}
+
 // Centralized loader so we can reuse for initial param load and manual input without forcing a full page reload.
 async function loadSource(rawInput) {
   const rawSrc = (rawInput || '').trim();
@@ -9,6 +17,7 @@ async function loadSource(rawInput) {
       errorMessage.textContent = 'Unfortunately, there was no directory given. Please try again or enter directory below.';
       errorMessage.style.display = 'block';
     }
+    setRecentSourcesActive(false);
     return false;
   }
 
@@ -108,6 +117,23 @@ async function loadSource(rawInput) {
     selectorScreen.style.display = 'flex';
     renderEpisodeList();
     showResumeMessage();
+    setRecentSourcesActive(true);
+    if (window.RSPRecentSources && typeof window.RSPRecentSources.record === 'function') {
+      try {
+        let inlinePayload = null;
+        if (directJson) {
+          inlinePayload = JSON.stringify(directJson);
+        }
+        window.RSPRecentSources.record(json, {
+          sourceKey,
+          openValue: directJson ? '' : decodedRaw,
+          kind: directJson ? 'inline' : 'remote',
+          inlinePayload
+        });
+      } catch (err) {
+        console.warn('[RecentSources] Unable to record remote source', err);
+      }
+    }
     return true;
   } catch (err) {
     urlInputContainer.style.display = 'flex';
@@ -117,6 +143,7 @@ async function loadSource(rawInput) {
       errorMessage.style.display = 'block';
     }
     console.error('Source Load Error:', err);
+    setRecentSourcesActive(false);
     return false;
   }
 }
@@ -151,6 +178,7 @@ async function init() {
     // Show empty input UI
     urlInputContainer.style.display = 'flex';
     if (errorMessage) errorMessage.style.display = 'none';
+    setRecentSourcesActive(false);
     return;
   }
 

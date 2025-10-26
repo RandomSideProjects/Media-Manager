@@ -67,6 +67,8 @@ jobs:
           const https = require('https');
           const sharp = require('sharp');
 
+          const HIDDEN_FILE_TOKEN = '-hidden';
+
           function coerceSeparatedFlag(value) {
             if (value === true) return true;
             if (value === false) return false;
@@ -240,7 +242,8 @@ jobs:
 
           (async () => {
             const files = fs.readdirSync(FILE_DIR)
-              .filter(f => f.toLowerCase().endsWith('.json') && f.toLowerCase() !== 'exampledir.json');
+              .filter(f => f.toLowerCase().endsWith('.json') && f.toLowerCase() !== 'exampledir.json')
+              .filter(f => !f.toLowerCase().includes(HIDDEN_FILE_TOKEN));
 
             const result = { sources: [] };
 

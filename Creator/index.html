@@ -125,24 +125,9 @@
         <input id="mmUploadConcurrencyRange" type="range" min="1" max="8" step="1" value="2" style="flex:1;">
         <span id="mmUploadConcurrencyValue" style="min-width:2em; text-align:right;">2</span>
       </div>
-      <div id="mmCatboxRow" class="mm-settings-row" style="display:none; flex-direction:column; align-items:stretch; gap:.3em;">
-        <label for="mmCatboxUploadUrl">Catbox Upload URL (Dev Mode)</label>
-        <input id="mmCatboxUploadUrl" class="mm-input" type="url" placeholder="https://catbox.moe/user/api.php">
-        <small>Override when testing against a proxy (defaults to the Catbox API).</small>
-        <label for="mmCatboxMode" style="margin-top:.4em;">Catbox Mode Override (Dev Mode)</label>
-        <select id="mmCatboxMode" class="mm-input">
-          <option value="auto">Auto (use health check)</option>
-          <option value="direct">Force direct to Catbox</option>
-          <option value="proxy">Force worker proxy</option>
-        </select>
-        <small>Select a mode to bypass automatic Catbox server selection while debugging.</small>
-      </div>
-      <div id="mmGithubWorkerRow" class="mm-settings-row" style="flex-direction:column; align-items:stretch; gap:.3em;">
-        <label for="mmGithubWorkerUrl">GitHub Worker URL (Dev Mode)</label>
-        <input id="mmGithubWorkerUrl" class="mm-input" type="url" placeholder="https://mmback.littlehacker303.workers.dev">
-        <label for="mmGithubToken">GitHub Token (Dev Mode)</label>
-        <input id="mmGithubToken" class="mm-input" type="password" autocomplete="off" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
-        <small>Press G + H in Dev Mode to upload via the Worker. The token is sent with each upload.</small>
+      <div class="mm-settings-row dev-menu-row" id="devMenuRow" style="display:none; justify-content:space-between; align-items:center;">
+        <button id="devMenuBtn" type="button" class="dev-menu-trigger">Dev Menu</button>
+        <span class="dev-menu-status" id="devMenuStatus">Developer tools</span>
       </div>
       <div class="mm-actions">
         <button id="mmSaveUploadSettings" class="mm-btn primary">Save</button>
@@ -151,8 +136,90 @@
     </div>
   </div>
 
+  <div id="devMenuOverlay" aria-hidden="true">
+    <div id="devMenuPanel" role="dialog" aria-modal="true" aria-labelledby="devMenuTitle" tabindex="-1">
+      <div class="dev-menu-header">
+        <h3 id="devMenuTitle">Developer Menu</h3>
+        <button id="devMenuCloseBtn" type="button" class="dev-menu-trigger">Close</button>
+      </div>
+      <div class="dev-menu-content">
+        <section class="dev-menu-section" aria-labelledby="devMenuSettingsHeading">
+          <h4 id="devMenuSettingsHeading">Dev Settings</h4>
+          <div class="dev-field">
+            <label for="devUploadConcurrencyInput">Upload concurrency</label>
+            <div class="dev-field-controls">
+              <input id="devUploadConcurrencyInput" type="number" min="1" step="1" inputmode="numeric">
+              <button id="devUploadConcurrencyResetBtn" type="button">Reset</button>
+            </div>
+            <p class="dev-menu-hint">Overrides the upload slider. Dev Mode removes the 1-8 UI cap.</p>
+          </div>
+          <div class="dev-field">
+            <label class="dev-menu-toggle" for="devHiddenSourceToggle">
+              <input type="checkbox" id="devHiddenSourceToggle">
+              <span>Append "-hidden" to exported filenames</span>
+            </label>
+            <p class="dev-menu-hint">Hidden files stay out of SourceList maintainers until you unhide them.</p>
+          </div>
+        </section>
+        <section class="dev-menu-section" aria-labelledby="devActionsHeading">
+          <h4 id="devActionsHeading">System Triggers</h4>
+          <div class="dev-action-grid" id="devActionGrid">
+            <button type="button" data-dev-action="notice:info">Show info notice</button>
+            <button type="button" data-dev-action="notice:error">Show error notice</button>
+            <button type="button" data-dev-action="catbox:detect">Run Catbox detection</button>
+            <button type="button" data-dev-action="creator:open-settings">Open upload settings</button>
+            <button type="button" data-dev-action="creator:test-json">Send test JSON</button>
+          </div>
+        </section>
+        <section class="dev-menu-section" aria-labelledby="devUploadOverridesHeading">
+          <h4 id="devUploadOverridesHeading">Upload Overrides</h4>
+          <div id="mmCatboxRow" class="mm-settings-row" style="display:none; flex-direction:column; align-items:stretch; gap:.3em; margin:0;">
+            <label for="mmCatboxUploadUrl">Catbox Upload URL</label>
+            <input id="mmCatboxUploadUrl" class="mm-input" type="url" placeholder="https://catbox.moe/user/api.php">
+            <small>Override when testing against a proxy (defaults to the Catbox API).</small>
+            <label for="mmCatboxMode" style="margin-top:.4em;">Catbox Mode Override</label>
+            <select id="mmCatboxMode" class="mm-input">
+              <option value="auto">Auto (use health check)</option>
+              <option value="direct">Force direct to Catbox</option>
+              <option value="proxy">Force worker proxy</option>
+            </select>
+            <small>Select a mode to bypass automatic Catbox server selection while debugging.</small>
+          </div>
+          <div id="mmGithubWorkerRow" class="mm-settings-row" style="display:none; flex-direction:column; align-items:stretch; gap:.3em; margin:0;">
+            <label for="mmGithubWorkerUrl">GitHub Worker URL</label>
+            <input id="mmGithubWorkerUrl" class="mm-input" type="url" placeholder="https://mmback.littlehacker303.workers.dev">
+            <label for="mmGithubToken">GitHub Token</label>
+            <input id="mmGithubToken" class="mm-input" type="password" autocomplete="off" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+            <small>Press G + H in Dev Mode to upload via the Worker. The token is sent with each upload.</small>
+          </div>
+        </section>
+        <section class="dev-menu-section">
+          <div class="dev-menu-diagnostics-header">
+            <h4>Diagnostics</h4>
+            <button id="devDiagnosticsRefreshBtn" type="button">Refresh</button>
+          </div>
+          <dl class="dev-stats">
+            <div class="dev-stat">
+              <dt>Dev mode</dt>
+              <dd id="devModeStateLabel">Off</dd>
+            </div>
+            <div class="dev-stat">
+              <dt>Upload concurrency</dt>
+              <dd id="devUploadConcurrencyStateLabel">—</dd>
+            </div>
+            <div class="dev-stat">
+              <dt>Active Catbox endpoint</dt>
+              <dd id="devCatboxEndpointLabel">Pending</dd>
+            </div>
+          </dl>
+        </section>
+      </div>
+    </div>
+  </div>
+
   <script src="scripts/constants.js"></script>
   <script src="../scripts/alerts.js"></script>
+  <script src="../scripts/dev-core.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="scripts/uploader.js"></script>
   <script src="scripts/ui.js"></script>
@@ -160,5 +227,6 @@
   <script src="scripts/server.js"></script>
   <script src="scripts/settings.js"></script>
   <script src="scripts/folder-upload.js"></script>
+  <script src="scripts/dev-menu.js"></script>
 </body>
 </html>

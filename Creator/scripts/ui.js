@@ -600,6 +600,61 @@ function sanitizeWorkerFileName(input) {
   return words.length ? words.join('_') : 'Untitled_Directory';
 }
 
+const CREATOR_HIDDEN_SUFFIX_KEY = 'mm_creator_hidden_suffix';
+let creatorHiddenSuffixMemory = false;
+
+function isHiddenSuffixModeEnabled() {
+  try {
+    const raw = localStorage.getItem(CREATOR_HIDDEN_SUFFIX_KEY);
+    if (raw === null) {
+      creatorHiddenSuffixMemory = false;
+      return false;
+    }
+    creatorHiddenSuffixMemory = raw === '1';
+    return creatorHiddenSuffixMemory;
+  } catch {
+    return creatorHiddenSuffixMemory;
+  }
+}
+
+function dispatchHiddenSuffixEvent(enabled) {
+  if (typeof window === 'undefined' || typeof window.dispatchEvent !== 'function') return;
+  try {
+    window.dispatchEvent(new CustomEvent('creator:hidden-suffix-updated', { detail: { enabled } }));
+  } catch {}
+}
+
+function setHiddenSuffixModeEnabled(enabled) {
+  const next = enabled === true;
+  const prev = isHiddenSuffixModeEnabled();
+  if (next === prev) return next;
+  creatorHiddenSuffixMemory = next;
+  try {
+    if (next) localStorage.setItem(CREATOR_HIDDEN_SUFFIX_KEY, '1');
+    else localStorage.removeItem(CREATOR_HIDDEN_SUFFIX_KEY);
+  } catch {}
+  dispatchHiddenSuffixEvent(next);
+  return next;
+}
+
+function ensureHiddenSuffix(name) {
+  if (typeof name !== 'string' || !name) return name;
+  return name.toLowerCase().includes('-hidden') ? name : `${name}-hidden`;
+}
+
+function applyHiddenSuffixIfNeeded(name) {
+  if (!isHiddenSuffixModeEnabled()) return name;
+  return ensureHiddenSuffix(name);
+}
+
+if (typeof window !== 'undefined') {
+  window.mmHiddenSourceNaming = Object.assign({}, window.mmHiddenSourceNaming, {
+    isEnabled: isHiddenSuffixModeEnabled,
+    setEnabled: setHiddenSuffixModeEnabled,
+    ensureSuffix: ensureHiddenSuffix
+  });
+}
+
 function isPosterCompressionEnabled() {
   const settings = getUploadSettingsSafe();
   if (typeof settings.compressPosters === 'boolean') return settings.compressPosters;
@@ -840,6 +895,207 @@ folderInput.addEventListener('change', async (e) => {
     folderUploadList = folderOverlay.querySelector('#folderUploadList');
     folderUploadSummary = folderOverlay.querySelector('#folderUploadSummary');
 
+    const formatBytesCompact = (bytes) => {
+      if (!Number.isFinite(bytes) || bytes < 0) return 'Unknown';
+      const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+      let value = bytes;
+      let unitIdx = 0;
+      while (value >= 1024 && unitIdx < units.length - 1) {
+        value /= 1024;
+        unitIdx += 1;
+      }
+      const fixed = value >= 100 ? value.toFixed(0) : value >= 10 ? value.toFixed(1) : value.toFixed(2);
+      return `${fixed} ${units[unitIdx]}`;
+    };
+
+    function createUploadRowContext(labelText, totalBytes) {
+      const row = document.createElement('div');
+      row.style.display = 'flex';
+      row.style.alignItems = 'center';
+      row.style.gap = '0.75em';
+      row.style.padding = '6px 8px';
+      row.style.background = '#222';
+      row.style.borderRadius = '6px';
+      row.style.fontSize = '0.9em';
+      row.style.position = 'relative';
+      row.style.transition = 'background 0.25s ease';
+      row.tabIndex = 0;
+
+      const labelEl = document.createElement('div');
+      labelEl.textContent = labelText;
+      labelEl.style.flex = '1';
+
+      const statusEl = document.createElement('div');
+      statusEl.textContent = 'Queued';
+      statusEl.style.minWidth = '110px';
+      statusEl.style.marginLeft = 'auto';
+      statusEl.style.textAlign = 'right';
+
+      const tooltip = document.createElement('div');
+      tooltip.textContent = 'Total Data: Unknown\nData Left: Unknown\n0% complete';
+      tooltip.style.position = 'absolute';
+      tooltip.style.top = 'calc(100% + 6px)';
+      tooltip.style.left = '0';
+      tooltip.style.background = '#111';
+      tooltip.style.border = '1px solid #444';
+      tooltip.style.borderRadius = '6px';
+      tooltip.style.padding = '6px 8px';
+      tooltip.style.fontSize = '0.8em';
+      tooltip.style.color = '#f1f1f1';
+      tooltip.style.boxShadow = '0 6px 14px rgba(0,0,0,0.4)';
+      tooltip.style.pointerEvents = 'none';
+      tooltip.style.whiteSpace = 'pre-line';
+      tooltip.style.display = 'none';
+      tooltip.style.zIndex = '5';
+      tooltip.style.maxWidth = '280px';
+
+      row.append(labelEl);
+      row.append(statusEl);
+      row.append(tooltip);
+      folderUploadList.appendChild(row);
+
+      const ctx = {
+        row,
+        statusEl,
+        tooltipEl: tooltip,
+        totalBytes: (Number.isFinite(totalBytes) && totalBytes >= 0) ? totalBytes : null,
+        loadedBytes: 0,
+        progress: 0,
+        state: 'queued'
+      };
+
+      const applyBackground = () => {
+        const percent = Math.max(0, Math.min(100, ctx.progress || 0));
+        const state = ctx.state || 'active';
+        let fillColor = 'rgba(78, 139, 255, 0.45)';
+        if (state === 'failed') fillColor = 'rgba(255, 107, 107, 0.45)';
+        else if (state === 'complete') fillColor = 'rgba(76, 175, 80, 0.45)';
+        else if (state === 'cancelled') fillColor = 'rgba(224, 192, 99, 0.45)';
+        else if (state === 'queued') fillColor = 'rgba(140, 140, 140, 0.3)';
+        if (percent <= 0) {
+          row.style.background = (state === 'failed' || state === 'cancelled') ? fillColor : '#222';
+        } else {
+          row.style.background = `linear-gradient(90deg, ${fillColor} 0%, ${fillColor} ${percent}%, #222 ${percent}%, #222 100%)`;
+        }
+      };
+
+      const updateTooltip = () => {
+        const total = Number.isFinite(ctx.totalBytes) && ctx.totalBytes >= 0 ? ctx.totalBytes : null;
+        const loaded = Number.isFinite(ctx.loadedBytes) && ctx.loadedBytes >= 0 ? ctx.loadedBytes : null;
+        const remaining = (total !== null && loaded !== null) ? Math.max(0, total - loaded) : null;
+        const pct = Math.max(0, Math.min(100, ctx.progress || 0));
+        const pctText = pct >= 100 || pct === 0 ? `${pct.toFixed(0)}% complete` : `${pct.toFixed(1)}% complete`;
+        tooltip.textContent = `Total Data: ${total !== null ? formatBytesCompact(total) : 'Unknown'}\n` +
+          `Data Left: ${remaining !== null ? formatBytesCompact(remaining) : 'Unknown'}\n${pctText}`;
+      };
+
+      ctx.setStatus = (text, { color, title } = {}) => {
+        statusEl.textContent = text;
+        if (color === null) statusEl.style.color = '';
+        else if (typeof color === 'string' && color.length) statusEl.style.color = color;
+        else statusEl.style.color = '#6ec1e4';
+        statusEl.title = title || '';
+        updateTooltip();
+      };
+
+      ctx.setProgress = (percent, { state, loadedBytes, totalBytes: overrideTotal } = {}) => {
+        const clamped = Math.max(0, Math.min(100, Number(percent) || 0));
+        ctx.progress = clamped;
+        if (typeof overrideTotal === 'number' && overrideTotal >= 0) ctx.totalBytes = overrideTotal;
+        if (typeof loadedBytes === 'number' && loadedBytes >= 0) ctx.loadedBytes = loadedBytes;
+        else if (Number.isFinite(ctx.totalBytes)) ctx.loadedBytes = (clamped / 100) * ctx.totalBytes;
+        if (state) ctx.state = state;
+        else if (!ctx.state || ctx.state === 'queued') ctx.state = 'active';
+        applyBackground();
+        updateTooltip();
+      };
+
+      ctx.attachDetailsElement = (detailsEl, { initiallyOpen = false } = {}) => {
+        if (!detailsEl || !row.parentNode) return;
+        ctx.detailsEl = detailsEl;
+        detailsEl.style.display = initiallyOpen ? 'block' : 'none';
+        detailsEl.style.margin = '4px 0 8px 1.5em';
+        detailsEl.style.padding = '6px 8px';
+        detailsEl.style.background = '#181818';
+        detailsEl.style.borderRadius = '6px';
+        detailsEl.style.fontSize = '0.85em';
+        detailsEl.style.lineHeight = '1.4';
+        folderUploadList.insertBefore(detailsEl, row.nextSibling);
+        const caret = document.createElement('span');
+        caret.textContent = initiallyOpen ? '▾' : '▸';
+        caret.style.marginRight = '0.35em';
+        caret.style.fontSize = '0.85em';
+        caret.style.opacity = '0.8';
+        caret.dataset.caret = '1';
+        labelEl.prepend(caret);
+        row.style.cursor = 'pointer';
+        const toggle = () => {
+          const open = detailsEl.style.display !== 'none';
+          const next = !open;
+          detailsEl.style.display = next ? 'block' : 'none';
+          caret.textContent = next ? '▾' : '▸';
+        };
+        row.addEventListener('click', (event) => {
+          if (event.target && detailsEl.contains(event.target)) return;
+          toggle();
+        });
+        row.addEventListener('keydown', (event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            toggle();
+          }
+        });
+      };
+
+      ctx.setOutline = (style) => {
+        row.style.outline = style || '';
+      };
+
+      const showTooltip = () => { tooltip.style.display = 'block'; };
+      const hideTooltip = () => { tooltip.style.display = 'none'; };
+      row.addEventListener('mouseenter', showTooltip);
+      row.addEventListener('mouseleave', hideTooltip);
+      row.addEventListener('focus', showTooltip);
+      row.addEventListener('blur', hideTooltip);
+
+      ctx.setStatus('Queued', { color: '#6ec1e4' });
+      ctx.setProgress(0, { state: 'queued' });
+      return ctx;
+    }
+
+    function createPartDetailRow(labelText) {
+      const row = document.createElement('div');
+      row.style.display = 'flex';
+      row.style.alignItems = 'center';
+      row.style.gap = '0.5em';
+      row.style.padding = '4px 0';
+      const labelEl = document.createElement('div');
+      labelEl.textContent = labelText;
+      labelEl.style.flex = '1';
+      labelEl.style.fontSize = '0.85em';
+      const progress = document.createElement('progress');
+      progress.max = 100;
+      progress.value = 0;
+      progress.style.flex = '2';
+      const statusEl = document.createElement('div');
+      statusEl.textContent = 'Queued';
+      statusEl.style.minWidth = '80px';
+      statusEl.style.textAlign = 'right';
+      statusEl.style.fontSize = '0.8em';
+      row.append(labelEl, progress, statusEl);
+      return {
+        el: row,
+        setProgress(value) {
+          const pct = Math.max(0, Math.min(100, Number(value) || 0));
+          progress.value = pct;
+        },
+        setStatus(text, color) {
+          statusEl.textContent = text;
+          statusEl.style.color = color || '#6ec1e4';
+        }
+      };
+    }
+
     const taskFns = [];
     const maxAttempts = 5;
     let completedCount = 0;
@@ -887,43 +1143,26 @@ folderInput.addEventListener('change', async (e) => {
         const epError = epDiv.querySelector('.ep-error');
         if (epError) epError.textContent = '';
 
-        const row = document.createElement('div');
-        row.style.display = 'flex';
-        row.style.alignItems = 'center';
-        row.style.gap = '0.75em';
-        row.style.padding = '6px 8px';
-        row.style.background = '#222';
-        row.style.borderRadius = '6px';
-        row.style.fontSize = '0.9em';
-        const labelEl = document.createElement('div');
-        labelEl.textContent = label || labelForUnit(num);
-        labelEl.style.flex = '1';
-        const status = document.createElement('div');
-        status.textContent = 'Queued';
-        status.style.minWidth = '110px';
-        const progressWrapper = document.createElement('div');
-        progressWrapper.style.flex = '2';
-        const prog = document.createElement('progress');
-        prog.max = 100;
-        prog.value = 0;
-        prog.style.width = '100%';
-        progressWrapper.appendChild(prog);
-        row.appendChild(labelEl);
-        row.appendChild(progressWrapper);
-        row.appendChild(status);
-        folderUploadList.appendChild(row);
+        const totalBytes = (file && typeof file.size === 'number' && file.size >= 0) ? file.size : null;
+        const rowCtx = createUploadRowContext(label || labelForUnit(num), totalBytes);
 
         const fn = async () => {
           for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
-            status.textContent = (attempt === 1) ? 'Uploading' : `Retry ${attempt} of ${maxAttempts}`;
-            prog.value = 0;
+            rowCtx.setStatus((attempt === 1) ? 'Uploading' : `Retry ${attempt} of ${maxAttempts}`, { color: null });
+            rowCtx.setProgress(0, { state: 'active', loadedBytes: 0, totalBytes });
             try {
-              const url = await uploadToCatboxWithProgress(file, (pct) => { prog.value = pct; }, { context: 'batch' });
+              const url = await uploadToCatboxWithProgress(
+                file,
+                (pct) => {
+                  const loaded = Number.isFinite(totalBytes) ? (pct / 100) * totalBytes : undefined;
+                  rowCtx.setProgress(pct, { loadedBytes: loaded });
+                },
+                { context: 'batch' }
+              );
               epSrcInput.value = url;
               if (epError) epError.textContent = '';
-              status.textContent = 'Done';
-              status.style.color = '#6ec1e4';
-              prog.value = 100;
+              rowCtx.setStatus('Done', { color: '#6ec1e4' });
+              rowCtx.setProgress(100, { state: 'complete', loadedBytes: totalBytes });
               completedCount++;
               folderUploadSummary.textContent = `${completedCount} / ${normalEntries.length} completed`;
               return;
@@ -934,8 +1173,8 @@ folderInput.addEventListener('change', async (e) => {
                 await sleep(base + jitter);
                 continue;
               }
-              status.textContent = 'Failed';
-              status.style.color = '#ff4444';
+              rowCtx.setStatus('Failed', { color: '#ff4444' });
+              rowCtx.setProgress(0, { state: 'failed' });
               if (epError) epError.innerHTML = '<span style="color:red">Upload failed</span>';
               return;
             }
@@ -976,31 +1215,10 @@ folderInput.addEventListener('change', async (e) => {
         epError.style.color = '';
       }
 
-      const row = document.createElement('div');
-      row.style.display = 'flex';
-      row.style.alignItems = 'center';
-      row.style.gap = '0.75em';
-      row.style.padding = '6px 8px';
-      row.style.background = '#222';
-      row.style.borderRadius = '6px';
-      row.style.fontSize = '0.9em';
-      const labelEl = document.createElement('div');
-      labelEl.textContent = title;
-      labelEl.style.flex = '1';
-      const status = document.createElement('div');
-      status.textContent = 'Queued';
-      status.style.minWidth = '110px';
-      const progressWrapper = document.createElement('div');
-      progressWrapper.style.flex = '2';
-      const prog = document.createElement('progress');
-      prog.max = 100;
-      prog.value = 0;
-      prog.style.width = '100%';
-      progressWrapper.appendChild(prog);
-      row.appendChild(labelEl);
-      row.appendChild(progressWrapper);
-      row.appendChild(status);
-      folderUploadList.appendChild(row);
+      const initialBytes = (entry.file && typeof entry.file.size === 'number' && entry.file.size >= 0)
+        ? entry.file.size
+        : null;
+      const rowCtx = createUploadRowContext(title, initialBytes);
 
       if (hasSeparated && entry.type === 'separated') {
         const videoParts = entry.parts.filter((part) => /\.(mp4|m4v|mov|webm|mkv)$/i.test((part.base || part.file.name || '')));
@@ -1019,6 +1237,13 @@ folderInput.addEventListener('change', async (e) => {
           try { epDiv.dataset.fileSizeBytes = String(totalSize); } catch {}
         }
         const partRows = [];
+        const detailWrapper = document.createElement('div');
+        const detailHeader = document.createElement('div');
+        detailHeader.textContent = `${videoParts.length} part${videoParts.length === 1 ? '' : 's'}`;
+        detailHeader.style.fontSize = '0.85em';
+        detailHeader.style.fontWeight = '600';
+        detailHeader.style.marginBottom = '4px';
+        detailWrapper.appendChild(detailHeader);
         videoParts.forEach((part, idx) => {
           const displayIndex = Number.isFinite(part.partIndex) ? part.partIndex : (idx + 1);
           const partLabel = `Part ${displayIndex}`;
@@ -1026,41 +1251,80 @@ folderInput.addEventListener('change', async (e) => {
             ? epDiv._addPartRow({ title: partLabel })
             : null;
           if (partRow && partRow._titleInput) partRow._titleInput.value = partLabel;
-          if (partRow) partRows.push({ row: partRow, file: part.file });
+          if (partRow) {
+            const detailCtx = createPartDetailRow(partLabel);
+            detailWrapper.appendChild(detailCtx.el);
+            const size = Number(part.file && part.file.size);
+            partRows.push({ row: partRow, file: part.file, detail: detailCtx, size: Number.isFinite(size) && size > 0 ? size : 0 });
+          }
         });
         if (typeof epDiv._recalcSeparatedTotals === 'function') epDiv._recalcSeparatedTotals();
         if (typeof epDiv._updatePartsVisibility === 'function') epDiv._updatePartsVisibility();
+        if (Number.isFinite(totalSize) && totalSize > 0) {
+          rowCtx.setProgress(0, { totalBytes: totalSize });
+        }
+        if (partRows.length) {
+          rowCtx.attachDetailsElement(detailWrapper, { initiallyOpen: false });
+        }
 
         const fn = async () => {
           if (!partRows.length) {
-            status.textContent = 'No video parts detected';
-            status.style.color = '#ffb347';
+            rowCtx.setStatus('No video parts detected', { color: '#ffb347' });
+            rowCtx.setProgress(0, { state: 'failed' });
             return;
           }
           let uploadedParts = 0;
+          let uploadedBytes = 0;
           for (let i = 0; i < partRows.length; i += 1) {
             const current = partRows[i];
-            status.textContent = `Part ${i + 1} / ${partRows.length}`;
+            rowCtx.setStatus(`Part ${i + 1} / ${partRows.length}`, { color: '#6ec1e4' });
+            if (current.detail) {
+              current.detail.setStatus('Uploading', '#6ec1e4');
+              current.detail.setProgress(0);
+            }
+            const partSize = Number.isFinite(current.size) ? current.size : 0;
             try {
               if (typeof epDiv._handlePartFileUpload === 'function') {
-                await epDiv._handlePartFileUpload(current.row, current.file);
+                await epDiv._handlePartFileUpload(current.row, current.file, {
+                  onProgress: (pct) => {
+                    if (current.detail) current.detail.setProgress(pct);
+                    const normalized = Math.max(0, Math.min(100, Number(pct) || 0)) / 100;
+                    const overallProgress = ((uploadedParts + normalized) / partRows.length) * 100;
+                    const loadedBytes = uploadedBytes + (partSize > 0 ? normalized * partSize : 0);
+                    rowCtx.setProgress(overallProgress, { loadedBytes, totalBytes: totalSize });
+                  },
+                  onComplete: () => {
+                    if (current.detail) {
+                      current.detail.setProgress(100);
+                      current.detail.setStatus('Done', '#7fe7a9');
+                    }
+                    const normalized = (uploadedParts + 1) / partRows.length;
+                    const loadedBytes = uploadedBytes + (partSize > 0 ? partSize : 0);
+                    rowCtx.setProgress(normalized * 100, { loadedBytes, totalBytes: totalSize });
+                  },
+                  onError: () => {
+                    if (current.detail) current.detail.setStatus('Failed', '#ff6b6b');
+                  }
+                });
               }
             } catch (err) {
               console.error('[Creator] Failed to upload part from folder', err);
+              if (current.detail) current.detail.setStatus('Failed', '#ff6b6b');
             }
             const uploaded = current.row && current.row._srcInput && current.row._srcInput.value.trim();
             if (uploaded) uploadedParts += 1;
-            prog.value = Math.round((uploadedParts / partRows.length) * 100);
+            if (uploaded && partSize > 0) uploadedBytes += partSize;
+            rowCtx.setProgress((uploadedParts / partRows.length) * 100, { loadedBytes: uploadedBytes, totalBytes: totalSize });
+            if (current.detail && !uploaded) current.detail.setStatus('Failed', '#ff6b6b');
           }
           if (uploadedParts === partRows.length) {
-            status.textContent = 'Done';
-            status.style.color = '#6ec1e4';
-            prog.value = 100;
+            rowCtx.setStatus('Done', { color: '#6ec1e4' });
+            rowCtx.setProgress(100, { state: 'complete' });
             completedCount++;
             folderUploadSummary.textContent = `${completedCount} / ${processEntries.length} completed`;
           } else {
-            status.textContent = `Uploaded ${uploadedParts} of ${partRows.length}`;
-            status.style.color = '#ff4444';
+            rowCtx.setStatus(`Uploaded ${uploadedParts} of ${partRows.length}`, { color: '#ff4444' });
+            rowCtx.setProgress((uploadedParts / partRows.length) * 100, { state: 'failed' });
           }
           if (typeof epDiv._recalcSeparatedTotals === 'function') epDiv._recalcSeparatedTotals();
           if (typeof epDiv._syncEpisodeMainSrc === 'function') epDiv._syncEpisodeMainSrc();
@@ -1071,9 +1335,8 @@ folderInput.addEventListener('change', async (e) => {
 
       const fileForUpload = entry.file;
       if (!fileForUpload) {
-        status.textContent = 'No file detected';
-        status.style.color = '#ffb347';
-        prog.value = 0;
+        rowCtx.setStatus('No file detected', { color: '#ffb347' });
+        rowCtx.setProgress(0, { state: 'failed' });
         return;
       }
       if (fileForUpload && fileForUpload.size != null) {
@@ -1085,11 +1348,13 @@ folderInput.addEventListener('change', async (e) => {
         }
       }
 
+      const fileSizeBytes = (fileForUpload && typeof fileForUpload.size === 'number' && fileForUpload.size >= 0)
+        ? fileForUpload.size
+        : null;
       const fn = async () => {
         for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
-          status.textContent = (attempt === 1) ? 'Uploading' : `Retry ${attempt} of ${maxAttempts}`;
-          status.style.color = '';
-          prog.value = 0;
+          rowCtx.setStatus((attempt === 1) ? 'Uploading' : `Retry ${attempt} of ${maxAttempts}`, { color: null });
+          rowCtx.setProgress(0, { state: 'active', totalBytes: fileSizeBytes });
           try {
             if (isMangaMode() && fileForUpload && /\.cbz$/i.test(fileForUpload.name || '')) {
               try {
@@ -1100,12 +1365,18 @@ folderInput.addEventListener('change', async (e) => {
                 epDiv.dataset.volumePageCount = String(names.length);
               } catch {}
             }
-            const url = await uploadToCatboxWithProgress(fileForUpload, (pct) => { prog.value = pct; }, { context: 'batch' });
+            const url = await uploadToCatboxWithProgress(
+              fileForUpload,
+              (pct) => {
+                const loaded = Number.isFinite(fileSizeBytes) ? (pct / 100) * fileSizeBytes : undefined;
+                rowCtx.setProgress(pct, { loadedBytes: loaded });
+              },
+              { context: 'batch' }
+            );
             if (epSrcInput) epSrcInput.value = url;
             if (epError) epError.textContent = '';
-            status.textContent = 'Done';
-            status.style.color = '#6ec1e4';
-            prog.value = 100;
+            rowCtx.setStatus('Done', { color: '#6ec1e4' });
+            rowCtx.setProgress(100, { state: 'complete', loadedBytes: fileSizeBytes });
             completedCount++;
             folderUploadSummary.textContent = `${completedCount} / ${processEntries.length} completed`;
             return;
@@ -1116,8 +1387,8 @@ folderInput.addEventListener('change', async (e) => {
               await sleep(base + jitter);
               continue;
             }
-            status.textContent = 'Failed';
-            status.style.color = '#ff4444';
+            rowCtx.setStatus('Failed', { color: '#ff4444' });
+            rowCtx.setProgress(0, { state: 'failed' });
             if (epError) epError.innerHTML = '<span style="color:red">Upload failed</span>';
             return;
           }
@@ -1550,14 +1821,18 @@ function addEpisode(container, data) {
     syncEpisodeMainSrc();
   }
 
-  async function handlePartFileUpload(row, file) {
+  async function handlePartFileUpload(row, file, options = {}) {
     if (!row || !file) return;
+    const opts = (options && typeof options === 'object') ? options : {};
     if (!isMangaMode() && file.size > 200 * 1024 * 1024) {
       if (row._statusEl) {
         row._statusEl.style.color = '#ff6b6b';
         row._statusEl.textContent = 'Files over 200 MB must be uploaded manually.';
       }
       if (row._fileInput) row._fileInput.value = '';
+      if (opts.onError) {
+        opts.onError(new Error('File too large for automated upload'));
+      }
       return;
     }
     if (row._statusEl) {
@@ -1584,6 +1859,9 @@ function addEpisode(container, data) {
           row._statusEl.textContent = `Uploading ${Math.round(pct)}%`;
           row._statusEl.appendChild(progress);
         }
+        if (typeof opts.onProgress === 'function') {
+          opts.onProgress(pct);
+        }
       }, { context: 'manual' });
       if (row._srcInput) row._srcInput.value = url;
       applyPartMetadata(row, { fileSize: file.size });
@@ -1592,12 +1870,18 @@ function addEpisode(container, data) {
       }
       if (row._statusEl) row._statusEl.textContent = '';
       syncEpisodeMainSrc();
+      if (typeof opts.onComplete === 'function') {
+        opts.onComplete({ url });
+      }
     } catch (err) {
       if (row._statusEl) {
         row._statusEl.style.color = '#ff6b6b';
         row._statusEl.textContent = 'Upload failed';
       }
       if (row._srcInput) row._srcInput.value = '';
+      if (typeof opts.onError === 'function') {
+        opts.onError(err);
+      }
     }
   }
 
@@ -2477,7 +2761,8 @@ async function uploadDirectoryToGithub() {
 
   const directoryJson = buildLocalDirectoryJSON();
   const title = directoryJson.title || '';
-  const fileName = sanitizeWorkerFileName(title || `directory-${Date.now()}`);
+  const baseFileName = sanitizeWorkerFileName(title || `directory-${Date.now()}`);
+  const fileName = applyHiddenSuffixIfNeeded(baseFileName);
   const jsonString = JSON.stringify(directoryJson, null, 2);
   const formData = new FormData();
   formData.append('ghtoken', githubToken);

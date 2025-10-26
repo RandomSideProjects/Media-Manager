@@ -55,6 +55,8 @@ jobs:
           const https = require('https');
           const sharp = require('sharp');
 
+          const HIDDEN_FILE_TOKEN = '-hidden';
+
           const FILE_DIR = 'Directorys/Files/Manga';
           const INDEX_FILE = 'Directorys/MangaSourceList.json';
           const POSTERS_DIR = 'Directorys/Posters/Manga';
@@ -113,7 +115,8 @@ jobs:
 
           (async () => {
             const entries = fs.readdirSync(FILE_DIR)
-              .filter(f => f.toLowerCase().endsWith('.json'));
+              .filter(f => f.toLowerCase().endsWith('.json'))
+              .filter(f => !f.toLowerCase().includes(HIDDEN_FILE_TOKEN));
 
             const result = { sources: [] };
 

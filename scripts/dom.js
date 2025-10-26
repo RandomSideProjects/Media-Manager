@@ -22,6 +22,9 @@ const folderInput = document.getElementById("folderInput");
 const downloadBtn = document.getElementById('downloadBtn');
 const themeToggle = document.getElementById('themeToggle');
 const separatedPartsBar = document.getElementById('separatedPartsBar');
+const homeMainRegion = document.getElementById('homeMainRegion');
+const recentSourcesRail = document.getElementById('recentSourcesRail');
+const playerContainer = document.getElementById('playerContainer');
 
 // CBZ viewer elements
 const cbzViewer = document.getElementById('cbzViewer');
@@ -74,6 +77,22 @@ const clipPreviewToggle = document.getElementById('clipPreviewToggle');
 const selectiveDownloadToggle = document.getElementById('selectiveDownloadToggle');
 const downloadConcurrencyRange = document.getElementById('downloadConcurrencyRange');
 const downloadConcurrencyValue = document.getElementById('downloadConcurrencyValue');
+const devMenuRow = document.getElementById('devMenuRow');
+const devMenuBtn = document.getElementById('devMenuBtn');
+const devMenuOverlay = document.getElementById('devMenuOverlay');
+const devMenuCloseBtn = document.getElementById('devMenuCloseBtn');
+const devModeToggle = document.getElementById('devModeToggle');
+const devConcurrencyInput = document.getElementById('devConcurrencyInput');
+const devConcurrencyResetBtn = document.getElementById('devConcurrencyResetBtn');
+const devActionGrid = document.getElementById('devActionGrid');
+const devDiagnosticsRefreshBtn = document.getElementById('devDiagnosticsRefreshBtn');
+const devModeStateLabel = document.getElementById('devModeStateLabel');
+const devConcurrencyStateLabel = document.getElementById('devConcurrencyStateLabel');
+const devCatboxEndpointLabel = document.getElementById('devCatboxEndpointLabel');
+const devSourceKeyLabel = document.getElementById('devSourceKeyLabel');
+const devMenuStatus = document.getElementById('devMenuStatus');
+const devRecentSourcesToggle = document.getElementById('devRecentSourcesToggle');
+const devRecentSourcesPlacement = document.getElementById('devRecentSourcesPlacement');
 
 // Spinner wiring
 if (video && spinner) {
