@@ -61,6 +61,18 @@
       "LatestTime": "2025-09-10T02:01:39.815Z"
     },
     {
+      "file": "Bloom_Into_You.json",
+      "path": "./Files/Anime/Bloom_Into_You.json",
+      "title": "Bloom Into You",
+      "poster": "./Posters/Anime/Bloom_Into_You.webp",
+      "categoryCount": 1,
+      "episodeCount": 13,
+      "itemCount": 13,
+      "totalFileSizeBytes": 1669603099,
+      "totalDurationSeconds": 18486,
+      "LatestTime": "2025-10-26T02:43:25.771Z"
+    },
+    {
       "file": "Call_Of_The_Night.json",
       "path": "./Files/Anime/Call_Of_The_Night.json",
       "title": "Call Of The Night",
