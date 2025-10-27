@@ -1,92 +1,394 @@
 {
   "title": "Bloom Into You",
   "Image": "https://files.catbox.moe/ycrqr2.webp",
-  "LatestTime": "2025-10-26T13:23:08.499Z",
+  "LatestTime": "2025-10-27T13:09:59.506Z",
   "categories": [
     {
       "category": "Season 1",
       "episodes": [
         {
           "title": "Episode 1",
-          "src": "https://files.catbox.moe/w15xyl.mp4",
-          "fileSizeBytes": 116520105,
-          "durationSeconds": 1422
+          "src": "https://files.catbox.moe/asj46a.mp4",
+          "fileSizeBytes": 499354757,
+          "durationSeconds": 2044,
+          "sources": [
+            {
+              "title": "Part 1",
+              "src": "https://files.catbox.moe/asj46a.mp4",
+              "fileSizeBytes": 127119675,
+              "durationSeconds": 586
+            },
+            {
+              "title": "Part 2",
+              "src": "https://files.catbox.moe/vjwofv.mp4",
+              "fileSizeBytes": 127008060,
+              "durationSeconds": 754
+            },
+            {
+              "title": "Part 3",
+              "src": "https://files.catbox.moe/01ovpw.mp4",
+              "fileSizeBytes": 129056458,
+              "durationSeconds": 356
+            },
+            {
+              "title": "Part 4",
+              "src": "https://files.catbox.moe/mn7l2o.mp4",
+              "fileSizeBytes": 116170564,
+              "durationSeconds": 348
+            }
+          ]
         },
         {
           "title": "Episode 2",
-          "src": "https://files.catbox.moe/vvfawd.mp4",
-          "fileSizeBytes": 113086361,
-          "durationSeconds": 1422
+          "src": "https://files.catbox.moe/2jyeoi.mp4",
+          "fileSizeBytes": 510812277,
+          "durationSeconds": 1670,
+          "sources": [
+            {
+              "title": "Part 1",
+              "src": "https://files.catbox.moe/2jyeoi.mp4",
+              "fileSizeBytes": 121545838,
+              "durationSeconds": 499
+            },
+            {
+              "title": "Part 2",
+              "src": "https://files.catbox.moe/ow5k7n.mp4",
+              "fileSizeBytes": 125050933,
+              "durationSeconds": 386
+            },
+            {
+              "title": "Part 3",
+              "src": "https://files.catbox.moe/da70j2.mp4",
+              "fileSizeBytes": 129345493,
+              "durationSeconds": 437
+            },
+            {
+              "title": "Part 4",
+              "src": "https://files.catbox.moe/4dnl3w.mp4",
+              "fileSizeBytes": 134870013,
+              "durationSeconds": 348
+            }
+          ]
         },
         {
           "title": "Episode 3",
-          "src": "https://files.catbox.moe/bvyvk6.mp4",
-          "fileSizeBytes": 120493218,
-          "durationSeconds": 1422
+          "src": "https://files.catbox.moe/0bvgec.mp4",
+          "fileSizeBytes": 437643740,
+          "durationSeconds": 1571,
+          "sources": [
+            {
+              "title": "Part 1",
+              "src": "https://files.catbox.moe/0bvgec.mp4",
+              "fileSizeBytes": 145967785,
+              "durationSeconds": 537
+            },
+            {
+              "title": "Part 2",
+              "src": "https://files.catbox.moe/7suc6f.mp4",
+              "fileSizeBytes": 149970286,
+              "durationSeconds": 560
+            },
+            {
+              "title": "Part 3",
+              "src": "https://files.catbox.moe/qmqdc3.mp4",
+              "fileSizeBytes": 141705669,
+              "durationSeconds": 474
+            }
+          ]
         },
         {
           "title": "Episode 4",
-          "src": "https://files.catbox.moe/12f2dn.mp4",
-          "fileSizeBytes": 148921181,
-          "durationSeconds": 1422
+          "src": "https://files.catbox.moe/j6r8ev.mp4",
+          "fileSizeBytes": 521075733,
+          "durationSeconds": 1742,
+          "sources": [
+            {
+              "title": "Part 1",
+              "src": "https://files.catbox.moe/j6r8ev.mp4",
+              "fileSizeBytes": 126702042,
+              "durationSeconds": 367
+            },
+            {
+              "title": "Part 2",
+              "src": "https://files.catbox.moe/xb7lr4.mp4",
+              "fileSizeBytes": 124911010,
+              "durationSeconds": 411
+            },
+            {
+              "title": "Part 3",
+              "src": "https://files.catbox.moe/nb1ny1.mp4",
+              "fileSizeBytes": 134673396,
+              "durationSeconds": 616
+            },
+            {
+              "title": "Part 4",
+              "src": "https://files.catbox.moe/0yrj7u.mp4",
+              "fileSizeBytes": 134789285,
+              "durationSeconds": 348
+            }
+          ]
         },
         {
           "title": "Episode 5",
-          "src": "https://files.catbox.moe/79mm7o.mp4",
-          "fileSizeBytes": 132120576,
-          "durationSeconds": 1422
+          "src": "https://files.catbox.moe/iqf3hc.mp4",
+          "fileSizeBytes": 444165361,
+          "durationSeconds": 1956,
+          "sources": [
+            {
+              "title": "Part 1",
+              "src": "https://files.catbox.moe/iqf3hc.mp4",
+              "fileSizeBytes": 142827710,
+              "durationSeconds": 719
+            },
+            {
+              "title": "Part 2",
+              "src": "https://files.catbox.moe/tb6hyw.mp4",
+              "fileSizeBytes": 137533131,
+              "durationSeconds": 763
+            },
+            {
+              "title": "Part 3",
+              "src": "https://files.catbox.moe/bsz1gc.mp4",
+              "fileSizeBytes": 163804520,
+              "durationSeconds": 474
+            }
+          ]
         },
         {
           "title": "Episode 6",
-          "src": "https://files.catbox.moe/7sdthg.mp4",
-          "fileSizeBytes": 157482768,
-          "durationSeconds": 1422
+          "src": "https://files.catbox.moe/2cdan7.mp4",
+          "fileSizeBytes": 520741828,
+          "durationSeconds": 1620,
+          "sources": [
+            {
+              "title": "Part 1",
+              "src": "https://files.catbox.moe/2cdan7.mp4",
+              "fileSizeBytes": 127731709,
+              "durationSeconds": 411
+            },
+            {
+              "title": "Part 2",
+              "src": "https://files.catbox.moe/49xjxw.mp4",
+              "fileSizeBytes": 123302136,
+              "durationSeconds": 381
+            },
+            {
+              "title": "Part 3",
+              "src": "https://files.catbox.moe/0sl0hu.mp4",
+              "fileSizeBytes": 132443498,
+              "durationSeconds": 480
+            },
+            {
+              "title": "Part 4",
+              "src": "https://files.catbox.moe/rz96h7.mp4",
+              "fileSizeBytes": 137264485,
+              "durationSeconds": 348
+            }
+          ]
         },
         {
           "title": "Episode 7",
-          "src": "https://files.catbox.moe/wf43sa.mp4",
-          "fileSizeBytes": 144991015,
-          "durationSeconds": 1422
+          "src": "https://files.catbox.moe/hog3nh.mp4",
+          "fileSizeBytes": 469875256,
+          "durationSeconds": 2262,
+          "sources": [
+            {
+              "title": "Part 1",
+              "src": "https://files.catbox.moe/hog3nh.mp4",
+              "fileSizeBytes": 156404155,
+              "durationSeconds": 933
+            },
+            {
+              "title": "Part 2",
+              "src": "https://files.catbox.moe/41s893.mp4",
+              "fileSizeBytes": 152320036,
+              "durationSeconds": 855
+            },
+            {
+              "title": "Part 3",
+              "src": "https://files.catbox.moe/oiyu8m.mp4",
+              "fileSizeBytes": 161151065,
+              "durationSeconds": 474
+            }
+          ]
         },
         {
           "title": "Episode 8",
-          "src": "https://files.catbox.moe/6g2mdy.mp4",
-          "fileSizeBytes": 130604025,
-          "durationSeconds": 1422
+          "src": "https://files.catbox.moe/itwlzk.mp4",
+          "fileSizeBytes": 506058711,
+          "durationSeconds": 1777,
+          "sources": [
+            {
+              "title": "Part 1",
+              "src": "https://files.catbox.moe/itwlzk.mp4",
+              "fileSizeBytes": 127654046,
+              "durationSeconds": 571
+            },
+            {
+              "title": "Part 2",
+              "src": "https://files.catbox.moe/33j5a5.mp4",
+              "fileSizeBytes": 121185541,
+              "durationSeconds": 421
+            },
+            {
+              "title": "Part 3",
+              "src": "https://files.catbox.moe/afba9d.mp4",
+              "fileSizeBytes": 126297733,
+              "durationSeconds": 437
+            },
+            {
+              "title": "Part 4",
+              "src": "https://files.catbox.moe/smtlg8.mp4",
+              "fileSizeBytes": 130921391,
+              "durationSeconds": 348
+            }
+          ]
         },
         {
           "title": "Episode 9",
-          "src": "https://files.catbox.moe/kfddv0.mp4",
-          "fileSizeBytes": 140894726,
-          "durationSeconds": 1422
+          "src": "https://files.catbox.moe/mva73u.mp4",
+          "fileSizeBytes": 516772011,
+          "durationSeconds": 1927,
+          "sources": [
+            {
+              "title": "Part 1",
+              "src": "https://files.catbox.moe/mva73u.mp4",
+              "fileSizeBytes": 126244647,
+              "durationSeconds": 666
+            },
+            {
+              "title": "Part 2",
+              "src": "https://files.catbox.moe/85z10c.mp4",
+              "fileSizeBytes": 129995623,
+              "durationSeconds": 519
+            },
+            {
+              "title": "Part 3",
+              "src": "https://files.catbox.moe/c4o9mi.mp4",
+              "fileSizeBytes": 134036682,
+              "durationSeconds": 394
+            },
+            {
+              "title": "Part 4",
+              "src": "https://files.catbox.moe/1sll13.mp4",
+              "fileSizeBytes": 126495059,
+              "durationSeconds": 348
+            }
+          ]
         },
         {
           "title": "Episode 10",
-          "src": "https://files.catbox.moe/wz3l11.mp4",
-          "fileSizeBytes": 127351429,
-          "durationSeconds": 1422
+          "src": "https://files.catbox.moe/0lmvmz.mp4",
+          "fileSizeBytes": 436592238,
+          "durationSeconds": 1882,
+          "sources": [
+            {
+              "title": "Part 1",
+              "src": "https://files.catbox.moe/0lmvmz.mp4",
+              "fileSizeBytes": 140401809,
+              "durationSeconds": 789
+            },
+            {
+              "title": "Part 2",
+              "src": "https://files.catbox.moe/p6yf06.mp4",
+              "fileSizeBytes": 154724519,
+              "durationSeconds": 619
+            },
+            {
+              "title": "Part 3",
+              "src": "https://files.catbox.moe/ri4cla.mp4",
+              "fileSizeBytes": 141465910,
+              "durationSeconds": 474
+            }
+          ]
         },
         {
           "title": "Episode 11",
-          "src": "https://files.catbox.moe/ti1xb9.mp4",
-          "fileSizeBytes": 132256646,
-          "durationSeconds": 1422
+          "src": "https://files.catbox.moe/jmoetj.mp4",
+          "fileSizeBytes": 517338339,
+          "durationSeconds": 2041,
+          "sources": [
+            {
+              "title": "Part 1",
+              "src": "https://files.catbox.moe/jmoetj.mp4",
+              "fileSizeBytes": 128676672,
+              "durationSeconds": 721
+            },
+            {
+              "title": "Part 2",
+              "src": "https://files.catbox.moe/93dn6d.mp4",
+              "fileSizeBytes": 126677562,
+              "durationSeconds": 356
+            },
+            {
+              "title": "Part 3",
+              "src": "https://files.catbox.moe/kt5j83.mp4",
+              "fileSizeBytes": 128110093,
+              "durationSeconds": 616
+            },
+            {
+              "title": "Part 4",
+              "src": "https://files.catbox.moe/rdujbr.mp4",
+              "fileSizeBytes": 133874012,
+              "durationSeconds": 348
+            }
+          ]
         },
         {
           "title": "Episode 12",
-          "src": "https://files.catbox.moe/f4a5aw.mp4",
-          "fileSizeBytes": 91089246,
-          "durationSeconds": 1422
+          "src": "https://files.catbox.moe/2x8l7g.mp4",
+          "fileSizeBytes": 417408102,
+          "durationSeconds": 1917,
+          "sources": [
+            {
+              "title": "Part 1",
+              "src": "https://files.catbox.moe/2x8l7g.mp4",
+              "fileSizeBytes": 136317576,
+              "durationSeconds": 784
+            },
+            {
+              "title": "Part 2",
+              "src": "https://files.catbox.moe/7e3ecg.mp4",
+              "fileSizeBytes": 139696177,
+              "durationSeconds": 659
+            },
+            {
+              "title": "Part 3",
+              "src": "https://files.catbox.moe/xlztao.mp4",
+              "fileSizeBytes": 141394349,
+              "durationSeconds": 474
+            }
+          ]
         },
         {
           "title": "Episode 13",
-          "src": "https://files.catbox.moe/lacgfa.mp4",
-          "fileSizeBytes": 113791803,
-          "durationSeconds": 1422
+          "src": "https://files.catbox.moe/vrvfvw.mp4",
+          "fileSizeBytes": 452078800,
+          "durationSeconds": 1610,
+          "sources": [
+            {
+              "title": "Part 1",
+              "src": "https://files.catbox.moe/vrvfvw.mp4",
+              "fileSizeBytes": 153267493,
+              "durationSeconds": 481
+            },
+            {
+              "title": "Part 2",
+              "src": "https://files.catbox.moe/t7miwy.mp4",
+              "fileSizeBytes": 152777893,
+              "durationSeconds": 655
+            },
+            {
+              "title": "Part 3",
+              "src": "https://files.catbox.moe/k9fugo.mp4",
+              "fileSizeBytes": 146033414,
+              "durationSeconds": 474
+            }
+          ]
         }
       ]
     }
   ],
-  "totalFileSizeBytes": 1669603099,
-  "totalDurationSeconds": 18486
+  "totalFileSizeBytes": 6249917153,
+  "totalDurationSeconds": 24019
 }
