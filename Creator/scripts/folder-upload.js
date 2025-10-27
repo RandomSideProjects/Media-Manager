@@ -42,11 +42,7 @@
   }
 
   const onChange = async (e) => {
-    try {
-      if (typeof window !== 'undefined' && typeof window.mmBuildSeasonEntries === 'function') {
-        return;
-      }
-    } catch {}
+    // Removed mmBuildSeasonEntries guard to always run enhanced handler
     try {
       e.stopImmediatePropagation();
       e.stopPropagation();
@@ -115,6 +111,58 @@
       return { file, num, label };
     }).sort((a, b) => a.num - b.num);
 
+    try {
+      const sample = files.slice(0, 20).map((file) => file && (file.webkitRelativePath || file.name || ''));
+      console.debug('[Creator] Folder upload sample paths', sample);
+    } catch {}
+
+    let seasonEntries = [];
+    try {
+      if (typeof window !== 'undefined' && typeof window.mmBuildSeasonEntries === 'function') {
+        const info = window.mmBuildSeasonEntries(files, { isManga: isManga() });
+        if (info && Array.isArray(info.entries) && info.entries.length) {
+          seasonEntries = info.entries.slice();
+        }
+      }
+    } catch (err) {
+      console.warn('[Creator] mmBuildSeasonEntries failed in override', err);
+    }
+
+    if (!seasonEntries.length) {
+      seasonEntries = filesInSeason.map(({ file, num, label }, index) => ({
+        type: 'single',
+        file,
+        num,
+        label,
+        title: label || (isManga() ? `Volume ${num}` : `Episode ${num}`),
+        originalIndex: index
+      }));
+    }
+
+    const separatedEntries = seasonEntries.filter((entry) => entry && entry.type === 'separated');
+    const singleEntries = seasonEntries.filter((entry) => entry && entry.type !== 'separated');
+    const hasSeparated = separatedEntries.length > 0;
+    const summaryTotal = Math.max(1, hasSeparated
+      ? (separatedEntries.length + singleEntries.length)
+      : filesInSeason.length);
+
+    console.debug('[Creator] Folder upload grouping summary', {
+      totalFiles: files.length,
+      seasonEntryCount: seasonEntries.length,
+      separatedDetected: hasSeparated,
+      separatedCount: separatedEntries.length,
+      singleCount: singleEntries.length,
+      fallbackFilesCount: filesInSeason.length,
+      sampleEntries: seasonEntries.slice(0, 10).map((entry) => ({
+        type: entry.type,
+        title: entry.title,
+        num: entry.num,
+        parts: entry.parts ? entry.parts.length : 0,
+        key: entry.key || null,
+        folderName: entry.folderName || null
+      }))
+    });
+
     let folderOverlay = document.getElementById('folderUploadOverlay');
     if (!folderOverlay) {
       folderOverlay = document.createElement('div');
@@ -137,9 +185,8 @@
     const folderUploadList = folderOverlay.querySelector('#folderUploadList');
     const folderUploadSummary = folderOverlay.querySelector('#folderUploadSummary');
     const cancelBtn = folderOverlay.querySelector('#folderUploadCancel');
-    const totalFiles = filesInSeason.length;
     let completedCount = 0;
-    folderUploadSummary.textContent = `0 / ${totalFiles} completed`;
+    folderUploadSummary.textContent = `0 / ${summaryTotal} completed`;
     const uploadAbortController = new AbortController();
     let cancelRequested = false;
     const isCancelled = () => cancelRequested || uploadAbortController.signal.aborted;
@@ -150,7 +197,7 @@
         cancelRequested = true;
         cancelBtn.disabled = true;
         cancelBtn.textContent = 'Cancelling...';
-        folderUploadSummary.textContent = `Cancelling... ${completedCount} / ${totalFiles} completed`;
+        folderUploadSummary.textContent = `Cancelling... ${completedCount} / ${summaryTotal} completed`;
         try { uploadAbortController.abort(); } catch {}
       });
     }
@@ -327,171 +374,491 @@
     // Allow browser to paint overlay before heavy work
     try { await new Promise(r => setTimeout(r, 0)); } catch {}
 
-    for (const { file, num, label } of filesInSeason) {
-      if (isCancelled()) break;
-      const title = label || (isManga() ? `Volume ${num}` : `Episode ${num}`);
-      if (typeof addEpisode === 'function' && episodesDiv) addEpisode(episodesDiv, { title, src: '' });
-      const epDiv = episodesDiv ? episodesDiv.lastElementChild : null;
-      try { if (epDiv) epDiv.dataset.fileSizeBytes = String(file.size); } catch {}
+    if (!hasSeparated) {
+      if (!filesInSeason.length) {
+        folderUploadSummary.textContent = 'No usable files detected';
+        return;
+      }
+      for (const { file, num, label } of filesInSeason) {
+        if (isCancelled()) break;
+        const title = label || (isManga() ? `Volume ${num}` : `Episode ${num}`);
+        if (typeof addEpisode === 'function' && episodesDiv) addEpisode(episodesDiv, { title, src: '' });
+        const epDiv = episodesDiv ? episodesDiv.lastElementChild : null;
+        try { if (epDiv) epDiv.dataset.fileSizeBytes = String(file.size); } catch {}
 
-      const inputs = epDiv ? epDiv.querySelectorAll('input[type="text"]') : [];
-      const epSrcInput = inputs && inputs[1];
-      const epError = epDiv ? epDiv.querySelector('.ep-error') : null;
-      if (epError) epError.textContent = '';
+        const inputs = epDiv ? epDiv.querySelectorAll('input[type="text"]') : [];
+        const epSrcInput = inputs && inputs[1];
+        const epError = epDiv ? epDiv.querySelector('.ep-error') : null;
+        if (epError) epError.textContent = '';
 
-      const totalBytes = (file && typeof file.size === 'number' && file.size >= 0) ? file.size : null;
-      const rowCtx = createUploadRowContext(title, totalBytes);
+        const totalBytes = (file && typeof file.size === 'number' && file.size >= 0) ? file.size : null;
+        const rowCtx = createUploadRowContext(title, totalBytes);
 
-      const fn = async () => {
-        const markCancelled = () => {
-          rowCtx.setStatus('Cancelled', { color: '#cccccc' });
-          rowCtx.setProgress(0, { state: 'cancelled' });
-        };
-        if (isCancelled()) {
-          markCancelled();
-          return;
-        }
-        // Compute metadata per file inside the task so queue builds instantly
-        try {
+        const fn = async () => {
+          const markCancelled = () => {
+            rowCtx.setStatus('Cancelled', { color: '#cccccc' });
+            rowCtx.setProgress(0, { state: 'cancelled' });
+          };
           if (isCancelled()) {
             markCancelled();
             return;
           }
-          if (isManga() && /\.cbz$/i.test(file.name||'')) {
-            const ab = await file.arrayBuffer();
-            const zip = await JSZip.loadAsync(ab);
-            const names = Object.keys(zip.files).filter(n => /\.(jpe?g|png|gif|webp|bmp)$/i.test(n));
-            if (epDiv) { epDiv.dataset.VolumePageCount = String(names.length); epDiv.dataset.volumePageCount = String(names.length); }
-          } else {
-            const d = await computeLocalFileDurationSeconds(file);
-            if (epDiv && !Number.isNaN(d) && d > 0) epDiv.dataset.durationSeconds = String(Math.round(d));
-          }
-        } catch {}
-
-        // Manga CBZ → optionally expand per settings
-        const cbzSet = getCbzExpandSettings();
-        if (isManga() && /\.cbz$/i.test(file.name||'') && cbzSet.expand && cbzSet.batch) {
+          // Compute metadata per file inside the task so queue builds instantly
           try {
             if (isCancelled()) {
               markCancelled();
               return;
             }
-            rowCtx.setStatus('Processing', { color: null });
-            rowCtx.setProgress(0, { state: 'active' });
-            const ab = await file.arrayBuffer();
-            const zip = await JSZip.loadAsync(ab);
-            const names = Object.keys(zip.files)
-              .filter(n => /\.(jpe?g|png|gif|webp|bmp)$/i.test(n))
-              .sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
-            const pageUrls = [];
-            const totalSteps = names.length + 1; // +1 for JSON upload
-            for (let i = 0; i < names.length; i++) {
+            if (isManga() && /\.cbz$/i.test(file.name||'')) {
+              const ab = await file.arrayBuffer();
+              const zip = await JSZip.loadAsync(ab);
+              const names = Object.keys(zip.files).filter(n => /\.(jpe?g|png|gif|webp|bmp)$/i.test(n));
+              if (epDiv) { epDiv.dataset.VolumePageCount = String(names.length); epDiv.dataset.volumePageCount = String(names.length); }
+            } else {
+              const d = await computeLocalFileDurationSeconds(file);
+              if (epDiv && !Number.isNaN(d) && d > 0) epDiv.dataset.durationSeconds = String(Math.round(d));
+            }
+          } catch {}
+
+          // Manga CBZ → optionally expand per settings
+          const cbzSet = getCbzExpandSettings();
+          if (isManga() && /\.cbz$/i.test(file.name||'') && cbzSet.expand && cbzSet.batch) {
+            try {
               if (isCancelled()) {
                 markCancelled();
                 return;
               }
-              const name = names[i];
-              const imgBlob = await zip.files[name].async('blob');
-              const ext = (() => { const m = name.toLowerCase().match(/\.(jpe?g|png|gif|webp|bmp)$/); return m ? m[0] : '.png'; })();
-              const pageFile = new File([imgBlob], `${i + 1}${ext}`, { type: imgBlob.type || 'application/octet-stream' });
-              const base = (i / totalSteps) * 100;
+              rowCtx.setStatus('Processing', { color: null });
+              rowCtx.setProgress(0, { state: 'active' });
+              const ab = await file.arrayBuffer();
+              const zip = await JSZip.loadAsync(ab);
+              const names = Object.keys(zip.files)
+                .filter(n => /\.(jpe?g|png|gif|webp|bmp)$/i.test(n))
+                .sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+              const pageUrls = [];
+              const totalSteps = names.length + 1; // +1 for JSON upload
+              for (let i = 0; i < names.length; i++) {
+                if (isCancelled()) {
+                  markCancelled();
+                  return;
+                }
+                const name = names[i];
+                const imgBlob = await zip.files[name].async('blob');
+                const ext = (() => { const m = name.toLowerCase().match(/\.(jpe?g|png|gif|webp|bmp)$/); return m ? m[0] : '.png'; })();
+                const pageFile = new File([imgBlob], `${i + 1}${ext}`, { type: imgBlob.type || 'application/octet-stream' });
+                const base = (i / totalSteps) * 100;
+                const url = await uploadToCatboxWithProgress(
+                  pageFile,
+                  pct => {
+                    const adj = Math.max(0, Math.min(100, base + pct / totalSteps));
+                    rowCtx.setProgress(adj);
+                  },
+                  { context: 'batch', signal: uploadAbortController.signal }
+                );
+                pageUrls.push(url);
+              }
+              if (isCancelled()) {
+                markCancelled();
+                return;
+              }
+              // Build volume JSON with pagecount and mapping { "Page 1": url }
+              const pagesMap = {};
+              for (let i = 0; i < pageUrls.length; i++) pagesMap[`Page ${i + 1}`] = pageUrls[i];
+              const volumeJson = { pagecount: pageUrls.length, pages: pagesMap };
+              const volBlob = new Blob([JSON.stringify(volumeJson, null, 2)], { type: 'application/json' });
+              const volNum = num || 1;
+              const volFile = new File([volBlob], `${volNum}.json`, { type: 'application/json' });
               const url = await uploadToCatboxWithProgress(
-                pageFile,
+                volFile,
                 pct => {
+                  const base = ((names.length) / totalSteps) * 100;
                   const adj = Math.max(0, Math.min(100, base + pct / totalSteps));
                   rowCtx.setProgress(adj);
                 },
                 { context: 'batch', signal: uploadAbortController.signal }
               );
-              pageUrls.push(url);
+              if (epSrcInput) epSrcInput.value = url;
+              if (epError) epError.textContent = '';
+              rowCtx.setStatus('Done', { color: '#6ec1e4' });
+              rowCtx.setProgress(100, { state: 'complete' });
+              completedCount++;
+              folderUploadSummary.textContent = `${completedCount} / ${summaryTotal} completed`;
+              return;
+            } catch (err) {
+              if (isCancelled() || (err && err.name === 'AbortError')) {
+                markCancelled();
+                return;
+              }
+              rowCtx.setStatus('Failed', { color: '#ff4444' });
+              rowCtx.setProgress(0, { state: 'failed' });
+              if (epError) epError.innerHTML = '<span style="color:red">Upload failed</span>';
+              return;
             }
+          }
+
+          // Default path (videos or non-CBZ files)
+          for (let attempt = 1; attempt <= maxAttempts; attempt++) {
             if (isCancelled()) {
               markCancelled();
               return;
             }
-            // Build volume JSON with pagecount and mapping { "Page 1": url }
-            const pagesMap = {};
-            for (let i = 0; i < pageUrls.length; i++) pagesMap[`Page ${i + 1}`] = pageUrls[i];
-            const volumeJson = { pagecount: pageUrls.length, pages: pagesMap };
-            const volBlob = new Blob([JSON.stringify(volumeJson, null, 2)], { type: 'application/json' });
-            const volNum = num || 1;
-            const volFile = new File([volBlob], `${volNum}.json`, { type: 'application/json' });
-            const url = await uploadToCatboxWithProgress(
-              volFile,
-              pct => {
-                const base = ((names.length) / totalSteps) * 100;
-                const adj = Math.max(0, Math.min(100, base + pct / totalSteps));
-                rowCtx.setProgress(adj);
-              },
-              { context: 'batch', signal: uploadAbortController.signal }
-            );
-            if (epSrcInput) epSrcInput.value = url;
-            if (epError) epError.textContent = '';
-            rowCtx.setStatus('Done', { color: '#6ec1e4' });
-            rowCtx.setProgress(100, { state: 'complete' });
-            completedCount++;
-            folderUploadSummary.textContent = `${completedCount} / ${totalFiles} completed`;
-            return;
-          } catch (err) {
-            if (isCancelled() || (err && err.name === 'AbortError')) {
-              markCancelled();
+            rowCtx.setStatus((attempt === 1) ? 'Uploading' : `Retry ${attempt} of ${maxAttempts}`, { color: null });
+            rowCtx.setProgress(0, { state: 'active', totalBytes });
+            try {
+              const fileSizeBytes = (file && typeof file.size === 'number' && file.size >= 0) ? file.size : null;
+              const url = await uploadToCatboxWithProgress(
+                file,
+                pct => {
+                  const loaded = Number.isFinite(fileSizeBytes) ? (pct / 100) * fileSizeBytes : undefined;
+                  rowCtx.setProgress(pct, { loadedBytes: loaded });
+                },
+                { context: 'batch', signal: uploadAbortController.signal }
+              );
+              if (epSrcInput) epSrcInput.value = url;
+              if (epError) epError.textContent = '';
+              rowCtx.setStatus('Done', { color: '#6ec1e4' });
+              rowCtx.setProgress(100, { state: 'complete', loadedBytes: fileSizeBytes });
+              completedCount++;
+              folderUploadSummary.textContent = `${completedCount} / ${summaryTotal} completed`;
+              return;
+            } catch (err) {
+              if (isCancelled() || (err && err.name === 'AbortError')) {
+                markCancelled();
+                return;
+              }
+              if (attempt < maxAttempts) {
+                const base = 800 * Math.pow(2, attempt - 1);
+                const jitter = base * (0.3 + Math.random() * 0.4);
+                await new Promise(r => setTimeout(r, base + jitter));
+                if (isCancelled()) {
+                  markCancelled();
+                  return;
+                }
+                continue;
+              }
+              rowCtx.setStatus('Failed', { color: '#ff4444' });
+              rowCtx.setProgress(0, { state: 'failed' });
+              if (epError) epError.innerHTML = '<span style="color:red">Upload failed</span>';
               return;
             }
-            rowCtx.setStatus('Failed', { color: '#ff4444' });
-            rowCtx.setProgress(0, { state: 'failed' });
-            if (epError) epError.innerHTML = '<span style="color:red">Upload failed</span>';
-            return;
           }
+        };
+        taskFns.push(fn);
+      }
+    } else {
+      const processEntries = separatedEntries.slice();
+      if (!processEntries.length) {
+        folderUploadSummary.textContent = 'No usable files detected';
+        return;
+      }
+      console.debug('[Creator] Separated folder upload entry count', processEntries.length);
+      folderUploadSummary.textContent = `0 / ${summaryTotal} completed`;
+
+      processEntries.forEach((entry) => {
+        if (!entry || isCancelled()) return;
+        const rawNum = Number(entry.num);
+        const title = entry.title || entry.label || (isManga() ? `Volume ${rawNum || ''}`.trim() : `Episode ${rawNum || ''}`.trim());
+        const createdEpisode = (typeof addEpisode === 'function' && episodesDiv) ? addEpisode(episodesDiv, { title, src: '' }) : null;
+        const epDiv = createdEpisode || (episodesDiv ? episodesDiv.lastElementChild : null);
+        if (!epDiv) return;
+        try {
+          if (entry.type === 'separated') epDiv.dataset.forceSeparated = '1';
+          else delete epDiv.dataset.forceSeparated;
+          if (typeof updateEpisodeSeparatedUi === 'function') updateEpisodeSeparatedUi(epDiv);
+        } catch {}
+
+        let epSrcInput = epDiv._srcInput || null;
+        if (!epSrcInput) {
+          const inputs = epDiv.querySelectorAll('input[type="text"]');
+          if (inputs.length > 1) epSrcInput = inputs[1];
+        }
+        const epError = epDiv._errorEl || epDiv.querySelector('.ep-error');
+        if (epError) {
+          epError.textContent = '';
+          epError.style.color = '';
         }
 
-        // Default path (videos or non-CBZ files)
-        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-          if (isCancelled()) {
-            markCancelled();
-            return;
-          }
-          rowCtx.setStatus((attempt === 1) ? 'Uploading' : `Retry ${attempt} of ${maxAttempts}`, { color: null });
-          rowCtx.setProgress(0, { state: 'active', totalBytes });
+        const baseLabel = title || (isManga() ? 'Volume' : 'Episode');
+        const initialBytes = (entry.file && typeof entry.file.size === 'number' && entry.file.size >= 0)
+          ? entry.file.size
+          : null;
+        const rowCtx = createUploadRowContext(baseLabel, initialBytes);
+
+        if (entry.type === 'separated') {
+          const videoParts = (entry.parts || []).filter((part) => {
+            const baseName = (typeof part.base === 'string' && part.base)
+              ? part.base
+              : ((part.file && part.file.name) || '');
+            return /\.(mp4|m4v|mov|webm|mkv)$/i.test(baseName);
+          });
+          if (epDiv._separatedToggle) epDiv._separatedToggle.checked = true;
           try {
-            const fileSizeBytes = (file && typeof file.size === 'number' && file.size >= 0) ? file.size : null;
-            const url = await uploadToCatboxWithProgress(
-              file,
-              pct => {
-                const loaded = Number.isFinite(fileSizeBytes) ? (pct / 100) * fileSizeBytes : undefined;
-                rowCtx.setProgress(pct, { loadedBytes: loaded });
-              },
-              { context: 'batch', signal: uploadAbortController.signal }
-            );
-            if (epSrcInput) epSrcInput.value = url;
-            if (epError) epError.textContent = '';
-            rowCtx.setStatus('Done', { color: '#6ec1e4' });
-            rowCtx.setProgress(100, { state: 'complete', loadedBytes: fileSizeBytes });
-            completedCount++;
-            folderUploadSummary.textContent = `${completedCount} / ${totalFiles} completed`;
-            return;
-          } catch (err) {
-            if (isCancelled() || (err && err.name === 'AbortError')) {
+            if (epDiv._separatedToggle) {
+              const evt = (typeof Event === 'function') ? new Event('change', { bubbles: true }) : null;
+              if (evt) epDiv._separatedToggle.dispatchEvent(evt);
+            }
+          } catch {}
+          if (typeof epDiv._captureBaseSeparationMeta === 'function') epDiv._captureBaseSeparationMeta();
+          if (epDiv._partsList) epDiv._partsList.innerHTML = '';
+          if (Array.isArray(epDiv._partRows)) epDiv._partRows.length = 0;
+          if (typeof epDiv._updatePartsVisibility === 'function') epDiv._updatePartsVisibility();
+
+          const totalSize = videoParts.reduce((sum, part) => {
+            const size = Number(part.file && part.file.size);
+            return sum + (Number.isFinite(size) && size > 0 ? size : 0);
+          }, 0);
+          if (Number.isFinite(totalSize) && totalSize > 0) {
+            try { epDiv.dataset.fileSizeBytes = String(totalSize); } catch {}
+            rowCtx.setProgress(0, { totalBytes: totalSize });
+          }
+
+          const partRows = [];
+          videoParts.forEach((part, idx) => {
+            const displayIndex = Number.isFinite(part.partIndex) ? part.partIndex : (idx + 1);
+            const partLabel = `Part ${displayIndex}`;
+            const partRow = typeof epDiv._addPartRow === 'function'
+              ? epDiv._addPartRow({ title: partLabel })
+              : null;
+            if (partRow && partRow._titleInput) partRow._titleInput.value = partLabel;
+            if (partRow) {
+              const size = Number(part.file && part.file.size);
+              partRows.push({
+                row: partRow,
+                file: part.file,
+                size: Number.isFinite(size) && size > 0 ? size : 0
+              });
+            }
+          });
+
+          if (typeof epDiv._recalcSeparatedTotals === 'function') epDiv._recalcSeparatedTotals();
+          if (typeof epDiv._updatePartsVisibility === 'function') epDiv._updatePartsVisibility();
+          if (typeof epDiv._syncEpisodeMainSrc === 'function') epDiv._syncEpisodeMainSrc();
+
+          const fn = async () => {
+            const markCancelled = () => {
+              rowCtx.setStatus('Cancelled', { color: '#cccccc' });
+              rowCtx.setProgress(0, { state: 'cancelled' });
+            };
+            if (isCancelled()) {
               markCancelled();
               return;
             }
-            if (attempt < maxAttempts) {
-              const base = 800 * Math.pow(2, attempt - 1);
-              const jitter = base * (0.3 + Math.random() * 0.4);
-              await new Promise(r => setTimeout(r, base + jitter));
+            if (!partRows.length) {
+              rowCtx.setStatus('No video parts detected', { color: '#ffb347' });
+              rowCtx.setProgress(0, { state: 'failed' });
+              return;
+            }
+            rowCtx.setStatus('Uploading', { color: null });
+            let uploadedParts = 0;
+            let uploadedBytes = 0;
+            for (let idx = 0; idx < partRows.length; idx += 1) {
               if (isCancelled()) {
                 markCancelled();
                 return;
               }
-              continue;
+              const current = partRows[idx];
+              const partSize = Number.isFinite(current.size) ? current.size : 0;
+              try {
+                if (typeof epDiv._handlePartFileUpload === 'function') {
+                  await epDiv._handlePartFileUpload(current.row, current.file, {
+                    onProgress: (pct) => {
+                      const normalized = Math.max(0, Math.min(100, Number(pct) || 0)) / 100;
+                      const overallProgress = ((uploadedParts + normalized) / partRows.length) * 100;
+                      const loadedBytes = uploadedBytes + (partSize > 0 ? normalized * partSize : 0);
+                      rowCtx.setProgress(overallProgress, { loadedBytes, totalBytes: totalSize });
+                    }
+                  });
+                }
+              } catch (err) {
+                console.error('[Creator] Failed to upload part from folder', err);
+              }
+              const uploaded = current.row && current.row._srcInput && current.row._srcInput.value && current.row._srcInput.value.trim();
+              if (uploaded) {
+                uploadedParts += 1;
+                if (partSize > 0) uploadedBytes += partSize;
+              }
+              rowCtx.setProgress((uploadedParts / partRows.length) * 100, { loadedBytes: uploadedBytes, totalBytes: totalSize });
             }
-            rowCtx.setStatus('Failed', { color: '#ff4444' });
-            rowCtx.setProgress(0, { state: 'failed' });
-            if (epError) epError.innerHTML = '<span style="color:red">Upload failed</span>';
-            return;
+            if (uploadedParts === partRows.length) {
+              rowCtx.setStatus('Done', { color: '#6ec1e4' });
+              rowCtx.setProgress(100, { state: 'complete' });
+              completedCount++;
+              folderUploadSummary.textContent = `${completedCount} / ${summaryTotal} completed`;
+            } else if (!isCancelled()) {
+              rowCtx.setStatus(`Uploaded ${uploadedParts} of ${partRows.length}`, { color: '#ff4444' });
+              rowCtx.setProgress((uploadedParts / partRows.length) * 100, { state: 'failed' });
+            }
+            if (typeof epDiv._recalcSeparatedTotals === 'function') epDiv._recalcSeparatedTotals();
+            if (typeof epDiv._syncEpisodeMainSrc === 'function') epDiv._syncEpisodeMainSrc();
+          };
+          taskFns.push(fn);
+          return;
+        }
+
+        const fileForUpload = entry.file;
+        if (!fileForUpload) {
+          rowCtx.setStatus('No file detected', { color: '#ffb347' });
+          rowCtx.setProgress(0, { state: 'failed' });
+          return;
+        }
+        if (fileForUpload && fileForUpload.size != null) {
+          try { epDiv.dataset.fileSizeBytes = String(fileForUpload.size); } catch {}
+          if (!isManga() && typeof epDiv._computeLocalFileDurationSeconds === 'function') {
+            epDiv._computeLocalFileDurationSeconds(fileForUpload).then((d) => {
+              if (!Number.isNaN(d) && d > 0) epDiv.dataset.durationSeconds = String(Math.round(d));
+            }).catch(() => {});
           }
         }
-      };
-      taskFns.push(fn);
+
+        const fileSizeBytes = (fileForUpload && typeof fileForUpload.size === 'number' && fileForUpload.size >= 0)
+          ? fileForUpload.size
+          : null;
+        const fn = async () => {
+          const markCancelled = () => {
+            rowCtx.setStatus('Cancelled', { color: '#cccccc' });
+            rowCtx.setProgress(0, { state: 'cancelled' });
+          };
+          for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+            if (isCancelled()) {
+              markCancelled();
+              return;
+            }
+            rowCtx.setStatus((attempt === 1) ? 'Uploading' : `Retry ${attempt} of ${maxAttempts}`, { color: null });
+            rowCtx.setProgress(0, { state: 'active', totalBytes: fileSizeBytes });
+            try {
+              if (isManga() && fileForUpload && /\.cbz$/i.test(fileForUpload.name || '')) {
+                try {
+                  const ab = await fileForUpload.arrayBuffer();
+                  const zip = await JSZip.loadAsync(ab);
+                  const names = Object.keys(zip.files).filter((n) => /\.(jpe?g|png|gif|webp|bmp)$/i.test(n));
+                  epDiv.dataset.VolumePageCount = String(names.length);
+                  epDiv.dataset.volumePageCount = String(names.length);
+                } catch {}
+              }
+              const url = await uploadToCatboxWithProgress(
+                fileForUpload,
+                (pct) => {
+                  const loaded = Number.isFinite(fileSizeBytes) ? (pct / 100) * fileSizeBytes : undefined;
+                  rowCtx.setProgress(pct, { loadedBytes: loaded });
+                },
+                { context: 'batch', signal: uploadAbortController.signal }
+              );
+              if (epSrcInput) epSrcInput.value = url;
+              if (epError) epError.textContent = '';
+              rowCtx.setStatus('Done', { color: '#6ec1e4' });
+              rowCtx.setProgress(100, { state: 'complete', loadedBytes: fileSizeBytes });
+              completedCount++;
+              folderUploadSummary.textContent = `${completedCount} / ${summaryTotal} completed`;
+              return;
+            } catch (err) {
+              if (isCancelled() || (err && err.name === 'AbortError')) {
+                markCancelled();
+                return;
+              }
+              if (attempt < maxAttempts) {
+                const base = 800 * Math.pow(2, attempt - 1);
+                const jitter = base * (0.3 + Math.random() * 0.4);
+                await new Promise(r => setTimeout(r, base + jitter));
+                continue;
+              }
+              rowCtx.setStatus('Failed', { color: '#ff4444' });
+              rowCtx.setProgress(0, { state: 'failed' });
+              if (epError) epError.innerHTML = '<span style="color:red">Upload failed</span>';
+              return;
+            }
+          }
+        };
+        taskFns.push(fn);
+      });
+
+      // Handle any non-separated entries alongside to avoid losing singles
+      singleEntries.forEach((entry) => {
+        if (!entry || isCancelled()) return;
+        if (!entry.file) return;
+        const title = entry.title || entry.label || (isManga() ? `Volume ${entry.num || ''}`.trim() : `Episode ${entry.num || ''}`.trim());
+        const createdEpisode = (typeof addEpisode === 'function' && episodesDiv) ? addEpisode(episodesDiv, { title, src: '' }) : null;
+        const epDiv = createdEpisode || (episodesDiv ? episodesDiv.lastElementChild : null);
+        if (!epDiv) return;
+        let epSrcInput = epDiv._srcInput || null;
+        if (!epSrcInput) {
+          const inputs = epDiv.querySelectorAll('input[type="text"]');
+          if (inputs.length > 1) epSrcInput = inputs[1];
+        }
+        const epError = epDiv._errorEl || epDiv.querySelector('.ep-error');
+        if (epError) epError.textContent = '';
+
+        const fileForUpload = entry.file;
+        if (fileForUpload && fileForUpload.size != null) {
+          try { epDiv.dataset.fileSizeBytes = String(fileForUpload.size); } catch {}
+          if (!isManga() && typeof epDiv._computeLocalFileDurationSeconds === 'function') {
+            epDiv._computeLocalFileDurationSeconds(fileForUpload).then((d) => {
+              if (!Number.isNaN(d) && d > 0) epDiv.dataset.durationSeconds = String(Math.round(d));
+            }).catch(() => {});
+          }
+        }
+
+        const fileSizeBytes = (fileForUpload && typeof fileForUpload.size === 'number' && fileForUpload.size >= 0)
+          ? fileForUpload.size
+          : null;
+        const rowCtx = createUploadRowContext(title, fileSizeBytes);
+
+        const fn = async () => {
+          const markCancelled = () => {
+            rowCtx.setStatus('Cancelled', { color: '#cccccc' });
+            rowCtx.setProgress(0, { state: 'cancelled' });
+          };
+          for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+            if (isCancelled()) {
+              markCancelled();
+              return;
+            }
+            rowCtx.setStatus((attempt === 1) ? 'Uploading' : `Retry ${attempt} of ${maxAttempts}`, { color: null });
+            rowCtx.setProgress(0, { state: 'active', totalBytes: fileSizeBytes });
+            try {
+              if (isManga() && fileForUpload && /\.cbz$/i.test(fileForUpload.name || '')) {
+                try {
+                  const ab = await fileForUpload.arrayBuffer();
+                  const zip = await JSZip.loadAsync(ab);
+                  const names = Object.keys(zip.files).filter((n) => /\.(jpe?g|png|gif|webp|bmp)$/i.test(n));
+                  epDiv.dataset.VolumePageCount = String(names.length);
+                  epDiv.dataset.volumePageCount = String(names.length);
+                } catch {}
+              }
+              const url = await uploadToCatboxWithProgress(
+                fileForUpload,
+                (pct) => {
+                  const loaded = Number.isFinite(fileSizeBytes) ? (pct / 100) * fileSizeBytes : undefined;
+                  rowCtx.setProgress(pct, { loadedBytes: loaded });
+                },
+                { context: 'batch', signal: uploadAbortController.signal }
+              );
+              if (epSrcInput) epSrcInput.value = url;
+              if (epError) epError.textContent = '';
+              rowCtx.setStatus('Done', { color: '#6ec1e4' });
+              rowCtx.setProgress(100, { state: 'complete', loadedBytes: fileSizeBytes });
+              completedCount++;
+              folderUploadSummary.textContent = `${completedCount} / ${summaryTotal} completed`;
+              return;
+            } catch (err) {
+              if (isCancelled() || (err && err.name === 'AbortError')) {
+                markCancelled();
+                return;
+              }
+              if (attempt < maxAttempts) {
+                const base = 800 * Math.pow(2, attempt - 1);
+                const jitter = base * (0.3 + Math.random() * 0.4);
+                await new Promise(r => setTimeout(r, base + jitter));
+                continue;
+              }
+              rowCtx.setStatus('Failed', { color: '#ff4444' });
+              rowCtx.setProgress(0, { state: 'failed' });
+              if (epError) epError.innerHTML = '<span style="color:red">Upload failed</span>';
+              return;
+            }
+          }
+        };
+        taskFns.push(fn);
+      });
     }
 
     const runWithConcurrency = async (fns, limit) => {
@@ -516,7 +883,7 @@
     } finally {
       try { window.isFolderUploading = false; } catch {}
       if (cancelRequested && folderUploadSummary) {
-        folderUploadSummary.textContent = `Cancelled ${completedCount} / ${totalFiles} completed`;
+        folderUploadSummary.textContent = `Cancelled ${completedCount} / ${summaryTotal} completed`;
       }
       if (folderOverlay) folderOverlay.remove();
     }

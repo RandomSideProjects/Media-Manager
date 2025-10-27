@@ -524,6 +524,20 @@ pre {
   border-radius: 12px; padding: 16px; box-shadow: 0 10px 24px rgba(0,0,0,0.55);
 }
 .mm-settings-row { display:flex; align-items:center; gap:.5em; margin:.5em 0; }
+.setting-tag {
+  display:inline-flex;
+  align-items:center;
+  padding:0.1em 0.55em;
+  border-radius:999px;
+  font-size:0.7em;
+  text-transform:uppercase;
+  letter-spacing:0.08em;
+  font-weight:700;
+  margin-left:0.45em;
+}
+.setting-tag--dev { background:rgba(59,130,246,0.18); color:#60a5fa; }
+.setting-tag--unstable { background:rgba(239,68,68,0.18); color:#f87171; }
+.setting-tag--beta { background:rgba(250,204,21,0.2); color:#facc15; }
 .mm-toggle { display:flex; align-items:center; gap:.5em; cursor:pointer; }
 .mm-input { width:100%; padding:.6em; border-radius:6px; border:1px solid #444; background:#2a2a2a; color:#f1f1f1; }
 .mm-actions { display:flex; gap:.5em; justify-content:flex-end; margin-top: 10px; }

@@ -45,6 +45,15 @@
         Uploading image…
         <progress id="posterProgress" max="100" value="0" style="vertical-align:middle; width:160px; margin-left:0.5em;"></progress>
       </div>
+      <div id="maintainerHiddenRow" style="display:none; margin-top:0.6em;">
+        <label class="mm-toggle" style="gap:.4em; align-items:center;">
+          <input type="checkbox" id="maintainerHiddenToggle">
+          <span>Hide this directory from Source Lists</span>
+        </label>
+        <small style="display:block; margin-left:2.1em; margin-top:0.2em; color:#9ecbff;">
+          When enabled, Source Maintainer workflows skip generating entries for this JSON.
+        </small>
+      </div>
     </div>
     <div id="categories"></div>
     <button id="addCategory">Add Category</button>
@@ -125,7 +134,7 @@
         <input id="mmUploadConcurrencyRange" type="range" min="1" max="8" step="1" value="2" style="flex:1;">
         <span id="mmUploadConcurrencyValue" style="min-width:2em; text-align:right;">2</span>
       </div>
-      <div class="mm-settings-row dev-menu-row" id="devMenuRow" style="display:none; justify-content:space-between; align-items:center;">
+      <div class="mm-settings-row dev-menu-row" id="devMenuRow" style="display:none; justify-content:space-between; align-items:center;" data-setting-tag="dev">
         <button id="devMenuBtn" type="button" class="dev-menu-trigger">Dev Menu</button>
         <span class="dev-menu-status" id="devMenuStatus">Developer tools</span>
       </div>
@@ -143,7 +152,7 @@
         <button id="devMenuCloseBtn" type="button" class="dev-menu-trigger">Close</button>
       </div>
       <div class="dev-menu-content">
-        <section class="dev-menu-section" aria-labelledby="devMenuSettingsHeading">
+        <section class="dev-menu-section" aria-labelledby="devMenuSettingsHeading" data-setting-tag="dev">
           <h4 id="devMenuSettingsHeading">Dev Settings</h4>
           <div class="dev-field">
             <label for="devUploadConcurrencyInput">Upload concurrency</label>
@@ -156,12 +165,12 @@
           <div class="dev-field">
             <label class="dev-menu-toggle" for="devHiddenSourceToggle">
               <input type="checkbox" id="devHiddenSourceToggle">
-              <span>Append "-hidden" to exported filenames</span>
+              <span>Show hidden-source toggle in editor</span>
             </label>
-            <p class="dev-menu-hint">Hidden files stay out of SourceList maintainers until you unhide them.</p>
+            <p class="dev-menu-hint">Adds a control next to the poster picker to hide directories from SourceList builds.</p>
           </div>
         </section>
-        <section class="dev-menu-section" aria-labelledby="devActionsHeading">
+        <section class="dev-menu-section" aria-labelledby="devActionsHeading" data-setting-tag="dev">
           <h4 id="devActionsHeading">System Triggers</h4>
           <div class="dev-action-grid" id="devActionGrid">
             <button type="button" data-dev-action="notice:info">Show info notice</button>
@@ -171,7 +180,7 @@
             <button type="button" data-dev-action="creator:test-json">Send test JSON</button>
           </div>
         </section>
-        <section class="dev-menu-section" aria-labelledby="devUploadOverridesHeading">
+        <section class="dev-menu-section" aria-labelledby="devUploadOverridesHeading" data-setting-tag="dev">
           <h4 id="devUploadOverridesHeading">Upload Overrides</h4>
           <div id="mmCatboxRow" class="mm-settings-row" style="display:none; flex-direction:column; align-items:stretch; gap:.3em; margin:0;">
             <label for="mmCatboxUploadUrl">Catbox Upload URL</label>
@@ -220,6 +229,7 @@
   <script src="scripts/constants.js"></script>
   <script src="../scripts/alerts.js"></script>
   <script src="../scripts/dev-core.js"></script>
+  <script src="../scripts/tags.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="scripts/uploader.js"></script>
   <script src="scripts/ui.js"></script>

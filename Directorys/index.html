@@ -43,7 +43,7 @@
           <label><input type="radio" name="mode" value="manga"> Manga</label>
         </div>
       </div>
-      <div class="section dev-menu-row" id="devMenuRow" style="display:none;">
+      <div class="section dev-menu-row" id="devMenuRow" style="display:none;" data-setting-tag="dev">
         <button id="devMenuBtn" type="button" class="btn-primary">Dev Menu</button>
         <span class="dev-menu-status" id="devMenuStatus">Developer tools</span>
       </div>
@@ -85,7 +85,7 @@
         <button id="devMenuCloseBtn" type="button" class="btn-ghost">Close</button>
       </div>
       <div class="dev-menu-content">
-        <section class="dev-menu-section" aria-labelledby="devMenuModeHeading">
+        <section class="dev-menu-section" aria-labelledby="devMenuModeHeading" data-setting-tag="dev">
           <h4 id="devMenuModeHeading">Mode</h4>
           <label class="dev-menu-toggle" for="devModeToggle">
             <input type="checkbox" id="devModeToggle">
@@ -93,7 +93,7 @@
           </label>
           <p class="dev-menu-hint">Toggle with O + P anywhere.</p>
         </section>
-        <section class="dev-menu-section">
+        <section class="dev-menu-section" data-setting-tag="dev">
           <h4>Quick Actions</h4>
           <div class="dev-action-grid" id="devActionGrid">
             <button type="button" data-dev-action="notice:info">Show info notice</button>
@@ -103,7 +103,7 @@
             <button type="button" data-dev-action="sources:feedback">Open feedback</button>
           </div>
         </section>
-        <section class="dev-menu-section">
+        <section class="dev-menu-section" data-setting-tag="dev">
           <div class="dev-menu-diagnostics-header">
             <h4>Diagnostics</h4>
             <button id="devDiagnosticsRefreshBtn" type="button" class="btn-ghost">Refresh</button>
@@ -136,6 +136,7 @@
 
   <script src="../scripts/alerts.js"></script>
   <script src="../scripts/dev-core.js"></script>
+  <script src="../scripts/tags.js"></script>
   <script src="scripts/constants.js"></script>
   <script src="scripts/utils.js"></script>
   <script src="scripts/render.js"></script>

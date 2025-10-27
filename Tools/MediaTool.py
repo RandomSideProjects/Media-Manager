@@ -9,6 +9,7 @@ segment muxer.
 from __future__ import annotations
 
 import argparse
+import json
 import math
 import pathlib
 import subprocess
@@ -40,6 +41,14 @@ SUPPORTED_VIDEO_SUFFIXES = {
 MAX_SEGMENT_OVERSHOOT_RATIO = 1.05  # Allow up to 5% container overhead.
 
 
+DEFAULT_SUPPRESS_TOKENS: tuple[str, ...] = (
+    "Past duration",  # benign timestamp jitter that FFmpeg recovers from
+    "Non-monotonous DTS",  # expected when trimming near keyframes
+    "Application provided invalid",  # noisy demuxer warnings that do not halt processing
+    "corrupt input packet",  # already handled by FFmpeg when copying streams
+)
+
+
 def format_timespan(seconds: float) -> str:
     """Return a human-friendly mm:ss or hh:mm:ss string."""
     seconds = max(0, int(seconds + 0.5))
@@ -48,6 +57,93 @@ def format_timespan(seconds: float) -> str:
     if hours:
         return f"{hours:d}:{minutes:02d}:{secs:02d}"
     return f"{minutes:d}:{secs:02d}"
+
+
+def run_ffprobe_duration(video: pathlib.Path) -> float:
+    """Return the media duration in seconds using ffprobe."""
+    cmd = [
+        "ffprobe",
+        "-v",
+        "error",
+        "-show_entries",
+        "format=duration",
+        "-of",
+        "default=noprint_wrappers=1:nokey=1",
+        str(video),
+    ]
+    try:
+        raw = subprocess.check_output(cmd, text=True).strip()
+    except FileNotFoundError as exc:  # pragma: no cover - handled elsewhere
+        raise RuntimeError("ffprobe not found on PATH.") from exc
+    except subprocess.CalledProcessError as exc:
+        raise RuntimeError(f"ffprobe failed to read duration: {exc}") from exc
+
+    try:
+        return float(raw)
+    except (TypeError, ValueError) as exc:
+        raise RuntimeError(f"ffprobe provided an invalid duration: {raw!r}") from exc
+
+
+def run_ffprobe_bitrate(video: pathlib.Path) -> int:
+    """Return the video stream bitrate in bits per second using ffprobe."""
+    cmd = [
+        "ffprobe",
+        "-v",
+        "error",
+        "-select_streams",
+        "v:0",
+        "-show_entries",
+        "stream=bit_rate",
+        "-of",
+        "default=noprint_wrappers=1:nokey=1",
+        str(video),
+    ]
+    try:
+        raw = subprocess.check_output(cmd, text=True).strip()
+    except FileNotFoundError as exc:  # pragma: no cover - handled elsewhere
+        raise RuntimeError("ffprobe not found on PATH.") from exc
+    except subprocess.CalledProcessError as exc:
+        raise RuntimeError(f"ffprobe failed to read bitrate: {exc}") from exc
+
+    if not raw or raw == "N/A":
+        # Fallback to format bitrate if stream bitrate not available
+        cmd = [
+            "ffprobe",
+            "-v",
+            "error",
+            "-show_entries",
+            "format=bit_rate",
+            "-of",
+            "default=noprint_wrappers=1:nokey=1",
+            str(video),
+        ]
+        try:
+            raw = subprocess.check_output(cmd, text=True).strip()
+        except subprocess.CalledProcessError as exc:
+            raise RuntimeError(f"ffprobe failed to read format bitrate: {exc}") from exc
+
+    try:
+        return int(float(raw))
+    except (TypeError, ValueError) as exc:
+        raise RuntimeError(f"ffprobe provided an invalid bitrate: {raw!r}") from exc
+
+
+def ask_target_size_mb(default: float = 180.0) -> float:
+    """Prompt the user for a positive target size (MB) for splitting."""
+    prompt = f"Target size per chunk in MB [{default:.0f}]: "
+    while True:
+        raw = input(prompt).strip()
+        if not raw:
+            return default
+        try:
+            value = float(raw)
+        except ValueError:
+            print("Please enter a numeric value.")
+            continue
+        if value <= 0:
+            print("Target size must be greater than zero.")
+            continue
+        return value
 
 
 def ask_path(prompt: str, expect_file: Optional[bool] = None) -> pathlib.Path:
@@ -69,85 +165,145 @@ def ask_path(prompt: str, expect_file: Optional[bool] = None) -> pathlib.Path:
                 print("That path exists but is not a directory. Try again.")
                 continue
             return path
-        if not path.exists():
-            print("That path does not exist. Try again.")
-            continue
-        if not path.is_file() and not path.is_dir():
-            print("That path is neither a file nor a directory. Try again.")
-            continue
+
         return path
 
 
-def ask_target_size_mb() -> float:
-    """Prompt until a positive numeric target size (MB) is provided."""
-    while True:
-        raw = input("Target size per chunk (MB): ").strip()
-        try:
-            value = float(raw)
-            if value <= 0:
-                raise ValueError
-            return value
-        except ValueError:
-            print("Please enter a positive number, e.g. 180.")
-
-
-def run_ffprobe_duration(video: pathlib.Path) -> float:
-    """Return video duration in seconds using ffprobe, with fallbacks."""
-
-    commands = [
-        [
-            "ffprobe",
-            "-v",
-            "error",
-            "-select_streams",
-            "v:0",
-            "-show_entries",
-            "stream=duration",
-            "-of",
-            "default=noprint_wrappers=1:nokey=1",
-            str(video),
-        ],
-        [
-            "ffprobe",
-            "-v",
-            "error",
-            "-show_entries",
-            "format=duration",
-            "-of",
-            "default=noprint_wrappers=1:nokey=1",
-            str(video),
-        ],
+def probe_streams(video: pathlib.Path) -> list[dict[str, object]]:
+    """Return stream metadata from ffprobe."""
+    cmd = [
+        "ffprobe",
+        "-v",
+        "error",
+        "-print_format",
+        "json",
+        "-show_streams",
+        str(video),
     ]
+    try:
+        raw = subprocess.check_output(cmd, text=True)
+    except FileNotFoundError as exc:  # pragma: no cover - handled elsewhere
+        raise RuntimeError("ffprobe not found on PATH.") from exc
+    except subprocess.CalledProcessError as exc:
+        raise RuntimeError(f"ffprobe failed to inspect streams: {exc}") from exc
 
-    last_error: Optional[str] = None
+    try:
+        payload = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise RuntimeError("ffprobe produced invalid JSON stream data.") from exc
 
-    for cmd in commands:
-        try:
-            out = subprocess.check_output(cmd)
-            candidate = out.decode().strip()
-            if not candidate:
-                last_error = "ffprobe returned no duration."
-                continue
-            duration = float(candidate)
-            if not math.isfinite(duration) or duration <= 0:
-                last_error = "ffprobe reported a non-positive duration."
-                continue
-            return duration
-        except FileNotFoundError as exc:
-            raise RuntimeError("ffprobe not found on PATH.") from exc
-        except subprocess.CalledProcessError as exc:
-            last_error = f"ffprobe failed: {exc}"
-        except ValueError:
-            last_error = "Could not parse duration from ffprobe output."
-
-    raise RuntimeError(last_error or "Unable to determine duration via ffprobe.")
+    streams = payload.get("streams")
+    if not isinstance(streams, list):
+        raise RuntimeError("ffprobe did not return stream information.")
+    return [stream for stream in streams if isinstance(stream, dict)]
 
 
-DEFAULT_SUPPRESS_TOKENS = (
-    "Invalid NAL unit size",
-    "missing picture in access unit",
-    "Referenced QT chapter track not found",
-)
+def plan_stream_copy(video: pathlib.Path, target_format: str) -> dict[str, object]:
+    """Determine whether the target container can be produced via stream copy."""
+    try:
+        streams = probe_streams(video)
+    except Exception as exc:  # noqa: BLE001
+        return {
+            "use_copy": False,
+            "reason": str(exc),
+            "has_attachment_streams": False,
+            "has_data_streams": False,
+            "has_subtitle_streams": False,
+        }
+
+    video_codecs = {
+        str(stream.get("codec_name", "")).lower()
+        for stream in streams
+        if stream.get("codec_type") == "video"
+    }
+    audio_codecs = {
+        str(stream.get("codec_name", "")).lower()
+        for stream in streams
+        if stream.get("codec_type") == "audio"
+    }
+    subtitle_codecs = {
+        str(stream.get("codec_name", "")).lower()
+        for stream in streams
+        if stream.get("codec_type") == "subtitle"
+    }
+
+    has_attachments = any(stream.get("codec_type") == "attachment" for stream in streams)
+    has_data = any(stream.get("codec_type") == "data" for stream in streams)
+    has_subs = bool(subtitle_codecs)
+
+    plan: dict[str, object] = {
+        "use_copy": False,
+        "reason": None,
+        "has_attachment_streams": has_attachments,
+        "has_data_streams": has_data,
+        "has_subtitle_streams": has_subs,
+        "drop_subtitles": False,
+        "dropped_subtitle_codecs": [],
+    }
+
+    if target_format == "mp4":
+        allowed_video = {"h264"}
+        allowed_audio = {"aac", "mp3"}
+        unsupported_video = sorted(codec for codec in video_codecs if codec not in allowed_video)
+        unsupported_audio = sorted(codec for codec in audio_codecs if codec not in allowed_audio)
+        if unsupported_video:
+            plan["reason"] = (
+                "Video codec(s) incompatible with mp4: " + ", ".join(unsupported_video)
+            )
+            return plan
+        if unsupported_audio:
+            plan["reason"] = (
+                "Audio codec(s) incompatible with mp4: " + ", ".join(unsupported_audio)
+            )
+            return plan
+        unsupported_subs = sorted(codec for codec in subtitle_codecs if codec != "mov_text")
+        plan.update(
+            {
+                "use_copy": True,
+                "drop_subtitles": bool(unsupported_subs and subtitle_codecs),
+                "dropped_subtitle_codecs": unsupported_subs,
+            }
+        )
+        if not plan["drop_subtitles"]:
+            plan["reason"] = None
+        else:
+            plan["reason"] = (
+                "Dropping subtitle stream(s) not supported by mp4: "
+                + ", ".join(unsupported_subs)
+            )
+        return plan
+
+    if target_format == "mkv":
+        plan.update({"use_copy": True, "drop_subtitles": False, "reason": None})
+        return plan
+
+    if target_format == "webm":
+        allowed_video = {"vp8", "vp9"}
+        allowed_audio = {"vorbis", "opus"}
+        unsupported_video = sorted(codec for codec in video_codecs if codec not in allowed_video)
+        unsupported_audio = sorted(codec for codec in audio_codecs if codec not in allowed_audio)
+        if unsupported_video:
+            plan["reason"] = (
+                "Video codec(s) incompatible with webm: " + ", ".join(unsupported_video)
+            )
+            return plan
+        if unsupported_audio:
+            plan["reason"] = (
+                "Audio codec(s) incompatible with webm: " + ", ".join(unsupported_audio)
+            )
+            return plan
+        plan.update(
+            {
+                "use_copy": True,
+                "drop_subtitles": bool(subtitle_codecs),
+                "dropped_subtitle_codecs": sorted(subtitle_codecs),
+                "reason": None if not subtitle_codecs else "Dropping subtitle stream(s) — webm does not support them.",
+            }
+        )
+        return plan
+
+    plan["reason"] = f"Unsupported target format: {target_format}"
+    return plan
 
 
 def run_ffmpeg_command(
@@ -664,24 +820,61 @@ def build_conversion_command(
     video: pathlib.Path,
     target_format: str,
     destination: pathlib.Path,
+    *,
+    prefer_fast: bool = True,
+    log: Optional[Callable[[str], None]] = None,
+    video_bitrate: Optional[int] = None,
 ) -> list[str]:
-    cmd = ["ffmpeg", "-hide_banner", "-y", "-i", str(video)]
+    base_cmd = ["ffmpeg", "-hide_banner", "-y", "-i", str(video)]
+
+    def append_pruning_flags(cmd_list: list[str], *, drop_subtitles: bool = False) -> None:
+        cmd_list.extend(["-map", "-0:d?", "-map", "-0:t?"])
+        if drop_subtitles:
+            cmd_list.extend(["-map", "-0:s?"])
+
+    plan: Optional[dict[str, object]] = None
+
+    if prefer_fast:
+        plan = plan_stream_copy(video, target_format)
+        if plan.get("use_copy"):
+            if log:
+                log("Using stream copy — no re-encoding needed.")
+            cmd = base_cmd.copy()
+            cmd.extend(["-map", "0"])
+            append_pruning_flags(cmd, drop_subtitles=bool(plan.get("drop_subtitles")))
+            if plan.get("drop_subtitles") and log:
+                dropped = plan.get("dropped_subtitle_codecs", [])
+                detail = f" ({', '.join(dropped)})" if dropped else ""
+                log(f"Dropping subtitle stream(s) for compatibility{detail}.")
+            cmd.extend(["-c", "copy"])
+            if target_format == "mp4":
+                cmd.extend(["-movflags", "+faststart"])
+            cmd.append(str(destination))
+            return cmd
+        if log and plan.get("reason"):
+            log(f"Stream copy unavailable: {plan['reason']}. Falling back to re-encode.")
+    else:
+        plan = plan_stream_copy(video, target_format)
+
+    cmd = base_cmd.copy()
 
     if target_format == "mp4":
+        cmd.extend(["-map", "0"])
+        append_pruning_flags(cmd, drop_subtitles=False)
+        cmd.extend(["-c:v", "libx264", "-preset", "ultrafast"])
+        
+        if video_bitrate and video_bitrate > 0:
+            bitrate_kbps = video_bitrate // 1000
+            cmd.extend(["-b:v", f"{bitrate_kbps}k"])
+            if log:
+                log(f"Using source video bitrate: {bitrate_kbps} kbps")
+        else:
+            cmd.extend(["-crf", "23"])
+            if log:
+                log("Source bitrate unavailable, using CRF 23")
+        
         cmd.extend(
             [
-                "-map",
-                "0",
-                "-map",
-                "-0:d?",
-                "-map",
-                "-0:t?",
-                "-c:v",
-                "libx264",
-                "-preset",
-                "slow",
-                "-crf",
-                "20",
                 "-c:a",
                 "aac",
                 "-b:a",
@@ -693,35 +886,25 @@ def build_conversion_command(
             ]
         )
     elif target_format == "mkv":
-        cmd.extend(
-            [
-                "-map",
-                "0",
-                "-map",
-                "-0:d?",
-                "-c",
-                "copy",
-            ]
-        )
+        cmd.extend(["-map", "0"])
+        append_pruning_flags(cmd, drop_subtitles=False)
+        cmd.extend(["-c", "copy"])
     elif target_format == "webm":
-        cmd.extend(
-            [
-                "-map",
-                "0:v:0",
-                "-map",
-                "0:a:0?",
-                "-c:v",
-                "libvpx-vp9",
-                "-b:v",
-                "0",
-                "-crf",
-                "32",
-                "-c:a",
-                "libopus",
-                "-b:a",
-                "128k",
-            ]
-        )
+        cmd.extend(["-map", "0:v:0", "-map", "0:a:0?"])
+        append_pruning_flags(cmd, drop_subtitles=True)
+        cmd.extend(["-c:v", "libvpx-vp9", "-speed", "8"])
+        
+        if video_bitrate and video_bitrate > 0:
+            bitrate_kbps = video_bitrate // 1000
+            cmd.extend(["-b:v", f"{bitrate_kbps}k"])
+            if log:
+                log(f"Using source video bitrate: {bitrate_kbps} kbps")
+        else:
+            cmd.extend(["-b:v", "0", "-crf", "32"])
+            if log:
+                log("Source bitrate unavailable, using CRF 32")
+        
+        cmd.extend(["-c:a", "libopus", "-b:a", "128k"])
     else:
         raise RuntimeError(f"Unsupported format: {target_format}")
 
@@ -788,7 +971,8 @@ def convert_source(
     for index, video in enumerate(videos, start=1):
         if multiple:
             log(f"[{index}/{total}] Processing {video.name}")
-            child_cb: StatusCallback = lambda msg, name=video.name: log(f"{name}: {msg}")
+            def child_cb(message: str, name: str = video.name) -> None:
+                log(f"{name}: {message}")
         else:
             child_cb = status_cb
         message_cb = child_cb or log
@@ -809,6 +993,16 @@ def convert_source(
 
         try:
             duration = run_ffprobe_duration(video)
+            
+            # Probe video bitrate for matching
+            video_bitrate: Optional[int] = None
+            try:
+                video_bitrate = run_ffprobe_bitrate(video)
+                bitrate_mbps = video_bitrate / 1_000_000
+                message_cb(f"Source video bitrate: {bitrate_mbps:.2f} Mbps")
+            except Exception as exc:
+                message_cb(f"Could not determine source bitrate: {exc}")
+            
             if progress_cb:
 
                 def progress_wrapper(processed: float, total: float, video_path: pathlib.Path = video) -> None:
@@ -854,7 +1048,14 @@ def convert_source(
                     message_cb(f"Final output path will be: {final_path}")
 
             destination.parent.mkdir(parents=True, exist_ok=True)
-            cmd = build_conversion_command(video, target_format, destination)
+            cmd = build_conversion_command(
+                video,
+                target_format,
+                destination,
+                prefer_fast=True,
+                log=child_log,
+                video_bitrate=video_bitrate,
+            )
             suppressed = run_ffmpeg_command(
                 cmd,
                 child_log,
@@ -1420,22 +1621,49 @@ def run_split_cli(delete_source_default: bool = False) -> None:
     progress_state: dict[pathlib.Path, dict[str, float]] = {}
 
     def progress_callback(path: pathlib.Path, processed: float, total: float) -> None:
-        info = progress_state.setdefault(path, {"start": time.time(), "last": -10.0})
+        info = progress_state.setdefault(path, {
+            "start": time.time(),
+            "last": -10.0,
+            "last_time": time.time(),
+            "last_processed": 0.0,
+            "avg_rate": 0.0
+        })
         if processed <= 0:
             info["start"] = time.time()
+            info["last_time"] = time.time()
+            info["last_processed"] = 0.0
+            info["avg_rate"] = 0.0
+        
         percent = 0
         if total > 0:
             percent = int(max(0.0, min(processed / total, 1.0)) * 100)
         elif processed > 0:
             percent = 100
 
-        elapsed = time.time() - info["start"]
         eta_text = ""
         if percent < 100 and processed > 0 and total > 0:
-            remaining = max(total - processed, 0.0)
-            rate = processed / max(elapsed, 1e-6)
-            if rate > 0:
-                eta_seconds = remaining / rate
+            now = time.time()
+            elapsed_total = now - info["start"]
+            elapsed_since_last = now - info["last_time"]
+            
+            # Calculate incremental rate
+            if elapsed_since_last > 0.1:  # Update only if enough time passed
+                delta_processed = processed - info["last_processed"]
+                instant_rate = delta_processed / elapsed_since_last
+                
+                # Use exponential moving average for smoothing (alpha = 0.3)
+                if info["avg_rate"] == 0.0:
+                    info["avg_rate"] = instant_rate
+                else:
+                    info["avg_rate"] = 0.3 * instant_rate + 0.7 * info["avg_rate"]
+                
+                info["last_time"] = now
+                info["last_processed"] = processed
+            
+            # Only show ETA after 2 seconds and if we have a reasonable rate
+            if elapsed_total > 2.0 and info["avg_rate"] > 0:
+                remaining = max(total - processed, 0.0)
+                eta_seconds = remaining / info["avg_rate"]
                 eta_text = f" — ETA {format_timespan(eta_seconds)}"
 
         if percent == 100:
@@ -1448,6 +1676,7 @@ def run_split_cli(delete_source_default: bool = False) -> None:
             info["last"] = float(percent)
             if percent == 100:
                 info["start"] = time.time()
+                info["avg_rate"] = 0.0
 
     split_source(
         source_path,
@@ -1479,22 +1708,49 @@ def run_convert_cli(
     progress_state: dict[pathlib.Path, dict[str, float]] = {}
 
     def progress_callback(path: pathlib.Path, processed: float, total: float) -> None:
-        info = progress_state.setdefault(path, {"start": time.time(), "last": -10.0})
+        info = progress_state.setdefault(path, {
+            "start": time.time(),
+            "last": -10.0,
+            "last_time": time.time(),
+            "last_processed": 0.0,
+            "avg_rate": 0.0
+        })
         if processed <= 0:
             info["start"] = time.time()
+            info["last_time"] = time.time()
+            info["last_processed"] = 0.0
+            info["avg_rate"] = 0.0
+        
         percent = 0
         if total > 0:
             percent = int(max(0.0, min(processed / total, 1.0)) * 100)
         elif processed > 0:
             percent = 100
 
-        elapsed = time.time() - info["start"]
         eta_text = ""
         if percent < 100 and processed > 0 and total > 0:
-            remaining = max(total - processed, 0.0)
-            rate = processed / max(elapsed, 1e-6)
-            if rate > 0:
-                eta_seconds = remaining / rate
+            now = time.time()
+            elapsed_total = now - info["start"]
+            elapsed_since_last = now - info["last_time"]
+            
+            # Calculate incremental rate
+            if elapsed_since_last > 0.1:  # Update only if enough time passed
+                delta_processed = processed - info["last_processed"]
+                instant_rate = delta_processed / elapsed_since_last
+                
+                # Use exponential moving average for smoothing (alpha = 0.3)
+                if info["avg_rate"] == 0.0:
+                    info["avg_rate"] = instant_rate
+                else:
+                    info["avg_rate"] = 0.3 * instant_rate + 0.7 * info["avg_rate"]
+                
+                info["last_time"] = now
+                info["last_processed"] = processed
+            
+            # Only show ETA after 2 seconds and if we have a reasonable rate
+            if elapsed_total > 2.0 and info["avg_rate"] > 0:
+                remaining = max(total - processed, 0.0)
+                eta_seconds = remaining / info["avg_rate"]
                 eta_text = f" — ETA {format_timespan(eta_seconds)}"
 
         if percent == 100:
@@ -1507,6 +1763,7 @@ def run_convert_cli(
             info["last"] = float(percent)
             if percent == 100:
                 info["start"] = time.time()
+                info["avg_rate"] = 0.0
 
     convert_source(
         source_path,

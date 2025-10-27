@@ -106,6 +106,33 @@ if (typeof window !== 'undefined') {
 
 applyDownloadConcurrencyUI();
 
+function updateRecentSourcesControls() {
+  if (!recentSourcesToggle) return;
+  const api = window.RSPRecentSources;
+  const apiAvailable = api && typeof api.isEnabled === 'function';
+  const enabled = apiAvailable ? api.isEnabled() === true : false;
+  recentSourcesToggle.checked = enabled;
+  if (recentSourcesPlacement) {
+    const placement = api && typeof api.getPlacement === 'function' ? api.getPlacement() : 'bottom';
+    recentSourcesPlacement.value = placement;
+    recentSourcesPlacement.disabled = !enabled || !apiAvailable;
+  }
+}
+
+if (recentSourcesToggle) {
+  recentSourcesToggle.addEventListener('change', () => {
+    if (!window.RSPRecentSources || typeof window.RSPRecentSources.setEnabled !== 'function') return;
+    window.RSPRecentSources.setEnabled(recentSourcesToggle.checked === true);
+  });
+}
+
+if (recentSourcesPlacement) {
+  recentSourcesPlacement.addEventListener('change', () => {
+    if (!window.RSPRecentSources || typeof window.RSPRecentSources.setPlacement !== 'function') return;
+    window.RSPRecentSources.setPlacement(recentSourcesPlacement.value);
+  });
+}
+
 if (clipPreviewToggle) {
   clipPreviewToggle.addEventListener('change', () => {
     localStorage.setItem('clipPreviewEnabled', clipPreviewToggle.checked);
@@ -125,3 +152,9 @@ if (clipToggle) {
     if (clipBtn) clipBtn.style.display = enabled ? 'inline-block' : 'none';
   });
 }
+
+window.addEventListener('rsp:recent-sources-updated', () => {
+  updateRecentSourcesControls();
+});
+
+updateRecentSourcesControls();

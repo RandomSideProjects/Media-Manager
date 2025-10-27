@@ -67,7 +67,12 @@ jobs:
           const https = require('https');
           const sharp = require('sharp');
 
-          const HIDDEN_FILE_TOKEN = '-hidden';
+          const HIDDEN_JSON_KEYS = ['maintainerHidden', 'hidden', 'Hidden'];
+
+          function isMaintainerHidden(entry) {
+            if (!entry || typeof entry !== 'object') return false;
+            return HIDDEN_JSON_KEYS.some((key) => entry[key] === true);
+          }
 
           function coerceSeparatedFlag(value) {
             if (value === true) return true;
@@ -242,8 +247,7 @@ jobs:
 
           (async () => {
             const files = fs.readdirSync(FILE_DIR)
-              .filter(f => f.toLowerCase().endsWith('.json') && f.toLowerCase() !== 'exampledir.json')
-              .filter(f => !f.toLowerCase().includes(HIDDEN_FILE_TOKEN));
+              .filter(f => f.toLowerCase().endsWith('.json') && f.toLowerCase() !== 'exampledir.json');
 
             const result = { sources: [] };
 
@@ -252,6 +256,10 @@ jobs:
                 const full = path.join(FILE_DIR, file);
                 const raw = fs.readFileSync(full, 'utf8');
                 const json = JSON.parse(raw);
+                if (isMaintainerHidden(json)) {
+                  console.log('Skipping hidden directory:', file);
+                  continue;
+                }
 
                 const title = json.title || path.parse(file).name;
                 const cats = Array.isArray(json.categories) ? json.categories : [];

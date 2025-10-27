@@ -20,7 +20,11 @@ const editTabBtn = document.getElementById('editTabBtn');
 const loadUrlContainer = document.getElementById('loadUrlContainer');
 const homeTabBtn = document.getElementById('homeTabBtn');
 const folderInput = document.getElementById('folderInput');
+const maintainerHiddenRow = document.getElementById('maintainerHiddenRow');
+const maintainerHiddenToggle = document.getElementById('maintainerHiddenToggle');
 let isFolderUploading = false;
+let maintainerHidden = false;
+const HIDDEN_JSON_KEYS = ['maintainerHidden', 'hidden', 'Hidden'];
 if (typeof window !== 'undefined') {
   window.isFolderUploading = false;
 }
@@ -103,7 +107,8 @@ function updateEpisodeSeparatedUi(epDiv) {
   const featureActive = isSeparationFeatureActive();
   const parentCategory = epDiv.closest('.category');
   const categorySeparated = !isMangaMode() && parentCategory && parentCategory.dataset && parentCategory.dataset.separated === '1';
-  const allowEpisodeSeparation = featureActive && !categorySeparated && !isMangaMode();
+  const forceSeparated = epDiv && epDiv.dataset && epDiv.dataset.forceSeparated === '1';
+  const allowEpisodeSeparation = (featureActive || forceSeparated) && !categorySeparated && !isMangaMode();
   let ordinal = 1;
   try {
     const container = epDiv.parentElement;
@@ -146,6 +151,7 @@ function buildSeasonEntriesFromFiles(files, { isManga } = {}) {
   const isMangaLibrary = (typeof isManga === 'boolean') ? isManga : isMangaMode();
   const labelHelper = (num) => (isMangaLibrary ? `Volume ${num}` : `Episode ${num}`);
   const episodeFolderPatterns = [
+    /[Ss]\d+[Ee]0?(\d{1,4})/,
     /(?:^|\b)e\s*0?(\d{1,4})(?:\b|$)/i,
     /(?:^|\b)ep\s*0?(\d{1,4})(?:\b|$)/i,
     /(?:^|\b)episode\s*0?(\d{1,4})(?:\b|$)/i
@@ -600,60 +606,83 @@ function sanitizeWorkerFileName(input) {
   return words.length ? words.join('_') : 'Untitled_Directory';
 }
 
-const CREATOR_HIDDEN_SUFFIX_KEY = 'mm_creator_hidden_suffix';
-let creatorHiddenSuffixMemory = false;
+const CREATOR_HIDDEN_CONTROL_KEY = 'mm_creator_hidden_control';
+const LEGACY_HIDDEN_CONTROL_KEY = 'mm_creator_hidden_suffix';
 
-function isHiddenSuffixModeEnabled() {
+function readStoredHiddenControlFlag() {
   try {
-    const raw = localStorage.getItem(CREATOR_HIDDEN_SUFFIX_KEY);
+    const raw = localStorage.getItem(CREATOR_HIDDEN_CONTROL_KEY);
     if (raw === null) {
-      creatorHiddenSuffixMemory = false;
-      return false;
+      const legacy = localStorage.getItem(LEGACY_HIDDEN_CONTROL_KEY);
+      return legacy === '1';
     }
-    creatorHiddenSuffixMemory = raw === '1';
-    return creatorHiddenSuffixMemory;
+    return raw === '1';
   } catch {
-    return creatorHiddenSuffixMemory;
+    return false;
   }
 }
 
-function dispatchHiddenSuffixEvent(enabled) {
+function isHiddenControlEnabled() {
+  return readStoredHiddenControlFlag();
+}
+
+function applyHiddenControlVisibility(forceEnabled) {
+  const enabled = typeof forceEnabled === 'boolean' ? forceEnabled : isHiddenControlEnabled();
+  if (maintainerHiddenRow) maintainerHiddenRow.style.display = enabled ? '' : 'none';
+}
+
+function dispatchHiddenControlEvent(enabled) {
   if (typeof window === 'undefined' || typeof window.dispatchEvent !== 'function') return;
   try {
-    window.dispatchEvent(new CustomEvent('creator:hidden-suffix-updated', { detail: { enabled } }));
+    window.dispatchEvent(new CustomEvent('creator:hidden-control-updated', { detail: { enabled } }));
   } catch {}
 }
 
-function setHiddenSuffixModeEnabled(enabled) {
-  const next = enabled === true;
-  const prev = isHiddenSuffixModeEnabled();
-  if (next === prev) return next;
-  creatorHiddenSuffixMemory = next;
+function setHiddenControlEnabled(enabled) {
+  const desired = enabled === true;
+  const prev = isHiddenControlEnabled();
+  if (desired === prev) {
+    applyHiddenControlVisibility(desired);
+    return desired;
+  }
   try {
-    if (next) localStorage.setItem(CREATOR_HIDDEN_SUFFIX_KEY, '1');
-    else localStorage.removeItem(CREATOR_HIDDEN_SUFFIX_KEY);
+    if (desired) localStorage.setItem(CREATOR_HIDDEN_CONTROL_KEY, '1');
+    else localStorage.removeItem(CREATOR_HIDDEN_CONTROL_KEY);
   } catch {}
-  dispatchHiddenSuffixEvent(next);
-  return next;
+  applyHiddenControlVisibility(desired);
+  dispatchHiddenControlEvent(desired);
+  return desired;
 }
 
-function ensureHiddenSuffix(name) {
-  if (typeof name !== 'string' || !name) return name;
-  return name.toLowerCase().includes('-hidden') ? name : `${name}-hidden`;
-}
-
-function applyHiddenSuffixIfNeeded(name) {
-  if (!isHiddenSuffixModeEnabled()) return name;
-  return ensureHiddenSuffix(name);
+function setMaintainerHiddenFlag(enabled) {
+  maintainerHidden = enabled === true;
+  if (maintainerHiddenToggle) {
+    maintainerHiddenToggle.checked = maintainerHidden;
+    maintainerHiddenToggle.setAttribute('aria-checked', maintainerHidden ? 'true' : 'false');
+  }
 }
 
 if (typeof window !== 'undefined') {
   window.mmHiddenSourceNaming = Object.assign({}, window.mmHiddenSourceNaming, {
-    isEnabled: isHiddenSuffixModeEnabled,
-    setEnabled: setHiddenSuffixModeEnabled,
-    ensureSuffix: ensureHiddenSuffix
+    isEnabled: isHiddenControlEnabled,
+    setEnabled: setHiddenControlEnabled
   });
 }
+
+applyHiddenControlVisibility();
+
+if (maintainerHiddenToggle) {
+  maintainerHiddenToggle.addEventListener('change', () => {
+    setMaintainerHiddenFlag(!!maintainerHiddenToggle.checked);
+  });
+}
+
+window.addEventListener('creator:hidden-control-updated', (event) => {
+  const explicit = event && event.detail && typeof event.detail.enabled === 'boolean';
+  applyHiddenControlVisibility(explicit ? event.detail.enabled : undefined);
+});
+
+setMaintainerHiddenFlag(false);
 
 function isPosterCompressionEnabled() {
   const settings = getUploadSettingsSafe();
@@ -1203,6 +1232,13 @@ folderInput.addEventListener('change', async (e) => {
       const createdEpisode = addEpisode(episodesDiv, { title, src: '' });
       const epDiv = createdEpisode || (episodesDiv ? episodesDiv.lastElementChild : null);
       if (!epDiv) return;
+      // Force-enable separation UI for detected separated folder uploads
+      try {
+        epDiv.dataset.forceSeparated = '1';
+        if (typeof updateEpisodeSeparatedUi === 'function') {
+          updateEpisodeSeparatedUi(epDiv);
+        }
+      } catch {}
 
       let epSrcInput = epDiv._srcInput || null;
       if (!epSrcInput) {
@@ -1221,29 +1257,62 @@ folderInput.addEventListener('change', async (e) => {
       const rowCtx = createUploadRowContext(title, initialBytes);
 
       if (hasSeparated && entry.type === 'separated') {
-        const videoParts = entry.parts.filter((part) => /\.(mp4|m4v|mov|webm|mkv)$/i.test((part.base || part.file.name || '')));
+        const videoParts = entry.parts.filter((part) => {
+          const baseName = (typeof part.base === 'string' && part.base)
+            ? part.base
+            : ((part.file && part.file.name) || '');
+          return /\.(mp4|m4v|mov|webm|mkv)$/i.test(baseName);
+        });
         console.debug('[Creator] Preparing separated episode', {
           title,
           partCount: videoParts.length,
           folder: entry.folderName || entry.key || null
         });
         if (epDiv._separatedToggle) epDiv._separatedToggle.checked = true;
+        try {
+          if (epDiv._separatedToggle) {
+            // Re-dispatch change so any bindings create parts UI scaffolding
+            const evt = (typeof Event === 'function') ? new Event('change', { bubbles: true }) : null;
+            if (evt) epDiv._separatedToggle.dispatchEvent(evt);
+          }
+        } catch {}
         if (typeof epDiv._captureBaseSeparationMeta === 'function') epDiv._captureBaseSeparationMeta();
         if (epDiv._partsList) epDiv._partsList.innerHTML = '';
         if (Array.isArray(epDiv._partRows)) epDiv._partRows.length = 0;
         if (typeof epDiv._updatePartsVisibility === 'function') epDiv._updatePartsVisibility();
-        const totalSize = videoParts.reduce((sum, part) => sum + (part.file.size || 0), 0);
+        // Ensure parts container is initialized; if creator hasn't bound helpers yet, create a minimal structure
+        try {
+          if (!epDiv._partsList || typeof epDiv._addPartRow !== 'function') {
+            const partsContainer = epDiv.querySelector('.parts') || epDiv.querySelector('[data-role="parts"]');
+            if (partsContainer) epDiv._partsList = partsContainer;
+            if (typeof epDiv._addPartRow !== 'function' && partsContainer) {
+              epDiv._addPartRow = ({ title }) => {
+                const row = document.createElement('div');
+                row.className = 'part-row';
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.placeholder = 'Part Source URL';
+                row._srcInput = input;
+                const titleInput = document.createElement('input');
+                titleInput.type = 'text';
+                titleInput.value = title || 'Part';
+                row._titleInput = titleInput;
+                row.appendChild(titleInput);
+                row.appendChild(input);
+                partsContainer.appendChild(row);
+                return row;
+              };
+            }
+          }
+        } catch {}
+        const totalSize = videoParts.reduce((sum, part) => {
+          const size = Number(part.file && part.file.size);
+          return sum + (Number.isFinite(size) && size > 0 ? size : 0);
+        }, 0);
         if (Number.isFinite(totalSize) && totalSize > 0) {
           try { epDiv.dataset.fileSizeBytes = String(totalSize); } catch {}
         }
         const partRows = [];
-        const detailWrapper = document.createElement('div');
-        const detailHeader = document.createElement('div');
-        detailHeader.textContent = `${videoParts.length} part${videoParts.length === 1 ? '' : 's'}`;
-        detailHeader.style.fontSize = '0.85em';
-        detailHeader.style.fontWeight = '600';
-        detailHeader.style.marginBottom = '4px';
-        detailWrapper.appendChild(detailHeader);
         videoParts.forEach((part, idx) => {
           const displayIndex = Number.isFinite(part.partIndex) ? part.partIndex : (idx + 1);
           const partLabel = `Part ${displayIndex}`;
@@ -1252,19 +1321,15 @@ folderInput.addEventListener('change', async (e) => {
             : null;
           if (partRow && partRow._titleInput) partRow._titleInput.value = partLabel;
           if (partRow) {
-            const detailCtx = createPartDetailRow(partLabel);
-            detailWrapper.appendChild(detailCtx.el);
             const size = Number(part.file && part.file.size);
-            partRows.push({ row: partRow, file: part.file, detail: detailCtx, size: Number.isFinite(size) && size > 0 ? size : 0 });
+            partRows.push({ row: partRow, file: part.file, size: Number.isFinite(size) && size > 0 ? size : 0 });
           }
         });
         if (typeof epDiv._recalcSeparatedTotals === 'function') epDiv._recalcSeparatedTotals();
         if (typeof epDiv._updatePartsVisibility === 'function') epDiv._updatePartsVisibility();
+        if (typeof epDiv._syncEpisodeMainSrc === 'function') epDiv._syncEpisodeMainSrc();
         if (Number.isFinite(totalSize) && totalSize > 0) {
           rowCtx.setProgress(0, { totalBytes: totalSize });
-        }
-        if (partRows.length) {
-          rowCtx.attachDetailsElement(detailWrapper, { initiallyOpen: false });
         }
 
         const fn = async () => {
@@ -1273,49 +1338,33 @@ folderInput.addEventListener('change', async (e) => {
             rowCtx.setProgress(0, { state: 'failed' });
             return;
           }
+          rowCtx.setStatus('Uploading', { color: null });
           let uploadedParts = 0;
           let uploadedBytes = 0;
           for (let i = 0; i < partRows.length; i += 1) {
             const current = partRows[i];
-            rowCtx.setStatus(`Part ${i + 1} / ${partRows.length}`, { color: '#6ec1e4' });
-            if (current.detail) {
-              current.detail.setStatus('Uploading', '#6ec1e4');
-              current.detail.setProgress(0);
-            }
             const partSize = Number.isFinite(current.size) ? current.size : 0;
             try {
               if (typeof epDiv._handlePartFileUpload === 'function') {
                 await epDiv._handlePartFileUpload(current.row, current.file, {
                   onProgress: (pct) => {
-                    if (current.detail) current.detail.setProgress(pct);
+                    // Aggregate progress only; no per-part UI
                     const normalized = Math.max(0, Math.min(100, Number(pct) || 0)) / 100;
                     const overallProgress = ((uploadedParts + normalized) / partRows.length) * 100;
                     const loadedBytes = uploadedBytes + (partSize > 0 ? normalized * partSize : 0);
                     rowCtx.setProgress(overallProgress, { loadedBytes, totalBytes: totalSize });
-                  },
-                  onComplete: () => {
-                    if (current.detail) {
-                      current.detail.setProgress(100);
-                      current.detail.setStatus('Done', '#7fe7a9');
-                    }
-                    const normalized = (uploadedParts + 1) / partRows.length;
-                    const loadedBytes = uploadedBytes + (partSize > 0 ? partSize : 0);
-                    rowCtx.setProgress(normalized * 100, { loadedBytes, totalBytes: totalSize });
-                  },
-                  onError: () => {
-                    if (current.detail) current.detail.setStatus('Failed', '#ff6b6b');
                   }
                 });
               }
             } catch (err) {
               console.error('[Creator] Failed to upload part from folder', err);
-              if (current.detail) current.detail.setStatus('Failed', '#ff6b6b');
             }
             const uploaded = current.row && current.row._srcInput && current.row._srcInput.value.trim();
-            if (uploaded) uploadedParts += 1;
-            if (uploaded && partSize > 0) uploadedBytes += partSize;
+            if (uploaded) {
+              uploadedParts += 1;
+              if (partSize > 0) uploadedBytes += partSize;
+            }
             rowCtx.setProgress((uploadedParts / partRows.length) * 100, { loadedBytes: uploadedBytes, totalBytes: totalSize });
-            if (current.detail && !uploaded) current.detail.setStatus('Failed', '#ff6b6b');
           }
           if (uploadedParts === partRows.length) {
             rowCtx.setStatus('Done', { color: '#6ec1e4' });
@@ -2420,6 +2469,8 @@ function applyDirectoryJson(json) {
     posterStatus.style.color = '#9ecbff';
     posterStatus.textContent = 'Uploading image…';
   }
+  const hiddenFromJson = HIDDEN_JSON_KEYS.some((key) => json && json[key] === true);
+  setMaintainerHiddenFlag(hiddenFromJson);
   const titleInput = document.getElementById('dirTitle');
   if (titleInput) titleInput.value = json.title || '';
   if (categoriesEl) {
@@ -2577,6 +2628,7 @@ createTabBtn.addEventListener('click', () => {
   if (posterInput) { posterInput.value = ''; }
   if (posterStatus) { posterStatus.style.display = 'none'; posterStatus.style.color = '#9ecbff'; posterStatus.textContent = 'Uploading image…'; }
   if (posterChangeBtn) posterChangeBtn.style.display = 'none';
+  setMaintainerHiddenFlag(false);
   clearPendingLoadFile();
 });
 editTabBtn.addEventListener('click', () => {
@@ -2593,6 +2645,7 @@ editTabBtn.addEventListener('click', () => {
   if (posterInput) { posterInput.value = ''; }
   if (posterStatus) { posterStatus.style.display = 'none'; posterStatus.style.color = '#9ecbff'; posterStatus.textContent = 'Uploading image…'; }
   if (posterChangeBtn) posterChangeBtn.style.display = 'none';
+  setMaintainerHiddenFlag(false);
   clearPendingLoadFile();
 });
 
@@ -2735,6 +2788,9 @@ function buildLocalDirectoryJSON() {
     base.separatedCategoryCount = separatedCategoryCount;
     base.separatedItemCount = separatedItemCount;
   }
+  if (maintainerHidden === true) {
+    base.maintainerHidden = true;
+  }
   return base;
 }
 
@@ -2761,8 +2817,7 @@ async function uploadDirectoryToGithub() {
 
   const directoryJson = buildLocalDirectoryJSON();
   const title = directoryJson.title || '';
-  const baseFileName = sanitizeWorkerFileName(title || `directory-${Date.now()}`);
-  const fileName = applyHiddenSuffixIfNeeded(baseFileName);
+  const fileName = sanitizeWorkerFileName(title || `directory-${Date.now()}`);
   const jsonString = JSON.stringify(directoryJson, null, 2);
   const formData = new FormData();
   formData.append('ghtoken', githubToken);

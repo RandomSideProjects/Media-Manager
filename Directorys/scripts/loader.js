@@ -3,6 +3,13 @@
 // Variables (top)
 // None; relies on global STATUS_URL, SOURCES_* and render/utils.
 
+const HIDDEN_ENTRY_KEYS = ["maintainerHidden", "hidden", "Hidden"];
+
+function shouldSkipManifestEntry(entry) {
+  if (!entry || typeof entry !== "object") return false;
+  return HIDDEN_ENTRY_KEYS.some((key) => entry[key] === true);
+}
+
 function showHostFailure(container, codeText) {
   container.innerHTML = `
     <div style="
@@ -98,7 +105,14 @@ async function loadSources() {
     console.log('Loaded', manifestName + ':', manifestUrl);
 
     if (Array.isArray(manifest.sources)) {
-      SOURCES_META = manifest.sources.map((m, idx)=> ({ ...m, _idx: idx }));
+      const decorated = manifest.sources
+        .map((entry, idx) => ({ entry, originalIdx: idx }))
+        .filter(({ entry }) => !shouldSkipManifestEntry(entry));
+      const skipped = manifest.sources.length - decorated.length;
+      if (skipped > 0) {
+        console.info(`[Sources] Skipped ${skipped} hidden entr${skipped === 1 ? 'y' : 'ies'} based on maintainer flags.`);
+      }
+      SOURCES_META = decorated.map(({ entry, originalIdx }) => ({ ...entry, _idx: originalIdx }));
     } else {
       const temp = [];
       let idx = 0;
@@ -106,6 +120,7 @@ async function loadSources() {
         if (typeof filePath !== 'string') continue;
         const lower = String(fileName).toLowerCase();
         if (!lower.endsWith('.json') || lower === 'exampledir.json') continue;
+        if (shouldSkipManifestEntry({ file: fileName, path: filePath })) continue;
         temp.push({
           file: fileName,
           path: filePath,

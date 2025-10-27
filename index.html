@@ -24,11 +24,25 @@
       </div>
       <div class="setting-row">
         <input type="checkbox" id="clipPreviewToggle">
-        <label for="clipPreviewToggle">Clip preview</label>
+        <label for="clipPreviewToggle" data-setting-tag="beta">Clip preview</label>
       </div>
       <div class="setting-row">
         <input type="checkbox" id="selectiveDownloadToggle">
         <label for="selectiveDownloadToggle">Selective downloads</label>
+      </div>
+      <div class="setting-row recent-sources-setting">
+        <div class="recent-sources-label">
+          <span data-setting-tag="beta">Recent sources</span>
+          <small>Show your last loaded sources on the home screen.</small>
+        </div>
+        <div class="recent-sources-controls">
+          <input type="checkbox" id="recentSourcesToggle" aria-label="Enable recent sources">
+          <select id="recentSourcesPlacement" aria-label="Recent sources placement">
+            <option value="bottom">Bottom</option>
+            <option value="left">Left</option>
+            <option value="right">Right</option>
+          </select>
+        </div>
       </div>
       <div class="setting-row">
         <label for="downloadConcurrencyRange">Download concurrency</label>
@@ -45,7 +59,7 @@
           </div>
         </div>
       </div>
-      <div class="setting-row" id="devMenuRow" style="display:none;">
+      <div class="setting-row" id="devMenuRow" style="display:none;" data-setting-tag="dev">
         <button id="devMenuBtn" type="button">Dev Menu</button>
         <span class="dev-menu-status" id="devMenuStatus">Developer tools</span>
       </div>
@@ -127,6 +141,7 @@
   <script defer src="scripts/alerts.js"></script>
   <script defer src="scripts/dev-core.js"></script>
   <script defer src="scripts/dom.js"></script>
+  <script defer src="scripts/tags.js"></script>
   <script defer src="scripts/recent-sources.js"></script>
   <script defer src="scripts/player.js"></script>
   <script defer src="scripts/popout.js"></script>
@@ -178,7 +193,7 @@
         <button id="devMenuCloseBtn" type="button">Close</button>
       </div>
       <div class="dev-menu-content">
-        <section class="dev-menu-section" aria-labelledby="devMenuModeHeading">
+        <section class="dev-menu-section" aria-labelledby="devMenuModeHeading" data-setting-tag="dev">
           <h4 id="devMenuModeHeading">Mode</h4>
           <label class="dev-menu-toggle" for="devModeToggle">
             <input type="checkbox" id="devModeToggle">
@@ -186,7 +201,7 @@
           </label>
           <p class="dev-menu-hint">Toggle with O + P at any time.</p>
         </section>
-        <section class="dev-menu-section" aria-labelledby="devMenuSettingsHeading">
+        <section class="dev-menu-section" aria-labelledby="devMenuSettingsHeading" data-setting-tag="dev">
           <h4 id="devMenuSettingsHeading">Dev Settings</h4>
           <div class="dev-field">
             <label for="devConcurrencyInput">Download concurrency</label>
@@ -197,23 +212,7 @@
             <p class="dev-menu-hint">Applies instantly. Dev mode removes the usual UI limit.</p>
           </div>
         </section>
-        <section class="dev-menu-section" aria-labelledby="devMenuExperimentalHeading">
-          <h4 id="devMenuExperimentalHeading">Experimental settings</h4>
-          <label class="dev-menu-toggle" for="devRecentSourcesToggle">
-            <input type="checkbox" id="devRecentSourcesToggle">
-            <span>Show recent sources on home</span>
-          </label>
-          <div class="dev-field" id="devRecentSourcesPlacementRow">
-            <label for="devRecentSourcesPlacement">Placement</label>
-            <select id="devRecentSourcesPlacement">
-              <option value="bottom">Bottom</option>
-              <option value="left">Left</option>
-              <option value="right">Right</option>
-            </select>
-          </div>
-          <p class="dev-menu-hint">Displays the last 6 sources using SourceList cards.</p>
-        </section>
-        <section class="dev-menu-section" aria-labelledby="devMenuActionsHeading">
+        <section class="dev-menu-section" aria-labelledby="devMenuActionsHeading" data-setting-tag="dev">
           <h4 id="devMenuActionsHeading">System Triggers</h4>
           <div class="dev-action-grid" id="devActionGrid">
             <button type="button" data-dev-action="notice:info">Show info notice</button>
@@ -227,7 +226,7 @@
             <button type="button" data-dev-action="player:popout">Trigger pop-out</button>
           </div>
         </section>
-        <section class="dev-menu-section" aria-labelledby="devMenuDiagnosticsHeading">
+        <section class="dev-menu-section" aria-labelledby="devMenuDiagnosticsHeading" data-setting-tag="dev">
           <div class="dev-menu-diagnostics-header">
             <h4 id="devMenuDiagnosticsHeading">Diagnostics</h4>
             <button id="devDiagnosticsRefreshBtn" type="button">Refresh</button>
@@ -311,7 +310,8 @@
     <span>RandomSideProjects</span>
     <img src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png" alt="GitHub">
   </a>
-</body> <!-- 
+</body> 
+<!-- 
 
 
 
@@ -329,8 +329,15 @@ when i went to remove the top placemnet for recent sources, i deleted the bottom
 fixed now :D (i think)
 -- 10/26/25 : 12:11 Am ---
 
+-- 10/26/25 : 11:24 Pm ---
+so codex just did smth cool when i asked it so add the text (Beta) next to recent sources in settings bc its basically ready, it added whole beta-tag and everything :D
+so now im having make that a whole new compeonent so i can reuse it for different settings like clip preview :D
+-- 10/26/25 : 11:24 Pm ---
 
-
+-- 10/27/25 : 1:02 Am ---
+you have got to be fucking kidding me. apparently codex decided to break separated episodes in folder upload for creator. i just wanted it to show the separate upload bars, not break the entire thing :sob:
+not fixed yet.. will try again tmrw or if copiolet works.
+-- 10/27/25 : 1:02 Am ---
 
 
 -->

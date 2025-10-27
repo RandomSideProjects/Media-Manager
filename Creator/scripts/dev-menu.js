@@ -16,7 +16,7 @@
   const devMenuStatus = document.getElementById("devMenuStatus");
   const uploadConcurrencyInput = document.getElementById("devUploadConcurrencyInput");
   const uploadConcurrencyResetBtn = document.getElementById("devUploadConcurrencyResetBtn");
-  const hiddenSuffixToggle = document.getElementById("devHiddenSourceToggle");
+  const hiddenControlToggle = document.getElementById("devHiddenSourceToggle");
 
   const OVERLAY_OPEN_CLASS = "is-open";
   const DEFAULT_CONCURRENCY = 2;
@@ -237,16 +237,19 @@
     }
   }
 
-  function refreshHiddenSuffixToggle() {
-    if (!hiddenSuffixToggle) return;
+  function refreshHiddenControlToggle() {
+    if (!hiddenControlToggle) return;
     const helper = window.mmHiddenSourceNaming;
     const enabled = helper && typeof helper.isEnabled === "function"
       ? helper.isEnabled()
       : (function fallback() {
-          try { return localStorage.getItem("mm_creator_hidden_suffix") === "1"; }
+          try {
+            return localStorage.getItem("mm_creator_hidden_control") === "1"
+              || localStorage.getItem("mm_creator_hidden_suffix") === "1";
+          }
           catch { return false; }
         })();
-    hiddenSuffixToggle.checked = enabled;
+    hiddenControlToggle.checked = enabled;
   }
 
   function refreshDiagnostics() {
@@ -256,7 +259,7 @@
     const currentUploadConc = getStoredUploadConcurrency();
     updateUploadConcurrencyDisplay(currentUploadConc);
     if (uploadConcurrencyInput) uploadConcurrencyInput.value = String(currentUploadConc);
-    refreshHiddenSuffixToggle();
+    refreshHiddenControlToggle();
   }
 
   updateDevMenuRowVisibility();
@@ -304,19 +307,19 @@
     });
   }
 
-  if (hiddenSuffixToggle) {
-    hiddenSuffixToggle.addEventListener("change", () => {
-      const desired = hiddenSuffixToggle.checked;
+  if (hiddenControlToggle) {
+    hiddenControlToggle.addEventListener("change", () => {
+      const desired = hiddenControlToggle.checked;
       const helper = window.mmHiddenSourceNaming;
       if (helper && typeof helper.setEnabled === "function") {
         helper.setEnabled(desired);
       } else {
         try {
-          if (desired) localStorage.setItem("mm_creator_hidden_suffix", "1");
-          else localStorage.removeItem("mm_creator_hidden_suffix");
+          if (desired) localStorage.setItem("mm_creator_hidden_control", "1");
+          else localStorage.removeItem("mm_creator_hidden_control");
         } catch {}
         try {
-          window.dispatchEvent(new CustomEvent("creator:hidden-suffix-updated", { detail: { enabled: desired } }));
+          window.dispatchEvent(new CustomEvent("creator:hidden-control-updated", { detail: { enabled: desired } }));
         } catch {}
       }
     });
@@ -333,11 +336,11 @@
     refreshDiagnostics();
   });
 
-  window.addEventListener("creator:hidden-suffix-updated", (event) => {
-    if (!hiddenSuffixToggle) return;
+  window.addEventListener("creator:hidden-control-updated", (event) => {
+    if (!hiddenControlToggle) return;
     const enabled = !!(event && event.detail && event.detail.enabled === true);
-    if (hiddenSuffixToggle.checked !== enabled) {
-      hiddenSuffixToggle.checked = enabled;
+    if (hiddenControlToggle.checked !== enabled) {
+      hiddenControlToggle.checked = enabled;
     }
   });
 

@@ -18,9 +18,6 @@
   const sourceKeyLabel = typeof devSourceKeyLabel !== "undefined" ? devSourceKeyLabel : document.getElementById("devSourceKeyLabel");
   const menuRow = typeof devMenuRow !== "undefined" ? devMenuRow : document.getElementById("devMenuRow");
   const menuStatus = typeof devMenuStatus !== "undefined" ? devMenuStatus : document.getElementById("devMenuStatus");
-  const recentSourcesToggle = typeof devRecentSourcesToggle !== "undefined" ? devRecentSourcesToggle : document.getElementById("devRecentSourcesToggle");
-  const recentSourcesPlacementSelect = typeof devRecentSourcesPlacement !== "undefined" ? devRecentSourcesPlacement : document.getElementById("devRecentSourcesPlacement");
-  const recentSourcesPlacementRow = document.getElementById("devRecentSourcesPlacementRow");
 
   if (!overlay || !panel || !openBtn) return;
 
@@ -121,28 +118,10 @@
     }
   }
 
-  function refreshExperimentalControls() {
-    if (!recentSourcesToggle) return;
-    const devEnabled = isDevModeEnabled();
-    const api = window.RSPRecentSources;
-    const featureEnabled = api && typeof api.isEnabled === "function" ? api.isEnabled() === true : false;
-    recentSourcesToggle.checked = featureEnabled;
-    recentSourcesToggle.disabled = !devEnabled;
-    if (recentSourcesPlacementRow) {
-      recentSourcesPlacementRow.style.display = featureEnabled ? "" : "none";
-    }
-    if (recentSourcesPlacementSelect) {
-      const placement = api && typeof api.getPlacement === "function" ? api.getPlacement() : "bottom";
-      recentSourcesPlacementSelect.value = placement;
-      recentSourcesPlacementSelect.disabled = !devEnabled || !featureEnabled;
-    }
-  }
-
   function refreshAll() {
     updateModeToggle();
     refreshConcurrencyInput();
     refreshDiagnostics();
-    refreshExperimentalControls();
     updateDevMenuAvailability();
   }
 
@@ -401,22 +380,6 @@
     });
   }
 
-  if (recentSourcesToggle) {
-    recentSourcesToggle.addEventListener("change", () => {
-      if (!window.RSPRecentSources || typeof window.RSPRecentSources.setEnabled !== "function") return;
-      window.RSPRecentSources.setEnabled(recentSourcesToggle.checked === true);
-      refreshExperimentalControls();
-    });
-  }
-
-  if (recentSourcesPlacementSelect) {
-    recentSourcesPlacementSelect.addEventListener("change", () => {
-      if (!window.RSPRecentSources || typeof window.RSPRecentSources.setPlacement !== "function") return;
-      window.RSPRecentSources.setPlacement(recentSourcesPlacementSelect.value);
-      refreshExperimentalControls();
-    });
-  }
-
   if (actionGrid) {
     actionGrid.addEventListener("click", (event) => {
       const target = event.target;
@@ -443,10 +406,6 @@
 
   window.addEventListener("rsp:catbox-default-updated", () => {
     refreshDiagnostics();
-  });
-
-  window.addEventListener("rsp:recent-sources-updated", () => {
-    refreshExperimentalControls();
   });
 
   refreshAll();

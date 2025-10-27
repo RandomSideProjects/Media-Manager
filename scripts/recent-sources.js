@@ -18,6 +18,7 @@
   const POINTER_COARSE_QUERY = (typeof window !== "undefined" && typeof window.matchMedia === "function")
     ? window.matchMedia("(pointer:coarse)")
     : null;
+  const MOBILE_UA_PATTERN = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
   const DESKTOP_MIN_WIDTH = 992;
 
   const state = {
@@ -76,11 +77,16 @@
     } catch {}
   }
 
+  function isDesktopUserAgent() {
+    if (typeof navigator === "undefined" || !navigator.userAgent) return true;
+    return !MOBILE_UA_PATTERN.test(navigator.userAgent);
+  }
+
   function isDesktopViewport() {
     if (typeof window === "undefined") return true;
     const widthOk = window.innerWidth >= DESKTOP_MIN_WIDTH;
     const coarsePointer = POINTER_COARSE_QUERY ? POINTER_COARSE_QUERY.matches : false;
-    return widthOk && !coarsePointer;
+    return widthOk && !coarsePointer && isDesktopUserAgent();
   }
 
   function isValidEntry(entry) {
@@ -333,23 +339,24 @@
       p3.style.display = "none";
     }
 
-    const updated = document.createElement("p");
-    updated.className = "source-time";
     const when = entry.LatestTime ? formatLocalDate(entry.LatestTime) : formatLocalDate(entry.recordedAt);
-    if (when) updated.textContent = entry.LatestTime ? `Updated: ${when}` : `Opened: ${when}`;
-    else updated.style.display = "none";
-
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "pill-button";
-    btn.textContent = "Open";
-    btn.addEventListener("click", () => openEntry(entry));
 
     content.append(h3, p1, p2);
     if (separatedCount > 0) content.appendChild(p3);
-    if (when) content.appendChild(updated);
-    content.appendChild(btn);
     wrapper.appendChild(content);
+    wrapper.tabIndex = 0;
+    wrapper.setAttribute("role", "button");
+    wrapper.setAttribute("aria-label", `Open ${entry.title || entry.file}`);
+    const activate = (event) => {
+      event.preventDefault();
+      openEntry(entry);
+    };
+    wrapper.addEventListener("click", activate);
+    wrapper.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        activate(event);
+      }
+    });
     return wrapper;
   }
 

@@ -75,6 +75,8 @@ const settingsCloseBtn = document.getElementById('settingsCloseBtn');
 const clipToggle = document.getElementById('clipToggle');
 const clipPreviewToggle = document.getElementById('clipPreviewToggle');
 const selectiveDownloadToggle = document.getElementById('selectiveDownloadToggle');
+const recentSourcesToggle = document.getElementById('recentSourcesToggle');
+const recentSourcesPlacement = document.getElementById('recentSourcesPlacement');
 const downloadConcurrencyRange = document.getElementById('downloadConcurrencyRange');
 const downloadConcurrencyValue = document.getElementById('downloadConcurrencyValue');
 const devMenuRow = document.getElementById('devMenuRow');
@@ -91,8 +93,6 @@ const devConcurrencyStateLabel = document.getElementById('devConcurrencyStateLab
 const devCatboxEndpointLabel = document.getElementById('devCatboxEndpointLabel');
 const devSourceKeyLabel = document.getElementById('devSourceKeyLabel');
 const devMenuStatus = document.getElementById('devMenuStatus');
-const devRecentSourcesToggle = document.getElementById('devRecentSourcesToggle');
-const devRecentSourcesPlacement = document.getElementById('devRecentSourcesPlacement');
 
 // Spinner wiring
 if (video && spinner) {
