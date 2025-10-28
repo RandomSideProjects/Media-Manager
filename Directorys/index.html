@@ -28,6 +28,15 @@
         </label>
       </div>
       <div class="section">
+        <label class="settings-row" style="justify-content: space-between;">
+          <span style="display:flex; align-items:center; gap:8px;">
+            <span>Enable search bar</span>
+            <span data-setting-tag="beta"></span>
+          </span>
+          <input type="checkbox" id="toggleSearchBar">
+        </label>
+      </div>
+      <div class="section">
         <div class="settings-row" style="justify-content: space-between; width:100%;">
           <span>Row Limit</span>
           <div style="display:flex; align-items:center; gap:8px;">
@@ -130,6 +139,10 @@
       </div>
     </div>
   </div>
+  <div id="sourcesToolbar" style="display:none; gap:8px; align-items:center; padding:8px 12px; max-width:1200px; margin:10px auto 0;">
+    <label for="sourcesSearchInput" style="font-weight:600; opacity:.9;">Search</label>
+    <input id="sourcesSearchInput" type="search" placeholder="Search sources..." style="flex:1; padding:.6em .8em; border-radius:10px; border:1px solid #333; background:#141414; color:#f1f1f1;" />
+  </div>
   <div class="container" id="sourcesContainer">
     <!-- Cards will be injected here -->
   </div>
@@ -140,6 +153,7 @@
   <script src="scripts/constants.js"></script>
   <script src="scripts/utils.js"></script>
   <script src="scripts/render.js"></script>
+  <script src="scripts/search.js"></script>
   <script src="scripts/ui-settings.js"></script>
   <script src="scripts/feedback.js"></script>
   <script src="scripts/loader.js"></script>

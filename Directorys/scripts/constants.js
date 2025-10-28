@@ -19,3 +19,10 @@ let SOURCES_SHARE_LOCATION = (function(){
   if (v === '1') return true;
   return true;
 })();
+// Search bar toggle (beta) — on by default
+let SOURCES_SEARCH_ENABLED = (function(){
+  const v = localStorage.getItem('sources_search_enabled');
+  if (v === '0') return false;
+  if (v === '1') return true;
+  return true;
+})();
