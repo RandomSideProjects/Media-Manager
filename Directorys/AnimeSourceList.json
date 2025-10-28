@@ -461,6 +461,18 @@
       "LatestTime": "2025-09-05T05:01:05.937Z"
     },
     {
+      "file": "So_I_M_A_Spider_So_What.json",
+      "path": "./Files/Anime/So_I_M_A_Spider_So_What.json",
+      "title": "So I'm a Spider, So What?",
+      "poster": "./Posters/Anime/So_I'm_a_Spider,_So_What_.webp",
+      "categoryCount": 1,
+      "episodeCount": 24,
+      "itemCount": 24,
+      "totalFileSizeBytes": 5448543682,
+      "totalDurationSeconds": 34164,
+      "LatestTime": "2025-10-28T06:11:49.969Z"
+    },
+    {
       "file": "Solo_Leveling.json",
       "path": "./Files/Anime/Solo_Leveling.json",
       "title": "Solo Leveling",
