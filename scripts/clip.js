@@ -1,10 +1,78 @@
 "use strict";
 
+// DOM Elements - will be queried/created on demand
+let clipBtn = document.getElementById('clipBtn');
+let clipOverlay = null;
+let clipOverlayCloseBtn = null;
+let clipMessage = null;
+let clipButtonsRow = null;
+let clipDoneBtn = null;
+let clipDownloadBtn = null;
+let clipPresetOverlay = null;
+let clipPresetCloseBtn = null;
+let clipPresetButtons = null;
+let clipCustomStartBtn = null;
+let clipRememberPreset = null;
+let clipHistoryClearBtn = null;
+let clipHistoryList = null;
+let trimSlider = null;
+let trimRange = null;
+let trimHandleStart = null;
+let trimHandleEnd = null;
+let trimPreviewMarker = null;
+let clipDisplayStart = null;
+let clipDisplayEnd = null;
+let clipDisplayLength = null;
+
+function ensureClipOverlays() {
+  // Create clip overlay if it doesn't exist
+  if (!clipOverlay && window.OverlayFactory && typeof window.OverlayFactory.createClipOverlay === 'function') {
+    console.log('[Clip] Creating clip overlay');
+    window.OverlayFactory.createClipOverlay();
+  }
+  // Create clip preset overlay if it doesn't exist
+  if (!clipPresetOverlay && window.OverlayFactory && typeof window.OverlayFactory.createClipPresetOverlay === 'function') {
+    console.log('[Clip] Creating clip preset overlay');
+    window.OverlayFactory.createClipPresetOverlay();
+  }
+  // Query all elements
+  clipOverlay = document.getElementById('clipOverlay');
+  clipOverlayCloseBtn = document.getElementById('clipOverlayCloseBtn');
+  clipMessage = document.getElementById('clipMessage');
+  clipButtonsRow = document.getElementById('clipButtonsRow');
+  clipDoneBtn = document.getElementById('clipDoneBtn');
+  clipDownloadBtn = document.getElementById('clipDownloadBtn');
+  clipPresetOverlay = document.getElementById('clipPresetOverlay');
+  clipPresetCloseBtn = document.getElementById('clipPresetCloseBtn');
+  clipPresetButtons = document.getElementById('clipPresetButtons');
+  clipCustomStartBtn = document.getElementById('clipCustomStartBtn');
+  clipRememberPreset = document.getElementById('clipRememberPreset');
+  clipHistoryClearBtn = document.getElementById('clipHistoryClearBtn');
+  clipHistoryList = document.getElementById('clipHistoryList');
+  trimSlider = document.getElementById('trimSlider');
+  trimRange = document.getElementById('trimRange');
+  trimHandleStart = document.getElementById('trimHandleStart');
+  trimHandleEnd = document.getElementById('trimHandleEnd');
+  trimPreviewMarker = document.getElementById('trimPreviewMarker');
+  clipDisplayStart = document.getElementById('clipDisplayStart');
+  clipDisplayEnd = document.getElementById('clipDisplayEnd');
+  clipDisplayLength = document.getElementById('clipDisplayLength');
+  
+  console.log('[Clip] Elements after query:', {
+    clipPresetOverlay: !!clipPresetOverlay,
+    clipOverlay: !!clipOverlay,
+    trimSlider: !!trimSlider
+  });
+  
+  // Attach event listeners
+  attachClipEventListeners();
+}
+
 let lastClipBlob = null;
 let lastClipFileName = 'clip.webm';
 let lastPreviewObjectURL = null;
-let clipPresetsCache = loadClipPresets();
-let clipPreferredLength = loadClipPreferredLength();
+let clipPresetsCache = null;
+let clipPreferredLength = null;
 let currentClipContext = null;
 
 const TRIM_WINDOW_DURATION = 90; // seconds
@@ -263,6 +331,7 @@ function buildHistoryPreviewHtml() {
 }
 
 function displayClipResult(html, isError = false) {
+  ensureClipOverlays();
   const historyHtml = buildHistoryPreviewHtml();
   if (clipMessage) {
     clipMessage.innerHTML = '';
@@ -407,7 +476,11 @@ function renderClipPresetButtons() {
 }
 
 function openClipPresetOverlay() {
-  if (!clipPresetOverlay) return;
+  ensureClipOverlays();
+  if (!clipPresetOverlay) {
+    console.warn('[Clip] clipPresetOverlay not available after ensureClipOverlays');
+    return;
+  }
   clipPresetsCache = loadClipPresets();
   clipPreferredLength = loadClipPreferredLength();
   renderClipPresetButtons();
@@ -446,6 +519,7 @@ function openClipPresetOverlay() {
   if (duration) startTrimPreviewMarker();
   else if (trimPreviewMarker) trimPreviewMarker.style.display = 'none';
 
+  console.log('[Clip] Opening preset overlay');
   clipPresetOverlay.style.display = 'flex';
   updateTrimPreviewMarker();
   if (trimHandleStart) {
@@ -461,10 +535,15 @@ function closeClipPresetOverlay() {
 }
 
 async function startClipCapture(lengthSeconds) {
-  if (!video) return;
+  console.log('[Clip] startClipCapture called with length:', lengthSeconds);
+  if (!video) {
+    console.error('[Clip] No video element available');
+    return;
+  }
   const total = Math.max(2, Number(lengthSeconds) || 20);
   const currentTime = Number.isFinite(video.currentTime) ? video.currentTime : 0;
   const duration = Number.isFinite(video.duration) ? video.duration : NaN;
+  console.log('[Clip] Video state:', { currentTime, duration, total });
   let start = Math.max(0, currentTime - total / 2);
   let end = currentTime + total / 2;
   if (Number.isFinite(duration) && duration > 0) {
@@ -507,10 +586,25 @@ async function startClipRange(rangeStart, rangeEnd) {
 }
 
 async function executeClipCapture(start, end, durationSeconds) {
-  const overlay = clipProgressOverlay;
-  const msg = clipProgressMessage;
-  const bar = clipProgressBar;
-  if (!overlay || !msg || !bar) return;
+  // Ensure clip progress overlay exists
+  let overlay = clipProgressOverlay;
+  let msg = clipProgressMessage;
+  let bar = clipProgressBar;
+  
+  if (!overlay && window.OverlayFactory && typeof window.OverlayFactory.createClipProgressOverlay === 'function') {
+    console.log('[Clip] Creating clip progress overlay');
+    window.OverlayFactory.createClipProgressOverlay();
+    // Query the newly created elements
+    overlay = document.getElementById('clipProgressOverlay');
+    msg = document.getElementById('clipProgressMessage');
+    bar = document.getElementById('clipProgressBar');
+  }
+  
+  if (!overlay || !msg || !bar) {
+    console.error('[Clip] Progress overlay elements not available:', { overlay: !!overlay, msg: !!msg, bar: !!bar });
+    return;
+  }
+  console.log('[Clip] Starting clip capture process');
   overlay.style.display = 'flex';
   msg.textContent = 'Preparing clip...';
   bar.value = 0;
@@ -658,6 +752,7 @@ async function executeClipCapture(start, end, durationSeconds) {
       msg.textContent = 'Uploading clip...';
       bar.value = 0;
       overlay.style.display = 'flex';
+      if (video) video.pause();
       const url = await uploadClipToCatboxWithProgress(blob, p => { bar.value = p; }, lastClipFileName);
       overlay.style.display = 'none';
       const fragments = [`
@@ -692,6 +787,101 @@ async function executeClipCapture(start, end, durationSeconds) {
   }
 }
 
+function attachClipEventListeners() {
+  if (clipPresetCloseBtn && !clipPresetCloseBtn.dataset.bound) {
+    clipPresetCloseBtn.addEventListener('click', closeClipPresetOverlay);
+    clipPresetCloseBtn.dataset.bound = '1';
+  }
+  if (clipPresetOverlay && !clipPresetOverlay.dataset.bound) {
+    clipPresetOverlay.addEventListener('click', (e) => { if (e.target === clipPresetOverlay) closeClipPresetOverlay(); });
+    clipPresetOverlay.dataset.bound = '1';
+  }
+
+  if (clipCustomStartBtn && !clipCustomStartBtn.dataset.bound) {
+    clipCustomStartBtn.addEventListener('click', () => {
+      if (!video) {
+        showClipNotice('Clip playback is not ready yet.', 'warning');
+        return;
+      }
+      const clampedStart = trimState.start;
+      const clampedEnd = trimState.end;
+      if (clampedEnd - clampedStart < 0.5) {
+        showClipNotice('Clip length must be at least half a second.', 'error');
+        return;
+      }
+      const remember = clipRememberPreset && clipRememberPreset.checked;
+      if (remember) saveClipPreferredLength(clampedEnd - clampedStart);
+      else saveClipPreferredLength(null);
+      closeClipPresetOverlay();
+      startClipRange(clampedStart, clampedEnd);
+    });
+    clipCustomStartBtn.dataset.bound = '1';
+  }
+
+  if (trimHandleStart && !trimHandleStart.dataset.bound) {
+    trimHandleStart.addEventListener('pointerdown', (e) => {
+      if (!isPrimaryPointer(e)) return;
+      beginTrimDrag('start', e);
+    });
+    trimHandleStart.dataset.bound = '1';
+  }
+  if (trimHandleEnd && !trimHandleEnd.dataset.bound) {
+    trimHandleEnd.addEventListener('pointerdown', (e) => {
+      if (!isPrimaryPointer(e)) return;
+      beginTrimDrag('end', e);
+    });
+    trimHandleEnd.dataset.bound = '1';
+  }
+  if (trimSlider && !trimSlider.dataset.bound) {
+    trimSlider.addEventListener('pointerdown', (e) => {
+      if (!isPrimaryPointer(e)) return;
+      if (e.target === trimHandleStart || e.target === trimHandleEnd) return;
+      const handle = jumpTrimToPosition(e);
+      if (handle) beginTrimDrag(handle, e);
+    });
+    trimSlider.dataset.bound = '1';
+  }
+
+  if (clipHistoryClearBtn && !clipHistoryClearBtn.dataset.bound) {
+    clipHistoryClearBtn.addEventListener('click', () => { clearClipHistory(); });
+    clipHistoryClearBtn.dataset.bound = '1';
+  }
+
+  if (clipDoneBtn && !clipDoneBtn.dataset.bound) {
+    clipDoneBtn.addEventListener('click', () => {
+      hideClipOverlay();
+    });
+    clipDoneBtn.dataset.bound = '1';
+  }
+
+  if (clipOverlayCloseBtn && !clipOverlayCloseBtn.dataset.bound) {
+    clipOverlayCloseBtn.addEventListener('click', () => { hideClipOverlay(); });
+    clipOverlayCloseBtn.dataset.bound = '1';
+  }
+
+  if (clipOverlay && !clipOverlay.dataset.bound) {
+    clipOverlay.addEventListener('click', (event) => {
+      if (event.target === clipOverlay) hideClipOverlay();
+    });
+    clipOverlay.dataset.bound = '1';
+  }
+
+  if (clipDownloadBtn && !clipDownloadBtn.dataset.bound) {
+    clipDownloadBtn.addEventListener('click', () => {
+      if (!lastClipBlob) return;
+      const url = URL.createObjectURL(lastClipBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = lastClipFileName || 'clip.webm';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    });
+    clipDownloadBtn.dataset.bound = '1';
+  }
+}
+
 if (clipBtn) {
   clipBtn.addEventListener('click', (event) => {
     event.preventDefault();
@@ -704,54 +894,6 @@ if (clipBtn) {
     }
   });
 }
-
-if (clipPresetCloseBtn) clipPresetCloseBtn.addEventListener('click', closeClipPresetOverlay);
-if (clipPresetOverlay) {
-  clipPresetOverlay.addEventListener('click', (e) => { if (e.target === clipPresetOverlay) closeClipPresetOverlay(); });
-}
-
-if (clipCustomStartBtn) {
-  clipCustomStartBtn.addEventListener('click', () => {
-    if (!video) {
-      showClipNotice('Clip playback is not ready yet.', 'warning');
-      return;
-    }
-    const clampedStart = trimState.start;
-    const clampedEnd = trimState.end;
-    if (clampedEnd - clampedStart < 0.5) {
-      showClipNotice('Clip length must be at least half a second.', 'error');
-      return;
-    }
-    const remember = clipRememberPreset && clipRememberPreset.checked;
-    if (remember) saveClipPreferredLength(clampedEnd - clampedStart);
-    else saveClipPreferredLength(null);
-    closeClipPresetOverlay();
-    startClipRange(clampedStart, clampedEnd);
-  });
-}
-
-if (trimHandleStart) {
-  trimHandleStart.addEventListener('pointerdown', (e) => {
-    if (!isPrimaryPointer(e)) return;
-    beginTrimDrag('start', e);
-  });
-}
-if (trimHandleEnd) {
-  trimHandleEnd.addEventListener('pointerdown', (e) => {
-    if (!isPrimaryPointer(e)) return;
-    beginTrimDrag('end', e);
-  });
-}
-if (trimSlider) {
-  trimSlider.addEventListener('pointerdown', (e) => {
-    if (!isPrimaryPointer(e)) return;
-    if (e.target === trimHandleStart || e.target === trimHandleEnd) return;
-    const handle = jumpTrimToPosition(e);
-    if (handle) beginTrimDrag(handle, e);
-  });
-}
-
-if (clipHistoryClearBtn) clipHistoryClearBtn.addEventListener('click', () => { clearClipHistory(); });
 
 window.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
@@ -766,35 +908,12 @@ window.addEventListener('keydown', (e) => {
   }
 });
 
-if (clipDoneBtn && clipOverlay) {
-  clipDoneBtn.addEventListener('click', () => {
-    hideClipOverlay();
-  });
-}
+// Expose clipBtn to window for settings.js to access
+if (clipBtn) window.clipBtn = clipBtn;
 
-if (clipOverlayCloseBtn) {
-  clipOverlayCloseBtn.addEventListener('click', () => { hideClipOverlay(); });
-}
-
-if (clipOverlay) {
-  clipOverlay.addEventListener('click', (event) => {
-    if (event.target === clipOverlay) hideClipOverlay();
-  });
-}
-
-if (clipDownloadBtn) {
-  clipDownloadBtn.addEventListener('click', () => {
-    if (!lastClipBlob) return;
-    const url = URL.createObjectURL(lastClipBlob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = lastClipFileName || 'clip.webm';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-  });
-}
+// Initialize clip presets and preferences
+clipPresetsCache = loadClipPresets();
+clipPreferredLength = loadClipPreferredLength();
 
 updateTrimUI();
 ensureClipDownloadButton();

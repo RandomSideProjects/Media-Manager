@@ -2651,14 +2651,55 @@ editTabBtn.addEventListener('click', () => {
 
 homeTabBtn.addEventListener('click', () => { window.location.href = '../index.html'; });
 
-const confirmModal = document.getElementById('confirmModal');
-const confirmPrompt = confirmModal ? confirmModal.querySelector('p') : null;
-const confirmYes = document.getElementById('confirmYes');
-const confirmNo = document.getElementById('confirmNo');
+let confirmModal = null;
+let confirmPrompt = null;
+let confirmYes = null;
+let confirmNo = null;
 let pendingRemoval = null;
 
+function ensureConfirmModal() {
+  if (!confirmModal) {
+    if (window.OverlayFactory && typeof window.OverlayFactory.createConfirmModal === 'function') {
+      confirmModal = window.OverlayFactory.createConfirmModal();
+      confirmPrompt = confirmModal ? confirmModal.querySelector('p') : null;
+      confirmYes = document.getElementById('confirmYes');
+      confirmNo = document.getElementById('confirmNo');
+      
+      if (confirmYes) {
+        confirmYes.addEventListener('click', () => {
+          if (pendingRemoval) {
+            try {
+              if (typeof pendingRemoval.onConfirm === 'function') {
+                pendingRemoval.onConfirm();
+              } else if (pendingRemoval.type === 'category' && pendingRemoval.elem) {
+                pendingRemoval.elem.remove();
+                updateCategoryButtonVisibility();
+              }
+            } finally {
+              if (confirmModal) confirmModal.style.display = 'none';
+              pendingRemoval = null;
+            }
+          } else {
+            if (confirmModal) confirmModal.style.display = 'none';
+          }
+        });
+      }
+      
+      if (confirmNo) {
+        confirmNo.addEventListener('click', () => {
+          if (confirmModal) confirmModal.style.display = 'none';
+          pendingRemoval = null;
+        });
+      }
+    }
+  }
+  return confirmModal;
+}
+
 function queueRemoval(removal) {
+  confirmModal = ensureConfirmModal();
   if (!confirmModal) return;
+  confirmPrompt = confirmModal.querySelector('p');
   const messages = {
     category: 'Are you sure you want to delete this category?',
     episode: 'Are you sure you want to delete this episode?',
@@ -2669,31 +2710,8 @@ function queueRemoval(removal) {
     confirmPrompt.textContent = text;
   }
   pendingRemoval = removal;
-  confirmModal.style.display = 'flex';
+  if (confirmModal) confirmModal.style.display = 'flex';
 }
-
-confirmYes.addEventListener('click', () => {
-  if (pendingRemoval) {
-    try {
-      if (typeof pendingRemoval.onConfirm === 'function') {
-        pendingRemoval.onConfirm();
-      } else if (pendingRemoval.type === 'category' && pendingRemoval.elem) {
-        pendingRemoval.elem.remove();
-        updateCategoryButtonVisibility();
-      }
-    } finally {
-      confirmModal.style.display = 'none';
-      pendingRemoval = null;
-    }
-  } else {
-    confirmModal.style.display = 'none';
-  }
-});
-
-confirmNo.addEventListener('click', () => {
-  if (confirmModal) confirmModal.style.display = 'none';
-  pendingRemoval = null;
-});
 
 function normalizeEpisodeTitles() {
   const mangaMode = isMangaMode();

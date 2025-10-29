@@ -3,27 +3,42 @@
 (function () {
   if (typeof window === "undefined") return;
 
-  const overlay = document.getElementById("devMenuOverlay");
-  const panel = document.getElementById("devMenuPanel");
-  const openBtn = document.getElementById("devMenuBtn");
-  const closeBtn = document.getElementById("devMenuCloseBtn");
-  const actionGrid = document.getElementById("devActionGrid");
-  const diagnosticsRefreshBtn = document.getElementById("devDiagnosticsRefreshBtn");
-  const modeStateLabel = document.getElementById("devModeStateLabel");
-  const uploadConcurrencyStateLabel = document.getElementById("devUploadConcurrencyStateLabel");
-  const catboxStateLabel = document.getElementById("devCatboxEndpointLabel");
-  const devMenuRow = document.getElementById("devMenuRow");
-  const devMenuStatus = document.getElementById("devMenuStatus");
-  const uploadConcurrencyInput = document.getElementById("devUploadConcurrencyInput");
-  const uploadConcurrencyResetBtn = document.getElementById("devUploadConcurrencyResetBtn");
-  const hiddenControlToggle = document.getElementById("devHiddenSourceToggle");
+  let overlay = null;
+  let panel = null;
+  let openBtn = null;
+  let closeBtn = null;
+  let actionGrid = null;
+  let diagnosticsRefreshBtn = null;
+  let modeStateLabel = null;
+  let uploadConcurrencyStateLabel = null;
+  let catboxStateLabel = null;
+  let devMenuRow = null;
+  let devMenuStatus = null;
+  let uploadConcurrencyInput = null;
+  let uploadConcurrencyResetBtn = null;
+  let hiddenControlToggle = null;
+
+  function queryElements() {
+    overlay = document.getElementById("devMenuOverlay");
+    panel = document.getElementById("devMenuPanel");
+    openBtn = document.getElementById("devMenuBtn");
+    closeBtn = document.getElementById("devMenuCloseBtn");
+    actionGrid = document.getElementById("devActionGrid");
+    diagnosticsRefreshBtn = document.getElementById("devDiagnosticsRefreshBtn");
+    modeStateLabel = document.getElementById("devModeStateLabel");
+    uploadConcurrencyStateLabel = document.getElementById("devUploadConcurrencyStateLabel");
+    catboxStateLabel = document.getElementById("devCatboxEndpointLabel");
+    devMenuRow = document.getElementById("devMenuRow");
+    devMenuStatus = document.getElementById("devMenuStatus");
+    uploadConcurrencyInput = document.getElementById("devUploadConcurrencyInput");
+    uploadConcurrencyResetBtn = document.getElementById("devUploadConcurrencyResetBtn");
+    hiddenControlToggle = document.getElementById("devHiddenSourceToggle");
+  }
 
   const OVERLAY_OPEN_CLASS = "is-open";
   const DEFAULT_CONCURRENCY = 2;
 
   const uploadSettingsPanel = document.getElementById("mmUploadSettingsPanel");
-
-  if (!overlay || !panel || !openBtn) return;
 
   const isDevModeEnabled = () => {
     if (window.RSPDev && typeof window.RSPDev.isEnabled === "function") {
@@ -45,6 +60,7 @@
   }
 
   function updateDevMenuRowVisibility() {
+    if (!devMenuRow) queryElements();
     const enabled = isDevModeEnabled();
     if (devMenuRow) devMenuRow.style.display = enabled ? "" : "none";
     if (devMenuStatus) {
@@ -181,8 +197,19 @@
   }
 
   function openOverlay() {
+    if (!overlay) queryElements();
     if (!isDevModeEnabled()) {
       showNotice("warning", "Enable Dev Mode first (press O + P) to open this menu.");
+      return;
+    }
+    // Create overlay if it doesn't exist
+    if (!overlay && window.OverlayFactory && typeof window.OverlayFactory.createCreatorDevMenuOverlay === 'function') {
+      window.OverlayFactory.createCreatorDevMenuOverlay();
+      queryElements();
+      attachEventListeners();
+    }
+    if (!overlay) {
+      showNotice("warning", "Dev menu overlay not available.");
       return;
     }
     if (uploadSettingsPanel && uploadSettingsPanel.style.display !== "none") {
@@ -193,12 +220,13 @@
     document.body.classList.add("dev-menu-open");
     refreshDiagnostics();
     setTimeout(() => {
-      try { panel.focus(); } catch {}
+      try { if (panel) panel.focus(); } catch {}
     }, 30);
   }
 
   function closeOverlay(returnFocus = true) {
-    if (!overlay.classList.contains(OVERLAY_OPEN_CLASS)) return;
+    if (!overlay) queryElements();
+    if (!overlay || !overlay.classList.contains(OVERLAY_OPEN_CLASS)) return;
     overlay.classList.remove(OVERLAY_OPEN_CLASS);
     overlay.setAttribute("aria-hidden", "true");
     document.body.classList.remove("dev-menu-open");
@@ -210,7 +238,8 @@
   }
 
   function handleOverlayKeydown(event) {
-    if (!overlay.classList.contains(OVERLAY_OPEN_CLASS)) return;
+    if (!overlay) queryElements();
+    if (!overlay || !overlay.classList.contains(OVERLAY_OPEN_CLASS)) return;
     if (event.key === "Escape") {
       event.preventDefault();
       closeOverlay();
@@ -262,68 +291,74 @@
     refreshHiddenControlToggle();
   }
 
+  function attachEventListeners() {
+    queryElements();
+    if (openBtn) openBtn.addEventListener("click", () => openOverlay());
+    if (closeBtn) closeBtn.addEventListener("click", () => closeOverlay());
+    if (overlay) {
+      overlay.addEventListener("click", (event) => {
+        if (event.target === overlay) closeOverlay();
+      });
+    }
+    document.addEventListener("keydown", handleOverlayKeydown);
+
+    if (actionGrid) {
+      actionGrid.addEventListener("click", (event) => {
+        const target = event.target;
+        if (!target || target.tagName !== "BUTTON") return;
+        const action = target.getAttribute("data-dev-action");
+        if (!action) return;
+        event.preventDefault();
+        handleAction(action);
+      });
+    }
+
+    if (uploadConcurrencyInput) {
+      const commitUpload = () => {
+        const value = Number(uploadConcurrencyInput.value);
+        const applied = applyUploadConcurrency(value);
+        uploadConcurrencyInput.value = String(applied);
+      };
+      uploadConcurrencyInput.addEventListener("change", commitUpload);
+      uploadConcurrencyInput.addEventListener("blur", commitUpload);
+    }
+
+    if (uploadConcurrencyResetBtn) {
+      uploadConcurrencyResetBtn.addEventListener("click", () => {
+        const applied = applyUploadConcurrency(DEFAULT_CONCURRENCY);
+        if (uploadConcurrencyInput) uploadConcurrencyInput.value = String(applied);
+        showNotice("info", "Upload concurrency reset to default.");
+      });
+    }
+
+    if (diagnosticsRefreshBtn) {
+      diagnosticsRefreshBtn.addEventListener("click", () => {
+        refreshDiagnostics();
+        showNotice("info", "Diagnostics refreshed.");
+      });
+    }
+
+    if (hiddenControlToggle) {
+      hiddenControlToggle.addEventListener("change", () => {
+        const desired = hiddenControlToggle.checked;
+        const helper = window.mmHiddenSourceNaming;
+        if (helper && typeof helper.setEnabled === "function") {
+          helper.setEnabled(desired);
+        } else {
+          try {
+            if (desired) localStorage.setItem("mm_creator_hidden_control", "1");
+            else localStorage.removeItem("mm_creator_hidden_control");
+          } catch {}
+          try {
+            window.dispatchEvent(new CustomEvent("creator:hidden-control-updated", { detail: { enabled: desired } }));
+          } catch {}
+        }
+      });
+    }
+  }
+
+  attachEventListeners();
   updateDevMenuRowVisibility();
-
-  if (openBtn) openBtn.addEventListener("click", () => openOverlay());
-  if (closeBtn) closeBtn.addEventListener("click", () => closeOverlay());
-  overlay.addEventListener("click", (event) => {
-    if (event.target === overlay) closeOverlay();
-  });
-  document.addEventListener("keydown", handleOverlayKeydown);
-
-  if (actionGrid) {
-    actionGrid.addEventListener("click", (event) => {
-      const target = event.target;
-      if (!target || target.tagName !== "BUTTON") return;
-      const action = target.getAttribute("data-dev-action");
-      if (!action) return;
-      event.preventDefault();
-      handleAction(action);
-    });
-  }
-
-  if (uploadConcurrencyInput) {
-    const commitUpload = () => {
-      const value = Number(uploadConcurrencyInput.value);
-      const applied = applyUploadConcurrency(value);
-      uploadConcurrencyInput.value = String(applied);
-    };
-    uploadConcurrencyInput.addEventListener("change", commitUpload);
-    uploadConcurrencyInput.addEventListener("blur", commitUpload);
-  }
-
-  if (uploadConcurrencyResetBtn) {
-    uploadConcurrencyResetBtn.addEventListener("click", () => {
-      const applied = applyUploadConcurrency(DEFAULT_CONCURRENCY);
-      if (uploadConcurrencyInput) uploadConcurrencyInput.value = String(applied);
-      showNotice("info", "Upload concurrency reset to default.");
-    });
-  }
-
-  if (diagnosticsRefreshBtn) {
-    diagnosticsRefreshBtn.addEventListener("click", () => {
-      refreshDiagnostics();
-      showNotice("info", "Diagnostics refreshed.");
-    });
-  }
-
-  if (hiddenControlToggle) {
-    hiddenControlToggle.addEventListener("change", () => {
-      const desired = hiddenControlToggle.checked;
-      const helper = window.mmHiddenSourceNaming;
-      if (helper && typeof helper.setEnabled === "function") {
-        helper.setEnabled(desired);
-      } else {
-        try {
-          if (desired) localStorage.setItem("mm_creator_hidden_control", "1");
-          else localStorage.removeItem("mm_creator_hidden_control");
-        } catch {}
-        try {
-          window.dispatchEvent(new CustomEvent("creator:hidden-control-updated", { detail: { enabled: desired } }));
-        } catch {}
-      }
-    });
-  }
 
   window.addEventListener("rsp:dev-mode-changed", (event) => {
     const enabled = event && event.detail && event.detail.enabled === true;
@@ -344,5 +379,18 @@
     }
   });
 
-  refreshDiagnostics();
+  // Defer initial refresh to ensure settings panel is created
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => {
+        updateDevMenuRowVisibility();
+        refreshDiagnostics();
+      }, 0);
+    });
+  } else {
+    setTimeout(() => {
+      updateDevMenuRowVisibility();
+      refreshDiagnostics();
+    }, 0);
+  }
 })();

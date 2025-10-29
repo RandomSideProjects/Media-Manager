@@ -9,140 +9,6 @@
 </head>
 <body>
   <button id="sourcesSettingsBtn" title="Settings" aria-label="Settings">⚙️</button>
-  <div id="sourcesSettingsOverlay">
-    <div id="sourcesSettingsPanel" role="dialog" aria-modal="true" aria-labelledby="sourcesSettingsTitle">
-      <h3 id="sourcesSettingsTitle">Public Sources — Settings</h3>
-      <div class="section">
-        <div class="settings-row"><strong>Sort by</strong></div>
-        <div class="settings-radio" id="sortOptions">
-          <label><input type="radio" name="sort" value="az"> A–Z</label>
-          <label><input type="radio" name="sort" value="za"> Z–A</label>
-          <label><input type="radio" name="sort" value="newold"> New → Old</label>
-          <label><input type="radio" name="sort" value="oldnew"> Old → New</label>
-        </div>
-      </div>
-      <div class="section">
-        <label class="settings-row" style="justify-content: space-between;">
-          <span>Hide posters</span>
-          <input type="checkbox" id="toggleHidePosters">
-        </label>
-      </div>
-      <div class="section">
-        <label class="settings-row" style="justify-content: space-between;">
-          <span style="display:flex; align-items:center; gap:8px;">
-            <span>Enable search bar</span>
-            <span data-setting-tag="beta"></span>
-          </span>
-          <input type="checkbox" id="toggleSearchBar">
-        </label>
-      </div>
-      <div class="section">
-        <div class="settings-row" style="justify-content: space-between; width:100%;">
-          <span>Row Limit</span>
-          <div style="display:flex; align-items:center; gap:8px;">
-            <input type="range" id="rowLimitRange" min="2" max="10" step="1" value="3">
-            <span id="rowLimitValue">3</span>
-          </div>
-        </div>
-      </div>
-      <div class="section">
-        <div class="settings-row"><strong>Library</strong></div>
-        <div class="settings-radio" id="modeOptions">
-          <label><input type="radio" name="mode" value="anime"> Anime</label>
-          <label><input type="radio" name="mode" value="manga"> Manga</label>
-        </div>
-      </div>
-      <div class="section dev-menu-row" id="devMenuRow" style="display:none;" data-setting-tag="dev">
-        <button id="devMenuBtn" type="button" class="btn-primary">Dev Menu</button>
-        <span class="dev-menu-status" id="devMenuStatus">Developer tools</span>
-      </div>
-      <div class="settings-actions">
-        <button id="settingsCancel" class="btn-ghost">Close</button>
-        <button id="settingsApply" class="btn-primary">Apply</button>
-        <button id="openFeedback" class="btn-primary" style="margin-left:auto;">Feedback & Bugs</button>
-      </div>
-    </div>
-  </div>
-  <!-- Feedback overlay -->
-  <div id="feedbackOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); align-items:center; justify-content:center; z-index:1002;">
-    <div id="feedbackPanel" role="dialog" aria-modal="true" aria-labelledby="feedbackTitle" style="background:#1a1a1a; color:#f1f1f1; border:1px solid #333; border-radius:12px; width:480px; max-width:calc(100vw - 40px); padding:16px 18px; box-shadow:0 16px 40px rgba(0,0,0,0.6); position:relative;">
-      <div style="position:absolute; top:16px; right:16px; display:flex; align-items:center; gap:6px; font-size:.75em; opacity:.75;">
-        <label for="fbShareLocation" style="cursor:pointer;">Analytics</label>
-        <input id="fbShareLocation" type="checkbox" checked title="Share approximate location (IP-based) for this message." style="width:14px; height:14px;">
-      </div>
-      <h3 id="feedbackTitle" style="margin:0 0 10px 0;">Feedback & Bugs</h3>
-      <div class="settings-row" style="flex-direction:column; align-items:stretch; gap:6px;">
-        <label for="fbSubject">Subject (10 words max)</label>
-        <input id="fbSubject" type="text" placeholder="Short subject" style="padding:.6em; border-radius:8px; border:1px solid #444; background:#2a2a2a; color:#f1f1f1;" />
-      </div>
-      <div class="settings-row" style="flex-direction:column; align-items:stretch; gap:6px; margin-top:8px;">
-        <label for="fbMessage">Message (240 characters max)</label>
-        <textarea id="fbMessage" maxlength="240" rows="5" placeholder="Describe the issue or feedback" style="padding:.6em; border-radius:8px; border:1px solid #444; background:#2a2a2a; color:#f1f1f1; resize:vertical;"></textarea>
-        <div id="fbCount" style="font-size:.85em; opacity:.8; text-align:right;">0 / 240</div>
-      </div>
-      <div class="settings-actions" style="display:flex; gap:8px; justify-content:flex-end; margin-top:12px;">
-        <button id="fbCancel" class="btn-ghost">Cancel</button>
-        <button id="fbSend" class="btn-primary">Send</button>
-      </div>
-      <div id="fbStatus" style="margin-top:8px; font-size:.9em; min-height:1.2em; opacity:.9;"></div>
-    </div>
-  </div>
-  <div id="devMenuOverlay" aria-hidden="true">
-    <div id="devMenuPanel" role="dialog" aria-modal="true" aria-labelledby="devMenuTitle" tabindex="-1">
-      <div class="dev-menu-header">
-        <h3 id="devMenuTitle">Developer Menu</h3>
-        <button id="devMenuCloseBtn" type="button" class="btn-ghost">Close</button>
-      </div>
-      <div class="dev-menu-content">
-        <section class="dev-menu-section" aria-labelledby="devMenuModeHeading" data-setting-tag="dev">
-          <h4 id="devMenuModeHeading">Mode</h4>
-          <label class="dev-menu-toggle" for="devModeToggle">
-            <input type="checkbox" id="devModeToggle">
-            <span>Enable developer mode</span>
-          </label>
-          <p class="dev-menu-hint">Toggle with O + P anywhere.</p>
-        </section>
-        <section class="dev-menu-section" data-setting-tag="dev">
-          <h4>Quick Actions</h4>
-          <div class="dev-action-grid" id="devActionGrid">
-            <button type="button" data-dev-action="notice:info">Show info notice</button>
-            <button type="button" data-dev-action="notice:error">Show error notice</button>
-            <button type="button" data-dev-action="sources:reload">Reload sources</button>
-            <button type="button" data-dev-action="sources:open-settings">Open settings</button>
-            <button type="button" data-dev-action="sources:feedback">Open feedback</button>
-          </div>
-        </section>
-        <section class="dev-menu-section" data-setting-tag="dev">
-          <div class="dev-menu-diagnostics-header">
-            <h4>Diagnostics</h4>
-            <button id="devDiagnosticsRefreshBtn" type="button" class="btn-ghost">Refresh</button>
-          </div>
-          <dl class="dev-stats">
-            <div class="dev-stat">
-              <dt>Dev mode</dt>
-              <dd id="devModeStateLabel">Off</dd>
-            </div>
-            <div class="dev-stat">
-              <dt>Download concurrency</dt>
-              <dd id="devConcurrencyStateLabel">—</dd>
-            </div>
-            <div class="dev-stat">
-              <dt>Active Catbox endpoint</dt>
-              <dd id="devCatboxEndpointLabel">Pending</dd>
-            </div>
-            <div class="dev-stat">
-              <dt>Source key</dt>
-              <dd id="devSourceKeyLabel">Not set</dd>
-            </div>
-          </dl>
-        </section>
-      </div>
-    </div>
-  </div>
-  <div id="sourcesToolbar" style="display:none; gap:8px; align-items:center; padding:8px 12px; max-width:1200px; margin:10px auto 0;">
-    <label for="sourcesSearchInput" style="font-weight:600; opacity:.9;">Search</label>
-    <input id="sourcesSearchInput" type="search" placeholder="Search sources..." style="flex:1; padding:.6em .8em; border-radius:10px; border:1px solid #333; background:#141414; color:#f1f1f1;" />
-  </div>
   <div class="container" id="sourcesContainer">
     <!-- Cards will be injected here -->
   </div>
@@ -150,6 +16,7 @@
   <script src="../scripts/alerts.js"></script>
   <script src="../scripts/dev-core.js"></script>
   <script src="../scripts/tags.js"></script>
+  <script src="../scripts/overlay-factory.js"></script>
   <script src="scripts/constants.js"></script>
   <script src="scripts/utils.js"></script>
   <script src="scripts/render.js"></script>

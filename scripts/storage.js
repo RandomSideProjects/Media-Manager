@@ -7,8 +7,28 @@
 
   let clearOverlayVisible = false;
   let importOverlayVisible = false;
+  let clearOverlayElement = null;
+  let importOverlayElement = null;
   let pendingImportData = null;
   let pendingImportNotice = null;
+
+  function ensureClearStorageOverlay() {
+    if (!clearOverlayElement) {
+      if (window.OverlayFactory && typeof window.OverlayFactory.createClearStorageOverlay === 'function') {
+        clearOverlayElement = window.OverlayFactory.createClearStorageOverlay();
+      }
+    }
+    return clearOverlayElement;
+  }
+
+  function ensureStorageImportOverlay() {
+    if (!importOverlayElement) {
+      if (window.OverlayFactory && typeof window.OverlayFactory.createStorageImportOverlay === 'function') {
+        importOverlayElement = window.OverlayFactory.createStorageImportOverlay();
+      }
+    }
+    return importOverlayElement;
+  }
 
   function showStorageNotice(options = {}) {
     const hasNotifier = window.mmNotices && typeof window.mmNotices.show === 'function';
@@ -262,18 +282,43 @@
     const storageExportBtn = document.getElementById('storageExportBtn');
     const storageImportBtn = document.getElementById('storageImportBtn');
 
-    const clearOverlay = document.getElementById('clearStorageOverlay');
-    const clearConfirmBtn = document.getElementById('clearStorageConfirmBtn');
-    const clearCancelBtn = document.getElementById('clearStorageCancelBtn');
-
-    const importOverlay = document.getElementById('storageImportOverlay');
-    const importCancelBtn = document.getElementById('storageImportCancelBtn');
-    const importConfirmBtn = document.getElementById('storageImportConfirmBtn');
-    const importCodeInput = document.getElementById('storageImportCodeInput');
-    const importFileInput = document.getElementById('storageImportFileInput');
+    let clearOverlay = null;
+    let clearConfirmBtn = null;
+    let clearCancelBtn = null;
+    let importOverlay = null;
+    let importCancelBtn = null;
+    let importConfirmBtn = null;
+    let importCodeInput = null;
+    let importFileInput = null;
 
     const closeMenu = () => closeStorageMenu(storageMenuPanel, storageMenuBtn);
     const openMenu = () => openStorageMenu(storageMenuPanel, storageMenuBtn);
+
+    const clearAppStorage = () => {
+      let cleared = false;
+      try {
+        localStorage.clear();
+        cleared = true;
+      } catch (err) {
+        console.error('Failed to clear localStorage:', err);
+        showStorageNotice({
+          title: 'Clear failed',
+          message: 'We could not clear local storage. Please check browser settings and try again.',
+          tone: 'error'
+        });
+      }
+      if (cleared) {
+        showStorageNotice({
+          title: 'Storage cleared',
+          message: 'Reloading to apply changes…',
+          tone: 'success',
+          autoCloseMs: 2000
+        });
+        setTimeout(() => {
+          try { window.location.reload(); } catch {}
+        }, 900);
+      }
+    };
 
     const clearPendingImportPrompt = () => {
       pendingImportData = null;
@@ -352,9 +397,32 @@
     };
 
     const openClearOverlay = () => {
+      clearOverlay = ensureClearStorageOverlay();
       if (!clearOverlay) return;
       clearOverlay.style.display = 'flex';
       clearOverlayVisible = true;
+      
+      // Ensure event handlers are attached
+      if (!clearOverlay.dataset.bound) {
+        clearConfirmBtn = document.getElementById('clearStorageConfirmBtn');
+        clearCancelBtn = document.getElementById('clearStorageCancelBtn');
+        
+        if (clearConfirmBtn) {
+          clearConfirmBtn.addEventListener('click', () => {
+            closeClearOverlay();
+            clearAppStorage();
+          });
+        }
+        if (clearCancelBtn) {
+          clearCancelBtn.addEventListener('click', () => {
+            closeClearOverlay();
+          });
+        }
+        clearOverlay.addEventListener('click', (event) => {
+          if (event.target === clearOverlay) closeClearOverlay();
+        });
+        clearOverlay.dataset.bound = '1';
+      }
     };
     const closeClearOverlay = () => {
       if (!clearOverlay) return;
@@ -363,18 +431,130 @@
     };
 
     const resetImportInputs = () => {
+      importCodeInput = document.getElementById('storageImportCodeInput');
+      importFileInput = document.getElementById('storageImportFileInput');
       if (importCodeInput) importCodeInput.value = '';
       if (importFileInput) importFileInput.value = '';
       clearPendingImportPrompt();
     };
 
+    const readImportFile = async (file) => {
+      clearPendingImportPrompt();
+      const importConfirmBtn = document.getElementById('storageImportConfirmBtn');
+      if (importConfirmBtn) importConfirmBtn.disabled = true;
+      try {
+        const jsonText = await readFileAsText(file);
+        let payload;
+        try {
+          payload = JSON.parse(jsonText);
+        } catch {
+          throw new Error('Imported file is not valid JSON.');
+        }
+        const data = extractDataFromImportPayload(payload);
+        presentImportModePrompt(data);
+      } catch (err) {
+        clearPendingImportPrompt();
+        console.error('[Storage] Import failed', err);
+        showStorageNotice({
+          title: 'Import failed',
+          message: err && err.message ? err.message : String(err),
+          tone: 'error'
+        });
+      } finally {
+        if (importConfirmBtn) importConfirmBtn.disabled = false;
+      }
+    };
+
+    const handleImportAction = async () => {
+      clearPendingImportPrompt();
+      importConfirmBtn = document.getElementById('storageImportConfirmBtn');
+      importCodeInput = document.getElementById('storageImportCodeInput');
+      importFileInput = document.getElementById('storageImportFileInput');
+      
+      if (importConfirmBtn) importConfirmBtn.disabled = true;
+      try {
+        const catboxInput = importCodeInput ? importCodeInput.value.trim() : '';
+        const file = importFileInput && importFileInput.files && importFileInput.files.length ? importFileInput.files[0] : null;
+        if (!catboxInput && !file) {
+          showStorageNotice({
+            title: 'Import needed',
+            message: 'Provide a Catbox code or choose a JSON file to import.',
+            tone: 'warning'
+          });
+          return;
+        }
+        let jsonText = '';
+        if (file) {
+          jsonText = await readFileAsText(file);
+        } else {
+          const url = resolveCatboxUrl(catboxInput);
+          if (!url) throw new Error('Enter a valid Catbox code or URL.');
+          const response = await fetch(url, { cache: 'no-store' });
+          if (!response.ok) throw new Error(`Unable to download settings (${response.status}).`);
+          jsonText = await response.text();
+        }
+        let payload;
+        try {
+          payload = JSON.parse(jsonText);
+        } catch {
+          throw new Error('Imported file is not valid JSON.');
+        }
+        const data = extractDataFromImportPayload(payload);
+        presentImportModePrompt(data);
+      } catch (err) {
+        clearPendingImportPrompt();
+        console.error('[Storage] Import failed', err);
+        showStorageNotice({
+          title: 'Import failed',
+          message: err && err.message ? err.message : String(err),
+          tone: 'error'
+        });
+      } finally {
+        if (importConfirmBtn) importConfirmBtn.disabled = false;
+      }
+    };
+
     const openImportOverlay = () => {
+      importOverlay = ensureStorageImportOverlay();
       if (!importOverlay) return;
       clearPendingImportPrompt();
       importOverlay.style.display = 'flex';
       importOverlayVisible = true;
+      
+      // Ensure event handlers are attached
+      if (!importOverlay.dataset.bound) {
+        importCancelBtn = document.getElementById('storageImportCancelBtn');
+        importConfirmBtn = document.getElementById('storageImportConfirmBtn');
+        importCodeInput = document.getElementById('storageImportCodeInput');
+        importFileInput = document.getElementById('storageImportFileInput');
+        
+        if (importCancelBtn) {
+          importCancelBtn.addEventListener('click', () => {
+            closeImportOverlay();
+          });
+        }
+        if (importConfirmBtn) {
+          importConfirmBtn.addEventListener('click', () => {
+            handleImportAction();
+          });
+        }
+        if (importFileInput) {
+          importFileInput.addEventListener('change', (event) => {
+            const file = event.target?.files?.[0];
+            if (file) {
+              readImportFile(file);
+            }
+          });
+        }
+        importOverlay.addEventListener('click', (event) => {
+          if (event.target === importOverlay) closeImportOverlay();
+        });
+        importOverlay.dataset.bound = '1';
+      }
+      
       setTimeout(() => {
         try {
+          importCodeInput = document.getElementById('storageImportCodeInput');
           if (importCodeInput) importCodeInput.focus();
         } catch {}
       }, 50);
@@ -473,95 +653,6 @@
       storageImportBtn.addEventListener('click', () => {
         closeMenu();
         openImportOverlay();
-      });
-    }
-
-    if (clearOverlay) {
-      clearOverlay.addEventListener('click', (event) => {
-        if (event.target === clearOverlay) closeClearOverlay();
-      });
-    }
-    if (clearCancelBtn) clearCancelBtn.addEventListener('click', closeClearOverlay);
-    if (clearConfirmBtn) {
-      clearConfirmBtn.addEventListener('click', () => {
-        let cleared = false;
-        try {
-          localStorage.clear();
-          cleared = true;
-        } catch (err) {
-          console.error('Failed to clear localStorage:', err);
-          showStorageNotice({
-            title: 'Clear failed',
-            message: 'We could not clear local storage. Please check browser settings and try again.',
-            tone: 'error'
-          });
-        }
-        closeClearOverlay();
-        if (cleared) {
-          showStorageNotice({
-            title: 'Storage cleared',
-            message: 'Reloading to apply changes…',
-            tone: 'success',
-            autoCloseMs: 2000
-          });
-          setTimeout(() => {
-            try { window.location.reload(); } catch {}
-          }, 900);
-        }
-      });
-    }
-
-    if (importOverlay) {
-      importOverlay.addEventListener('click', (event) => {
-        if (event.target === importOverlay) closeImportOverlay();
-      });
-    }
-    if (importCancelBtn) importCancelBtn.addEventListener('click', closeImportOverlay);
-
-    if (importConfirmBtn) {
-      importConfirmBtn.addEventListener('click', async () => {
-        clearPendingImportPrompt();
-        importConfirmBtn.disabled = true;
-        try {
-          const catboxInput = importCodeInput ? importCodeInput.value.trim() : '';
-          const file = importFileInput && importFileInput.files && importFileInput.files.length ? importFileInput.files[0] : null;
-          if (!catboxInput && !file) {
-            showStorageNotice({
-              title: 'Import needed',
-              message: 'Provide a Catbox code or choose a JSON file to import.',
-              tone: 'warning'
-            });
-            return;
-          }
-          let jsonText = '';
-          if (file) {
-            jsonText = await readFileAsText(file);
-          } else {
-            const url = resolveCatboxUrl(catboxInput);
-            if (!url) throw new Error('Enter a valid Catbox code or URL.');
-            const response = await fetch(url, { cache: 'no-store' });
-            if (!response.ok) throw new Error(`Unable to download settings (${response.status}).`);
-            jsonText = await response.text();
-          }
-          let payload;
-          try {
-            payload = JSON.parse(jsonText);
-          } catch {
-            throw new Error('Imported file is not valid JSON.');
-          }
-          const data = extractDataFromImportPayload(payload);
-          presentImportModePrompt(data);
-        } catch (err) {
-          clearPendingImportPrompt();
-          console.error('[Storage] Import failed', err);
-          showStorageNotice({
-            title: 'Import failed',
-            message: err && err.message ? err.message : String(err),
-            tone: 'error'
-          });
-        } finally {
-          importConfirmBtn.disabled = false;
-        }
       });
     }
 

@@ -1,16 +1,50 @@
 "use strict";
 
 // Variables (top)
-const feedbackBtn = document.getElementById('openFeedback');
-const fbOverlay = document.getElementById('feedbackOverlay');
-const fbPanel = document.getElementById('feedbackPanel');
-const fbSubject = document.getElementById('fbSubject');
-const fbMessage = document.getElementById('fbMessage');
-const fbCount = document.getElementById('fbCount');
-const fbSend = document.getElementById('fbSend');
-const fbCancel = document.getElementById('fbCancel');
-const fbStatus = document.getElementById('fbStatus');
-const fbShareLocation = document.getElementById('fbShareLocation');
+let feedbackBtn = null;
+let fbOverlay = null;
+let fbPanel = null;
+let fbSubject = null;
+let fbMessage = null;
+let fbCount = null;
+let fbSend = null;
+let fbCancel = null;
+let fbStatus = null;
+let fbShareLocation = null;
+
+// Ensure feedback overlay exists and query elements
+function ensureFeedbackOverlay() {
+  if (!fbOverlay) {
+    if (window.OverlayFactory && typeof window.OverlayFactory.createFeedbackOverlay === 'function') {
+      window.OverlayFactory.createFeedbackOverlay();
+    }
+    // Query all elements
+    feedbackBtn = document.getElementById('openFeedback');
+    fbOverlay = document.getElementById('feedbackOverlay');
+    fbPanel = document.getElementById('feedbackPanel');
+    fbSubject = document.getElementById('fbSubject');
+    fbMessage = document.getElementById('fbMessage');
+    fbCount = document.getElementById('fbCount');
+    fbSend = document.getElementById('fbSend');
+    fbCancel = document.getElementById('fbCancel');
+    fbStatus = document.getElementById('fbStatus');
+    fbShareLocation = document.getElementById('fbShareLocation');
+    
+    // Attach event listeners
+    if (fbCancel) fbCancel.addEventListener('click', closeFeedback);
+    if (fbOverlay) fbOverlay.addEventListener('click', (e)=>{ if (e.target === fbOverlay) closeFeedback(); });
+    if (fbMessage && fbCount) fbMessage.addEventListener('input', ()=>{ fbCount.textContent = `${fbMessage.value.length} / 240`; });
+    if (fbSubject) fbSubject.addEventListener('input', () => {
+      const words = fbSubject.value.trim().split(/\s+/).filter(Boolean);
+      if (words.length > 10) {
+        fbSubject.value = words.slice(0, 10).join(' ');
+      }
+    });
+    if (fbShareLocation) fbShareLocation.addEventListener('change', () => { updateShareLocation(fbShareLocation.checked); });
+    if (fbSend) fbSend.addEventListener('click', handleSendFeedback);
+  }
+  return fbOverlay;
+}
 // Encryption data
 const WH_KEY_B64 = 'aJB+40k8AaWDi1xFQdEk5g==';
 const WH_IV_B64  = 'vlPG0OOvVmnKNG15';
@@ -83,6 +117,7 @@ function setLastFeedbackTimestamp(ts) {
 
 // Behavior
 function openFeedback(){
+  ensureFeedbackOverlay();
   if (fbShareLocation) {
     const desired = (typeof SOURCES_SHARE_LOCATION === 'undefined') ? true : !!SOURCES_SHARE_LOCATION;
     fbShareLocation.checked = desired;
@@ -91,24 +126,11 @@ function openFeedback(){
 }
 function closeFeedback(){ if (fbOverlay) fbOverlay.style.display = 'none'; if (fbStatus) fbStatus.textContent=''; }
 
-if (feedbackBtn) feedbackBtn.addEventListener('click', openFeedback);
-if (fbOverlay) fbOverlay.addEventListener('click', (e)=>{ if (e.target === fbOverlay) closeFeedback(); });
-if (fbCancel) fbCancel.addEventListener('click', closeFeedback);
-if (fbMessage && fbCount) fbMessage.addEventListener('input', ()=>{ fbCount.textContent = `${fbMessage.value.length} / 240`; });
-if (fbSubject) fbSubject.addEventListener('input', () => {
-  const words = fbSubject.value.trim().split(/\s+/).filter(Boolean);
-  if (words.length > 10) {
-    fbSubject.value = words.slice(0,10).join(' ');
-  }
-});
-if (fbShareLocation) {
-  fbShareLocation.checked = (typeof SOURCES_SHARE_LOCATION === 'undefined') ? true : !!SOURCES_SHARE_LOCATION;
-  fbShareLocation.addEventListener('change', () => {
-    updateShareLocation(fbShareLocation.checked);
-  });
-}
+// Make openFeedback globally accessible
+window.openFeedback = openFeedback;
 
-if (fbSend) fbSend.addEventListener('click', async () => {
+// Handle send feedback - extracted to named function for reuse
+async function handleSendFeedback() {
   const subject = (fbSubject && fbSubject.value || '').trim();
   const message = (fbMessage && fbMessage.value || '').trim();
   if (!subject || !message) { if (fbStatus) { fbStatus.style.color = '#ff6b6b'; fbStatus.textContent = 'Please enter both subject and message.'; } return; }
@@ -161,4 +183,4 @@ if (fbSend) fbSend.addEventListener('click', async () => {
   } finally {
     if (fbSend) { fbSend.disabled = false; fbSend.textContent = 'Send'; }
   }
-});
+}

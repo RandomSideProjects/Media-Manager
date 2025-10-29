@@ -33,66 +33,20 @@ const cbzNextBtn = document.getElementById('cbzNextBtn');
 const cbzPageInfo = document.getElementById('cbzPageInfo');
 const cbzImage = document.getElementById('cbzImage');
 
-// CBZ progress elements
-const cbzProgressOverlay = document.getElementById('cbzProgressOverlay');
-const cbzProgressBar = document.getElementById('cbzProgressBar');
-const cbzProgressMessage = document.getElementById('cbzProgressMessage');
+// CBZ progress elements (created dynamically)
+let cbzProgressOverlay = document.getElementById('cbzProgressOverlay');
+let cbzProgressBar = document.getElementById('cbzProgressBar');
+let cbzProgressMessage = document.getElementById('cbzProgressMessage');
 
-// Clip overlay
-const clipBtn = document.getElementById('clipBtn');
-const clipOverlay = document.getElementById('clipOverlay');
-const clipOverlayCloseBtn = document.getElementById('clipOverlayCloseBtn');
-const clipMessage = document.getElementById('clipMessage');
-const clipDoneBtn = document.getElementById('clipDoneBtn');
-const clipDownloadBtn = document.getElementById('clipDownloadBtn');
-const clipButtonsRow = document.getElementById('clipButtonsRow');
-const clipProgressOverlay = document.getElementById('clipProgressOverlay');
-const clipProgressMessage = document.getElementById('clipProgressMessage');
-const clipProgressBar = document.getElementById('clipProgressBar');
+// Clip progress overlay elements (used by clip.js but not managed by it)
+let clipProgressOverlay = document.getElementById('clipProgressOverlay');
+let clipProgressMessage = document.getElementById('clipProgressMessage');
+let clipProgressBar = document.getElementById('clipProgressBar');
 
-// Clip preset/history elements
-const clipPresetOverlay = document.getElementById('clipPresetOverlay');
-const clipPresetButtons = document.getElementById('clipPresetButtons');
-const clipCustomStartBtn = document.getElementById('clipCustomStartBtn');
-const clipRememberPreset = document.getElementById('clipRememberPreset');
-const clipPresetCloseBtn = document.getElementById('clipPresetCloseBtn');
-const clipHistoryList = document.getElementById('clipHistoryList');
-const clipHistoryClearBtn = document.getElementById('clipHistoryClearBtn');
-const trimSlider = document.getElementById('trimSlider');
-const trimRange = document.getElementById('trimRange');
-const trimHandleStart = document.getElementById('trimHandleStart');
-const trimHandleEnd = document.getElementById('trimHandleEnd');
-const trimPreviewMarker = document.getElementById('trimPreviewMarker');
-const clipDisplayStart = document.getElementById('clipDisplayStart');
-const clipDisplayEnd = document.getElementById('clipDisplayEnd');
-const clipDisplayLength = document.getElementById('clipDisplayLength');
+// Clip overlay (created dynamically by clip.js, all elements declared there)
+// clipBtn is declared in clip.js and exposed to window there
 
-// Settings elements
-const settingsBtn = document.getElementById('settingsBtn');
-const settingsOverlay = document.getElementById('settingsOverlay');
-const settingsPanel = document.getElementById('settingsPanel');
-const settingsCloseBtn = document.getElementById('settingsCloseBtn');
-const clipToggle = document.getElementById('clipToggle');
-const clipPreviewToggle = document.getElementById('clipPreviewToggle');
-const selectiveDownloadToggle = document.getElementById('selectiveDownloadToggle');
-const recentSourcesToggle = document.getElementById('recentSourcesToggle');
-const recentSourcesPlacement = document.getElementById('recentSourcesPlacement');
-const downloadConcurrencyRange = document.getElementById('downloadConcurrencyRange');
-const downloadConcurrencyValue = document.getElementById('downloadConcurrencyValue');
-const devMenuRow = document.getElementById('devMenuRow');
-const devMenuBtn = document.getElementById('devMenuBtn');
-const devMenuOverlay = document.getElementById('devMenuOverlay');
-const devMenuCloseBtn = document.getElementById('devMenuCloseBtn');
-const devModeToggle = document.getElementById('devModeToggle');
-const devConcurrencyInput = document.getElementById('devConcurrencyInput');
-const devConcurrencyResetBtn = document.getElementById('devConcurrencyResetBtn');
-const devActionGrid = document.getElementById('devActionGrid');
-const devDiagnosticsRefreshBtn = document.getElementById('devDiagnosticsRefreshBtn');
-const devModeStateLabel = document.getElementById('devModeStateLabel');
-const devConcurrencyStateLabel = document.getElementById('devConcurrencyStateLabel');
-const devCatboxEndpointLabel = document.getElementById('devCatboxEndpointLabel');
-const devSourceKeyLabel = document.getElementById('devSourceKeyLabel');
-const devMenuStatus = document.getElementById('devMenuStatus');
+// Settings button - handled by settings.js, other settings elements created dynamically
 
 // Spinner wiring
 if (video && spinner) {

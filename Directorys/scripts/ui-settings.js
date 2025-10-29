@@ -1,20 +1,80 @@
 "use strict";
 
 // Variables (top)
-const settingsBtn = document.getElementById('sourcesSettingsBtn');
-const settingsOverlay = document.getElementById('sourcesSettingsOverlay');
-const settingsApplyBtn = document.getElementById('settingsApply');
-const rowLimitRange = document.getElementById('rowLimitRange');
-const rowLimitValue = document.getElementById('rowLimitValue');
-const settingsCancelBtn = document.getElementById('settingsCancel');
-const hidePostersToggle = document.getElementById('toggleHidePosters');
-const sortRadios = Array.from(document.querySelectorAll('#sortOptions input[name="sort"]'));
-const modeRadios = Array.from(document.querySelectorAll('#modeOptions input[name="mode"]'));
-const searchToggleEl = document.getElementById('toggleSearchBar');
+let settingsBtn = null;
+let settingsOverlay = null;
+let settingsApplyBtn = null;
+let rowLimitRange = null;
+let rowLimitValue = null;
+let settingsCancelBtn = null;
+let hidePostersToggle = null;
+let sortRadios = [];
+let modeRadios = [];
+let searchToggleEl = null;
+let openFeedbackBtn = null;
+
+function ensureSourcesSettingsOverlay() {
+  if (!settingsOverlay) {
+    if (window.OverlayFactory && typeof window.OverlayFactory.createSourcesSettingsOverlay === 'function') {
+      settingsOverlay = window.OverlayFactory.createSourcesSettingsOverlay();
+      
+      // Re-query all elements
+      settingsApplyBtn = document.getElementById('settingsApply');
+      rowLimitRange = document.getElementById('rowLimitRange');
+      rowLimitValue = document.getElementById('rowLimitValue');
+      settingsCancelBtn = document.getElementById('settingsCancel');
+      hidePostersToggle = document.getElementById('toggleHidePosters');
+      sortRadios = Array.from(document.querySelectorAll('#sortOptions input[name="sort"]'));
+      modeRadios = Array.from(document.querySelectorAll('#modeOptions input[name="mode"]'));
+      searchToggleEl = document.getElementById('toggleSearchBar');
+      openFeedbackBtn = document.getElementById('openFeedback');
+      
+      // Setup event handlers
+      if (settingsCancelBtn) settingsCancelBtn.addEventListener('click', closeSettingsPanel);
+      if (settingsOverlay) {
+        settingsOverlay.addEventListener('click', (e) => {
+          if (e.target === settingsOverlay) closeSettingsPanel();
+        });
+      }
+      
+      if (rowLimitRange) {
+        rowLimitRange.addEventListener('input', () => {
+          if (rowLimitValue) rowLimitValue.textContent = rowLimitRange.value;
+          applyRowLimit(parseInt(rowLimitRange.value, 10));
+        });
+      }
+      
+      if (settingsApplyBtn) settingsApplyBtn.addEventListener('click', applySettings);
+      
+      if (openFeedbackBtn) {
+        openFeedbackBtn.addEventListener('click', () => {
+          closeSettingsPanel();
+          if (window.OverlayFactory && typeof window.OverlayFactory.createFeedbackOverlay === 'function') {
+            window.OverlayFactory.createFeedbackOverlay();
+          }
+          const feedbackOverlay = document.getElementById('feedbackOverlay');
+          if (feedbackOverlay) feedbackOverlay.style.display = 'flex';
+        });
+      }
+    }
+  }
+  return settingsOverlay;
+}
 
 // Behavior
 function openSettingsPanel(){
-  hidePostersToggle.checked = !!SOURCES_HIDE_POSTERS;
+  settingsOverlay = ensureSourcesSettingsOverlay();
+  if (!settingsOverlay) return;
+  
+  // Re-query elements
+  hidePostersToggle = document.getElementById('toggleHidePosters');
+  sortRadios = Array.from(document.querySelectorAll('#sortOptions input[name="sort"]'));
+  modeRadios = Array.from(document.querySelectorAll('#modeOptions input[name="mode"]'));
+  rowLimitRange = document.getElementById('rowLimitRange');
+  rowLimitValue = document.getElementById('rowLimitValue');
+  searchToggleEl = document.getElementById('toggleSearchBar');
+  
+  if (hidePostersToggle) hidePostersToggle.checked = !!SOURCES_HIDE_POSTERS;
   for (const r of sortRadios) r.checked = (r.value === SOURCES_SORT);
   for (const m of modeRadios) m.checked = (m.value === SOURCES_MODE);
   updateRowLimitMax();
@@ -23,13 +83,17 @@ function openSettingsPanel(){
     if (rowLimitValue) rowLimitValue.textContent = String(SOURCES_ROW_LIMIT);
   }
   if (searchToggleEl) searchToggleEl.checked = !!SOURCES_SEARCH_ENABLED;
-  settingsOverlay.style.display = 'flex';
+  if (settingsOverlay) settingsOverlay.style.display = 'flex';
 }
-function closeSettingsPanel(){ settingsOverlay.style.display = 'none'; }
+function closeSettingsPanel(){ 
+  if (settingsOverlay) settingsOverlay.style.display = 'none'; 
+}
 
+// Create settings overlay immediately so dev-menu.js can access its elements
+ensureSourcesSettingsOverlay();
+
+settingsBtn = document.getElementById('sourcesSettingsBtn');
 if (settingsBtn) settingsBtn.addEventListener('click', openSettingsPanel);
-if (settingsCancelBtn) settingsCancelBtn.addEventListener('click', closeSettingsPanel);
-if (settingsOverlay) settingsOverlay.addEventListener('click', (e)=>{ if (e.target === settingsOverlay) closeSettingsPanel(); });
 
 function applyRowLimit(n){
   const container = document.getElementById('sourcesContainer');
@@ -70,14 +134,13 @@ window.addEventListener('resize', () => {
   __rowLimitTimer = setTimeout(() => { __rowLimitTimer = null; updateRowLimitMax(); }, 100);
 });
 
-if (rowLimitRange) {
-  rowLimitRange.addEventListener('input', () => {
-    if (rowLimitValue) rowLimitValue.textContent = rowLimitRange.value;
-    applyRowLimit(parseInt(rowLimitRange.value, 10));
-  });
-}
-
-if (settingsApplyBtn) settingsApplyBtn.addEventListener('click', async () => {
+async function applySettings() {
+  sortRadios = Array.from(document.querySelectorAll('#sortOptions input[name="sort"]'));
+  modeRadios = Array.from(document.querySelectorAll('#modeOptions input[name="mode"]'));
+  hidePostersToggle = document.getElementById('toggleHidePosters');
+  searchToggleEl = document.getElementById('toggleSearchBar');
+  rowLimitRange = document.getElementById('rowLimitRange');
+  
   const selected = sortRadios.find(r => r.checked);
   SOURCES_SORT = selected ? selected.value : 'az';
   SOURCES_HIDE_POSTERS = !!hidePostersToggle.checked;
@@ -114,4 +177,4 @@ if (settingsApplyBtn) settingsApplyBtn.addEventListener('click', async () => {
     renderSourcesFromState();
   }
   closeSettingsPanel();
-});
+}

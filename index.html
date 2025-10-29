@@ -8,63 +8,10 @@
 </head>
 <body>
   <button id="themeToggle" title="Toggle Theme">☾</button>
-  <button id="settingsBtn" title="Settings">
+  <button id="settingsBtn" title="Settings" onclick="console.log('Settings button clicked directly')">
     ⚙
   </button>
   <nav class="tabs">
-  <div id="settingsOverlay">
-    <div id="settingsPanel">
-      <div class="setting-row">
-        <h3>Settings</h3>
-        <button id="settingsCloseBtn">Close</button>
-      </div>
-      <div class="setting-row">
-        <input type="checkbox" id="clipToggle">
-        <label for="clipToggle">Enable clipping</label>
-      </div>
-      <div class="setting-row">
-        <input type="checkbox" id="clipPreviewToggle">
-        <label for="clipPreviewToggle" data-setting-tag="beta">Clip preview</label>
-      </div>
-      <div class="setting-row">
-        <input type="checkbox" id="selectiveDownloadToggle">
-        <label for="selectiveDownloadToggle">Selective downloads</label>
-      </div>
-      <div class="setting-row recent-sources-setting">
-        <div class="recent-sources-label">
-          <span data-setting-tag="beta">Recent sources</span>
-          <small>Show your last loaded sources on the home screen.</small>
-        </div>
-        <div class="recent-sources-controls">
-          <input type="checkbox" id="recentSourcesToggle" aria-label="Enable recent sources">
-          <select id="recentSourcesPlacement" aria-label="Recent sources placement">
-            <option value="bottom">Bottom</option>
-            <option value="left">Left</option>
-            <option value="right">Right</option>
-          </select>
-        </div>
-      </div>
-      <div class="setting-row">
-        <label for="downloadConcurrencyRange">Download concurrency</label>
-        <input type="range" id="downloadConcurrencyRange" min="1" max="8" step="1" value="2">
-        <span id="downloadConcurrencyValue">2</span>
-      </div>
-      <div class="setting-row">
-        <div class="storage-menu">
-          <button id="storageMenuBtn" type="button">Storage</button>
-          <div id="storageMenuPanel" class="storage-menu-panel" role="menu" aria-hidden="true">
-            <button id="storageDeleteBtn" type="button" class="danger-button storage-menu-item">Delete storage</button>
-            <button id="storageExportBtn" type="button" class="storage-menu-item">Export</button>
-            <button id="storageImportBtn" type="button" class="storage-menu-item">Import</button>
-          </div>
-        </div>
-      </div>
-      <div class="setting-row" id="devMenuRow" style="display:none;" data-setting-tag="dev">
-        <button id="devMenuBtn" type="button">Dev Menu</button>
-        <span class="dev-menu-status" id="devMenuStatus">Developer tools</span>
-      </div>
-    </div>
-  </div>
     <button onclick="location.href='./index.html'" class="tab-button">Home</button>
     <div class="dropdown">
       <button class="tab-button dropbtn">Sources</button>
@@ -97,21 +44,6 @@
     </div>
     <div id="playerScreen" style="display: none;">
       <div id="loadingSpinner" class="spinner"></div>
-      <!-- CBZ progress overlay -->
-      <div id="cbzProgressOverlay">
-        <div id="cbzProgressContent">
-          <div id="cbzProgressHeader">
-            <p id="cbzProgressMessage">Preparing…</p>
-            <div id="cbzInfoWrap" class="cbz-info-wrap" aria-describedby="cbzInfoTooltip">
-              <button id="cbzInfoBtn" type="button" title="Why does this take time?" aria-label="Why does this take time?">i</button>
-              <div id="cbzInfoTooltip" class="cbz-info-tooltip" role="tooltip">
-                Due to the way we store pages (in cbz/zip files), we have to load the entire set at once. we apologize for the inconvenience.
-              </div>
-            </div>
-          </div>
-          <progress id="cbzProgressBar" max="100" value="0"></progress>
-        </div>
-      </div>
       <button id="backBtn">≡</button>
       <button id="theaterBtn" title="Pop-out Player">⤴</button>
       <button id="clipBtn">Clip</button>
@@ -140,6 +72,7 @@
   <script defer src="scripts/constants.js"></script>
   <script defer src="scripts/alerts.js"></script>
   <script defer src="scripts/dev-core.js"></script>
+  <script defer src="scripts/overlay-factory.js"></script>
   <script defer src="scripts/dom.js"></script>
   <script defer src="scripts/tags.js"></script>
   <script defer src="scripts/recent-sources.js"></script>
@@ -156,156 +89,6 @@
   <script defer src="scripts/local-folder.js"></script>
   <script defer src="scripts/storage.js"></script>
   <script defer src="scripts/version.js"></script>
-  <!-- Clear Storage Confirm Overlay moved outside nav for full-screen coverage -->
-  <div id="clearStorageOverlay">
-    <div id="clearStoragePanel">
-      <div class="setting-row">
-        <h3>Confirm Clear Storage</h3>
-      </div>
-      <p>This will remove all saved progress, preferences, and cached data for this app. This cannot be undone.</p>
-      <div class="setting-row">
-        <button id="clearStorageConfirmBtn" class="danger-button">Yes, clear storage</button>
-        <button id="clearStorageCancelBtn">Cancel</button>
-      </div>
-    </div>
-  </div>
-  <div id="storageImportOverlay">
-    <div id="storageImportPanel">
-      <div class="setting-row">
-        <h3>Import Settings</h3>
-      </div>
-      <p>Select a Catbox code or JSON file to load settings.</p>
-      <label for="storageImportCodeInput" class="import-label">Catbox code or URL</label>
-      <input id="storageImportCodeInput" type="text" placeholder="abc123 or https://files.catbox.moe/abc123.json">
-      <div class="import-divider">or</div>
-      <label for="storageImportFileInput" class="import-label">Import JSON file</label>
-      <input id="storageImportFileInput" type="file" accept="application/json">
-      <div id="storageImportActionsRow" class="setting-row import-actions">
-        <button id="storageImportConfirmBtn" type="button">Import</button>
-        <button id="storageImportCancelBtn" type="button">Cancel</button>
-      </div>
-    </div>
-  </div>
-  <div id="devMenuOverlay" aria-hidden="true">
-    <div id="devMenuPanel" role="dialog" aria-modal="true" aria-labelledby="devMenuTitle" tabindex="-1">
-      <div class="dev-menu-header">
-        <h3 id="devMenuTitle">Developer Menu</h3>
-        <button id="devMenuCloseBtn" type="button">Close</button>
-      </div>
-      <div class="dev-menu-content">
-        <section class="dev-menu-section" aria-labelledby="devMenuModeHeading" data-setting-tag="dev">
-          <h4 id="devMenuModeHeading">Mode</h4>
-          <label class="dev-menu-toggle" for="devModeToggle">
-            <input type="checkbox" id="devModeToggle">
-            <span>Enable developer mode</span>
-          </label>
-          <p class="dev-menu-hint">Toggle with O + P at any time.</p>
-        </section>
-        <section class="dev-menu-section" aria-labelledby="devMenuSettingsHeading" data-setting-tag="dev">
-          <h4 id="devMenuSettingsHeading">Dev Settings</h4>
-          <div class="dev-field">
-            <label for="devConcurrencyInput">Download concurrency</label>
-            <div class="dev-field-controls">
-              <input id="devConcurrencyInput" type="number" min="1" step="1" inputmode="numeric">
-              <button id="devConcurrencyResetBtn" type="button">Reset</button>
-            </div>
-            <p class="dev-menu-hint">Applies instantly. Dev mode removes the usual UI limit.</p>
-          </div>
-        </section>
-        <section class="dev-menu-section" aria-labelledby="devMenuActionsHeading" data-setting-tag="dev">
-          <h4 id="devMenuActionsHeading">System Triggers</h4>
-          <div class="dev-action-grid" id="devActionGrid">
-            <button type="button" data-dev-action="notice:info">Show info notice</button>
-            <button type="button" data-dev-action="notice:error">Show error notice</button>
-            <button type="button" data-dev-action="storage:menu">Open storage menu</button>
-            <button type="button" data-dev-action="storage:clear">Confirm clear storage</button>
-            <button type="button" data-dev-action="storage:import">Open import overlay</button>
-            <button type="button" data-dev-action="catbox:detect">Run Catbox detection</button>
-            <button type="button" data-dev-action="clip:preset">Open clip presets</button>
-            <button type="button" data-dev-action="clip:overlay">Show clip overlay</button>
-            <button type="button" data-dev-action="player:popout">Trigger pop-out</button>
-          </div>
-        </section>
-        <section class="dev-menu-section" aria-labelledby="devMenuDiagnosticsHeading" data-setting-tag="dev">
-          <div class="dev-menu-diagnostics-header">
-            <h4 id="devMenuDiagnosticsHeading">Diagnostics</h4>
-            <button id="devDiagnosticsRefreshBtn" type="button">Refresh</button>
-          </div>
-          <dl class="dev-stats">
-            <div class="dev-stat">
-              <dt>Dev mode</dt>
-              <dd id="devModeStateLabel">Off</dd>
-            </div>
-            <div class="dev-stat">
-              <dt>Download concurrency</dt>
-              <dd id="devConcurrencyStateLabel">—</dd>
-            </div>
-            <div class="dev-stat">
-              <dt>Active Catbox endpoint</dt>
-              <dd id="devCatboxEndpointLabel">Pending</dd>
-            </div>
-            <div class="dev-stat">
-              <dt>Source key</dt>
-              <dd id="devSourceKeyLabel">Not loaded</dd>
-            </div>
-          </dl>
-        </section>
-      </div>
-    </div>
-  </div>
-  <div id="clipOverlay">
-    <div id="clipOverlayContent">
-      <button id="clipOverlayCloseBtn" class="overlay-close" type="button" aria-label="Close clip dialog">✕</button>
-      <div id="clipMessage"></div>
-      <div id="clipButtonsRow">
-        <button id="clipDoneBtn">Done</button>
-        <button id="clipDownloadBtn">Download</button>
-      </div>
-    </div>
-  </div>
-  <div id="clipPresetOverlay">
-    <div id="clipPresetContent">
-      <h3>Select Clip Length</h3>
-      <div id="clipPresetButtons"></div>
-      <div class="clip-custom-row">
-        <div class="trim-slider" id="trimSlider">
-          <div class="trim-track"></div>
-          <div class="trim-range" id="trimRange"></div>
-          <button class="trim-handle" id="trimHandleStart" type="button" aria-label="Clip start"></button>
-          <button class="trim-handle" id="trimHandleEnd" type="button" aria-label="Clip end"></button>
-          <div class="trim-mark" id="trimPreviewMarker"></div>
-        </div>
-        <div class="clip-custom-controls">
-          <div class="trim-display">
-            <span>Start: <span id="clipDisplayStart">00:00</span></span>
-            <span>End: <span id="clipDisplayEnd">00:20</span></span>
-            <span>Length: <span id="clipDisplayLength">00:20</span></span>
-          </div>
-          <button id="clipCustomStartBtn" type="button">Start</button>
-        </div>
-        <small class="clip-custom-hint">Drag handles to choose the clip window.</small>
-      </div>
-      <label class="clip-remember-row">
-        <input type="checkbox" id="clipRememberPreset">
-        <span>Remember last selection</span>
-      </label>
-      <div id="clipHistorySection">
-        <div class="clip-history-header">
-          <h4>Recent Clips</h4>
-          <button id="clipHistoryClearBtn" type="button">Clear</button>
-        </div>
-        <div id="clipHistoryList"></div>
-      </div>
-      <button id="clipPresetCloseBtn" type="button" class="overlay-close" aria-label="Close clip presets">✕</button>
-    </div>
-  </div>
-  <!-- Clip progress overlay -->
-  <div id="clipProgressOverlay">
-    <div id="clipProgressContent">
-      <p id="clipProgressMessage"></p>
-      <progress id="clipProgressBar" max="100" value="0"></progress>
-    </div>
-  </div>
   <a href="https://github.com/RandomSideProjects" target="_blank" id="githubLink">
     <span>RandomSideProjects</span>
     <img src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png" alt="GitHub">

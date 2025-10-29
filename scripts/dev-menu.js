@@ -3,23 +3,39 @@
 (function () {
   if (typeof window === "undefined") return;
 
-  const overlay = typeof devMenuOverlay !== "undefined" ? devMenuOverlay : document.getElementById("devMenuOverlay");
-  const panel = document.getElementById("devMenuPanel");
-  const openBtn = typeof devMenuBtn !== "undefined" ? devMenuBtn : document.getElementById("devMenuBtn");
-  const closeBtn = typeof devMenuCloseBtn !== "undefined" ? devMenuCloseBtn : document.getElementById("devMenuCloseBtn");
-  const modeToggle = typeof devModeToggle !== "undefined" ? devModeToggle : document.getElementById("devModeToggle");
-  const concurrencyInput = typeof devConcurrencyInput !== "undefined" ? devConcurrencyInput : document.getElementById("devConcurrencyInput");
-  const concurrencyResetBtn = typeof devConcurrencyResetBtn !== "undefined" ? devConcurrencyResetBtn : document.getElementById("devConcurrencyResetBtn");
-  const actionGrid = typeof devActionGrid !== "undefined" ? devActionGrid : document.getElementById("devActionGrid");
-  const diagnosticsRefreshBtn = typeof devDiagnosticsRefreshBtn !== "undefined" ? devDiagnosticsRefreshBtn : document.getElementById("devDiagnosticsRefreshBtn");
-  const modeStateLabel = typeof devModeStateLabel !== "undefined" ? devModeStateLabel : document.getElementById("devModeStateLabel");
-  const concurrencyStateLabel = typeof devConcurrencyStateLabel !== "undefined" ? devConcurrencyStateLabel : document.getElementById("devConcurrencyStateLabel");
-  const catboxStateLabel = typeof devCatboxEndpointLabel !== "undefined" ? devCatboxEndpointLabel : document.getElementById("devCatboxEndpointLabel");
-  const sourceKeyLabel = typeof devSourceKeyLabel !== "undefined" ? devSourceKeyLabel : document.getElementById("devSourceKeyLabel");
-  const menuRow = typeof devMenuRow !== "undefined" ? devMenuRow : document.getElementById("devMenuRow");
-  const menuStatus = typeof devMenuStatus !== "undefined" ? devMenuStatus : document.getElementById("devMenuStatus");
+  let overlay = null;
+  let panel = null;
+  let openBtn = null;
+  let closeBtn = null;
+  let modeToggle = null;
+  let concurrencyInput = null;
+  let concurrencyResetBtn = null;
+  let actionGrid = null;
+  let diagnosticsRefreshBtn = null;
+  let modeStateLabel = null;
+  let concurrencyStateLabel = null;
+  let catboxStateLabel = null;
+  let sourceKeyLabel = null;
+  let menuRow = null;
+  let menuStatus = null;
 
-  if (!overlay || !panel || !openBtn) return;
+  function queryElements() {
+    overlay = document.getElementById("devMenuOverlay");
+    panel = document.getElementById("devMenuPanel");
+    openBtn = document.getElementById("devMenuBtn");
+    closeBtn = document.getElementById("devMenuCloseBtn");
+    modeToggle = document.getElementById("devModeToggle");
+    concurrencyInput = document.getElementById("devConcurrencyInput");
+    concurrencyResetBtn = document.getElementById("devConcurrencyResetBtn");
+    actionGrid = document.getElementById("devActionGrid");
+    diagnosticsRefreshBtn = document.getElementById("devDiagnosticsRefreshBtn");
+    modeStateLabel = document.getElementById("devModeStateLabel");
+    concurrencyStateLabel = document.getElementById("devConcurrencyStateLabel");
+    catboxStateLabel = document.getElementById("devCatboxEndpointLabel");
+    sourceKeyLabel = document.getElementById("devSourceKeyLabel");
+    menuRow = document.getElementById("devMenuRow");
+    menuStatus = document.getElementById("devMenuStatus");
+  }
 
   const DEFAULT_CONCURRENCY = 2;
   const OVERLAY_OPEN_CLASS = "is-open";
@@ -126,6 +142,7 @@
   }
 
   function updateDevMenuAvailability() {
+    if (!menuRow && !openBtn) queryElements();
     const enabled = isDevModeEnabled();
     if (menuRow) {
       menuRow.style.display = enabled ? "" : "none";
@@ -138,8 +155,19 @@
   }
 
   function openOverlay() {
+    if (!overlay) queryElements();
     if (!isDevModeEnabled()) {
       showDevNotice("warning", "Enable Dev Mode first (press O + P) to open this menu.");
+      return;
+    }
+    // Create overlay if it doesn't exist
+    if (!overlay && window.OverlayFactory && typeof window.OverlayFactory.createDevMenuOverlay === 'function') {
+      window.OverlayFactory.createDevMenuOverlay();
+      queryElements();
+      attachEventListeners();
+    }
+    if (!overlay) {
+      showDevNotice("warning", "Dev menu overlay not available.");
       return;
     }
     overlay.classList.add(OVERLAY_OPEN_CLASS);
@@ -147,12 +175,13 @@
     document.body.classList.add("dev-menu-open");
     refreshAll();
     setTimeout(() => {
-      try { panel.focus(); } catch {}
+      try { if (panel) panel.focus(); } catch {}
     }, 30);
   }
 
   function closeOverlay(returnFocus = true) {
-    if (!overlay.classList.contains(OVERLAY_OPEN_CLASS)) return;
+    if (!overlay) queryElements();
+    if (!overlay || !overlay.classList.contains(OVERLAY_OPEN_CLASS)) return;
     overlay.classList.remove(OVERLAY_OPEN_CLASS);
     overlay.setAttribute("aria-hidden", "true");
     document.body.classList.remove("dev-menu-open");
@@ -322,7 +351,8 @@
   }
 
   function handleOverlayKeydown(event) {
-    if (!overlay.classList.contains(OVERLAY_OPEN_CLASS)) return;
+    if (!overlay) queryElements();
+    if (!overlay || !overlay.classList.contains(OVERLAY_OPEN_CLASS)) return;
     if (event.key === "Escape") {
       event.preventDefault();
       closeOverlay();
@@ -347,55 +377,60 @@
     }
   }
 
-  if (openBtn) openBtn.addEventListener("click", () => openOverlay());
-  if (closeBtn) closeBtn.addEventListener("click", () => closeOverlay());
-  overlay.addEventListener("click", (event) => {
-    if (event.target === overlay) closeOverlay();
-  });
-  document.addEventListener("keydown", handleOverlayKeydown);
+  function attachEventListeners() {
+    queryElements();
+    if (openBtn) openBtn.addEventListener("click", () => openOverlay());
+    if (closeBtn) closeBtn.addEventListener("click", () => closeOverlay());
+    if (overlay) {
+      overlay.addEventListener("click", (event) => {
+        if (event.target === overlay) closeOverlay();
+      });
+    }
+    document.addEventListener("keydown", handleOverlayKeydown);
 
-  if (modeToggle) {
-    modeToggle.addEventListener("change", () => {
-      const desired = modeToggle.checked === true;
-      window.DevMode = desired;
-      if (!desired) closeOverlay(false);
-    });
-  }
+    if (modeToggle) {
+      modeToggle.addEventListener("change", () => {
+        const desired = modeToggle.checked === true;
+        window.DevMode = desired;
+        if (!desired) closeOverlay(false);
+      });
+    }
 
-  if (concurrencyInput) {
-    const commit = () => {
-      const next = Number(concurrencyInput.value);
-      const applied = applyConcurrency(next);
-      concurrencyInput.value = String(applied);
-    };
-    concurrencyInput.addEventListener("change", commit);
-    concurrencyInput.addEventListener("blur", commit);
-  }
+    if (concurrencyInput) {
+      const commit = () => {
+        const next = Number(concurrencyInput.value);
+        const applied = applyConcurrency(next);
+        concurrencyInput.value = String(applied);
+      };
+      concurrencyInput.addEventListener("change", commit);
+      concurrencyInput.addEventListener("blur", commit);
+    }
 
-  if (concurrencyResetBtn) {
-    concurrencyResetBtn.addEventListener("click", () => {
-      const applied = applyConcurrency(DEFAULT_CONCURRENCY);
-      if (concurrencyInput) concurrencyInput.value = String(applied);
-      showDevNotice("info", "Download concurrency reset to default.");
-    });
-  }
+    if (concurrencyResetBtn) {
+      concurrencyResetBtn.addEventListener("click", () => {
+        const applied = applyConcurrency(DEFAULT_CONCURRENCY);
+        if (concurrencyInput) concurrencyInput.value = String(applied);
+        showDevNotice("info", "Download concurrency reset to default.");
+      });
+    }
 
-  if (actionGrid) {
-    actionGrid.addEventListener("click", (event) => {
-      const target = event.target;
-      if (!target || target.tagName !== "BUTTON") return;
-      const action = target.getAttribute("data-dev-action");
-      if (!action) return;
-      event.preventDefault();
-      handleAction(action);
-    });
-  }
+    if (actionGrid) {
+      actionGrid.addEventListener("click", (event) => {
+        const target = event.target;
+        if (!target || target.tagName !== "BUTTON") return;
+        const action = target.getAttribute("data-dev-action");
+        if (!action) return;
+        event.preventDefault();
+        handleAction(action);
+      });
+    }
 
-  if (diagnosticsRefreshBtn) {
-    diagnosticsRefreshBtn.addEventListener("click", () => {
-      refreshDiagnostics();
-      showDevNotice("info", "Diagnostics refreshed.");
-    });
+    if (diagnosticsRefreshBtn) {
+      diagnosticsRefreshBtn.addEventListener("click", () => {
+        refreshDiagnostics();
+        showDevNotice("info", "Diagnostics refreshed.");
+      });
+    }
   }
 
   window.addEventListener("rsp:dev-mode-changed", (event) => {
@@ -408,5 +443,15 @@
     refreshDiagnostics();
   });
 
-  refreshAll();
+  // Initialize
+  attachEventListeners();
+  
+  // Defer initial refresh to ensure settings overlay is created
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(refreshAll, 0);
+    });
+  } else {
+    setTimeout(refreshAll, 0);
+  }
 })();

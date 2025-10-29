@@ -152,36 +152,80 @@ if (typeof window !== 'undefined') {
 window.mm_uploadSettings = { load: loadUploadSettings, save: saveUploadSettings };
 
 // UI wiring
-const mmBtn = document.getElementById('mmUploadSettingsBtn');
-const mmPanel = document.getElementById('mmUploadSettingsPanel');
-const mmAnonToggle = document.getElementById('mmAnonToggle');
-const mmUserhashRow = document.getElementById('mmUserhashRow');
-const mmUserhashInput = document.getElementById('mmUserhashInput');
-const mmUploadConcRange = document.getElementById('mmUploadConcurrencyRange');
-const mmUploadConcValue = document.getElementById('mmUploadConcurrencyValue');
-const mmSaveBtn = document.getElementById('mmSaveUploadSettings');
-const mmCloseBtn = document.getElementById('mmCloseUploadSettings');
-const mmModeAnime = document.getElementById('mmModeAnime');
-const mmModeManga = document.getElementById('mmModeManga');
-const mmGithubWorkerRow = document.getElementById('mmGithubWorkerRow');
-const mmGithubWorkerUrlInput = document.getElementById('mmGithubWorkerUrl');
-const mmGithubTokenInput = document.getElementById('mmGithubToken');
-const mmCatboxRow = document.getElementById('mmCatboxRow');
-const mmCatboxUrlInput = document.getElementById('mmCatboxUploadUrl');
-const mmCatboxModeSelect = document.getElementById('mmCatboxMode');
-// CBZ expansion controls
-const mmCbzSection = document.getElementById('mmCbzSection');
-const mmCbzExpandToggle = document.getElementById('mmCbzExpandToggle');
-const mmCbzExpandSubrows = document.getElementById('mmCbzExpandSubrows');
-const mmCbzExpandBatch = document.getElementById('mmCbzExpandBatch');
-const mmCbzExpandManual = document.getElementById('mmCbzExpandManual');
-const mmPosterCompressToggle = document.getElementById('mmPosterCompressToggle');
-const mmSeparationToggle = document.getElementById('mmSeparationToggle');
-const devMenuRow = document.getElementById('devMenuRow');
-const devMenuStatus = document.getElementById('devMenuStatus');
-// No per-flow anon controls; only userhash visibility when anonymous is off
+let mmBtn = null;
+let mmPanel = null;
+let mmAnonToggle = null;
+let mmUserhashRow = null;
+let mmUserhashInput = null;
+let mmUploadConcRange = null;
+let mmUploadConcValue = null;
+let mmSaveBtn = null;
+let mmCloseBtn = null;
+let mmModeAnime = null;
+let mmModeManga = null;
+let mmGithubWorkerRow = null;
+let mmGithubWorkerUrlInput = null;
+let mmGithubTokenInput = null;
+let mmCatboxRow = null;
+let mmCatboxUrlInput = null;
+let mmCatboxModeSelect = null;
+let mmCbzSection = null;
+let mmCbzExpandToggle = null;
+let mmCbzExpandSubrows = null;
+let mmCbzExpandBatch = null;
+let mmCbzExpandManual = null;
+let mmPosterCompressToggle = null;
+let mmSeparationToggle = null;
+let devMenuRow = null;
+let devMenuStatus = null;
+let settingsPanelInitialized = false;
+
+function ensureUploadSettingsPanel() {
+  if (!mmPanel) {
+    if (window.OverlayFactory && typeof window.OverlayFactory.createUploadSettingsPanel === 'function') {
+      mmPanel = window.OverlayFactory.createUploadSettingsPanel();
+      
+      // Re-query all elements
+      mmAnonToggle = document.getElementById('mmAnonToggle');
+      mmUserhashRow = document.getElementById('mmUserhashRow');
+      mmUserhashInput = document.getElementById('mmUserhashInput');
+      mmUploadConcRange = document.getElementById('mmUploadConcurrencyRange');
+      mmUploadConcValue = document.getElementById('mmUploadConcurrencyValue');
+      mmSaveBtn = document.getElementById('mmSaveUploadSettings');
+      mmCloseBtn = document.getElementById('mmCloseUploadSettings');
+      mmModeAnime = document.getElementById('mmModeAnime');
+      mmModeManga = document.getElementById('mmModeManga');
+      mmGithubWorkerRow = document.getElementById('mmGithubWorkerRow');
+      mmGithubWorkerUrlInput = document.getElementById('mmGithubWorkerUrl');
+      mmGithubTokenInput = document.getElementById('mmGithubToken');
+      mmCatboxRow = document.getElementById('mmCatboxRow');
+      mmCatboxUrlInput = document.getElementById('mmCatboxUploadUrl');
+      mmCatboxModeSelect = document.getElementById('mmCatboxMode');
+      mmCbzSection = document.getElementById('mmCbzSection');
+      mmCbzExpandToggle = document.getElementById('mmCbzExpandToggle');
+      mmCbzExpandSubrows = document.getElementById('mmCbzExpandSubrows');
+      mmCbzExpandBatch = document.getElementById('mmCbzExpandBatch');
+      mmCbzExpandManual = document.getElementById('mmCbzExpandManual');
+      mmPosterCompressToggle = document.getElementById('mmPosterCompressToggle');
+      mmSeparationToggle = document.getElementById('mmSeparationToggle');
+      devMenuRow = document.getElementById('devMenuRow');
+      devMenuStatus = document.getElementById('devMenuStatus');
+      
+      if (!settingsPanelInitialized) {
+        initializeUploadSettingsPanel();
+        settingsPanelInitialized = true;
+      }
+    }
+  }
+  return mmPanel;
+}
 
 function updateDevModeRowsVisibility(force) {
+  mmGithubWorkerRow = document.getElementById('mmGithubWorkerRow');
+  mmCatboxRow = document.getElementById('mmCatboxRow');
+  devMenuRow = document.getElementById('devMenuRow');
+  devMenuStatus = document.getElementById('devMenuStatus');
+  
   const enabled = typeof force === 'boolean'
     ? force
     : (typeof window !== 'undefined' && window.DevMode === true);
@@ -225,7 +269,34 @@ if (typeof window !== 'undefined') {
   });
 }
 
-if (mmBtn && mmPanel && mmAnonToggle && mmUserhashRow && mmUserhashInput && mmSaveBtn && mmCloseBtn) {
+function updateCbzRelated() {
+  const mmModeManga = document.getElementById('mmModeManga');
+  const mmCbzSection = document.getElementById('mmCbzSection');
+  const mode = (mmModeManga && mmModeManga.checked) ? 'manga' : 'anime';
+  if (mmCbzSection) mmCbzSection.style.display = (mode === 'manga') ? '' : 'none';
+  
+  const mmCbzExpandToggle = document.getElementById('mmCbzExpandToggle');
+  const mmCbzExpandSubrows = document.getElementById('mmCbzExpandSubrows');
+  if (mmCbzExpandToggle && mmCbzExpandSubrows) {
+    mmCbzExpandSubrows.style.display = mmCbzExpandToggle.checked ? '' : 'none';
+  }
+}
+
+mmBtn = document.getElementById('mmUploadSettingsBtn');
+if (mmBtn) {
+  mmBtn.addEventListener('click', (event) => {
+    event.stopPropagation();
+    mmPanel = ensureUploadSettingsPanel();
+    if (mmPanel) {
+      mmPanel.style.display = 'flex';
+      updateCbzRelated();
+    }
+  });
+}
+
+function initializeUploadSettingsPanel() {
+  if (!mmAnonToggle || !mmUserhashRow || !mmUserhashInput || !mmSaveBtn || !mmCloseBtn) return;
+  
   const st = loadUploadSettings();
   mmAnonToggle.checked = !!st.anonymous;
   mmUserhashInput.value = st.userhash || '';
@@ -255,6 +326,11 @@ if (mmBtn && mmPanel && mmAnonToggle && mmUserhashRow && mmUserhashInput && mmSa
     const mode = (mmModeManga && mmModeManga.checked) ? 'manga' : 'anime';
     if (mmCbzSection) mmCbzSection.style.display = (mode === 'manga') ? '' : 'none';
   }
+  function updateSeparationVisibility() {
+    const mode = (mmModeManga && mmModeManga.checked) ? 'manga' : 'anime';
+    const mmSeparationRow = mmSeparationToggle ? mmSeparationToggle.closest('.mm-settings-row') : null;
+    if (mmSeparationRow) mmSeparationRow.style.display = (mode === 'anime') ? '' : 'none';
+  }
   function updateCbzSubrowsVisibility() {
     if (!mmCbzExpandToggle || !mmCbzExpandSubrows) return;
     mmCbzExpandSubrows.style.display = mmCbzExpandToggle.checked ? '' : 'none';
@@ -263,17 +339,25 @@ if (mmBtn && mmPanel && mmAnonToggle && mmUserhashRow && mmUserhashInput && mmSa
   if (mmCbzExpandBatch) mmCbzExpandBatch.checked = (typeof st.cbzExpandBatch === 'boolean') ? st.cbzExpandBatch : true;
   if (mmCbzExpandManual) mmCbzExpandManual.checked = (typeof st.cbzExpandManual === 'boolean') ? st.cbzExpandManual : true;
   updateCbzSectionVisibility();
+  updateSeparationVisibility();
   updateCbzSubrowsVisibility();
-  if (mmModeAnime) mmModeAnime.addEventListener('change', updateCbzSectionVisibility);
-  if (mmModeManga) mmModeManga.addEventListener('change', updateCbzSectionVisibility);
+  if (mmModeAnime) mmModeAnime.addEventListener('change', () => {
+    updateCbzSectionVisibility();
+    updateSeparationVisibility();
+  });
+  if (mmModeManga) mmModeManga.addEventListener('change', () => {
+    updateCbzSectionVisibility();
+    updateSeparationVisibility();
+  });
   if (mmCbzExpandToggle) mmCbzExpandToggle.addEventListener('change', updateCbzSubrowsVisibility);
 
-  mmBtn.addEventListener('click', () => {
-    mmPanel.style.display = 'flex';
-    updateDevModeRowsVisibility();
-  });
-  mmCloseBtn.addEventListener('click', () => { mmPanel.style.display = 'none'; });
-  mmPanel.addEventListener('click', (e)=>{ if(e.target===mmPanel) mmPanel.style.display='none'; });
+  mmCloseBtn.addEventListener('click', () => { if (mmPanel) mmPanel.style.display = 'none'; });
+  if (mmPanel) {
+    mmPanel.addEventListener('click', (e) => { 
+      if (e.target === mmPanel && mmPanel) mmPanel.style.display = 'none'; 
+    });
+  }
+  
   function updateAnonFields() {
     try { mmUserhashRow.style.display = mmAnonToggle.checked ? 'none' : ''; } catch {}
   }
@@ -363,6 +447,9 @@ async function mm_sendTestJson() {
   }
 }
 window.mm_sendTestJson = mm_sendTestJson;
+
+// Create settings panel immediately so dev-menu.js can access its elements
+ensureUploadSettingsPanel();
 
 document.addEventListener('keydown', (e) => {
   try {
