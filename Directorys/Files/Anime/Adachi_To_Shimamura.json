@@ -1,0 +1,86 @@
+{
+  "title": "Adachi to Shimamura",
+  "Image": "https://files.catbox.moe/dgzzvn.webp",
+  "LatestTime": "2025-10-30T21:06:41.913Z",
+  "categories": [
+    {
+      "category": "Season 1",
+      "episodes": [
+        {
+          "title": "Episode 1",
+          "src": "https://files.catbox.moe/4oyc8h.mp4",
+          "fileSizeBytes": 150122011,
+          "durationSeconds": 1446
+        },
+        {
+          "title": "Episode 2",
+          "src": "https://files.catbox.moe/bs5zot.mp4",
+          "fileSizeBytes": 131621111,
+          "durationSeconds": 1446
+        },
+        {
+          "title": "Episode 3",
+          "src": "https://files.catbox.moe/rfbw3x.mp4",
+          "fileSizeBytes": 131957223,
+          "durationSeconds": 1446
+        },
+        {
+          "title": "Episode 4",
+          "src": "https://files.catbox.moe/pqvtr2.mp4",
+          "fileSizeBytes": 122827740,
+          "durationSeconds": 1446
+        },
+        {
+          "title": "Episode 5",
+          "src": "https://files.catbox.moe/q04k49.mp4",
+          "fileSizeBytes": 128504752,
+          "durationSeconds": 1446
+        },
+        {
+          "title": "Episode 6",
+          "src": "https://files.catbox.moe/qra0cr.mp4",
+          "fileSizeBytes": 116178894,
+          "durationSeconds": 1446
+        },
+        {
+          "title": "Episode 7",
+          "src": "https://files.catbox.moe/ucuvrf.mp4",
+          "fileSizeBytes": 124624850,
+          "durationSeconds": 1446
+        },
+        {
+          "title": "Episode 8",
+          "src": "https://files.catbox.moe/9btt4j.mp4",
+          "fileSizeBytes": 159896351,
+          "durationSeconds": 1446
+        },
+        {
+          "title": "Episode 9",
+          "src": "https://files.catbox.moe/vkz4uz.mp4",
+          "fileSizeBytes": 129422505,
+          "durationSeconds": 1446
+        },
+        {
+          "title": "Episode 10",
+          "src": "https://files.catbox.moe/kton5v.mp4",
+          "fileSizeBytes": 133689258,
+          "durationSeconds": 1446
+        },
+        {
+          "title": "Episode 11",
+          "src": "https://files.catbox.moe/wgv1po.mp4",
+          "fileSizeBytes": 130292574,
+          "durationSeconds": 1446
+        },
+        {
+          "title": "Episode 12",
+          "src": "https://files.catbox.moe/7ie3ff.mp4",
+          "fileSizeBytes": 99552517,
+          "durationSeconds": 1431
+        }
+      ]
+    }
+  ],
+  "totalFileSizeBytes": 1558689786,
+  "totalDurationSeconds": 17337
+}
