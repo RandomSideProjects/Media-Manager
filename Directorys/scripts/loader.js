@@ -3,7 +3,7 @@
 // Variables (top)
 // None; relies on global STATUS_URL, SOURCES_* and render/utils.
 
-const HIDDEN_ENTRY_KEYS = ["maintainerHidden", "hidden", "Hidden"];
+const HIDDEN_ENTRY_KEYS = ["hidden", "Hidden", "maintainerHidden"];
 
 function shouldSkipManifestEntry(entry) {
   if (!entry || typeof entry !== "object") return false;

@@ -125,6 +125,16 @@ function startAutoUploadPolling() {
     const imageField = posterValue || 'N/A';
     // Build payload (omit duration aggregate for manga mode)
     const contentOnly = { title: titleVal, Image: imageField, categories: cats, totalFileSizeBytes };
+    const hiddenEnabled = (() => {
+      if (typeof window === 'undefined') return false;
+      if (window.mm_creatorHidden === true) return true;
+      if (window.mm_creatorMaintainerHidden === true) return true;
+      const doc = window.document || null;
+      if (!doc || typeof doc.getElementById !== 'function') return false;
+      const toggle = doc.getElementById('maintainerHiddenToggle');
+      return !!(toggle && toggle.checked);
+    })();
+    if (hiddenEnabled) contentOnly.hidden = true;
     if (mode !== 'manga') contentOnly.totalDurationSeconds = totalDurationSeconds; else contentOnly.totalPagecount = totalPagecount;
     if (mode !== 'manga' && separatedCategoryCount > 0) {
       contentOnly.separatedCategoryCount = separatedCategoryCount;

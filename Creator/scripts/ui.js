@@ -24,7 +24,7 @@ const maintainerHiddenRow = document.getElementById('maintainerHiddenRow');
 const maintainerHiddenToggle = document.getElementById('maintainerHiddenToggle');
 let isFolderUploading = false;
 let maintainerHidden = false;
-const HIDDEN_JSON_KEYS = ['maintainerHidden', 'hidden', 'Hidden'];
+const HIDDEN_JSON_KEYS = ['hidden', 'Hidden', 'maintainerHidden'];
 if (typeof window !== 'undefined') {
   window.isFolderUploading = false;
 }
@@ -656,6 +656,12 @@ function setHiddenControlEnabled(enabled) {
 
 function setMaintainerHiddenFlag(enabled) {
   maintainerHidden = enabled === true;
+  if (typeof window !== 'undefined') {
+    try {
+      window.mm_creatorHidden = maintainerHidden;
+      window.mm_creatorMaintainerHidden = maintainerHidden;
+    } catch {}
+  }
   if (maintainerHiddenToggle) {
     maintainerHiddenToggle.checked = maintainerHidden;
     maintainerHiddenToggle.setAttribute('aria-checked', maintainerHidden ? 'true' : 'false');
@@ -2807,7 +2813,7 @@ function buildLocalDirectoryJSON() {
     base.separatedItemCount = separatedItemCount;
   }
   if (maintainerHidden === true) {
-    base.maintainerHidden = true;
+    base.hidden = true;
   }
   return base;
 }

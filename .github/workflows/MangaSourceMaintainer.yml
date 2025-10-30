@@ -55,7 +55,7 @@ jobs:
           const https = require('https');
           const sharp = require('sharp');
 
-          const HIDDEN_JSON_KEYS = ['maintainerHidden', 'hidden', 'Hidden'];
+          const HIDDEN_JSON_KEYS = ['hidden', 'Hidden', 'maintainerHidden'];
 
           function isMaintainerHidden(entry) {
             if (!entry || typeof entry !== 'object') return false;
