@@ -599,15 +599,6 @@ window.OverlayFactory = (function() {
         
         createElement('div', { className: 'dev-menu-content' }, [
           createElement('div', { className: 'dev-menu-section' }, [
-            createElement('h4', {}, ['Settings']),
-            createElement('label', { className: 'dev-menu-toggle' }, [
-              createElement('input', { type: 'checkbox', id: 'devModeToggle', 'aria-label': 'Developer mode' }),
-              createElement('span', {}, ['Developer Mode'])
-            ]),
-            createElement('p', { className: 'dev-menu-hint' }, ['Enables additional developer features and diagnostics.'])
-          ]),
-          
-          createElement('div', { className: 'dev-menu-section' }, [
             createElement('h4', {}, ['Download Concurrency']),
             createElement('div', { className: 'dev-field' }, [
               createElement('div', { className: 'dev-field-controls' }, [
@@ -675,15 +666,6 @@ window.OverlayFactory = (function() {
         
         createElement('div', { className: 'dev-menu-content' }, [
           createElement('div', { className: 'dev-menu-section' }, [
-            createElement('h4', {}, ['Settings']),
-            createElement('label', { className: 'dev-menu-toggle' }, [
-              createElement('input', { type: 'checkbox', id: 'devModeToggle', 'aria-label': 'Developer mode' }),
-              createElement('span', {}, ['Developer Mode'])
-            ]),
-            createElement('p', { className: 'dev-menu-hint' }, ['Enables additional developer features and diagnostics.'])
-          ]),
-          
-          createElement('div', { className: 'dev-menu-section' }, [
             createElement('h4', {}, ['Upload Concurrency']),
             createElement('div', { className: 'dev-field' }, [
               createElement('div', { className: 'dev-field-controls' }, [
@@ -701,6 +683,53 @@ window.OverlayFactory = (function() {
               createElement('span', {}, ['Enable Hidden Source Naming'])
             ]),
             createElement('p', { className: 'dev-menu-hint' }, ['Allows naming sources with underscores for hidden/private sources.'])
+          ]),
+          
+          createElement('div', { className: 'dev-menu-section' }, [
+            createElement('h4', {}, ['GitHub Settings']),
+            createElement('div', { className: 'dev-field' }, [
+              createElement('label', { for: 'devGithubWorkerUrl' }, ['Worker URL']),
+              createElement('input', { 
+                type: 'text', 
+                id: 'devGithubWorkerUrl', 
+                className: 'dev-field-input',
+                placeholder: 'GitHub Worker endpoint URL' 
+              }),
+              createElement('p', { className: 'dev-menu-hint' }, ['URL for the GitHub worker service.'])
+            ]),
+            createElement('div', { className: 'dev-field' }, [
+              createElement('label', { for: 'devGithubToken' }, ['GitHub Token']),
+              createElement('input', { 
+                type: 'password', 
+                id: 'devGithubToken', 
+                className: 'dev-field-input',
+                placeholder: 'Optional GitHub token' 
+              }),
+              createElement('p', { className: 'dev-menu-hint' }, ['Personal access token for GitHub operations.'])
+            ])
+          ]),
+          
+          createElement('div', { className: 'dev-menu-section' }, [
+            createElement('h4', {}, ['Catbox Settings']),
+            createElement('div', { className: 'dev-field' }, [
+              createElement('label', { for: 'devCatboxUploadUrl' }, ['Upload URL']),
+              createElement('input', { 
+                type: 'text', 
+                id: 'devCatboxUploadUrl', 
+                className: 'dev-field-input',
+                placeholder: 'Catbox upload endpoint' 
+              }),
+              createElement('p', { className: 'dev-menu-hint' }, ['Catbox file upload endpoint.'])
+            ]),
+            createElement('div', { className: 'dev-field' }, [
+              createElement('label', { for: 'devCatboxMode' }, ['Mode']),
+              createElement('select', { id: 'devCatboxMode', className: 'dev-field-input' }, [
+                createElement('option', { value: 'auto' }, ['Auto']),
+                createElement('option', { value: 'direct' }, ['Direct']),
+                createElement('option', { value: 'proxy' }, ['Proxy'])
+              ]),
+              createElement('p', { className: 'dev-menu-hint' }, ['Connection mode: Auto (detect), Direct, or Proxy.'])
+            ])
           ]),
           
           createElement('div', { className: 'dev-menu-section' }, [

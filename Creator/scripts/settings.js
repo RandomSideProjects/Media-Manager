@@ -163,12 +163,6 @@ let mmSaveBtn = null;
 let mmCloseBtn = null;
 let mmModeAnime = null;
 let mmModeManga = null;
-let mmGithubWorkerRow = null;
-let mmGithubWorkerUrlInput = null;
-let mmGithubTokenInput = null;
-let mmCatboxRow = null;
-let mmCatboxUrlInput = null;
-let mmCatboxModeSelect = null;
 let mmCbzSection = null;
 let mmCbzExpandToggle = null;
 let mmCbzExpandSubrows = null;
@@ -195,12 +189,6 @@ function ensureUploadSettingsPanel() {
       mmCloseBtn = document.getElementById('mmCloseUploadSettings');
       mmModeAnime = document.getElementById('mmModeAnime');
       mmModeManga = document.getElementById('mmModeManga');
-      mmGithubWorkerRow = document.getElementById('mmGithubWorkerRow');
-      mmGithubWorkerUrlInput = document.getElementById('mmGithubWorkerUrl');
-      mmGithubTokenInput = document.getElementById('mmGithubToken');
-      mmCatboxRow = document.getElementById('mmCatboxRow');
-      mmCatboxUrlInput = document.getElementById('mmCatboxUploadUrl');
-      mmCatboxModeSelect = document.getElementById('mmCatboxMode');
       mmCbzSection = document.getElementById('mmCbzSection');
       mmCbzExpandToggle = document.getElementById('mmCbzExpandToggle');
       mmCbzExpandSubrows = document.getElementById('mmCbzExpandSubrows');
@@ -221,16 +209,12 @@ function ensureUploadSettingsPanel() {
 }
 
 function updateDevModeRowsVisibility(force) {
-  mmGithubWorkerRow = document.getElementById('mmGithubWorkerRow');
-  mmCatboxRow = document.getElementById('mmCatboxRow');
   devMenuRow = document.getElementById('devMenuRow');
   devMenuStatus = document.getElementById('devMenuStatus');
   
   const enabled = typeof force === 'boolean'
     ? force
     : (typeof window !== 'undefined' && window.DevMode === true);
-  if (mmGithubWorkerRow) mmGithubWorkerRow.style.display = enabled ? '' : 'none';
-  if (mmCatboxRow) mmCatboxRow.style.display = enabled ? '' : 'none';
   if (devMenuRow) devMenuRow.style.display = enabled ? '' : 'none';
   if (devMenuStatus) {
     devMenuStatus.textContent = enabled ? 'Developer tools' : 'Enable Dev Mode (O + P)';
@@ -301,10 +285,6 @@ function initializeUploadSettingsPanel() {
   mmAnonToggle.checked = !!st.anonymous;
   mmUserhashInput.value = st.userhash || '';
   mmUserhashRow.style.display = st.anonymous ? 'none' : '';
-  if (mmGithubWorkerUrlInput) mmGithubWorkerUrlInput.value = st.githubWorkerUrl || SETTINGS_DEFAULT_GITHUB_WORKER_URL;
-  if (mmGithubTokenInput) mmGithubTokenInput.value = st.githubToken || '';
-  if (mmCatboxUrlInput) mmCatboxUrlInput.value = st.catboxUploadUrl || defaultCatboxUploadUrl();
-  if (mmCatboxModeSelect) mmCatboxModeSelect.value = st.catboxOverrideMode || 'auto';
   updateDevModeRowsVisibility();
   if (mmModeAnime && mmModeManga) {
     const mode = (st.libraryMode === 'manga') ? 'manga' : 'anime';
@@ -374,31 +354,11 @@ function initializeUploadSettingsPanel() {
       cbzExpandBatch: mmCbzExpandBatch ? !!mmCbzExpandBatch.checked : true,
       cbzExpandManual: mmCbzExpandManual ? !!mmCbzExpandManual.checked : true,
       compressPosters: mmPosterCompressToggle ? !!mmPosterCompressToggle.checked : true,
-      separationTag: mmSeparationToggle ? !!mmSeparationToggle.checked : false,
-      githubWorkerUrl: mmGithubWorkerUrlInput ? mmGithubWorkerUrlInput.value.trim() : '',
-      githubToken: mmGithubTokenInput ? mmGithubTokenInput.value.trim() : '',
-      catboxUploadUrl: mmCatboxUrlInput ? mmCatboxUrlInput.value.trim() : '',
-      catboxOverrideMode: mmCatboxModeSelect ? mmCatboxModeSelect.value : 'auto'
+      separationTag: mmSeparationToggle ? !!mmSeparationToggle.checked : false
     };
     saveUploadSettings(saved);
     try { window.dispatchEvent(new CustomEvent('mm_settings_saved', { detail: saved })); } catch {}
     mmPanel.style.display = 'none';
-  });
-}
-
-if (mmGithubTokenInput) {
-  const commitToken = () => { saveSettingsPartial({ githubToken: mmGithubTokenInput.value.trim() }); };
-  mmGithubTokenInput.addEventListener('change', commitToken);
-  mmGithubTokenInput.addEventListener('blur', commitToken);
-}
-
-if (mmCatboxModeSelect) {
-  mmCatboxModeSelect.addEventListener('change', () => {
-    const normalized = applyCatboxOverrideMode(mmCatboxModeSelect.value);
-    if (mmCatboxModeSelect.value !== normalized) {
-      mmCatboxModeSelect.value = normalized;
-    }
-    saveSettingsPartial({ catboxOverrideMode: normalized });
   });
 }
 

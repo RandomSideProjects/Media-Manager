@@ -17,6 +17,10 @@
   let uploadConcurrencyInput = null;
   let uploadConcurrencyResetBtn = null;
   let hiddenControlToggle = null;
+  let githubWorkerUrlInput = null;
+  let githubTokenInput = null;
+  let catboxUrlInput = null;
+  let catboxModeSelect = null;
 
   function queryElements() {
     overlay = document.getElementById("devMenuOverlay");
@@ -33,6 +37,10 @@
     uploadConcurrencyInput = document.getElementById("devUploadConcurrencyInput");
     uploadConcurrencyResetBtn = document.getElementById("devUploadConcurrencyResetBtn");
     hiddenControlToggle = document.getElementById("devHiddenSourceToggle");
+    githubWorkerUrlInput = document.getElementById("devGithubWorkerUrl");
+    githubTokenInput = document.getElementById("devGithubToken");
+    catboxUrlInput = document.getElementById("devCatboxUploadUrl");
+    catboxModeSelect = document.getElementById("devCatboxMode");
   }
 
   const OVERLAY_OPEN_CLASS = "is-open";
@@ -289,6 +297,27 @@
     updateUploadConcurrencyDisplay(currentUploadConc);
     if (uploadConcurrencyInput) uploadConcurrencyInput.value = String(currentUploadConc);
     refreshHiddenControlToggle();
+    
+    // Load GitHub and Catbox settings
+    if (typeof loadUploadSettings === 'function') {
+      try {
+        const settings = loadUploadSettings();
+        if (githubWorkerUrlInput && settings.githubWorkerUrl !== undefined) {
+          githubWorkerUrlInput.value = settings.githubWorkerUrl || '';
+        }
+        if (githubTokenInput && settings.githubToken !== undefined) {
+          githubTokenInput.value = settings.githubToken || '';
+        }
+        if (catboxUrlInput && settings.catboxUploadUrl !== undefined) {
+          catboxUrlInput.value = settings.catboxUploadUrl || '';
+        }
+        if (catboxModeSelect && settings.catboxOverrideMode !== undefined) {
+          catboxModeSelect.value = settings.catboxOverrideMode || 'auto';
+        }
+      } catch (err) {
+        console.warn('[CreatorDevMenu] Failed to load settings', err);
+      }
+    }
   }
 
   function attachEventListeners() {
@@ -352,6 +381,61 @@
           try {
             window.dispatchEvent(new CustomEvent("creator:hidden-control-updated", { detail: { enabled: desired } }));
           } catch {}
+        }
+      });
+    }
+    
+    // GitHub and Catbox settings event listeners
+    if (githubWorkerUrlInput) {
+      const commitGithubUrl = () => {
+        if (typeof saveSettingsPartial === 'function') {
+          try {
+            saveSettingsPartial({ githubWorkerUrl: githubWorkerUrlInput.value.trim() });
+          } catch (err) {
+            console.warn('[CreatorDevMenu] Failed to save GitHub Worker URL', err);
+          }
+        }
+      };
+      githubWorkerUrlInput.addEventListener('change', commitGithubUrl);
+      githubWorkerUrlInput.addEventListener('blur', commitGithubUrl);
+    }
+    
+    if (githubTokenInput) {
+      const commitGithubToken = () => {
+        if (typeof saveSettingsPartial === 'function') {
+          try {
+            saveSettingsPartial({ githubToken: githubTokenInput.value.trim() });
+          } catch (err) {
+            console.warn('[CreatorDevMenu] Failed to save GitHub Token', err);
+          }
+        }
+      };
+      githubTokenInput.addEventListener('change', commitGithubToken);
+      githubTokenInput.addEventListener('blur', commitGithubToken);
+    }
+    
+    if (catboxUrlInput) {
+      const commitCatboxUrl = () => {
+        if (typeof saveSettingsPartial === 'function') {
+          try {
+            saveSettingsPartial({ catboxUploadUrl: catboxUrlInput.value.trim() });
+          } catch (err) {
+            console.warn('[CreatorDevMenu] Failed to save Catbox URL', err);
+          }
+        }
+      };
+      catboxUrlInput.addEventListener('change', commitCatboxUrl);
+      catboxUrlInput.addEventListener('blur', commitCatboxUrl);
+    }
+    
+    if (catboxModeSelect) {
+      catboxModeSelect.addEventListener('change', () => {
+        if (typeof saveSettingsPartial === 'function') {
+          try {
+            saveSettingsPartial({ catboxOverrideMode: catboxModeSelect.value });
+          } catch (err) {
+            console.warn('[CreatorDevMenu] Failed to save Catbox mode', err);
+          }
         }
       });
     }
