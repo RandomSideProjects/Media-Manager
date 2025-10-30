@@ -6,8 +6,7 @@ on:
   push:
     branches: ["main"]
     paths-ignore:
-      - 'Directorys/Files/Anime/**'
-      - 'Directorys/Files/Manga/**'
+      - 'Directorys/Files/**'
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:

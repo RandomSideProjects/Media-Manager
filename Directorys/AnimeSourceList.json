@@ -78,11 +78,11 @@
       "title": "Call Of The Night",
       "poster": "./Posters/Anime/Call_Of_The_Night.webp",
       "categoryCount": 2,
-      "episodeCount": 21,
-      "itemCount": 21,
-      "totalFileSizeBytes": 2922934948,
-      "totalDurationSeconds": 29201,
-      "LatestTime": "2025-10-22T21:54:39.322Z"
+      "episodeCount": 22,
+      "itemCount": 22,
+      "totalFileSizeBytes": 3111919153,
+      "totalDurationSeconds": 30599,
+      "LatestTime": "2025-10-29T17:21:01.346Z"
     },
     {
       "file": "Campfire_Cooking_In_Another_World_With_My_Absurd_Skill.json",
@@ -543,6 +543,18 @@
       "totalFileSizeBytes": 1506263286,
       "totalDurationSeconds": 17060,
       "LatestTime": "2025-09-05T05:07:12.860Z"
+    },
+    {
+      "file": "This_Is_A_Test.json",
+      "path": "./Files/Anime/This_Is_A_Test.json",
+      "title": "This is a test",
+      "poster": null,
+      "categoryCount": 1,
+      "episodeCount": 1,
+      "itemCount": 1,
+      "totalFileSizeBytes": 2233652,
+      "totalDurationSeconds": 40,
+      "LatestTime": "2025-10-30T01:41:50.737Z"
     },
     {
       "file": "Tomochan.json",
