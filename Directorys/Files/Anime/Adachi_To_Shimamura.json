@@ -1,7 +1,7 @@
 {
   "title": "Adachi to Shimamura",
   "Image": "https://files.catbox.moe/dgzzvn.webp",
-  "LatestTime": "2025-10-30T22:38:11.869Z",
+  "LatestTime": "2025-10-30T22:41:07.682Z",
   "categories": [
     {
       "category": "Season 1",
@@ -82,5 +82,6 @@
     }
   ],
   "totalFileSizeBytes": 1558689786,
-  "totalDurationSeconds": 17337
+  "totalDurationSeconds": 17337,
+  "hidden": true
 }
