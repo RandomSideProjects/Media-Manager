@@ -25,6 +25,18 @@
       "LatestTime": "2025-09-06T18:20:33.268Z"
     },
     {
+      "file": "Adachi_To_Shimamura.json",
+      "path": "./Files/Anime/Adachi_To_Shimamura.json",
+      "title": "Adachi to Shimamura",
+      "poster": "./Posters/Anime/Adachi_to_Shimamura.webp",
+      "categoryCount": 1,
+      "episodeCount": 12,
+      "itemCount": 12,
+      "totalFileSizeBytes": 1558689786,
+      "totalDurationSeconds": 17337,
+      "LatestTime": "2025-10-30T21:06:41.913Z"
+    },
+    {
       "file": "Aharen.json",
       "path": "./Files/Anime/Aharen.json",
       "title": "Aharen Is Indecipherable",
