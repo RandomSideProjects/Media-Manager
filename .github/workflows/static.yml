@@ -14,6 +14,12 @@ on:
       - 'Directorys/AnimeSourceList.json'
       - 'Directorys/MangaSourceList.json'
 
+  # Triggers after maintainer workflows complete
+  workflow_run:
+    workflows: ["AnimeSourceMaintainer (DO NOT TOUCH)", "MangaSourceMaintainer (DO NOT TOUCH)"]
+    types:
+      - completed
+
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
