@@ -119,18 +119,54 @@ jobs:
           }
 
           (async () => {
+            // Load existing index
+            let existingData = { sources: [] };
+            if (fs.existsSync(INDEX_FILE)) {
+              try {
+                const existing = fs.readFileSync(INDEX_FILE, 'utf8');
+                existingData = JSON.parse(existing);
+                if (!Array.isArray(existingData.sources)) existingData.sources = [];
+              } catch (e) {
+                console.warn('Could not parse existing index, starting fresh:', e.message);
+              }
+            }
+
+            // Get changed files from git
+            const changedFiles = new Set();
+            try {
+              const { execSync } = require('child_process');
+              const gitDiff = execSync('git diff --name-only HEAD~1 HEAD 2>/dev/null || echo ""', { encoding: 'utf8' });
+              gitDiff.split('\n')
+                .filter(line => line.startsWith(FILE_DIR) && line.toLowerCase().endsWith('.json'))
+                .forEach(line => changedFiles.add(path.basename(line)));
+            } catch (e) {
+              console.warn('Could not determine changed files, will process all:', e.message);
+            }
+
             const entries = fs.readdirSync(FILE_DIR)
               .filter(f => f.toLowerCase().endsWith('.json'));
 
-            const result = { sources: [] };
+            // Build map of existing sources
+            const existingMap = new Map();
+            for (const src of existingData.sources) {
+              if (src.file) existingMap.set(src.file, src);
+            }
 
-            for (const file of entries) {
+            // Process only changed files (or all if we can't determine changes)
+            const filesToProcess = changedFiles.size > 0 
+              ? entries.filter(f => changedFiles.has(f))
+              : entries;
+
+            console.log(`Processing ${filesToProcess.length} file(s) out of ${entries.length} total`);
+
+            for (const file of filesToProcess) {
               try {
                 const full = path.join(FILE_DIR, file);
                 const raw = fs.readFileSync(full, 'utf8');
                 const json = JSON.parse(raw);
                 if (isMaintainerHidden(json)) {
                   console.log('Skipping hidden directory:', file);
+                  existingMap.delete(file); // Remove if was previously indexed
                   continue;
                 }
 
@@ -174,31 +210,38 @@ jobs:
                 const imgUrl = (json.Image && json.Image !== 'N/A') ? json.Image : (json.image && json.image !== 'N/A' ? json.image : null);
                 if (imgUrl) {
                   try {
-                    let sourceBuffer;
-                    if (imgUrl.startsWith('data:')) {
-                      const m = imgUrl.match(/^data:.*?;base64,(.*)$/);
-                      if (!m) throw new Error('Unsupported data URI format');
-                      sourceBuffer = Buffer.from(m[1], 'base64');
-                    } else {
-                      const { buf } = await fetchBuffer(imgUrl);
-                      sourceBuffer = buf;
-                    }
-                    const webpBuf = await sharp(sourceBuffer)
-                      .resize({ height: 512 })
-                      .webp({ quality: 80 })
-                      .toBuffer();
-
                     const posterName = safePosterName(title, path.parse(file).name) + '.webp';
                     const posterAbs = path.join(POSTERS_DIR, posterName);
-                    fs.writeFileSync(posterAbs, webpBuf);
-                    console.log('Wrote poster:', posterAbs);
-                    poster = `./Posters/Manga/${posterName}`;
+                    
+                    if (fs.existsSync(posterAbs)) {
+                      console.log('Poster already exists, skipping:', posterAbs);
+                      poster = `./Posters/Manga/${posterName}`;
+                    } else {
+                      let sourceBuffer;
+                      if (imgUrl.startsWith('data:')) {
+                        const m = imgUrl.match(/^data:.*?;base64,(.*)$/);
+                        if (!m) throw new Error('Unsupported data URI format');
+                        sourceBuffer = Buffer.from(m[1], 'base64');
+                      } else {
+                        const { buf } = await fetchBuffer(imgUrl);
+                        sourceBuffer = buf;
+                      }
+                      const webpBuf = await sharp(sourceBuffer)
+                        .resize({ height: 512 })
+                        .webp({ quality: 80 })
+                        .toBuffer();
+
+                      fs.writeFileSync(posterAbs, webpBuf);
+                      console.log('Wrote poster:', posterAbs);
+                      poster = `./Posters/Manga/${posterName}`;
+                    }
                   } catch (e) {
                     console.warn('Poster build failed for', file, '-', e.message);
                   }
                 }
 
-                result.sources.push({
+                // Update or add the source entry
+                existingMap.set(file, {
                   file,
                   path: `./Files/Manga/${file}`,
                   title,
@@ -214,6 +257,16 @@ jobs:
               }
             }
 
+            // Remove entries for files that no longer exist
+            for (const file of existingMap.keys()) {
+              if (!entries.includes(file)) {
+                console.log('Removing deleted file from index:', file);
+                existingMap.delete(file);
+              }
+            }
+
+            // Build final sorted array
+            const result = { sources: Array.from(existingMap.values()) };
             result.sources.sort((a, b) => String(a.title).localeCompare(String(b.title)));
 
             fs.writeFileSync(INDEX_FILE, JSON.stringify(result, null, 2));
