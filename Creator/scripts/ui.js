@@ -594,6 +594,14 @@ function getGithubToken() {
   } catch { return ''; }
 }
 
+function getUploadWebhookOverride() {
+  try {
+    const settings = getUploadSettingsSafe();
+    const raw = settings.webhookUrl;
+    return (typeof raw === 'string') ? raw.trim() : '';
+  } catch { return ''; }
+}
+
 function sanitizeWorkerFileName(input) {
   const base = typeof input === 'string' ? input : '';
   const normalized = typeof base.normalize === 'function' ? base.normalize('NFKD') : base;
@@ -2849,6 +2857,8 @@ async function uploadDirectoryToGithub() {
   formData.append('mode', isMangaMode() ? 'manga' : 'anime');
   formData.append('fileName', fileName);
   if (title) formData.append('title', title);
+  const webhookOverride = getUploadWebhookOverride();
+  if (webhookOverride) formData.append('webhookUrl', webhookOverride);
   const jsonBlob = new Blob([jsonString], { type: 'application/json' });
   formData.append('upload', jsonBlob, `${fileName}.json`);
 

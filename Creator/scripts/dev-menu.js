@@ -19,6 +19,7 @@
   let hiddenControlToggle = null;
   let githubWorkerUrlInput = null;
   let githubTokenInput = null;
+  let webhookUrlInput = null;
   let catboxUrlInput = null;
   let catboxModeSelect = null;
 
@@ -39,6 +40,7 @@
     hiddenControlToggle = document.getElementById("devHiddenSourceToggle");
     githubWorkerUrlInput = document.getElementById("devGithubWorkerUrl");
     githubTokenInput = document.getElementById("devGithubToken");
+    webhookUrlInput = document.getElementById("devWebhookUrl");
     catboxUrlInput = document.getElementById("devCatboxUploadUrl");
     catboxModeSelect = document.getElementById("devCatboxMode");
   }
@@ -308,6 +310,9 @@
         if (githubTokenInput && settings.githubToken !== undefined) {
           githubTokenInput.value = settings.githubToken || '';
         }
+        if (webhookUrlInput && settings.webhookUrl !== undefined) {
+          webhookUrlInput.value = settings.webhookUrl || '';
+        }
         if (catboxUrlInput && settings.catboxUploadUrl !== undefined) {
           catboxUrlInput.value = settings.catboxUploadUrl || '';
         }
@@ -412,6 +417,20 @@
       };
       githubTokenInput.addEventListener('change', commitGithubToken);
       githubTokenInput.addEventListener('blur', commitGithubToken);
+    }
+    
+    if (webhookUrlInput) {
+      const commitWebhookUrl = () => {
+        if (typeof saveSettingsPartial === 'function') {
+          try {
+            saveSettingsPartial({ webhookUrl: webhookUrlInput.value.trim() });
+          } catch (err) {
+            console.warn('[CreatorDevMenu] Failed to save Discord Webhook URL', err);
+          }
+        }
+      };
+      webhookUrlInput.addEventListener('change', commitWebhookUrl);
+      webhookUrlInput.addEventListener('blur', commitWebhookUrl);
     }
     
     if (catboxUrlInput) {

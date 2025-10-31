@@ -706,6 +706,16 @@ window.OverlayFactory = (function() {
                 placeholder: 'Optional GitHub token' 
               }),
               createElement('p', { className: 'dev-menu-hint' }, ['Personal access token for GitHub operations.'])
+            ]),
+            createElement('div', { className: 'dev-field' }, [
+              createElement('label', { for: 'devWebhookUrl' }, ['Discord Webhook Override']),
+              createElement('input', {
+                type: 'text',
+                id: 'devWebhookUrl',
+                className: 'dev-field-input',
+                placeholder: 'Leave blank to use default webhook'
+              }),
+              createElement('p', { className: 'dev-menu-hint' }, ['Optional Discord webhook for upload summaries.'])
             ])
           ]),
           

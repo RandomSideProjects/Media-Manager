@@ -15,6 +15,45 @@ function coerceSeparatedFlag(value) {
 
 async function handleFolderUpload(event) {
   const files = Array.from(event.target.files || []);
+  // If a single .zip is selected, extract it and emulate a folder selection
+  if (files.length === 1) {
+    const only = files[0];
+    const name = (only && only.name || '').toLowerCase();
+    const type = (only && only.type || '').toLowerCase();
+    if (name.endsWith('.zip') || type === 'application/zip' || type === 'application/x-zip-compressed') {
+      try {
+        const buf = await only.arrayBuffer();
+        const zip = await JSZip.loadAsync(buf);
+        const extracted = [];
+        const entries = Object.values(zip.files || {});
+        for (const entry of entries) {
+          if (entry.dir) continue;
+          // Create a File from each zip entry
+          const content = await entry.async('blob');
+          // Preserve the relative path within the zip via a synthetic property later
+          const file = new File([content], entry.name);
+          // Attach a non-standard field used by our logic below to resolve paths
+          Object.defineProperty(file, 'webkitRelativePath', { value: entry.name, configurable: false });
+          extracted.push(file);
+        }
+        if (extracted.length) {
+          // Replace files with extracted list and continue normal flow
+          event.target.value = '';
+          return await handleExtractedFiles(extracted);
+        }
+      } catch (err) {
+        console.warn('[LocalFolder] Failed to read zip', err);
+        errorMessage.textContent = 'Unable to read ZIP file. Ensure it contains index.json and media files.';
+        errorMessage.style.display = 'block';
+        return;
+      }
+    }
+  }
+
+  return await handleExtractedFiles(files);
+}
+
+async function handleExtractedFiles(files) {
   // Build index of all selected files by relative path (lowercased)
   const filesIndex = {};
   let rootPrefix = '';

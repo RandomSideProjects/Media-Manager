@@ -64,6 +64,7 @@ function loadUploadSettings(){
         githubWorkerUrl: normalizeGithubWorkerUrlValue(SETTINGS_DEFAULT_GITHUB_WORKER_URL),
         catboxUploadUrl: defaultCatboxUploadUrl(),
         catboxOverrideMode: 'auto',
+        webhookUrl: '',
         separationTag: false
       };
       applyCatboxOverrideMode(initial.catboxOverrideMode);
@@ -86,7 +87,8 @@ function loadUploadSettings(){
       githubWorkerUrl: normalizedGithubUrl,
       githubToken: (typeof p.githubToken === 'string') ? p.githubToken : '',
       catboxUploadUrl: (typeof p.catboxUploadUrl === 'string' && p.catboxUploadUrl.trim()) ? p.catboxUploadUrl.trim() : defaultCatboxUploadUrl(),
-      catboxOverrideMode: normalizeCatboxOverrideMode(p.catboxOverrideMode)
+      catboxOverrideMode: normalizeCatboxOverrideMode(p.catboxOverrideMode),
+      webhookUrl: (typeof p.webhookUrl === 'string') ? p.webhookUrl.trim() : ''
     };
     if (result.catboxOverrideMode === 'auto' && result.catboxUploadUrl === SETTINGS_CATBOX_PROXY_UPLOAD_URL) {
       result.catboxUploadUrl = defaultCatboxUploadUrl();
@@ -105,6 +107,7 @@ function loadUploadSettings(){
     githubToken: '',
     catboxUploadUrl: defaultCatboxUploadUrl(),
     catboxOverrideMode: 'auto',
+    webhookUrl: '',
     separationTag: false
   };
   applyCatboxOverrideMode(fallback.catboxOverrideMode);
@@ -126,7 +129,8 @@ function saveUploadSettings(s){
     githubWorkerUrl: normalizeGithubWorkerUrlValue((typeof s.githubWorkerUrl === 'string') ? s.githubWorkerUrl.trim() : ''),
     githubToken: (typeof s.githubToken === 'string') ? s.githubToken.trim() : '',
     catboxUploadUrl: (typeof s.catboxUploadUrl === 'string') ? s.catboxUploadUrl.trim() : '',
-    catboxOverrideMode: normalizedMode
+    catboxOverrideMode: normalizedMode,
+    webhookUrl: (typeof s.webhookUrl === 'string') ? s.webhookUrl.trim() : ''
   }));
   applyCatboxOverrideMode(normalizedMode);
 }
