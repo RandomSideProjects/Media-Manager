@@ -32,6 +32,7 @@ const cbzPrevBtn = document.getElementById('cbzPrevBtn');
 const cbzNextBtn = document.getElementById('cbzNextBtn');
 const cbzPageInfo = document.getElementById('cbzPageInfo');
 const cbzImage = document.getElementById('cbzImage');
+const cbzImageWrap = document.getElementById('cbzImageWrap');
 
 // CBZ progress elements (created dynamically)
 let cbzProgressOverlay = document.getElementById('cbzProgressOverlay');

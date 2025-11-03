@@ -11,6 +11,10 @@ let cbzCache = new Map(); // key -> { pages: string[] }
 let cbzCurrentKey = '';
 let cbzProgressBase = 0; // base percent before extraction phase
 
+// Adjust this to change how many pages are preloaded ahead/behind the current page.
+let cbzPreloadAheadCount = 20;
+const cbzPreloadedImages = new Map();
+
 function isMangaVolumeItem(item) {
   if (!item) return false;
   const nameFromSrc = (typeof item.src === 'string') ? item.src : '';
@@ -361,10 +365,58 @@ function hideCbzShowVideo() {
   if (clipBtn) clipBtn.style.display = '';
 }
 
+function getCbzPreloadWindowSize() {
+  const count = Number(cbzPreloadAheadCount);
+  if (!Number.isFinite(count) || count <= 0) return 0;
+  return Math.max(0, Math.floor(count));
+}
+
+function ensureCbzPagePreloaded(index) {
+  if (!Array.isArray(cbzState.pages)) return;
+  if (!Number.isFinite(index)) return;
+  const intIndex = Math.trunc(index);
+  if (intIndex < 0 || intIndex >= cbzState.pages.length) return;
+  if (cbzPreloadedImages.has(intIndex)) return;
+  const src = cbzState.pages[intIndex];
+  if (!src) return;
+  const img = new Image();
+  img.decoding = 'async';
+  try { img.loading = 'eager'; } catch {}
+  img.src = src;
+  cbzPreloadedImages.set(intIndex, img);
+}
+
+function syncCbzPreloads(currentIndex) {
+  if (!Array.isArray(cbzState.pages) || cbzState.pages.length === 0) {
+    cbzPreloadedImages.clear();
+    return;
+  }
+  const windowSize = getCbzPreloadWindowSize();
+  if (windowSize <= 0) {
+    cbzPreloadedImages.clear();
+    return;
+  }
+  const maxIndex = cbzState.pages.length - 1;
+  for (let offset = 1; offset <= windowSize; offset++) {
+    const ahead = currentIndex + offset;
+    if (ahead <= maxIndex) ensureCbzPagePreloaded(ahead);
+    const behind = currentIndex - offset;
+    if (behind >= 0) ensureCbzPagePreloaded(behind);
+  }
+  const removals = [];
+  cbzPreloadedImages.forEach((_, idx) => {
+    if (Math.abs(idx - currentIndex) > windowSize) removals.push(idx);
+  });
+  for (const idx of removals) {
+    cbzPreloadedImages.delete(idx);
+  }
+}
+
 function updateCbzPageInfo() {
   if (!cbzState.active) return;
   if (cbzPageInfo) cbzPageInfo.textContent = `Page ${cbzState.index + 1} / ${cbzState.pages.length}`;
   if (cbzImage) cbzImage.src = cbzState.pages[cbzState.index] || '';
+  syncCbzPreloads(cbzState.index);
   if (nextBtn) nextBtn.style.display = (cbzState.index >= cbzState.pages.length - 1 && flatList && currentIndex < flatList.length - 1) ? 'inline-block' : 'none';
   // Persist current page and total pages for this CBZ item
   try {
@@ -483,6 +535,7 @@ function parseMangaJsonToPages(json) {
 
 async function loadMangaVolume(item) {
   cbzState = { active: true, pages: [], index: 0 };
+  cbzPreloadedImages.clear();
   // Use progress overlay instead of spinner
   showCbzProgress('Loading...', 0);
   try { if (spinner) spinner.style.display = 'none'; } catch {}
@@ -663,6 +716,7 @@ async function loadMangaVolume(item) {
 
 function unloadCbz() {
   cbzState.active = false;
+  cbzPreloadedImages.clear();
   if (cbzViewer) cbzViewer.style.display = 'none';
   // Do not revoke URLs here; cache persists until page reload.
 }
@@ -675,6 +729,7 @@ function clearAllCbzCache() {
     });
   } catch {}
   cbzCache.clear();
+  cbzPreloadedImages.clear();
   clearCbzUrls();
 }
 
@@ -692,6 +747,20 @@ if (cbzNextBtn) {
   cbzNextBtn.addEventListener('click', () => {
     if (!cbzState.active) return;
     if (cbzState.index < cbzState.pages.length - 1) { cbzState.index++; updateCbzPageInfo(); }
+  });
+}
+if (cbzImageWrap) {
+  cbzImageWrap.addEventListener('click', (e) => {
+    if (!cbzState.active) return;
+    const rect = cbzImageWrap.getBoundingClientRect();
+    if (!rect || rect.width <= 0) return;
+    const offsetX = e.clientX - rect.left;
+    if (!Number.isFinite(offsetX)) return;
+    if (offsetX <= rect.width / 2) {
+      if (cbzState.index > 0) { cbzState.index--; updateCbzPageInfo(); }
+    } else {
+      if (cbzState.index < cbzState.pages.length - 1) { cbzState.index++; updateCbzPageInfo(); }
+    }
   });
 }
 document.addEventListener('keydown', (e) => {
