@@ -1,6 +1,17 @@
 {
   "sources": [
     {
+      "file": "Bloom_Into_You.json",
+      "path": "./Files/Manga/Bloom_Into_You.json",
+      "title": "Bloom Into You",
+      "poster": "./Posters/Manga/Bloom_Into_You.webp",
+      "volumeCount": 8,
+      "pageCount": 1481,
+      "totalPagecount": 1481,
+      "totalFileSizeBytes": 2623674107,
+      "LatestTime": "2025-11-03T08:45:58.213Z"
+    },
+    {
       "file": "My_Dress-Up_Darling.json",
       "path": "./Files/Manga/My_Dress-Up_Darling.json",
       "title": "My Dress-Up Darling",
