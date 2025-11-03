@@ -1,0 +1,62 @@
+{
+  "title": "Bloom Into You",
+  "Image": "https://files.catbox.moe/hd6fnu.webp",
+  "LatestTime": "2025-11-03T08:45:58.213Z",
+  "categories": [
+    {
+      "category": "Volumes",
+      "episodes": [
+        {
+          "title": "Volume 1",
+          "src": "https://files.catbox.moe/f52119.json",
+          "fileSizeBytes": 335564117,
+          "VolumePageCount": 183
+        },
+        {
+          "title": "Volume 2",
+          "src": "https://files.catbox.moe/c5arnm.json",
+          "fileSizeBytes": 312759306,
+          "VolumePageCount": 182
+        },
+        {
+          "title": "Volume 3",
+          "src": "https://files.catbox.moe/skswx7.json",
+          "fileSizeBytes": 298315777,
+          "VolumePageCount": 183
+        },
+        {
+          "title": "Volume 4",
+          "src": "https://files.catbox.moe/06pmxo.json",
+          "fileSizeBytes": 312396609,
+          "VolumePageCount": 181
+        },
+        {
+          "title": "Volume 5",
+          "src": "https://files.catbox.moe/hqfryd.json",
+          "fileSizeBytes": 318622525,
+          "VolumePageCount": 181
+        },
+        {
+          "title": "Volume 6",
+          "src": "https://files.catbox.moe/ziwywa.json",
+          "fileSizeBytes": 318282392,
+          "VolumePageCount": 179
+        },
+        {
+          "title": "Volume 7",
+          "src": "https://files.catbox.moe/7svej5.json",
+          "fileSizeBytes": 332940364,
+          "VolumePageCount": 179
+        },
+        {
+          "title": "Volume 8",
+          "src": "https://files.catbox.moe/mi3wmv.json",
+          "fileSizeBytes": 394793017,
+          "VolumePageCount": 213
+        }
+      ]
+    }
+  ],
+  "totalFileSizeBytes": 2623674107,
+  "totalPagecount": 1481
+}
