@@ -292,10 +292,6 @@ window.OverlayFactory = (function() {
             createElement('label', {}, [createElement('input', { type: 'radio', name: 'mode', value: 'manga' }), ' Manga'])
           ])
         ]),
-        createElement('div', { className: 'section dev-menu-row', id: 'devMenuRow', style: { display: 'none' }, 'data-setting-tag': 'dev' }, [
-          createElement('button', { id: 'devMenuBtn', type: 'button', className: 'btn-primary' }, ['Dev Menu']),
-          createElement('span', { className: 'dev-menu-status', id: 'devMenuStatus' }, ['Developer tools'])
-        ]),
         createElement('div', { className: 'settings-actions' }, [
           createElement('button', { id: 'settingsCancel', className: 'btn-ghost' }, ['Close']),
           createElement('button', { id: 'settingsApply', className: 'btn-primary' }, ['Apply']),

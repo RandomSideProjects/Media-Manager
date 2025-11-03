@@ -89,7 +89,7 @@ function closeSettingsPanel(){
   if (settingsOverlay) settingsOverlay.style.display = 'none'; 
 }
 
-// Create settings overlay immediately so dev-menu.js can access its elements
+// Create settings overlay immediately so other scripts can reference its elements
 ensureSourcesSettingsOverlay();
 
 settingsBtn = document.getElementById('sourcesSettingsBtn');
