@@ -506,13 +506,34 @@ async function downloadSourceFolder(options = {}) {
   showCompleteCb.addEventListener('change', () => { showCompleted = !!showCompleteCb.checked; applyVisibilityAll(); });
   const rowsContainer = document.createElement('div');
   Object.assign(rowsContainer.style, { display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '50vh', overflow: 'auto' });
-  const footer = document.createElement('div'); footer.style.display = 'flex'; footer.style.justifyContent = 'center'; footer.style.marginTop = '10px';
-  const cancelBtn = document.createElement('button'); cancelBtn.textContent = 'Cancel'; cancelBtn.className = 'pill-button'; footer.appendChild(cancelBtn);
+  const footer = document.createElement('div');
+  footer.style.display = 'flex';
+  footer.style.justifyContent = 'center';
+  footer.style.marginTop = '10px';
+  footer.style.gap = '0.75rem';
+  const endEarlyBtn = document.createElement('button');
+  endEarlyBtn.type = 'button';
+  endEarlyBtn.textContent = 'End early';
+  endEarlyBtn.className = 'pill-button';
+  Object.assign(endEarlyBtn.style, {
+    background: '#1d4ed8',
+    color: '#fff',
+    border: '1px solid #1d4ed8'
+  });
+  const cancelBtn = document.createElement('button');
+  cancelBtn.textContent = 'Cancel';
+  cancelBtn.className = 'pill-button';
+  footer.append(endEarlyBtn, cancelBtn);
   modal.append(titleEl, summary, controlsRow, rowsContainer, footer);
   overlay.appendChild(modal);
   document.body.appendChild(overlay);
 
-  let cancelRequested = false; const xhrs = [];
+  let stopRequested = false;
+  let cancelRequested = false;
+  let abortActiveDownloads = false;
+  let endEarlyPromptActive = false;
+  let endEarlyChoiceMade = false;
+  const xhrs = [];
 
   const zip = new JSZip();
   const titleText = (directoryTitle.textContent || 'directory').trim() || 'directory';
@@ -1020,7 +1041,68 @@ async function downloadSourceFolder(options = {}) {
   updateRemainingLabel();
   updateFailureSummary();
   speedLabel.textContent = 'Speed: 0.00 MB/s';
-  cancelBtn.addEventListener('click', () => { cancelRequested = true; xhrs.forEach(x => x.abort()); overlay.remove(); });
+  function resetEndEarlyPrompt() {
+    endEarlyPromptActive = false;
+    if (!endEarlyChoiceMade) {
+      endEarlyBtn.disabled = false;
+      endEarlyBtn.textContent = 'End early';
+    }
+  }
+  function finalizeEndEarly(waitForActive) {
+    if (endEarlyChoiceMade) return;
+    endEarlyChoiceMade = true;
+    endEarlyPromptActive = false;
+    stopRequested = true;
+    endEarlyBtn.disabled = true;
+    endEarlyBtn.textContent = 'Ending early…';
+    if (waitForActive) {
+      try { remainingLabel.textContent = 'Waiting for active downloads to finish…'; } catch {}
+    } else {
+      abortActiveDownloads = true;
+      try { remainingLabel.textContent = 'Ending active downloads immediately…'; } catch {}
+      xhrs.forEach((xhr) => { if (xhr && typeof xhr.abort === 'function') { try { xhr.abort(); } catch {} } });
+    }
+  }
+  endEarlyBtn.addEventListener('click', () => {
+    if (stopRequested || endEarlyPromptActive) return;
+    endEarlyPromptActive = true;
+    const message = 'Do you want to wait until active downloads (non queued) are complete or end immediately?';
+    const noticeSource = (typeof window !== 'undefined' && typeof window.showAppNotice === 'function')
+      ? window.showAppNotice
+      : window.mmNotices?.show;
+    if (noticeSource) {
+      noticeSource({
+        title: 'End early?',
+        message,
+        tone: 'warning',
+        actions: [
+          {
+            label: 'Wait for active downloads',
+            className: 'storage-notice__btn--primary',
+            onClick: () => finalizeEndEarly(true)
+          },
+          {
+            label: 'End immediately',
+            className: 'storage-notice__btn--danger',
+            onClick: () => finalizeEndEarly(false)
+          }
+        ],
+        dismissLabel: 'Cancel',
+        onClose: () => resetEndEarlyPrompt()
+      });
+    } else {
+      const waitForActive = typeof window !== 'undefined' && typeof window.confirm === 'function'
+        ? window.confirm(`${message}\n\nPress OK to wait for active downloads, or Cancel to end immediately.`)
+        : true;
+      finalizeEndEarly(waitForActive);
+    }
+  });
+  cancelBtn.addEventListener('click', () => {
+    stopRequested = true;
+    cancelRequested = true;
+    xhrs.forEach((xhr) => { if (xhr && typeof xhr.abort === 'function') { try { xhr.abort(); } catch {} } });
+    try { overlay.remove(); } catch {}
+  });
 
   const devModeEnabled = typeof window !== 'undefined' && window.DevMode === true;
   const DEFAULT_DL_CONCURRENCY = 2;
@@ -1104,7 +1186,7 @@ async function downloadSourceFolder(options = {}) {
   }
 
   const workers = Array.from({ length: concurrency }, async () => {
-    while (!cancelRequested && pointer < tasks.length) {
+    while (!stopRequested && pointer < tasks.length) {
       const idx = pointer++;
       const task = tasks[idx];
       const { ci, ei, episode, placeholder, type } = task;
@@ -1490,12 +1572,22 @@ async function downloadSourceFolder(options = {}) {
           : (episode && episode.src);
         console.error('Error downloading', errorContext, err);
         const failureContext = placeholder && placeholder.src ? placeholder : episode;
-        markDownloadFailed(idx, err, ci, ei, failureContext || {}, { cancelled: cancelRequested });
+        markDownloadFailed(idx, err, ci, ei, failureContext || {}, { cancelled: stopRequested });
       }
     }
   });
 
   await Promise.all(workers);
+  const endedEarly = stopRequested && !cancelRequested;
+  if (endedEarly) {
+    for (let idx = pointer; idx < tasks.length; idx++) {
+      if (!rowEls[idx]) continue;
+      setRowProgress(idx, 0, { state: 'cancelled' });
+      setStatus(idx, 'Cancelled', { color: '#e0c063' });
+      rowCompleted[idx] = false;
+    }
+    applyVisibilityAll();
+  }
   if (cancelRequested) { return; }
   let totalBytesAll = 0, totalSecsAll = 0, totalPagesAll = 0;
   try {
@@ -1535,6 +1627,17 @@ async function downloadSourceFolder(options = {}) {
   try { speedLabel.textContent = 'Speed: 0.00 MB/s'; } catch {}
   updateRemainingLabel();
   updateFailureSummary();
+  if (endedEarly) {
+    const endedMessage = abortActiveDownloads
+      ? 'Ended early; active downloads aborted.'
+      : 'Ended early; remaining downloads skipped.';
+    try {
+      failureLabel.style.color = '#e0c063';
+      failureLabel.textContent = failureCount > 0
+        ? `Failed: ${failureCount} • Ended early`
+        : endedMessage;
+    } catch {}
+  }
   try { etaLabel.textContent = failureCount > 0 ? 'Downloads complete (with failures).' : 'Downloads complete.'; } catch {}
 
   const zipBase = String(titleText || 'download').trim().replace(/ /g, '_') || 'download';

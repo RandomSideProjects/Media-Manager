@@ -38,24 +38,46 @@ window.OverlayFactory = (function() {
   function createSettingsOverlay() {
     removeOverlay('settingsOverlay');
     
+    const clippingSection = createElement('div', { className: 'setting-category' }, [
+      createElement('div', { className: 'setting-category-header' }, ['Clipping']),
+      createElement('div', { className: 'setting-row' }, [
+        createElement('input', { type: 'checkbox', id: 'clipToggle' }),
+        createElement('label', { for: 'clipToggle' }, ['Enable clipping'])
+      ]),
+      createElement('div', { className: 'setting-row' }, [
+        createElement('input', { type: 'checkbox', id: 'clipPreviewToggle' }),
+        createElement('label', { for: 'clipPreviewToggle', 'data-setting-tag': 'beta' }, ['Clip preview'])
+      ]),
+      createElement('div', { className: 'setting-row' }, [
+        createElement('div', { style: { display: 'flex', alignItems: 'center', gap: '8px' } }, [
+          createElement('input', { type: 'checkbox', id: 'clipLocalModeToggle' }),
+          createElement('label', { for: 'clipLocalModeToggle' }, ['Local clipping only'])
+        ]),
+        createElement('small', {}, ['Skip the clip API and keep the capture process on-device.'])
+      ])
+    ]);
+
+    const downloadsSection = createElement('div', { className: 'setting-category' }, [
+      createElement('div', { className: 'setting-category-header' }, ['Downloads']),
+      createElement('div', { className: 'setting-row' }, [
+        createElement('input', { type: 'checkbox', id: 'selectiveDownloadToggle' }),
+        createElement('label', { for: 'selectiveDownloadToggle', 'data-setting-tag': 'beta' }, ['Selective downloads'])
+      ]),
+      createElement('div', { className: 'setting-row' }, [
+        createElement('label', { for: 'downloadConcurrencyRange' }, ['Download concurrency']),
+        createElement('input', { type: 'range', id: 'downloadConcurrencyRange', min: '1', max: '8', step: '1', value: '2' }),
+        createElement('span', { id: 'downloadConcurrencyValue' }, ['2'])
+      ])
+    ]);
+    
     const overlay = createElement('div', { id: 'settingsOverlay' }, [
       createElement('div', { id: 'settingsPanel' }, [
         createElement('div', { className: 'setting-row' }, [
           createElement('h3', {}, ['Settings']),
           createElement('button', { id: 'settingsCloseBtn' }, ['Close'])
         ]),
-        createElement('div', { className: 'setting-row' }, [
-          createElement('input', { type: 'checkbox', id: 'clipToggle' }),
-          createElement('label', { for: 'clipToggle' }, ['Enable clipping'])
-        ]),
-        createElement('div', { className: 'setting-row' }, [
-          createElement('input', { type: 'checkbox', id: 'clipPreviewToggle' }),
-          createElement('label', { for: 'clipPreviewToggle', 'data-setting-tag': 'beta' }, ['Clip preview'])
-        ]),
-        createElement('div', { className: 'setting-row' }, [
-          createElement('input', { type: 'checkbox', id: 'selectiveDownloadToggle' }),
-          createElement('label', { for: 'selectiveDownloadToggle' }, ['Selective downloads'])
-        ]),
+        clippingSection,
+        downloadsSection,
         createElement('div', { className: 'setting-row recent-sources-setting' }, [
           createElement('div', { className: 'recent-sources-label' }, [
             createElement('span', { 'data-setting-tag': 'beta' }, ['Recent sources']),
@@ -69,11 +91,6 @@ window.OverlayFactory = (function() {
               createElement('option', { value: 'right' }, ['Right'])
             ])
           ])
-        ]),
-        createElement('div', { className: 'setting-row' }, [
-          createElement('label', { for: 'downloadConcurrencyRange' }, ['Download concurrency']),
-          createElement('input', { type: 'range', id: 'downloadConcurrencyRange', min: '1', max: '8', step: '1', value: '2' }),
-          createElement('span', { id: 'downloadConcurrencyValue' }, ['2'])
         ]),
         createElement('div', { className: 'setting-row' }, [
           createElement('div', { className: 'storage-menu' }, [
@@ -606,6 +623,42 @@ window.OverlayFactory = (function() {
           ]),
           
           createElement('div', { className: 'dev-menu-section' }, [
+            createElement('h4', {}, ['Catbox Settings']),
+            createElement('div', { className: 'dev-field' }, [
+              createElement('label', { for: 'devCatboxUploadUrl' }, ['Upload URL']),
+              createElement('input', { 
+                type: 'text', 
+                id: 'devCatboxUploadUrl', 
+                className: 'dev-field-input',
+                placeholder: 'Catbox upload endpoint for proxy' 
+              }),
+              createElement('p', { className: 'dev-menu-hint' }, ['Set only when Mode is Proxy.'])
+            ]),
+            createElement('div', { className: 'dev-field' }, [
+              createElement('label', { for: 'devCatboxMode' }, ['Mode']),
+              createElement('select', { id: 'devCatboxMode', className: 'dev-field-input' }, [
+                createElement('option', { value: 'default' }, ['Default']),
+                createElement('option', { value: 'proxy' }, ['Proxy'])
+              ]),
+              createElement('p', { className: 'dev-menu-hint select' }, ['Choose Default (worker) or Proxy (custom URL).'])
+            ])
+          ]),
+
+          createElement('div', { className: 'dev-menu-section' }, [
+            createElement('h4', {}, ['Clip Backend']),
+            createElement('div', { className: 'dev-field' }, [
+              createElement('label', { for: 'devClipBackendUrl' }, ['Clip backend URL']),
+              createElement('input', {
+                type: 'text',
+                id: 'devClipBackendUrl',
+                className: 'dev-field-input',
+                placeholder: 'https://mm.littlehacker303.workers.dev/clip'
+              }),
+              createElement('p', { className: 'dev-menu-hint' }, ['Override the clip/set segment endpoint.'])
+            ])
+          ]),
+          
+          createElement('div', { className: 'dev-menu-section' }, [
             createElement('h4', {}, ['Quick Actions']),
             createElement('div', { id: 'devActionGrid', className: 'dev-action-grid' }, [
               createElement('button', { type: 'button', 'data-dev-action': 'notice:info' }, ['Test Info Notice']),
@@ -633,14 +686,18 @@ window.OverlayFactory = (function() {
               ]),
               createElement('div', { className: 'dev-stat' }, [
                 createElement('dt', {}, ['Catbox Endpoint']),
-                createElement('dd', { id: 'devCatboxEndpointLabel' }, ['Pending'])
-              ]),
-              createElement('div', { className: 'dev-stat' }, [
-                createElement('dt', {}, ['Source Key']),
-                createElement('dd', { id: 'devSourceKeyLabel' }, ['Not set'])
-              ])
+              createElement('dd', { id: 'devCatboxEndpointLabel' }, ['Pending'])
+            ]),
+            createElement('div', { className: 'dev-stat' }, [
+              createElement('dt', {}, ['Clip Backend']),
+              createElement('dd', { id: 'devClipEndpointLabel' }, ['Pending'])
+            ]),
+            createElement('div', { className: 'dev-stat' }, [
+              createElement('dt', {}, ['Source Key']),
+              createElement('dd', { id: 'devSourceKeyLabel' }, ['Not set'])
             ])
           ])
+        ])
         ])
       ])
     ]);
@@ -723,18 +780,17 @@ window.OverlayFactory = (function() {
                 type: 'text', 
                 id: 'devCatboxUploadUrl', 
                 className: 'dev-field-input',
-                placeholder: 'Catbox upload endpoint' 
+                placeholder: 'Catbox upload endpoint for proxy' 
               }),
-              createElement('p', { className: 'dev-menu-hint' }, ['Catbox file upload endpoint.'])
+              createElement('p', { className: 'dev-menu-hint' }, ['Set only when Mode is Proxy.'])
             ]),
             createElement('div', { className: 'dev-field' }, [
               createElement('label', { for: 'devCatboxMode' }, ['Mode']),
               createElement('select', { id: 'devCatboxMode', className: 'dev-field-input' }, [
-                createElement('option', { value: 'auto' }, ['Auto']),
-                createElement('option', { value: 'direct' }, ['Direct']),
+                createElement('option', { value: 'default' }, ['Default']),
                 createElement('option', { value: 'proxy' }, ['Proxy'])
               ]),
-              createElement('p', { className: 'dev-menu-hint' }, ['Connection mode: Auto (detect), Direct, or Proxy.'])
+              createElement('p', { className: 'dev-menu-hint select' }, ['Choose Default (worker) or Proxy (custom URL).'])
             ])
           ]),
           

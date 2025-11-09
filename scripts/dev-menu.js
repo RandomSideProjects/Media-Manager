@@ -15,6 +15,10 @@
   let modeStateLabel = null;
   let concurrencyStateLabel = null;
   let catboxStateLabel = null;
+  let clipBackendStateLabel = null;
+  let catboxUrlInput = null;
+  let catboxModeSelect = null;
+  let clipBackendUrlInput = null;
   let sourceKeyLabel = null;
   let menuRow = null;
   let menuStatus = null;
@@ -32,6 +36,10 @@
     modeStateLabel = document.getElementById("devModeStateLabel");
     concurrencyStateLabel = document.getElementById("devConcurrencyStateLabel");
     catboxStateLabel = document.getElementById("devCatboxEndpointLabel");
+    catboxUrlInput = document.getElementById("devCatboxUploadUrl");
+    catboxModeSelect = document.getElementById("devCatboxMode");
+    clipBackendStateLabel = document.getElementById("devClipEndpointLabel");
+    clipBackendUrlInput = document.getElementById("devClipBackendUrl");
     sourceKeyLabel = document.getElementById("devSourceKeyLabel");
     menuRow = document.getElementById("devMenuRow");
     menuStatus = document.getElementById("devMenuStatus");
@@ -40,6 +48,8 @@
   const DEFAULT_CONCURRENCY = 2;
   const OVERLAY_OPEN_CLASS = "is-open";
   const STORAGE_MENU_DELAY_MS = 90;
+  const CLIP_BACKEND_STORAGE_KEY = "clipBackendUrl";
+  const DEFAULT_CLIP_BACKEND = "https://mm.littlehacker303.workers.dev/clip";
 
   function isDevModeEnabled() {
     if (typeof window === "undefined") return false;
@@ -86,6 +96,48 @@
     return effective !== stored ? `${stored} (clamped to ${effective})` : String(stored);
   }
 
+  function getClipBackendFromStorage() {
+    try {
+      const stored = localStorage.getItem(CLIP_BACKEND_STORAGE_KEY);
+      const trimmed = (typeof stored === "string") ? stored.trim() : "";
+      return trimmed || DEFAULT_CLIP_BACKEND;
+    } catch {
+      return DEFAULT_CLIP_BACKEND;
+    }
+  }
+
+  function setClipBackendStorage(value) {
+    const normalized = value && value.trim() ? value.trim() : DEFAULT_CLIP_BACKEND;
+    try {
+      localStorage.setItem(CLIP_BACKEND_STORAGE_KEY, normalized);
+    } catch {}
+    try {
+      window.dispatchEvent(new CustomEvent("mm:clip-backend-changed", { detail: { url: normalized } }));
+    } catch {}
+  }
+
+  function getClipBackendSummary() {
+    try {
+      return getClipBackendFromStorage();
+    } catch {
+      return "Unavailable";
+    }
+  }
+
+  function getCatboxSettings() {
+    try {
+      const stored = localStorage.getItem("mm_upload_settings");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        return {
+          url: (typeof parsed.catboxUploadUrl === "string") ? parsed.catboxUploadUrl.trim() : "",
+          mode: typeof parsed.catboxOverrideMode === "string" ? parsed.catboxOverrideMode : "default"
+        };
+      }
+    } catch {}
+    return { url: "", mode: "default" };
+  }
+
   function getCatboxSummary() {
     try {
       if (window.MM_catbox && typeof window.MM_catbox.getLastResult === "function") {
@@ -127,11 +179,14 @@
     if (modeStateLabel) modeStateLabel.textContent = enabled ? "On" : "Off";
     if (concurrencyStateLabel) concurrencyStateLabel.textContent = describeConcurrency(getStoredConcurrency());
     if (catboxStateLabel) catboxStateLabel.textContent = getCatboxSummary();
+    if (clipBackendStateLabel) clipBackendStateLabel.textContent = getClipBackendSummary();
     if (sourceKeyLabel) {
       const key = (typeof sourceKey === "string" && sourceKey) ? sourceKey
         : (Array.isArray(sourceKeyHistory) && sourceKeyHistory.length ? sourceKeyHistory[0] : "");
       sourceKeyLabel.textContent = key || "Not set";
     }
+    refreshCatboxControls();
+    refreshClipBackendInput();
   }
 
   function refreshAll() {
@@ -139,6 +194,17 @@
     refreshConcurrencyInput();
     refreshDiagnostics();
     updateDevMenuAvailability();
+  }
+
+  function refreshCatboxControls() {
+    const settings = getCatboxSettings();
+    if (catboxUrlInput) catboxUrlInput.value = settings.url || '';
+    if (catboxModeSelect) catboxModeSelect.value = settings.mode || 'default';
+  }
+
+  function refreshClipBackendInput() {
+    if (!clipBackendUrlInput) return;
+    clipBackendUrlInput.value = getClipBackendFromStorage() || DEFAULT_CLIP_BACKEND;
   }
 
   function updateDevMenuAvailability() {
@@ -430,6 +496,35 @@
         refreshDiagnostics();
         showDevNotice("info", "Diagnostics refreshed.");
       });
+    }
+
+    if (catboxUrlInput) {
+      catboxUrlInput.addEventListener("focus", () => {
+        if (catboxModeSelect) catboxModeSelect.value = 'proxy';
+      });
+    }
+
+    if (catboxModeSelect) {
+      catboxModeSelect.addEventListener("change", () => {
+        const mode = (catboxModeSelect.value || 'default').trim().toLowerCase();
+        try {
+          saveSettingsPartial({ catboxOverrideMode: mode });
+        } catch (err) {
+          console.warn('[DevMenu] Failed to save Catbox mode', err);
+        }
+        refreshDiagnostics();
+      });
+    }
+
+    if (clipBackendUrlInput) {
+      const commitClipBackend = () => {
+        const value = (clipBackendUrlInput.value || '').trim() || DEFAULT_CLIP_BACKEND;
+        setClipBackendStorage(value);
+        refreshDiagnostics();
+        showDevNotice("info", `Clip backend set to ${value}`);
+      };
+      clipBackendUrlInput.addEventListener("change", commitClipBackend);
+      clipBackendUrlInput.addEventListener("blur", commitClipBackend);
     }
   }
 

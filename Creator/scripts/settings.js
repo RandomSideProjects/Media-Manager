@@ -3,55 +3,58 @@
 // Variables (top)
 const DEFAULT_USERHASH = '2cdcc7754c86c2871ed2bde9d';
 const LS_SETTINGS_KEY = 'mm_upload_settings';
-const SETTINGS_DEFAULT_GITHUB_WORKER_URL = (typeof window !== 'undefined' && typeof window.MM_DEFAULT_GITHUB_WORKER_URL === 'string') ? window.MM_DEFAULT_GITHUB_WORKER_URL : '';
+const SETTINGS_CURRENT_GITHUB_WORKER_ROOT = 'https://mm.littlehacker303.workers.dev/gh';
+const SETTINGS_DEFAULT_GITHUB_WORKER_URL = (typeof window !== 'undefined' && typeof window.MM_DEFAULT_GITHUB_WORKER_URL === 'string') ? window.MM_DEFAULT_GITHUB_WORKER_URL : SETTINGS_CURRENT_GITHUB_WORKER_ROOT;
 const SETTINGS_LEGACY_GITHUB_WORKER_ROOT = 'https://mmback.littlehacker303.workers.dev/gh';
-const SETTINGS_CATBOX_DIRECT_UPLOAD_URL = 'https://catbox.moe/user/api.php';
-const SETTINGS_CATBOX_PROXY_UPLOAD_URL = 'https://catbox-proxy.littlehacker303.workers.dev/user/api.php';
-
-function getActiveCatboxDefault() {
-  if (typeof window !== 'undefined') {
-    const active = typeof window.MM_ACTIVE_CATBOX_UPLOAD_URL === 'string' ? window.MM_ACTIVE_CATBOX_UPLOAD_URL.trim() : '';
-    if (active) return active;
-    const fallback = typeof window.MM_DEFAULT_CATBOX_UPLOAD_URL === 'string' ? window.MM_DEFAULT_CATBOX_UPLOAD_URL.trim() : '';
-    if (fallback) return fallback;
-  }
-  return SETTINGS_CATBOX_DIRECT_UPLOAD_URL;
-}
+const SETTINGS_CATBOX_BACKEND_URL = 'https://mm.littlehacker303.workers.dev/catbox/user/api.php';
+const SETTINGS_CATBOX_MODE_KEY = 'catboxOverrideMode';
 
 function normalizeGithubWorkerUrlValue(raw) {
   const trimmed = (typeof raw === 'string') ? raw.trim() : '';
   if (!trimmed) return '';
   const withoutTrailingSlash = trimmed.replace(/\/+$/, '');
   if (withoutTrailingSlash === SETTINGS_LEGACY_GITHUB_WORKER_ROOT) {
-    return 'https://mmback.littlehacker303.workers.dev';
+    return SETTINGS_CURRENT_GITHUB_WORKER_ROOT;
   }
   if (withoutTrailingSlash === 'https://mmback.littlehacker303.workers.dev') {
-    return withoutTrailingSlash;
+    return SETTINGS_CURRENT_GITHUB_WORKER_ROOT;
   }
-  return trimmed;
+  if (withoutTrailingSlash === SETTINGS_CURRENT_GITHUB_WORKER_ROOT) {
+    return SETTINGS_CURRENT_GITHUB_WORKER_ROOT;
+  }
+  return withoutTrailingSlash;
 }
 
 function defaultCatboxUploadUrl() {
-  return getActiveCatboxDefault();
+  return SETTINGS_CATBOX_BACKEND_URL;
 }
 
-function normalizeCatboxOverrideMode(value) {
-  const trimmed = (typeof value === 'string') ? value.trim().toLowerCase() : '';
-  if (trimmed === 'direct' || trimmed === 'proxy') return trimmed;
-  return 'auto';
+function normalizeCatboxMode(value) {
+  const trimmed = (typeof value === 'string') ? value.trim().toLowerCase() : 'default';
+  return trimmed === 'proxy' ? 'proxy' : 'default';
 }
 
-function applyCatboxOverrideMode(mode) {
-  const normalized = normalizeCatboxOverrideMode(mode);
+function applyCatboxOverride(mode, proxyUrl) {
+  const normalizedMode = normalizeCatboxMode(mode);
+  const candidate = normalizedMode === 'proxy' ? (typeof proxyUrl === 'string' && proxyUrl.trim() ? proxyUrl.trim() : defaultCatboxUploadUrl()) : defaultCatboxUploadUrl();
   if (typeof window !== 'undefined') {
-    window.MM_CATBOX_OVERRIDE_MODE = normalized;
-    if (normalized === 'direct') {
-      window.MM_ACTIVE_CATBOX_UPLOAD_URL = SETTINGS_CATBOX_DIRECT_UPLOAD_URL;
-    } else if (normalized === 'proxy') {
-      window.MM_ACTIVE_CATBOX_UPLOAD_URL = SETTINGS_CATBOX_PROXY_UPLOAD_URL;
-    }
+    window.MM_CATBOX_OVERRIDE_MODE = normalizedMode;
+    window.MM_DEFAULT_CATBOX_UPLOAD_URL = candidate;
+    window.MM_ACTIVE_CATBOX_UPLOAD_URL = candidate;
+    try {
+      window.dispatchEvent(new CustomEvent('rsp:catbox-default-updated', { detail: { url: candidate, previous: '', meta: { source: 'overwrite' } } }));
+    } catch {}
   }
-  return normalized;
+}
+
+function applyCatboxBackendUrl(url) {
+  if (typeof window === 'undefined') return;
+  const normalized = (typeof url === 'string' && url.trim()) ? url.trim() : defaultCatboxUploadUrl();
+  window.MM_DEFAULT_CATBOX_UPLOAD_URL = normalized;
+  window.MM_ACTIVE_CATBOX_UPLOAD_URL = normalized;
+  try {
+    window.dispatchEvent(new CustomEvent('rsp:catbox-default-updated', { detail: { url: normalized, previous: '', meta: { source: 'dev-override' } } }));
+  } catch {}
 }
 
 function loadUploadSettings(){
@@ -63,11 +66,9 @@ function loadUploadSettings(){
         userhash: '',
         githubWorkerUrl: normalizeGithubWorkerUrlValue(SETTINGS_DEFAULT_GITHUB_WORKER_URL),
         catboxUploadUrl: defaultCatboxUploadUrl(),
-        catboxOverrideMode: 'auto',
         webhookUrl: '',
         separationTag: false
       };
-      applyCatboxOverrideMode(initial.catboxOverrideMode);
       return initial;
     }
     const p = JSON.parse(raw);
@@ -87,14 +88,10 @@ function loadUploadSettings(){
       githubWorkerUrl: normalizedGithubUrl,
       githubToken: (typeof p.githubToken === 'string') ? p.githubToken : '',
       catboxUploadUrl: (typeof p.catboxUploadUrl === 'string' && p.catboxUploadUrl.trim()) ? p.catboxUploadUrl.trim() : defaultCatboxUploadUrl(),
-      catboxOverrideMode: normalizeCatboxOverrideMode(p.catboxOverrideMode),
+      catboxOverrideMode: normalizeCatboxMode(p.catboxOverrideMode),
       webhookUrl: (typeof p.webhookUrl === 'string') ? p.webhookUrl.trim() : ''
     };
-    if (result.catboxOverrideMode === 'auto' && result.catboxUploadUrl === SETTINGS_CATBOX_PROXY_UPLOAD_URL) {
-      result.catboxUploadUrl = defaultCatboxUploadUrl();
-      saveUploadSettings(result);
-    }
-    applyCatboxOverrideMode(result.catboxOverrideMode);
+    applyCatboxOverride(result.catboxOverrideMode, result.catboxUploadUrl);
     if (storedGithubRaw && normalizedGithubUrl && normalizedGithubUrl !== storedGithubRaw) {
       saveUploadSettings(result);
     }
@@ -106,16 +103,14 @@ function loadUploadSettings(){
     githubWorkerUrl: normalizeGithubWorkerUrlValue(SETTINGS_DEFAULT_GITHUB_WORKER_URL),
     githubToken: '',
     catboxUploadUrl: defaultCatboxUploadUrl(),
-    catboxOverrideMode: 'auto',
+    catboxOverrideMode: 'default',
     webhookUrl: '',
     separationTag: false
   };
-  applyCatboxOverrideMode(fallback.catboxOverrideMode);
   return fallback;
 }
 }
 function saveUploadSettings(s){
-  const normalizedMode = normalizeCatboxOverrideMode(s.catboxOverrideMode);
   localStorage.setItem(LS_SETTINGS_KEY, JSON.stringify({
     anonymous: !!s.anonymous,
     userhash: (s.userhash||'').trim(),
@@ -129,10 +124,10 @@ function saveUploadSettings(s){
     githubWorkerUrl: normalizeGithubWorkerUrlValue((typeof s.githubWorkerUrl === 'string') ? s.githubWorkerUrl.trim() : ''),
     githubToken: (typeof s.githubToken === 'string') ? s.githubToken.trim() : '',
     catboxUploadUrl: (typeof s.catboxUploadUrl === 'string') ? s.catboxUploadUrl.trim() : '',
-    catboxOverrideMode: normalizedMode,
+    catboxOverrideMode: normalizeCatboxMode(s.catboxOverrideMode),
     webhookUrl: (typeof s.webhookUrl === 'string') ? s.webhookUrl.trim() : ''
   }));
-  applyCatboxOverrideMode(normalizedMode);
+  applyCatboxOverride(s.catboxOverrideMode, s.catboxUploadUrl);
 }
 
 function saveSettingsPartial(partial) {

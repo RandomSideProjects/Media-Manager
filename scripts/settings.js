@@ -34,6 +34,7 @@ function ensureSettingsOverlay() {
       // Re-query elements after overlay creation
       window.clipToggle = document.getElementById('clipToggle');
       window.clipPreviewToggle = document.getElementById('clipPreviewToggle');
+      window.clipLocalModeToggle = document.getElementById('clipLocalModeToggle');
       window.selectiveDownloadToggle = document.getElementById('selectiveDownloadToggle');
       window.downloadConcurrencyRange = document.getElementById('downloadConcurrencyRange');
       window.downloadConcurrencyValue = document.getElementById('downloadConcurrencyValue');
@@ -77,6 +78,9 @@ function initializeSettingsValues() {
   
   const clipPreviewEnabledStored = localStorage.getItem('clipPreviewEnabled') === 'true';
   if (clipPreviewToggle) clipPreviewToggle.checked = clipPreviewEnabledStored;
+
+  const clipLocalModeEnabledStored = localStorage.getItem('clipLocalMode') === 'true';
+  if (clipLocalModeToggle) clipLocalModeToggle.checked = clipLocalModeEnabledStored;
   
   const selectiveDownloadsEnabledStored = localStorage.getItem('selectiveDownloadsEnabled') === 'true';
   if (selectiveDownloadToggle) selectiveDownloadToggle.checked = selectiveDownloadsEnabledStored;
@@ -96,6 +100,13 @@ function initializeSettingsValues() {
       localStorage.setItem('clipPreviewEnabled', clipPreviewToggle.checked);
     });
     clipPreviewToggle.dataset.bound = '1';
+  }
+
+  if (clipLocalModeToggle && !clipLocalModeToggle.dataset.bound) {
+    clipLocalModeToggle.addEventListener('change', () => {
+      localStorage.setItem('clipLocalMode', clipLocalModeToggle.checked);
+    });
+    clipLocalModeToggle.dataset.bound = '1';
   }
   
   if (selectiveDownloadToggle && !selectiveDownloadToggle.dataset.bound) {

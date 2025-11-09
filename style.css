@@ -567,6 +567,27 @@ header {
 #settingsPanel .setting-row:first-child { justify-content: space-between; }
 #settingsPanel h3 { margin: 0; }
 #settingsPanel .setting-row + .setting-row { margin-top: 0.5rem; }
+.setting-category {
+  margin-top: 0.85rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid #333;
+}
+.setting-category:first-of-type {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+.setting-category-header {
+  color: var(--muted-text);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 0.35rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
 label[for="downloadConcurrencyRange"] { min-width: 8.5em; }
 #downloadConcurrencyRange { flex: 1; }
 #downloadConcurrencyValue { width: 2.5em; text-align: right; }

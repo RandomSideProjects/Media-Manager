@@ -24,6 +24,60 @@ let clipDisplayStart = null;
 let clipDisplayEnd = null;
 let clipDisplayLength = null;
 
+const DEFAULT_CLIP_BACKEND = 'https://mm.littlehacker303.workers.dev';
+const CLIP_BACKEND_STORAGE_KEY = 'clipBackendUrl';
+const REMOTE_CLIP_API_CHECK_TIMEOUT = 5000;
+const REMOTE_CLIP_API_SUCCESS_TTL = 2 * 60 * 1000;
+const REMOTE_CLIP_API_FAILURE_TTL = 30 * 1000;
+const REMOTE_CLIP_API_CAPTURE_TIMEOUT = 30000;
+const CLIP_LOCAL_MODE_KEY = 'clipLocalMode';
+const MAX_REMOTE_CLIP_BYTES = 104857600;
+
+let remoteClipApiState = { available: false, expiresAt: 0 };
+let clipBackendCached = getClipBackendBase();
+
+function getClipBackendBase() {
+  if (typeof localStorage === 'undefined') return DEFAULT_CLIP_BACKEND;
+  try {
+    const stored = (localStorage.getItem(CLIP_BACKEND_STORAGE_KEY) || '').trim();
+    return stored || DEFAULT_CLIP_BACKEND;
+  } catch {
+    return DEFAULT_CLIP_BACKEND;
+  }
+}
+
+function ensureClipBackendUpToDate() {
+  const current = getClipBackendBase();
+  if (current !== clipBackendCached) {
+    clipBackendCached = current;
+    remoteClipApiState = { available: false, expiresAt: 0 };
+  }
+  return clipBackendCached;
+}
+
+async function isRemoteSizeAllowed(url) {
+  if (!url) return false;
+  try {
+    const response = await fetch(url, { method: 'HEAD', redirect: 'follow' });
+    if (!response.ok) return true;
+    const lengthHeader = response.headers.get('content-length');
+    if (!lengthHeader) return true;
+    const length = Number.parseInt(lengthHeader, 10);
+    if (!Number.isFinite(length)) return true;
+    return length <= MAX_REMOTE_CLIP_BYTES;
+  } catch (err) {
+    console.warn('[Clip] Failed to check remote file size', err);
+    return true;
+  }
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', (event) => {
+    if (!event || event.key !== CLIP_BACKEND_STORAGE_KEY) return;
+    ensureClipBackendUpToDate();
+  });
+}
+
 function ensureClipOverlays() {
   // Create clip overlay if it doesn't exist
   if (!clipOverlay && window.OverlayFactory && typeof window.OverlayFactory.createClipOverlay === 'function') {
@@ -110,6 +164,131 @@ function showClipNotice(message, tone = 'warning') {
     });
   } else if (typeof window.alert === 'function') {
     window.alert(message);
+  }
+}
+
+function isLocalStorageFlagEnabled(key) {
+  if (typeof localStorage === 'undefined') return false;
+  try { return localStorage.getItem(key) === 'true'; } catch { return false; }
+}
+
+function isClipLocalOnlyEnabled() {
+  return isLocalStorageFlagEnabled(CLIP_LOCAL_MODE_KEY);
+}
+
+function buildClipPreviewHTML(blob) {
+  if (!blob || !isLocalStorageFlagEnabled('clipPreviewEnabled')) return '';
+  try {
+    if (lastPreviewObjectURL) {
+      URL.revokeObjectURL(lastPreviewObjectURL);
+      lastPreviewObjectURL = null;
+    }
+    lastPreviewObjectURL = URL.createObjectURL(blob);
+    return `<video class="clip-preview-video" src="${lastPreviewObjectURL}" controls playsinline></video>`;
+  } catch {
+    return '';
+  }
+}
+
+function inferClipExtension(contentType) {
+  if (!contentType) return '';
+  const mime = contentType.split(';')[0].trim().toLowerCase();
+  if (mime.includes('mp4')) return 'mp4';
+  if (mime.includes('webm')) return 'webm';
+  if (mime.includes('ogg')) return 'ogv';
+  if (mime.includes('mov') || mime.includes('quicktime')) return 'mov';
+  if (mime.includes('mpeg')) return 'mpeg';
+  return '';
+}
+
+async function isRemoteClipApiReachable() {
+  if (isClipLocalOnlyEnabled()) return false;
+  if (typeof fetch !== 'function') return false;
+  const now = Date.now();
+  if (remoteClipApiState.expiresAt > now) {
+    return remoteClipApiState.available;
+  }
+  const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  let timeoutId;
+  if (controller) timeoutId = setTimeout(() => controller.abort(), REMOTE_CLIP_API_CHECK_TIMEOUT);
+  try {
+    const options = { method: 'GET', cache: 'no-store' };
+    if (controller) options.signal = controller.signal;
+    const base = ensureClipBackendUpToDate();
+    const response = await fetch(`${base}/clip/check`, options);
+    if (timeoutId) clearTimeout(timeoutId);
+    const body = await response.text();
+    const success = response.ok && typeof body === 'string' && body.toLowerCase().includes('you are able to communicate with the clipping api');
+    remoteClipApiState = {
+      available: success,
+      expiresAt: now + (success ? REMOTE_CLIP_API_SUCCESS_TTL : REMOTE_CLIP_API_FAILURE_TTL)
+    };
+    return success;
+  } catch (err) {
+    if (timeoutId) clearTimeout(timeoutId);
+    remoteClipApiState = {
+      available: false,
+      expiresAt: now + REMOTE_CLIP_API_FAILURE_TTL
+    };
+    return false;
+  }
+}
+
+async function tryRemoteClipCapture(start, end, durationSeconds, overlay, msg, bar) {
+  if (!overlay || !msg || !bar) return false;
+  if (isClipLocalOnlyEnabled()) return false;
+  if (typeof fetch !== 'function') return false;
+  const remoteAvailable = await isRemoteClipApiReachable();
+  if (!remoteAvailable) return false;
+  const videoUrl = video && (video.currentSrc || video.src || '');
+  if (!videoUrl) return false;
+  const allowed = await isRemoteSizeAllowed(videoUrl);
+  if (!allowed) return false;
+  const sanitizedStart = Number.isFinite(start) ? Math.max(0, start) : 0;
+  let sanitizedEnd = Number.isFinite(end) ? end : sanitizedStart + Math.max(0.5, durationSeconds || 1);
+  if (sanitizedEnd <= sanitizedStart) {
+    sanitizedEnd = sanitizedStart + Math.max(0.01, durationSeconds || 0.5);
+  }
+  const params = new URLSearchParams();
+  params.append('url', videoUrl);
+  params.append('start', sanitizedStart.toFixed(3));
+  params.append('stop', sanitizedEnd.toFixed(3));
+    const base = ensureClipBackendUpToDate();
+    const endpoint = `${base}/clip?${params.toString()}`;
+  const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  let timeoutId;
+  if (controller) timeoutId = setTimeout(() => controller.abort(), REMOTE_CLIP_API_CAPTURE_TIMEOUT);
+  try {
+    msg.textContent = 'Requesting clip API...';
+    bar.value = 10;
+    const options = { method: 'GET', cache: 'no-store' };
+    if (controller) options.signal = controller.signal;
+    const response = await fetch(endpoint, options);
+    if (timeoutId) clearTimeout(timeoutId);
+    if (!response.ok) throw new Error(`Clip API returned ${response.status}`);
+    msg.textContent = 'Downloading clip from API...';
+    bar.value = 60;
+    const blob = await response.blob();
+    if (video) video.pause();
+    lastClipBlob = blob;
+    const previewHTML = buildClipPreviewHTML(blob);
+    const extension = inferClipExtension(response.headers.get('content-type') || blob.type || '') || 'mp4';
+    lastClipFileName = `clip.${extension}`;
+    bar.value = 100;
+    overlay.style.display = 'none';
+    const durationLabel = formatTimeForInput(durationSeconds);
+    const fragments = [
+      `<div class="clip-result__title">Clip ready via clip API</div>${previewHTML}<p class="clip-result__detail clip-result__detail--muted">Length: ${durationLabel}</p>`,
+      `<p class="clip-result__detail clip-result__detail--link"><a class="clip-result__link" href="${endpoint}" target="_blank" rel="noopener noreferrer">Download clip from API</a></p>`
+    ];
+    displayClipResult(fragments);
+    recordClipHistory({ ...currentClipContext, url: endpoint });
+    ensureClipDownloadButton();
+    return true;
+  } catch (err) {
+    if (timeoutId) clearTimeout(timeoutId);
+    console.warn('[Clip] Remote clip capture failed, falling back to local capture', err);
+    return false;
   }
 }
 
@@ -594,7 +773,6 @@ async function executeClipCapture(start, end, durationSeconds) {
   if (!overlay && window.OverlayFactory && typeof window.OverlayFactory.createClipProgressOverlay === 'function') {
     console.log('[Clip] Creating clip progress overlay');
     window.OverlayFactory.createClipProgressOverlay();
-    // Query the newly created elements
     overlay = document.getElementById('clipProgressOverlay');
     msg = document.getElementById('clipProgressMessage');
     bar = document.getElementById('clipProgressBar');
@@ -609,19 +787,38 @@ async function executeClipCapture(start, end, durationSeconds) {
   msg.textContent = 'Preparing clip...';
   bar.value = 0;
 
-  const hiddenVideo = document.createElement('video');
-  hiddenVideo.muted = false;
-  hiddenVideo.preload = 'auto';
-  hiddenVideo.crossOrigin = 'anonymous';
-  hiddenVideo.style.position = 'absolute';
-  hiddenVideo.style.left = '-9999px';
-  hiddenVideo.style.width = '1px';
-  hiddenVideo.style.height = '1px';
-  hiddenVideo.style.opacity = '0';
-  hiddenVideo.setAttribute('playsinline', '');
-  document.body.appendChild(hiddenVideo);
+  const item = getCurrentMediaItem();
+  currentClipContext = {
+    lengthSeconds: Math.round(durationSeconds),
+    itemTitle: item && item.title ? item.title : 'Clip',
+    sourceTitle: directoryTitle && directoryTitle.textContent ? directoryTitle.textContent : '',
+    createdAt: new Date().toISOString()
+  };
 
+  let hiddenVideo = null;
   try {
+    if (clipButtonsRow) clipButtonsRow.style.display = 'none';
+    if (video) video.pause();
+    const remoteCaptured = await tryRemoteClipCapture(start, end, durationSeconds, overlay, msg, bar);
+    if (remoteCaptured) {
+      return;
+    }
+
+    msg.textContent = 'Preparing clip...';
+    bar.value = 0;
+
+    hiddenVideo = document.createElement('video');
+    hiddenVideo.muted = false;
+    hiddenVideo.preload = 'auto';
+    hiddenVideo.crossOrigin = 'anonymous';
+    hiddenVideo.style.position = 'absolute';
+    hiddenVideo.style.left = '-9999px';
+    hiddenVideo.style.width = '1px';
+    hiddenVideo.style.height = '1px';
+    hiddenVideo.style.opacity = '0';
+    hiddenVideo.setAttribute('playsinline', '');
+    document.body.appendChild(hiddenVideo);
+
     hiddenVideo.src = video.src;
     await new Promise(resolve => {
       const onMeta = () => { hiddenVideo.removeEventListener('loadedmetadata', onMeta); resolve(); };
@@ -729,23 +926,7 @@ async function executeClipCapture(start, end, durationSeconds) {
     bar.value = 100;
     overlay.style.display = 'none';
 
-    const previewEnabled = (localStorage.getItem('clipPreviewEnabled') === 'true');
-    let previewHTML = '';
-    if (previewEnabled) {
-      try {
-        if (lastPreviewObjectURL) { URL.revokeObjectURL(lastPreviewObjectURL); lastPreviewObjectURL = null; }
-        lastPreviewObjectURL = URL.createObjectURL(blob);
-        previewHTML = `<video class="clip-preview-video" src="${lastPreviewObjectURL}" controls playsinline></video>`;
-      } catch {}
-    }
-
-    const item = getCurrentMediaItem();
-    currentClipContext = {
-      lengthSeconds: Math.round(durationSeconds),
-      itemTitle: item && item.title ? item.title : 'Clip',
-      sourceTitle: directoryTitle && directoryTitle.textContent ? directoryTitle.textContent : '',
-      createdAt: new Date().toISOString()
-    };
+    const previewHTML = buildClipPreviewHTML(blob);
 
     try {
       if (clipButtonsRow) clipButtonsRow.style.display = 'none';
@@ -755,7 +936,8 @@ async function executeClipCapture(start, end, durationSeconds) {
       if (video) video.pause();
       const url = await uploadClipToCatboxWithProgress(blob, p => { bar.value = p; }, lastClipFileName);
       overlay.style.display = 'none';
-      const fragments = [`
+      const fragments = [
+        `
         <div class="clip-result__title">Clip uploaded!</div>
         ${previewHTML}
         <p class="clip-result__detail clip-result__detail--muted">Saved as ${lastClipFileName || 'clip.webm'}</p>
@@ -770,7 +952,8 @@ async function executeClipCapture(start, end, durationSeconds) {
     } catch (err) {
       overlay.style.display = 'none';
       const localUrl = (() => { try { return URL.createObjectURL(blob); } catch { return ''; } })();
-      const fragments = [`
+      const fragments = [
+        `
         <div class="clip-result__title">Upload failed</div>
         <p class="clip-result__detail">${err.message}</p>
         ${previewHTML}
@@ -786,6 +969,7 @@ async function executeClipCapture(start, end, durationSeconds) {
     currentClipContext = null;
   }
 }
+
 
 function attachClipEventListeners() {
   if (clipPresetCloseBtn && !clipPresetCloseBtn.dataset.bound) {

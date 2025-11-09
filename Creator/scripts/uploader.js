@@ -1,29 +1,15 @@
 "use strict";
 
 // Variables (top)
-const UPLOADER_CATBOX_DIRECT_UPLOAD_URL = 'https://catbox.moe/user/api.php';
-const UPLOADER_CATBOX_PROXY_UPLOAD_URL = 'https://catbox-proxy.littlehacker303.workers.dev/user/api.php';
-const UPLOADER_OVERRIDE_ALLOWED = new Set(['auto', 'direct', 'proxy']);
-const PROXY_SIZE_LIMIT_BYTES = 100 * 1024 * 1024;
-const DIRECT_SIZE_LIMIT_BYTES = 200 * 1024 * 1024;
+const UPLOADER_CATBOX_BACKEND_URL = 'https://mm.littlehacker303.workers.dev/catbox/user/api.php';
+const CUSTOM_CATBOX_LIMIT = 104857600;
 
 function getActiveCatboxDefault() {
-  const override = getCatboxOverrideMode();
-  if (override === 'direct') return UPLOADER_CATBOX_DIRECT_UPLOAD_URL;
-  if (override === 'proxy') return UPLOADER_CATBOX_PROXY_UPLOAD_URL;
   if (typeof window !== 'undefined') {
     const active = typeof window.MM_ACTIVE_CATBOX_UPLOAD_URL === 'string' ? window.MM_ACTIVE_CATBOX_UPLOAD_URL.trim() : '';
     if (active) return active;
-    const fallback = typeof window.MM_DEFAULT_CATBOX_UPLOAD_URL === 'string' ? window.MM_DEFAULT_CATBOX_UPLOAD_URL.trim() : '';
-    if (fallback) return fallback;
   }
-  return UPLOADER_CATBOX_DIRECT_UPLOAD_URL;
-}
-
-function getCatboxOverrideMode() {
-  if (typeof window === 'undefined') return 'auto';
-  const raw = (window.MM_CATBOX_OVERRIDE_MODE || '').toString().trim().toLowerCase();
-  return UPLOADER_OVERRIDE_ALLOWED.has(raw) ? raw : 'auto';
+  return UPLOADER_CATBOX_BACKEND_URL;
 }
 
 function normalizeCatboxUrl(raw) {
@@ -83,44 +69,15 @@ function defaultCatboxUploadUrl() {
 
 function resolveCatboxUploadUrl(settings, { fileSizeBytes } = {}) {
   const raw = settings && typeof settings.catboxUploadUrl === 'string' ? settings.catboxUploadUrl.trim() : '';
-  const defaultUrl = getActiveCatboxDefault();
-  const override = getCatboxOverrideMode();
-  if (override === 'direct') {
-    return UPLOADER_CATBOX_DIRECT_UPLOAD_URL;
+  if (raw && Number.isFinite(fileSizeBytes) && fileSizeBytes >= CUSTOM_CATBOX_LIMIT) {
+    return getActiveCatboxDefault();
   }
-  if (override === 'proxy') {
-    return UPLOADER_CATBOX_PROXY_UPLOAD_URL;
-  }
-  if (typeof window !== 'undefined') {
-    const active = typeof window.MM_ACTIVE_CATBOX_UPLOAD_URL === 'string' ? window.MM_ACTIVE_CATBOX_UPLOAD_URL.trim() : '';
-    if (active) {
-      const isStandard = !raw || raw === UPLOADER_CATBOX_DIRECT_UPLOAD_URL || raw === UPLOADER_CATBOX_PROXY_UPLOAD_URL || raw === active;
-      if (isStandard) {
-        return active;
-      }
-    }
-    if (!active && !raw && defaultUrl) {
-      return defaultUrl;
-    }
-  }
-  const chosen = raw || defaultUrl;
-  if (!fileSizeBytes || chosen === UPLOADER_CATBOX_DIRECT_UPLOAD_URL) return chosen;
-  if (fileSizeBytes > PROXY_SIZE_LIMIT_BYTES) {
-    return UPLOADER_CATBOX_DIRECT_UPLOAD_URL;
-  }
-  return chosen;
+  if (raw) return raw;
+  return getActiveCatboxDefault();
 }
 
-function assertUploadSizeLimit(uploadUrl, fileSizeBytes) {
-  if (!Number.isFinite(fileSizeBytes)) return;
-  if (uploadUrl === UPLOADER_CATBOX_PROXY_UPLOAD_URL && fileSizeBytes > PROXY_SIZE_LIMIT_BYTES) {
-    const limitMb = Math.floor(PROXY_SIZE_LIMIT_BYTES / (1024 * 1024));
-    throw new Error(`File is larger than ${limitMb} MB proxy limit. Switch to direct Catbox uploads.`);
-  }
-  if (uploadUrl === UPLOADER_CATBOX_DIRECT_UPLOAD_URL && fileSizeBytes > DIRECT_SIZE_LIMIT_BYTES) {
-    const limitMb = Math.floor(DIRECT_SIZE_LIMIT_BYTES / (1024 * 1024));
-    throw new Error(`File exceeds ${limitMb} MB direct Catbox limit.`);
-  }
+function assertUploadSizeLimit() {
+  // Delegated to backend limits now
 }
 
 // opts: { context?: 'batch'|'manual' }

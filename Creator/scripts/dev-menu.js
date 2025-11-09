@@ -21,7 +21,6 @@
   let githubTokenInput = null;
   let webhookUrlInput = null;
   let catboxUrlInput = null;
-  let catboxModeSelect = null;
 
   function queryElements() {
     overlay = document.getElementById("devMenuOverlay");
@@ -42,7 +41,6 @@
     githubTokenInput = document.getElementById("devGithubToken");
     webhookUrlInput = document.getElementById("devWebhookUrl");
     catboxUrlInput = document.getElementById("devCatboxUploadUrl");
-    catboxModeSelect = document.getElementById("devCatboxMode");
   }
 
   const OVERLAY_OPEN_CLASS = "is-open";
@@ -316,9 +314,6 @@
         if (catboxUrlInput && settings.catboxUploadUrl !== undefined) {
           catboxUrlInput.value = settings.catboxUploadUrl || '';
         }
-        if (catboxModeSelect && settings.catboxOverrideMode !== undefined) {
-          catboxModeSelect.value = settings.catboxOverrideMode || 'auto';
-        }
       } catch (err) {
         console.warn('[CreatorDevMenu] Failed to load settings', err);
       }
@@ -437,7 +432,11 @@
       const commitCatboxUrl = () => {
         if (typeof saveSettingsPartial === 'function') {
           try {
-            saveSettingsPartial({ catboxUploadUrl: catboxUrlInput.value.trim() });
+            const value = catboxUrlInput.value.trim();
+            saveSettingsPartial({ catboxUploadUrl: value });
+            if (typeof window !== 'undefined' && window.mm_uploadSettings && typeof window.mm_uploadSettings.save === 'function') {
+              window.mm_uploadSettings.save({ catboxUploadUrl: value });
+            }
           } catch (err) {
             console.warn('[CreatorDevMenu] Failed to save Catbox URL', err);
           }
@@ -447,17 +446,6 @@
       catboxUrlInput.addEventListener('blur', commitCatboxUrl);
     }
     
-    if (catboxModeSelect) {
-      catboxModeSelect.addEventListener('change', () => {
-        if (typeof saveSettingsPartial === 'function') {
-          try {
-            saveSettingsPartial({ catboxOverrideMode: catboxModeSelect.value });
-          } catch (err) {
-            console.warn('[CreatorDevMenu] Failed to save Catbox mode', err);
-          }
-        }
-      });
-    }
   }
 
   attachEventListeners();

@@ -67,7 +67,7 @@ function showHostFailure(container, codeText) {
 }
 
 const CATBOX_DIRECT_UPLOAD_URL = 'https://catbox.moe/user/api.php';
-const CATBOX_PROXY_UPLOAD_URL = 'https://catbox-proxy.littlehacker303.workers.dev/user/api.php';
+const CATBOX_PROXY_UPLOAD_URL = 'https://mm.littlehacker303.workers.dev/catbox/user/api.php';
 
 if (typeof window !== 'undefined') {
   window.MM_PROXY_CATBOX_UPLOAD_URL = CATBOX_PROXY_UPLOAD_URL;
