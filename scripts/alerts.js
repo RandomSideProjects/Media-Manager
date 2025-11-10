@@ -170,19 +170,24 @@
       const qrWrapper = document.createElement('div');
       qrWrapper.className = 'storage-notice__qr';
       const qrTarget = document.createElement('div');
+      qrTarget.setAttribute('aria-hidden', 'true');
       qrWrapper.appendChild(qrTarget);
+      const caption = document.createElement('p');
+      caption.className = 'storage-notice__qr-caption';
+      caption.textContent = 'Scan to import settings';
+      qrWrapper.appendChild(caption);
       notice.appendChild(qrWrapper);
 
       if (typeof window !== 'undefined' && typeof window.QRCode === 'function') {
         try {
-        new QRCode(qrTarget, {
-          text: qrValue,
-          width: 160,
-          height: 160,
-          colorDark: '#000000',
-          colorLight: '#f8fafc',
-          correctLevel: QRCode.CorrectLevel.M
-        });
+          new QRCode(qrTarget, {
+            text: qrValue,
+            width: 160,
+            height: 160,
+            colorDark: '#000000',
+            colorLight: '#f8fafc',
+            correctLevel: QRCode.CorrectLevel.M
+          });
         } catch (err) {
           console.error('[Alerts] QR code render failed', err);
           qrTarget.textContent = qrValue;
