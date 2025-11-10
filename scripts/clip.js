@@ -1071,7 +1071,8 @@ if (clipBtn) {
     event.preventDefault();
     clipPreferredLength = loadClipPreferredLength();
     clipPresetsCache = loadClipPresets();
-    if (clipPreferredLength && !event.shiftKey && !event.altKey) {
+    const quickCaptureRequested = clipPreferredLength && event.ctrlKey && !event.shiftKey && !event.altKey;
+    if (quickCaptureRequested) {
       startClipCapture(clipPreferredLength);
     } else {
       openClipPresetOverlay();
