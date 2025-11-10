@@ -1106,6 +1106,28 @@ body.light-mode #clipPresetContent .overlay-close:focus {
   max-width: 100%;
   box-sizing: border-box;
 }
+.import-code-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: stretch;
+}
+.import-code-row input {
+  flex: 1;
+}
+.scanner-launcher {
+  border: none;
+  border-radius: 999px;
+  background: var(--button-bg);
+  color: var(--button-text);
+  padding: 0 0.85rem;
+  font-weight: 600;
+  min-width: 120px;
+  cursor: pointer;
+  transition: filter 0.2s ease;
+}
+.scanner-launcher:hover {
+  filter: brightness(1.05);
+}
 .import-divider {
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -1114,6 +1136,64 @@ body.light-mode #clipPresetContent .overlay-close:focus {
   font-size: 0.75rem;
 }
 .import-actions { justify-content: flex-end; gap: 0.75rem; }
+#storageImportScanOverlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  align-items: center;
+  justify-content: center;
+  z-index: 10100;
+}
+#storageImportScanOverlay.is-visible {
+  display: flex;
+}
+#storageImportScanPanel {
+  background: var(--container-bg);
+  color: var(--text);
+  border: 1px solid rgba(255,255,255,0.1);
+  padding: 1.5rem;
+  border-radius: 16px;
+  width: min(480px, 90%);
+  max-width: 90%;
+  box-shadow: 0 28px 48px -15px rgba(0,0,0,0.7);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  position: relative;
+}
+#storageImportScanPanel p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--muted-text);
+}
+.scanner-video-wrap {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #111;
+  border: 1px solid rgba(255,255,255,0.2);
+}
+#storageImportScanVideo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: saturate(1.2);
+}
+.scanner-target {
+  position: absolute;
+  inset: 12%;
+  border: 2px dashed rgba(255,255,255,0.5);
+  border-radius: 16px;
+  pointer-events: none;
+}
+#storageImportScanMessage {
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--muted-text);
+}
 
 #devMenuOverlay {
   display: none;
@@ -1348,6 +1428,28 @@ body.mm-notice-open {
   font-size: 0.9rem;
   line-height: 1.35;
   white-space: pre-line;
+}
+.storage-notice__qr {
+  display: flex;
+  justify-content: center;
+  padding: 0.25rem 0;
+}
+.storage-notice__qr div {
+  width: min(180px, 70vw);
+  height: auto;
+  background: #fff;
+  padding: 0.35rem;
+  border-radius: 14px;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.1);
+}
+.storage-notice__qr img,
+.storage-notice__qr canvas {
+  width: 100%;
+  height: auto;
+  max-width: 200px;
+  border-radius: 10px;
+  display: block;
 }
 .storage-notice__actions {
   display: flex;

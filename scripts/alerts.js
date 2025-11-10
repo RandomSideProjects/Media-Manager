@@ -138,6 +138,7 @@
     tone = 'info',
     copyText = null,
     copyLabel = 'Copy',
+    qrValue = null,
     autoCloseMs = DEFAULT_NOTICE_TIMEOUT_MS,
     onClose,
     actions = [],
@@ -164,6 +165,32 @@
     messageEl.className = 'storage-notice__message';
     messageEl.textContent = message;
     notice.appendChild(messageEl);
+
+    if (qrValue) {
+      const qrWrapper = document.createElement('div');
+      qrWrapper.className = 'storage-notice__qr';
+      const qrTarget = document.createElement('div');
+      qrWrapper.appendChild(qrTarget);
+      notice.appendChild(qrWrapper);
+
+      if (typeof window !== 'undefined' && typeof window.QRCode === 'function') {
+        try {
+        new QRCode(qrTarget, {
+          text: qrValue,
+          width: 160,
+          height: 160,
+          colorDark: '#000000',
+          colorLight: '#f8fafc',
+          correctLevel: QRCode.CorrectLevel.M
+        });
+        } catch (err) {
+          console.error('[Alerts] QR code render failed', err);
+          qrTarget.textContent = qrValue;
+        }
+      } else {
+        qrTarget.textContent = qrValue;
+      }
+    }
 
     const actionsRow = document.createElement('div');
     actionsRow.className = 'storage-notice__actions';

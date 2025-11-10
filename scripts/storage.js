@@ -189,6 +189,34 @@
     }
   }
 
+  function normalizeImportCode(raw) {
+    if (typeof raw !== 'string') return '';
+    const trimmed = raw.trim();
+    if (!trimmed) return '';
+    try {
+      const baseOrigin = (typeof window !== 'undefined' && window.location && window.location.origin && window.location.origin !== 'null')
+        ? window.location.origin
+        : 'http://localhost';
+      const resolved = new URL(trimmed, baseOrigin);
+      const paramValue = resolved.searchParams.get('import');
+      if (paramValue && paramValue.trim()) {
+        return paramValue.trim();
+      }
+    } catch {
+      // Ignore parse errors and fallback
+    }
+    const catboxCode = extractCatboxCode(trimmed);
+    if (catboxCode) return catboxCode;
+    return trimmed;
+  }
+
+  function resolveJsQrLibrary() {
+    if (typeof window !== 'undefined' && typeof window.jsQR === 'function') {
+      return window.jsQR;
+    }
+    return (typeof jsQR === 'function') ? jsQR : null;
+  }
+
   function readFileAsText(file) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -290,6 +318,15 @@
     let importConfirmBtn = null;
     let importCodeInput = null;
     let importFileInput = null;
+    let importScanBtn = null;
+    let scanOverlay = null;
+    let scanCloseBtn = null;
+    let scanVideo = null;
+    let scanCanvas = null;
+    let scanMessageEl = null;
+    let scanStream = null;
+    let scanAnimationFrameId = null;
+    let scanLib = null;
 
     const closeMenu = () => closeStorageMenu(storageMenuPanel, storageMenuBtn);
     const openMenu = () => openStorageMenu(storageMenuPanel, storageMenuBtn);
@@ -514,6 +551,157 @@
       }
     };
 
+    const handleScanResult = (rawData) => {
+      const value = rawData ? String(rawData).trim() : '';
+      if (!value) return;
+      const normalizedValue = normalizeImportCode(value);
+      if (!normalizedValue) return;
+      if (scanMessageEl) {
+        scanMessageEl.textContent = 'QR code detected!';
+      }
+      closeScanOverlay();
+      importCodeInput = document.getElementById('storageImportCodeInput');
+      if (importCodeInput) {
+        importCodeInput.value = normalizedValue;
+      }
+      setTimeout(() => {
+        handleImportAction();
+      }, 120);
+    };
+
+    const scanFrame = () => {
+      if (!scanVideo || !scanCanvas) {
+        scanAnimationFrameId = requestAnimationFrame(scanFrame);
+        return;
+      }
+      if (scanVideo.readyState < scanVideo.HAVE_ENOUGH_DATA) {
+        scanAnimationFrameId = requestAnimationFrame(scanFrame);
+        return;
+      }
+      const width = scanVideo.videoWidth;
+      const height = scanVideo.videoHeight;
+      if (!width || !height) {
+        scanAnimationFrameId = requestAnimationFrame(scanFrame);
+        return;
+      }
+      if (scanCanvas.width !== width || scanCanvas.height !== height) {
+        scanCanvas.width = width;
+        scanCanvas.height = height;
+      }
+      if (!scanLib) {
+        return;
+      }
+      const ctx = scanCanvas.getContext('2d');
+      try {
+        ctx.drawImage(scanVideo, 0, 0, width, height);
+        const imageData = ctx.getImageData(0, 0, width, height);
+        const detection = scanLib
+          ? scanLib(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'attemptBoth' })
+          : null;
+        if (detection && detection.data) {
+          handleScanResult(detection.data);
+          return;
+        }
+      } catch (err) {
+        console.error('[Storage] QR scan frame failed', err);
+      }
+      scanAnimationFrameId = requestAnimationFrame(scanFrame);
+    };
+
+    const stopScanSession = () => {
+      if (scanAnimationFrameId) {
+        cancelAnimationFrame(scanAnimationFrameId);
+        scanAnimationFrameId = null;
+      }
+      if (scanVideo) {
+        try {
+          scanVideo.pause();
+        } catch {}
+        scanVideo.srcObject = null;
+      }
+      if (scanStream) {
+        scanStream.getTracks().forEach((track) => {
+          try {
+            track.stop();
+          } catch {}
+        });
+        scanStream = null;
+      }
+      scanLib = null;
+    };
+
+    const closeScanOverlay = () => {
+      if (!scanOverlay) return;
+      stopScanSession();
+      scanOverlay.style.display = 'none';
+      if (scanMessageEl) {
+        scanMessageEl.textContent = 'Looking for a QR code...';
+      }
+    };
+
+    const ensureScanOverlay = () => {
+      if (!scanOverlay) {
+        if (window.OverlayFactory && typeof window.OverlayFactory.createStorageImportScanOverlay === 'function') {
+          scanOverlay = window.OverlayFactory.createStorageImportScanOverlay();
+        }
+      }
+      return scanOverlay;
+    };
+
+    const openScanOverlay = async () => {
+      scanOverlay = ensureScanOverlay();
+      if (!scanOverlay) return;
+      scanMessageEl = document.getElementById('storageImportScanMessage');
+      scanVideo = document.getElementById('storageImportScanVideo');
+      scanCanvas = document.getElementById('storageImportScanCanvas');
+      if (!scanOverlay.dataset.bound) {
+        scanCloseBtn = document.getElementById('storageImportScanCloseBtn');
+        if (scanCloseBtn) {
+          scanCloseBtn.addEventListener('click', () => closeScanOverlay());
+        }
+        scanOverlay.addEventListener('click', (event) => {
+          if (event.target === scanOverlay) closeScanOverlay();
+        });
+        scanOverlay.dataset.bound = '1';
+      }
+      scanOverlay.style.display = 'flex';
+      if (scanMessageEl) scanMessageEl.textContent = 'Checking scanner readiness...';
+      stopScanSession();
+      scanLib = resolveJsQrLibrary();
+      if (!scanLib) {
+        const missingMsg = 'Scanner unavailable (missing jsQR library).';
+        if (scanMessageEl) scanMessageEl.textContent = missingMsg;
+        console.error('[Storage] QR scanner requires jsQR but the library is unavailable.');
+        showStorageNotice({
+          title: 'QR scanner unavailable',
+          message: 'The jsQR library failed to load. Reload the page and ensure `scripts/jsqr.min.js` can be reached.',
+          tone: 'error'
+        });
+        return;
+      }
+      if (scanMessageEl) scanMessageEl.textContent = 'Requesting camera access...';
+      try {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          throw new Error('Camera access is not supported in this browser.');
+        }
+        scanStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        if (!scanVideo) return;
+        scanVideo.srcObject = scanStream;
+        await scanVideo.play();
+        if (scanMessageEl) scanMessageEl.textContent = 'Scanning for QR codes...';
+        scanAnimationFrameId = requestAnimationFrame(scanFrame);
+      } catch (err) {
+        console.error('[Storage] QR scan failed', err);
+        if (scanMessageEl) scanMessageEl.textContent = 'Unable to access the camera.';
+        stopScanSession();
+        showStorageNotice({
+          title: 'QR scan failed',
+          message: err && err.message ? err.message : 'Unable to access the camera.',
+          tone: 'error'
+        });
+      }
+    };
+
     const openImportOverlay = () => {
       importOverlay = ensureStorageImportOverlay();
       if (!importOverlay) return;
@@ -527,6 +715,7 @@
         importConfirmBtn = document.getElementById('storageImportConfirmBtn');
         importCodeInput = document.getElementById('storageImportCodeInput');
         importFileInput = document.getElementById('storageImportFileInput');
+        importScanBtn = document.getElementById('storageImportScanBtn');
         
         if (importCancelBtn) {
           importCancelBtn.addEventListener('click', () => {
@@ -546,6 +735,11 @@
             }
           });
         }
+        if (importScanBtn) {
+          importScanBtn.addEventListener('click', () => {
+            openScanOverlay();
+          });
+        }
         importOverlay.addEventListener('click', (event) => {
           if (event.target === importOverlay) closeImportOverlay();
         });
@@ -561,10 +755,40 @@
     };
     const closeImportOverlay = () => {
       if (!importOverlay) return;
+      closeScanOverlay();
       importOverlay.style.display = 'none';
       importOverlayVisible = false;
       clearPendingImportPrompt();
       resetImportInputs();
+    };
+
+    const processImportQuery = () => {
+      if (typeof window === 'undefined') return;
+      const params = new URLSearchParams(window.location.search);
+      const rawImportParam = params.get('import') || '';
+      if (!rawImportParam.trim()) return;
+      importOverlay = ensureStorageImportOverlay();
+      if (importOverlay) {
+        importOverlay.style.display = 'none';
+      }
+      let decoded = rawImportParam;
+      try {
+        decoded = decodeURIComponent(rawImportParam);
+      } catch {
+        decoded = rawImportParam;
+      }
+      const normalizedCode = normalizeImportCode(decoded);
+      if (!normalizedCode) return;
+      importCodeInput = document.getElementById('storageImportCodeInput');
+      if (importCodeInput) {
+        importCodeInput.value = normalizedCode;
+      }
+      params.delete('import');
+      const basePath = window.location.pathname;
+      const newQuery = params.toString();
+      const newUrl = newQuery ? `${basePath}?${newQuery}` : basePath;
+      window.history.replaceState(null, '', newUrl);
+      handleImportAction();
     };
 
     if (storageMenuBtn && storageMenuPanel) {
@@ -616,15 +840,28 @@
                 copied = true;
               } catch {}
             }
+            let importLink = null;
+            if (code && typeof window !== 'undefined') {
+              const origin = window.location.origin || '';
+              const currentPath = window.location.pathname || '';
+              const directoryPath = currentPath.endsWith('/')
+                ? currentPath
+                : currentPath.replace(/\/[^/]*$/, '/');
+              importLink = `${origin}${directoryPath}?import=${encodeURIComponent(code)}`;
+            }
+            const statusMessage = copied
+              ? (code ? `Catbox code copied to clipboard: ${code}` : 'Catbox export succeeded. Code copied to clipboard.')
+              : (code ? `Catbox code: ${code}` : 'Catbox export succeeded.');
             showStorageNotice({
               title: 'Export complete',
-              message: copied
-                ? (code ? `Catbox code copied to clipboard: ${code}` : 'Catbox export succeeded. Code copied to clipboard.')
-                : (code ? `Catbox code: ${code}` : 'Catbox export succeeded.'),
+              message: importLink
+                ? `${statusMessage}\nImport link: ${importLink}`
+                : statusMessage,
               tone: 'success',
               copyText: (!copied && code) ? code : null,
               copyLabel: code ? 'Copy code' : 'Copy',
-              actions: [downloadAction]
+              actions: [downloadAction],
+              qrValue: importLink
             });
           } catch (err) {
             console.error('[Storage] Catbox upload failed, initiating download fallback.', err);
@@ -655,6 +892,8 @@
         openImportOverlay();
       });
     }
+
+    processImportQuery();
 
     document.addEventListener('keydown', (event) => {
       if (event.key !== ESCAPE_KEY) return;

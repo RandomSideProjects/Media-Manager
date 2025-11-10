@@ -145,7 +145,16 @@ window.OverlayFactory = (function() {
         ]),
         createElement('p', {}, ['Select a Catbox code or JSON file to load settings.']),
         createElement('label', { for: 'storageImportCodeInput', className: 'import-label' }, ['Catbox code or URL']),
-        createElement('input', { id: 'storageImportCodeInput', type: 'text', placeholder: 'abc123 or https://files.catbox.moe/abc123.json' }),
+        createElement('div', { className: 'import-code-row' }, [
+          createElement('input', { id: 'storageImportCodeInput', type: 'text', placeholder: 'abc123 or https://files.catbox.moe/abc123.json' }),
+          createElement('button', {
+            id: 'storageImportScanBtn',
+            type: 'button',
+            className: 'scanner-launcher',
+            title: 'Scan Catbox QR code',
+            'aria-label': 'Scan Catbox QR code using camera'
+          }, ['Scan QR'])
+        ]),
         createElement('div', { className: 'import-divider' }, ['or']),
         createElement('label', { for: 'storageImportFileInput', className: 'import-label' }, ['Import JSON file']),
         createElement('input', { id: 'storageImportFileInput', type: 'file', accept: 'application/json' }),
@@ -156,6 +165,37 @@ window.OverlayFactory = (function() {
       ])
     ]);
     
+    document.body.appendChild(overlay);
+    return overlay;
+  }
+
+  function createStorageImportScanOverlay() {
+    removeOverlay('storageImportScanOverlay');
+
+    const overlay = createElement('div', { id: 'storageImportScanOverlay' }, [
+      createElement('div', { id: 'storageImportScanPanel' }, [
+        createElement('button', {
+          id: 'storageImportScanCloseBtn',
+          type: 'button',
+          className: 'overlay-close',
+          'aria-label': 'Close QR scanner'
+        }, ['✕']),
+        createElement('h3', {}, ['Scan QR Code']),
+        createElement('p', {}, ['Point your device camera at a Catbox export QR to load settings quickly.']),
+        createElement('div', { className: 'scanner-video-wrap' }, [
+          createElement('video', {
+            id: 'storageImportScanVideo',
+            autoplay: '',
+            muted: '',
+            playsinline: ''
+          }),
+          createElement('div', { className: 'scanner-target' })
+        ]),
+        createElement('canvas', { id: 'storageImportScanCanvas', hidden: '' }),
+        createElement('div', { id: 'storageImportScanMessage' }, ['Looking for a QR code...'])
+      ])
+    ]);
+
     document.body.appendChild(overlay);
     return overlay;
   }
@@ -838,6 +878,7 @@ window.OverlayFactory = (function() {
     createSettingsOverlay,
     createClearStorageOverlay,
     createStorageImportOverlay,
+    createStorageImportScanOverlay,
     createClipPresetOverlay,
     createClipOverlay,
     createClipProgressOverlay,
