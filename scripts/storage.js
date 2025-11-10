@@ -97,12 +97,16 @@
   }
 
   async function resolveCatboxUploadEndpoint() {
-    if (typeof window !== 'undefined' && window.MM_catbox && typeof window.MM_catbox.getUploadUrl === 'function') {
-      try {
-        const resolved = await window.MM_catbox.getUploadUrl();
-        if (typeof resolved === 'string' && resolved.trim()) return resolved.trim();
-      } catch (err) {
-        console.warn('[Storage] Falling back to direct Catbox endpoint', err);
+    if (typeof window !== 'undefined' && window.MM_catbox) {
+      const proxyUrl = (typeof window.MM_catbox.proxyUrl === 'string') ? window.MM_catbox.proxyUrl.trim() : '';
+      if (proxyUrl) return proxyUrl;
+      if (typeof window.MM_catbox.getUploadUrl === 'function') {
+        try {
+          const resolved = await window.MM_catbox.getUploadUrl();
+          if (typeof resolved === 'string' && resolved.trim()) return resolved.trim();
+        } catch (err) {
+          console.warn('[Storage] Falling back to default Catbox endpoint', err);
+        }
       }
     }
     return 'https://catbox.moe/user/api.php';
@@ -850,13 +854,11 @@
               importLink = `${origin}${directoryPath}?import=${encodeURIComponent(code)}`;
             }
             const statusMessage = copied
-              ? (code ? `Catbox code copied to clipboard: ${code}` : 'Catbox export succeeded. Code copied to clipboard.')
-              : (code ? `Catbox code: ${code}` : 'Catbox export succeeded.');
+              ? (code ? `Import code copied to clipboard: ${code}` : 'Storage export succeeded. Code copied to clipboard.')
+              : (code ? `Import code: ${code}` : 'Storage export succeeded.');
             showStorageNotice({
               title: 'Export complete',
-              message: importLink
-                ? `${statusMessage}\nImport link: ${importLink}`
-                : statusMessage,
+              message: statusMessage,
               tone: 'success',
               copyText: (!copied && code) ? code : null,
               copyLabel: code ? 'Copy code' : 'Copy',
