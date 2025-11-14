@@ -9,6 +9,16 @@
 </head>
 <body>
   <button id="sourcesSettingsBtn" title="Settings" aria-label="Settings">⚙️</button>
+  <div class="sources-search" id="sourcesToolbar">
+    <label class="sr-only" for="sourcesSearchInput">Search public sources</label>
+    <input
+      type="search"
+      id="sourcesSearchInput"
+      name="sourcesSearchInput"
+      placeholder="Search by title, file name, or poster URL"
+      autocomplete="off"
+    />
+  </div>
   <div class="container" id="sourcesContainer">
     <!-- Cards will be injected here -->
   </div>
