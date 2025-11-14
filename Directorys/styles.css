@@ -72,16 +72,51 @@ body {
   margin: 0;
   padding: 0;
 }
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+.sources-search {
+  width: 90%;
+  max-width: 560px;
+  margin: 1.25rem auto 0;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+#sourcesSearchInput {
+  flex: 1;
+  padding: 0.65em 0.85em;
+  border-radius: 999px;
+  border: 1px solid #2a2a2a;
+  background: #1c1c1c;
+  color: inherit;
+  font: inherit;
+}
+
+#sourcesSearchInput::placeholder {
+  color: rgba(241, 241, 241, 0.75);
+}
+
 .container {
   --cols: 3;
   --gap: 1.5em;
   width: 90%;
-  max-width: none;
-  margin: 2em auto;
+  max-width: 1200px;
+  margin: 1.5em auto;
   display: grid;
-  grid-template-columns: repeat(var(--cols), 360px);
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: var(--gap);
-  justify-content: center;
+  justify-items: center;
   overflow-x: auto;
 }
 .source-card {
@@ -90,7 +125,7 @@ body {
   border: 1px solid #333;
   border-radius: 12px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.4);
-  width: 360px;
+  width: min(360px, 100%);
   height: 260px; /* needed so the poster can use 90% height */
   padding: 1em;
   display: flex;
@@ -298,3 +333,23 @@ body.mm-notice-open {
   color: #3b82f6;
 }
 .storage-notice__btn--primary:hover { background: rgba(59,130,246,0.15); }
+
+@media (max-width: 900px) {
+  .sources-search {
+    width: calc(100% - 2rem);
+  }
+}
+
+@media (max-width: 600px) {
+  .sources-search {
+    width: calc(100% - 1.5rem);
+    margin-top: 4.5rem;
+  }
+  .container {
+    width: calc(100% - 1.5rem);
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .source-card {
+    width: 100%;
+  }
+}
