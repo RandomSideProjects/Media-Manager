@@ -139,11 +139,15 @@
     copyText = null,
     copyLabel = 'Copy',
     qrValue = null,
-    autoCloseMs = DEFAULT_NOTICE_TIMEOUT_MS,
+    autoCloseMs,
+    persistent = false,
     onClose,
     actions = [],
     dismissLabel = 'Close'
   } = {}) {
+    const resolvedAutoCloseMs = (typeof autoCloseMs === 'undefined')
+      ? (persistent ? null : DEFAULT_NOTICE_TIMEOUT_MS)
+      : autoCloseMs;
     if (!message) return null;
     const { overlay, stack } = ensureOverlay();
     const normalizedTone = NOTICE_TONES.has(tone) ? tone : 'info';
@@ -251,13 +255,13 @@
 
     stack.appendChild(notice);
     activeNotices.add(notice);
-    noticeMetadata.set(notice, { onClose });
+    noticeMetadata.set(notice, { onClose, persistent: Boolean(persistent) });
     updateOverlayVisibility();
 
-    if (Number.isFinite(autoCloseMs) && autoCloseMs > 0) {
+    if (Number.isFinite(resolvedAutoCloseMs) && resolvedAutoCloseMs > 0) {
       const timeoutId = setTimeout(() => {
         removeNotice(notice, onClose);
-      }, autoCloseMs);
+      }, resolvedAutoCloseMs);
       noticeTimeouts.set(notice, timeoutId);
     }
 
@@ -273,6 +277,8 @@
     event.preventDefault();
     const notices = Array.from(activeNotices);
     const lastNotice = notices[notices.length - 1];
+    const meta = noticeMetadata.get(lastNotice);
+    if (meta && meta.persistent) return;
     removeNotice(lastNotice);
   });
 
