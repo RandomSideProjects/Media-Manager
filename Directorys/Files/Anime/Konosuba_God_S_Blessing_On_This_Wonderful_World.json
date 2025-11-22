@@ -1,7 +1,7 @@
 {
   "title": "KONOSUBA -God's blessing on this wonderful world!",
   "Image": "https://files.catbox.moe/5g97po.webp",
-  "LatestTime": "2025-10-11T15:57:41.444Z",
+  "LatestTime": "2025-11-22T03:49:20.551Z",
   "categories": [
     {
       "category": "Season 1",
@@ -34,6 +34,11 @@
           "title": "Episode 5",
           "src": "https://files.catbox.moe/pnpn91.mp4",
           "fileSizeBytes": 159640825,
+          "durationSeconds": 1421
+        },
+        {
+          "title": "Episode 6",
+          "src": "https://files.catbox.moe/ozbtil.mp4",
           "durationSeconds": 1421
         },
         {
@@ -224,7 +229,7 @@
     }
   ],
   "totalFileSizeBytes": 5070684574,
-  "totalDurationSeconds": 47158,
+  "totalDurationSeconds": 48579,
   "separatedCategoryCount": 1,
   "separatedItemCount": 4
 }
