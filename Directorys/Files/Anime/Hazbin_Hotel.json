@@ -1,0 +1,139 @@
+{
+  "title": "Hazbin Hotel",
+  "Image": "N/A",
+  "categories": [
+    {
+      "category": "Season 1",
+      "episodes": [
+        {
+          "title": "Episode 1",
+          "src": "https://files.catbox.moe/5yfnql.mp4",
+          "fileSizeBytes": 191902459,
+          "durationSeconds": 1483
+        },
+        {
+          "title": "Episode 2",
+          "src": "https://files.catbox.moe/b8rr2b.mp4",
+          "fileSizeBytes": 199823224,
+          "durationSeconds": 1472
+        },
+        {
+          "title": "Episode 3",
+          "src": "https://files.catbox.moe/u7um7j.mp4",
+          "fileSizeBytes": 199171042,
+          "durationSeconds": 1468
+        },
+        {
+          "title": "Episode 4",
+          "src": "https://files.catbox.moe/64a2uk.mp4",
+          "fileSizeBytes": 198676612,
+          "durationSeconds": 1466
+        },
+        {
+          "title": "Episode 5",
+          "src": "https://files.catbox.moe/gpricq.mp4",
+          "fileSizeBytes": 192109715,
+          "durationSeconds": 1480
+        },
+        {
+          "title": "Episode 6",
+          "src": "https://files.catbox.moe/keszrz.mp4",
+          "fileSizeBytes": 192278391,
+          "durationSeconds": 1483
+        },
+        {
+          "title": "Episode 7",
+          "src": "https://files.catbox.moe/nk69hm.mp4",
+          "fileSizeBytes": 192048396,
+          "durationSeconds": 1482
+        },
+        {
+          "title": "Episode 8",
+          "src": "https://files.catbox.moe/rr1n5f.mp4",
+          "fileSizeBytes": 192553820,
+          "durationSeconds": 1488
+        }
+      ]
+    },
+    {
+      "category": "Season 2",
+      "episodes": [
+        {
+          "title": "Episode 1",
+          "src": "https://files.catbox.moe/vd83nv.mp4",
+          "fileSizeBytes": 198117399,
+          "durationSeconds": 1687
+        },
+        {
+          "title": "Episode 2",
+          "src": "https://files.catbox.moe/yp8zyg.mp4",
+          "fileSizeBytes": 193823288,
+          "durationSeconds": 1654
+        },
+        {
+          "title": "Episode 3",
+          "src": "https://files.catbox.moe/ljyrnc.mp4",
+          "fileSizeBytes": 196196755,
+          "durationSeconds": 1671
+        },
+        {
+          "title": "Episode 4",
+          "src": "https://files.catbox.moe/07bzpz.mp4",
+          "fileSizeBytes": 199263249,
+          "durationSeconds": 1755
+        },
+        {
+          "title": "Episode 5",
+          "src": "https://files.catbox.moe/ax7jh3.mp4",
+          "fileSizeBytes": 195175640,
+          "durationSeconds": 1664
+        },
+        {
+          "title": "Episode 6",
+          "src": "https://files.catbox.moe/mkppmx.mp4",
+          "fileSizeBytes": 198055057,
+          "durationSeconds": 1688
+        },
+        {
+          "title": "Episode 7",
+          "src": "https://files.catbox.moe/niaf62.mp4",
+          "fileSizeBytes": 198993395,
+          "durationSeconds": 1743
+        },
+        {
+          "title": "Episode 8",
+          "src": "https://files.catbox.moe/d5s72x.mp4",
+          "fileSizeBytes": 265621973,
+          "ItemfileSizeBytes": 265621973,
+          "durationSeconds": 2269,
+          "separated": 1,
+          "seperated": 1,
+          "sources": [
+            {
+              "title": "Part 1",
+              "src": "https://files.catbox.moe/d5s72x.mp4",
+              "fileSizeBytes": 84844591,
+              "durationSeconds": 757
+            },
+            {
+              "title": "Part 2",
+              "src": "https://files.catbox.moe/o7nmta.mp4",
+              "fileSizeBytes": 108968879,
+              "durationSeconds": 756
+            },
+            {
+              "title": "Part 3",
+              "src": "https://files.catbox.moe/15zix6.mp4",
+              "fileSizeBytes": 71808503,
+              "durationSeconds": 756
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "LatestTime": "2025-11-20T23:08:53.461Z",
+  "totalFileSizeBytes": 3203810415,
+  "totalDurationSeconds": 25953,
+  "hidden": true
+}

@@ -763,11 +763,226 @@ if (cbzImageWrap) {
     }
   });
 }
+
+function handleCbzKeyboardNavigation(e) {
+  if (e.key === 'ArrowLeft') {
+    e.preventDefault();
+    if (cbzState.index > 0) {
+      cbzState.index--;
+      updateCbzPageInfo();
+    }
+  }
+  if (e.key === 'ArrowRight') {
+    e.preventDefault();
+    if (cbzState.index < cbzState.pages.length - 1) {
+      cbzState.index++;
+      updateCbzPageInfo();
+    }
+  }
+}
+
+const SHORTCUT_IGNORE_SELECTOR = 'input, textarea, select, button, [contenteditable="true"]';
+const GAMEPAD_VOLUME_DELTA = 0.1;
+const SEEK_DELTA = 5;
+
+let gamepadPollHandle = null;
+const gamepadPrevButtonState = new Map();
+
+function isShortcutContextAllowed(target) {
+  if (!target) return true;
+  if (target === video || target === document.body || target === document.documentElement) return true;
+  if (typeof target.matches !== 'function') return true;
+  if (target.matches(SHORTCUT_IGNORE_SELECTOR)) return false;
+  if (typeof target.closest === 'function' && target.closest(SHORTCUT_IGNORE_SELECTOR)) return false;
+  if (target.isContentEditable) return false;
+  return true;
+}
+
+function clampVolume(value) {
+  return Math.max(0, Math.min(1, value));
+}
+
+function togglePlayPause() {
+  if (!video) return;
+  if (video.paused) {
+    const playPromise = video.play();
+    if (playPromise && typeof playPromise.catch === 'function') playPromise.catch(() => {});
+  } else {
+    video.pause();
+  }
+}
+
+function toggleMute() {
+  if (!video) return;
+  video.muted = !video.muted;
+}
+
+function seekBy(seconds) {
+  if (!video) return;
+  let target = (Number.isFinite(video.currentTime) && video.currentTime >= 0) ? video.currentTime : 0;
+  target += Number(seconds) || 0;
+  const duration = (Number.isFinite(video.duration) && video.duration > 0) ? video.duration : null;
+  if (duration !== null) {
+    target = Math.min(duration, Math.max(0, target));
+  } else {
+    target = Math.max(0, target);
+  }
+  try {
+    video.currentTime = target;
+  } catch {}
+}
+
+function changeVolume(delta) {
+  if (!video) return;
+  let current = Number.isFinite(video.volume) ? video.volume : 0;
+  current = clampVolume(current + (Number(delta) || 0));
+  if (current > 0 && video.muted) {
+    video.muted = false;
+  }
+  video.volume = current;
+}
+
+function toggleFullscreen() {
+  if (!video) return;
+  const doc = document;
+  const fullscreenElement =
+    doc.fullscreenElement || doc.webkitFullscreenElement || doc.mozFullScreenElement || doc.msFullscreenElement;
+  if (fullscreenElement) {
+    const exitFullscreen =
+      doc.exitFullscreen || doc.webkitExitFullscreen || doc.mozCancelFullScreen || doc.msExitFullscreen;
+    if (typeof exitFullscreen === 'function') {
+      exitFullscreen.call(doc);
+    }
+    return;
+  }
+  const requestFullscreen =
+    video.requestFullscreen || video.webkitRequestFullscreen || video.mozRequestFullScreen || video.msRequestFullscreen;
+  if (typeof requestFullscreen === 'function') {
+    requestFullscreen.call(video);
+  }
+}
+
+function handleVideoKeyboardShortcuts(e) {
+  if (!video) return;
+  if (cbzState.active) return;
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  if (!isShortcutContextAllowed(e.target)) return;
+
+  const key = e.key || '';
+  const lowerKey = key.toLowerCase();
+  const handled = [];
+
+  if (key === ' ' || e.code === 'Space') handled.push('space');
+  if (lowerKey === 'k') handled.push('play');
+  if (lowerKey === 'm') handled.push('mute');
+  if (lowerKey === 'f') handled.push('fullscreen');
+  if (key === 'ArrowRight') handled.push('seek-forward');
+  if (lowerKey === 'l') handled.push('seek-forward');
+  if (key === 'ArrowLeft') handled.push('seek-back');
+  if (lowerKey === 'j') handled.push('seek-back');
+  if (key === 'ArrowUp') handled.push('volume-up');
+  if (key === 'ArrowDown') handled.push('volume-down');
+
+  if (!handled.length) return;
+  e.preventDefault();
+  if (handled.includes('space') || handled.includes('play')) togglePlayPause();
+  if (handled.includes('mute')) toggleMute();
+  if (handled.includes('fullscreen')) toggleFullscreen();
+  if (handled.includes('seek-forward')) seekBy(SEEK_DELTA);
+  if (handled.includes('seek-back')) seekBy(-SEEK_DELTA);
+  if (handled.includes('volume-up')) changeVolume(0.05);
+  if (handled.includes('volume-down')) changeVolume(-0.05);
+}
+
+const GAMEPAD_BUTTON_ACTIONS = {
+  0: () => togglePlayPause(), // A
+  1: () => toggleMute(), // B
+  2: () => toggleFullscreen(), // X
+  12: () => changeVolume(GAMEPAD_VOLUME_DELTA), // D-pad up
+  13: () => changeVolume(-GAMEPAD_VOLUME_DELTA), // D-pad down
+  14: () => seekBy(-SEEK_DELTA), // D-pad left
+  15: () => seekBy(SEEK_DELTA) // D-pad right
+};
+
+function handleGamepadButtonPress(buttonIndex) {
+  if (cbzState.active) return;
+  const action = GAMEPAD_BUTTON_ACTIONS[buttonIndex];
+  if (typeof action === 'function') {
+    action();
+  }
+}
+
+function pollGamepads() {
+  if (typeof navigator === 'undefined' || typeof navigator.getGamepads !== 'function') return;
+  const gamepads = navigator.getGamepads();
+  if (!gamepads) return;
+  let anyConnected = false;
+  for (const pad of gamepads) {
+    if (!pad || !pad.connected) continue;
+    anyConnected = true;
+    const previous = gamepadPrevButtonState.get(pad.index) || [];
+    pad.buttons.forEach((button, idx) => {
+      const wasPressed = !!previous[idx];
+      if (button && button.pressed && !wasPressed) {
+        handleGamepadButtonPress(idx);
+      }
+    });
+    const nextStates = pad.buttons.map(btn => !!(btn && btn.pressed));
+    gamepadPrevButtonState.set(pad.index, nextStates);
+  }
+  if (!anyConnected) {
+    gamepadPrevButtonState.clear();
+  }
+}
+
+function gamepadLoop() {
+  pollGamepads();
+  if (typeof window === 'undefined' || typeof window.requestAnimationFrame !== 'function') return;
+  gamepadPollHandle = window.requestAnimationFrame(gamepadLoop);
+}
+
+function startGamepadPolling() {
+  if (gamepadPollHandle !== null) return;
+  if (typeof window === 'undefined') return;
+  if (typeof window.requestAnimationFrame !== 'function') return;
+  gamepadLoop();
+}
+
+function stopGamepadPolling() {
+  if (gamepadPollHandle !== null && typeof window !== 'undefined' && typeof window.cancelAnimationFrame === 'function') {
+    window.cancelAnimationFrame(gamepadPollHandle);
+  }
+  gamepadPollHandle = null;
+  gamepadPrevButtonState.clear();
+}
+
 document.addEventListener('keydown', (e) => {
-  if (!cbzState.active) return;
-  if (e.key === 'ArrowLeft') { e.preventDefault(); if (cbzState.index > 0) { cbzState.index--; updateCbzPageInfo(); } }
-  if (e.key === 'ArrowRight') { e.preventDefault(); if (cbzState.index < cbzState.pages.length - 1) { cbzState.index++; updateCbzPageInfo(); } }
+  if (cbzState.active) {
+    handleCbzKeyboardNavigation(e);
+    return;
+  }
+  handleVideoKeyboardShortcuts(e);
 });
+
+if (typeof window !== 'undefined' && typeof navigator !== 'undefined') {
+  const supportsGamepad = typeof navigator.getGamepads === 'function' || 'getGamepads' in navigator;
+  if (supportsGamepad) {
+    startGamepadPolling();
+    window.addEventListener('gamepadconnected', startGamepadPolling);
+    window.addEventListener('gamepaddisconnected', () => {
+      if (typeof navigator.getGamepads !== 'function') return;
+      const pads = navigator.getGamepads();
+      if (!pads) {
+        stopGamepadPolling();
+        return;
+      }
+      const connected = Array.from(pads).some(p => p && p.connected);
+      if (!connected) {
+        stopGamepadPolling();
+      }
+    });
+  }
+}
 
 function loadVideo(index) {
   const item = flatList[index];

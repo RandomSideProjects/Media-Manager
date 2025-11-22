@@ -92,6 +92,20 @@ window.OverlayFactory = (function() {
             ])
           ])
         ]),
+        createElement('div', { className: 'setting-category' }, [
+          createElement('div', { className: 'setting-category-header' }, ['Theater']),
+          createElement('div', { className: 'setting-row' }, [
+            createElement('label', { for: 'popoutToolbarPlacement' }, ['Pop-out toolbar placement']),
+            createElement('select', { id: 'popoutToolbarPlacement', 'aria-label': 'Pop-out toolbar placement' }, [
+              createElement('option', { value: 'bottom' }, ['Bottom']),
+              createElement('option', { value: 'left' }, ['Left']),
+              createElement('option', { value: 'right' }, ['Right'])
+            ])
+          ]),
+          createElement('small', { style: { opacity: '.7', marginTop: '4px', display: 'block' } }, [
+            'Choose where the pop-out toolbar should appear when you move your mouse near the screen edge.'
+          ])
+        ]),
         createElement('div', { className: 'setting-row' }, [
           createElement('div', { className: 'storage-menu' }, [
             createElement('button', { id: 'storageMenuBtn', type: 'button' }, ['Storage']),

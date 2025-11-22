@@ -36,15 +36,17 @@ function normalizeCatboxMode(value) {
 
 function applyCatboxOverride(mode, proxyUrl) {
   const normalizedMode = normalizeCatboxMode(mode);
-  const candidate = normalizedMode === 'proxy' ? (typeof proxyUrl === 'string' && proxyUrl.trim() ? proxyUrl.trim() : defaultCatboxUploadUrl()) : defaultCatboxUploadUrl();
-  if (typeof window !== 'undefined') {
-    window.MM_CATBOX_OVERRIDE_MODE = normalizedMode;
-    window.MM_DEFAULT_CATBOX_UPLOAD_URL = candidate;
-    window.MM_ACTIVE_CATBOX_UPLOAD_URL = candidate;
-    try {
-      window.dispatchEvent(new CustomEvent('rsp:catbox-default-updated', { detail: { url: candidate, previous: '', meta: { source: 'overwrite' } } }));
-    } catch {}
-  }
+  if (typeof window === 'undefined') return;
+  window.MM_CATBOX_OVERRIDE_MODE = normalizedMode;
+  if (normalizedMode !== 'proxy') return;
+
+  const candidate = (typeof proxyUrl === 'string' && proxyUrl.trim()) ? proxyUrl.trim() : defaultCatboxUploadUrl();
+  const previous = (typeof window.MM_DEFAULT_CATBOX_UPLOAD_URL === 'string') ? window.MM_DEFAULT_CATBOX_UPLOAD_URL : '';
+  window.MM_DEFAULT_CATBOX_UPLOAD_URL = candidate;
+  window.MM_ACTIVE_CATBOX_UPLOAD_URL = candidate;
+  try {
+    window.dispatchEvent(new CustomEvent('rsp:catbox-default-updated', { detail: { url: candidate, previous, meta: { source: 'overwrite' } } }));
+  } catch {}
 }
 
 function applyCatboxBackendUrl(url) {
@@ -169,6 +171,7 @@ let mmCbzExpandBatch = null;
 let mmCbzExpandManual = null;
 let mmPosterCompressToggle = null;
 let mmSeparationToggle = null;
+let mmCatboxUrlInput = null;
 let devMenuRow = null;
 let devMenuStatus = null;
 let settingsPanelInitialized = false;

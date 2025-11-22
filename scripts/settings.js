@@ -5,6 +5,16 @@ console.log('[Settings] Script loaded');
 // Create overlay immediately on load
 let settingsOverlay = null;
 let settingsCloseBtn = null;
+let popoutToolbarPlacementSelect = null;
+
+const DEFAULT_POPOUT_TOOLBAR_PLACEMENT = 'bottom';
+const VALID_POPOUT_TOOLBAR_PLACEMENTS = ['bottom', 'left', 'right'];
+
+function sanitizePopoutToolbarPlacement(value) {
+  if (typeof value !== 'string') return DEFAULT_POPOUT_TOOLBAR_PLACEMENT;
+  const normalized = value.toLowerCase();
+  return VALID_POPOUT_TOOLBAR_PLACEMENTS.includes(normalized) ? normalized : DEFAULT_POPOUT_TOOLBAR_PLACEMENT;
+}
 
 function ensureSettingsOverlay() {
   if (!settingsOverlay) {
@@ -40,6 +50,7 @@ function ensureSettingsOverlay() {
       window.downloadConcurrencyValue = document.getElementById('downloadConcurrencyValue');
       window.recentSourcesToggle = document.getElementById('recentSourcesToggle');
       window.recentSourcesPlacement = document.getElementById('recentSourcesPlacement');
+      popoutToolbarPlacementSelect = document.getElementById('popoutToolbarPlacement');
       
       // Setup initial states
       initializeSettingsValues();
@@ -136,6 +147,23 @@ function initializeSettingsValues() {
     downloadConcurrencyRange.addEventListener('input', handleDownloadConcurrencyInput);
     downloadConcurrencyRange.addEventListener('change', handleDownloadConcurrencyInput);
     downloadConcurrencyRange.dataset.bound = '1';
+  }
+
+  const currentPopoutPlacement = sanitizePopoutToolbarPlacement(localStorage.getItem('popoutToolbarPlacement'));
+  if (popoutToolbarPlacementSelect) {
+    popoutToolbarPlacementSelect.value = currentPopoutPlacement;
+  }
+  if (currentPopoutPlacement !== localStorage.getItem('popoutToolbarPlacement')) {
+    localStorage.setItem('popoutToolbarPlacement', currentPopoutPlacement);
+  }
+
+  if (popoutToolbarPlacementSelect && !popoutToolbarPlacementSelect.dataset.bound) {
+    popoutToolbarPlacementSelect.addEventListener('change', () => {
+      const placement = sanitizePopoutToolbarPlacement(popoutToolbarPlacementSelect.value);
+      localStorage.setItem('popoutToolbarPlacement', placement);
+      popoutToolbarPlacementSelect.value = placement;
+    });
+    popoutToolbarPlacementSelect.dataset.bound = '1';
   }
 }
 
