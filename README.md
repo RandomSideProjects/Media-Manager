@@ -35,7 +35,7 @@ RSP Media Manager is a browser-only library viewer for video and manga catalogs.
 ## Installation
 
 ```bash
-git clone https://github.com/randomsideprojects/Media-Manager.git
+git clone https://github.com/RandomSideProjects/Media-Manager.git
 cd Media-Manager
 ```
 

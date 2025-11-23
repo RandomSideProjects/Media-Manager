@@ -456,7 +456,7 @@ jobs:
             let animeSection = '## Anime Sources\n\n';
             for (const source of allAnimeSources) {
               const encodedFile = encodeURIComponent(source.file);
-              const hostedUrl = `https://randomsideprojects.github.io/?source=${encodedFile}`;
+              const hostedUrl = `https://randomsideprojects.github.io/Media-Manager/?source=${encodedFile}`;
               animeSection += `- [${source.title}](${hostedUrl})\n`;
             }
             animeSection += '\n';

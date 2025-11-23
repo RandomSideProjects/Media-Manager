@@ -2626,7 +2626,7 @@ function updateOutput() {
     outputLink.textContent = full; outputLink.href = full;
   } else {
     outputLink.textContent = directoryCode;
-    outputLink.href = `https://randomsideprojects.github.io/Media-Manager/index.html?source=${directoryCode}`;
+    outputLink.href = `https://randomsideprojects.github.io/Media-Manager/?source=${directoryCode}`;
   }
 }
 const outputContainer = document.getElementById('outputContainer');
