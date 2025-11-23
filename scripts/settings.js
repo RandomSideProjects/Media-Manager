@@ -48,6 +48,7 @@ function ensureSettingsOverlay() {
       window.selectiveDownloadToggle = document.getElementById('selectiveDownloadToggle');
       window.downloadConcurrencyRange = document.getElementById('downloadConcurrencyRange');
       window.downloadConcurrencyValue = document.getElementById('downloadConcurrencyValue');
+      window.storageShowCameraOptionsToggle = document.getElementById('storageShowCameraOptionsToggle');
       window.recentSourcesToggle = document.getElementById('recentSourcesToggle');
       window.recentSourcesPlacement = document.getElementById('recentSourcesPlacement');
       popoutToolbarPlacementSelect = document.getElementById('popoutToolbarPlacement');
@@ -125,6 +126,17 @@ function initializeSettingsValues() {
       localStorage.setItem('selectiveDownloadsEnabled', selectiveDownloadToggle.checked);
     });
     selectiveDownloadToggle.dataset.bound = '1';
+  }
+
+  const showCameraOptionsStored = localStorage.getItem('storageShowCameraOptions') === 'true';
+  if (storageShowCameraOptionsToggle) {
+    storageShowCameraOptionsToggle.checked = showCameraOptionsStored;
+  }
+  if (storageShowCameraOptionsToggle && !storageShowCameraOptionsToggle.dataset.bound) {
+    storageShowCameraOptionsToggle.addEventListener('change', () => {
+      localStorage.setItem('storageShowCameraOptions', storageShowCameraOptionsToggle.checked);
+    });
+    storageShowCameraOptionsToggle.dataset.bound = '1';
   }
   
   if (recentSourcesToggle && !recentSourcesToggle.dataset.bound) {

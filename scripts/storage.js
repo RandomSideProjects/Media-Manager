@@ -12,6 +12,50 @@
   let pendingImportData = null;
   let pendingImportNotice = null;
 
+  function getStoredSourceKey() {
+    try {
+      const key = localStorage.getItem('currentSourceKey');
+      return (typeof key === 'string' && key.trim()) ? key.trim() : '';
+    } catch {
+      return '';
+    }
+  }
+
+  function applyStoredSourceToParams(params) {
+    if (!params) return null;
+    const storedKey = getStoredSourceKey();
+    if (storedKey) {
+      params.set('source', storedKey);
+      params.delete('s');
+    }
+    return params;
+  }
+
+  function updateUrlWithStoredSource() {
+    try {
+      const params = applyStoredSourceToParams(new URLSearchParams(window.location.search));
+      if (!params) return;
+      const basePath = window.location.pathname || '';
+      const newQuery = params.toString();
+      const newUrl = newQuery ? `${basePath}?${newQuery}` : basePath;
+      window.history.replaceState(null, '', newUrl);
+    } catch {}
+  }
+
+  function resolveZxing() {
+    if (typeof window !== 'undefined' && window.ZXing) return window.ZXing;
+    if (typeof ZXing !== 'undefined') return ZXing;
+    return null;
+  }
+
+  function shouldShowCameraOptions() {
+    try {
+      return localStorage.getItem('storageShowCameraOptions') === 'true';
+    } catch {
+      return false;
+    }
+  }
+
   function ensureClearStorageOverlay() {
     if (!clearOverlayElement) {
       if (window.OverlayFactory && typeof window.OverlayFactory.createClearStorageOverlay === 'function') {
@@ -214,6 +258,53 @@
     return trimmed;
   }
 
+  function parseImportPayload(raw) {
+    if (typeof raw !== 'string') return { code: '', source: '', item: '' };
+    const trimmed = raw.trim();
+    if (!trimmed) return { code: '', source: '', item: '' };
+    let code = '';
+    let source = '';
+    let item = '';
+    try {
+      const baseOrigin = (typeof window !== 'undefined' && window.location && window.location.origin && window.location.origin !== 'null')
+        ? window.location.origin
+        : 'http://localhost';
+      const parsed = new URL(trimmed, baseOrigin);
+      const importParam = parsed.searchParams.get('i') || parsed.searchParams.get('import');
+      if (importParam && importParam.trim()) code = importParam.trim();
+      const sourceParam = parsed.searchParams.get('s') || parsed.searchParams.get('source') || parsed.searchParams.get('?source');
+      if (sourceParam && sourceParam.trim()) source = sourceParam.trim();
+      const itemParam = parsed.searchParams.get('t') || parsed.searchParams.get('item') || parsed.searchParams.get('?item');
+      if (itemParam && itemParam.trim()) item = itemParam.trim();
+    } catch {
+      // Ignore URL parse errors and fallback below
+    }
+    if (!code) {
+      code = normalizeImportCode(trimmed);
+    }
+    return { code, source, item };
+  }
+
+  function buildImportUrl(code, srcKey, itemParam) {
+    try {
+      const url = new URL(window.location.href);
+      url.search = '';
+      url.hash = '';
+      const params = new URLSearchParams();
+      params.set('i', code);
+      // Source key no longer needed in URL (persisted in storage payload)
+      if (itemParam) params.set('t', itemParam);
+      url.search = params.toString();
+      return url.toString();
+    } catch (err) {
+      const origin = (typeof window !== 'undefined' && window.location && window.location.origin) ? window.location.origin : '';
+      const path = (typeof window !== 'undefined' && window.location && window.location.pathname) ? window.location.pathname : '';
+      const sourcePart = ''; // no source param needed
+      const itemPart = itemParam ? `&t=${encodeURIComponent(itemParam)}` : '';
+      return `${origin}${path}?i=${encodeURIComponent(code)}${sourcePart}${itemPart}`;
+    }
+  }
+
   function resolveJsQrLibrary() {
     if (typeof window !== 'undefined' && typeof window.jsQR === 'function') {
       return window.jsQR;
@@ -328,9 +419,13 @@
     let scanVideo = null;
     let scanCanvas = null;
     let scanMessageEl = null;
+    let scanCameraSelectRow = null;
+    let scanCameraSelect = null;
     let scanStream = null;
     let scanAnimationFrameId = null;
     let scanLib = null;
+    let scanControls = null;
+    let zxingReader = null;
 
     const closeMenu = () => closeStorageMenu(storageMenuPanel, storageMenuBtn);
     const openMenu = () => openStorageMenu(storageMenuPanel, storageMenuBtn);
@@ -394,6 +489,7 @@
           autoCloseMs: 2000
         });
         setTimeout(() => {
+          updateUrlWithStoredSource();
           try { window.location.reload(); } catch {}
         }, 900);
       } catch (err) {
@@ -558,19 +654,142 @@
     const handleScanResult = (rawData) => {
       const value = rawData ? String(rawData).trim() : '';
       if (!value) return;
-      const normalizedValue = normalizeImportCode(value);
-      if (!normalizedValue) return;
+      const { code, source, item } = parseImportPayload(value);
+      if (!code) return;
       if (scanMessageEl) {
         scanMessageEl.textContent = 'QR code detected!';
       }
       closeScanOverlay();
-      importCodeInput = document.getElementById('storageImportCodeInput');
-      if (importCodeInput) {
-        importCodeInput.value = normalizedValue;
+      let updatedUrl = true;
+      try {
+        const params = new URLSearchParams(window.location.search);
+        params.set('i', code);
+        if (item) params.set('t', item);
+        params.delete('import');
+        params.delete('source');
+        params.delete('item');
+        params.delete('s');
+        applyStoredSourceToParams(params);
+        const basePath = window.location.pathname || '';
+        const newQuery = params.toString();
+        const newUrl = newQuery ? `${basePath}?${newQuery}` : basePath;
+        window.history.replaceState(null, '', newUrl);
+      } catch (err) {
+        console.warn('[Storage] Unable to update URL for import', err);
+        updatedUrl = false;
+        importCodeInput = document.getElementById('storageImportCodeInput');
+        if (importCodeInput) {
+          importCodeInput.value = code;
+        }
       }
       setTimeout(() => {
-        handleImportAction();
+        if (updatedUrl) {
+          processImportQuery();
+        } else {
+          openImportOverlay();
+          handleImportAction();
+        }
       }, 120);
+    };
+
+    const stopScanSession = () => {
+      if (scanControls && typeof scanControls.stop === 'function') {
+        try { scanControls.stop(); } catch {}
+        scanControls = null;
+      }
+      if (scanAnimationFrameId) {
+        cancelAnimationFrame(scanAnimationFrameId);
+        scanAnimationFrameId = null;
+      }
+      if (zxingReader && typeof zxingReader.reset === 'function') {
+        try { zxingReader.reset(); } catch {}
+      }
+      if (scanVideo) {
+        try {
+          // Ensure video is fully stopped
+          if (!scanVideo.paused) {
+            scanVideo.pause();
+          }
+          scanVideo.currentTime = 0;
+        } catch {}
+        try {
+          const activeStream = scanStream || scanVideo.srcObject;
+          if (activeStream && activeStream.getTracks) {
+            activeStream.getTracks().forEach((track) => {
+              try { track.stop(); } catch {}
+            });
+          }
+        } catch {}
+        try {
+          scanVideo.srcObject = null;
+        } catch {}
+        // Reset video attributes to prevent conflicts
+        try {
+          scanVideo.autoplay = false;
+          scanVideo.removeAttribute('autoplay');
+        } catch {}
+      }
+      scanStream = null;
+      scanLib = null;
+    };
+
+    const closeScanOverlay = () => {
+      if (!scanOverlay) return;
+      stopScanSession();
+      scanOverlay.style.display = 'none';
+      if (scanMessageEl) {
+        scanMessageEl.textContent = 'Looking for a QR code...';
+      }
+    };
+
+    const ensureScanOverlay = () => {
+      if (!scanOverlay) {
+        if (window.OverlayFactory && typeof window.OverlayFactory.createStorageImportScanOverlay === 'function') {
+          scanOverlay = window.OverlayFactory.createStorageImportScanOverlay();
+        }
+      }
+      return scanOverlay;
+    };
+
+    const enumerateCameras = async () => {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return [];
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        return devices.filter((device) => device && device.kind === 'videoinput');
+      } catch {
+        return [];
+      }
+    };
+
+    const applyCameraOptions = (cameras, selectedId = '') => {
+      if (!scanCameraSelectRow || !scanCameraSelect) return;
+      if (!shouldShowCameraOptions() || !Array.isArray(cameras) || cameras.length === 0) {
+        scanCameraSelectRow.style.display = 'none';
+        scanCameraSelect.innerHTML = '';
+        return;
+      }
+      scanCameraSelectRow.style.display = 'flex';
+      scanCameraSelect.innerHTML = '';
+      const autoOption = document.createElement('option');
+      autoOption.value = '';
+      autoOption.textContent = 'Auto (default)';
+      scanCameraSelect.appendChild(autoOption);
+      cameras.forEach((cam, idx) => {
+        const opt = document.createElement('option');
+        opt.value = cam.deviceId || '';
+        opt.textContent = cam.label || `Camera ${idx + 1}`;
+        scanCameraSelect.appendChild(opt);
+      });
+      const match = Array.from(scanCameraSelect.options).find((opt) => opt.value === selectedId);
+      scanCameraSelect.value = match ? selectedId : '';
+      if (!scanCameraSelect.dataset.bound) {
+        scanCameraSelect.addEventListener('change', () => {
+          stopScanSession();
+          const deviceId = scanCameraSelect.value || null;
+          startScanWithDevice(deviceId);
+        });
+        scanCameraSelect.dataset.bound = '1';
+      }
     };
 
     const scanFrame = () => {
@@ -612,44 +831,130 @@
       scanAnimationFrameId = requestAnimationFrame(scanFrame);
     };
 
-    const stopScanSession = () => {
-      if (scanAnimationFrameId) {
-        cancelAnimationFrame(scanAnimationFrameId);
-        scanAnimationFrameId = null;
+    const startScanWithJsQr = async (deviceId = null) => {
+      if (!scanLib) {
+        scanLib = resolveJsQrLibrary();
       }
-      if (scanVideo) {
-        try {
-          scanVideo.pause();
-        } catch {}
-        scanVideo.srcObject = null;
+      if (!scanLib) {
+        if (scanMessageEl) scanMessageEl.textContent = 'Scanner unavailable (missing jsQR library).';
+        return;
       }
-      if (scanStream) {
-        scanStream.getTracks().forEach((track) => {
-          try {
-            track.stop();
-          } catch {}
-        });
-        scanStream = null;
-      }
-      scanLib = null;
-    };
-
-    const closeScanOverlay = () => {
-      if (!scanOverlay) return;
+      if (scanMessageEl) scanMessageEl.textContent = 'Requesting camera access...';
       stopScanSession();
-      scanOverlay.style.display = 'none';
-      if (scanMessageEl) {
-        scanMessageEl.textContent = 'Looking for a QR code...';
+      try {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          throw new Error('Camera access is not supported in this browser.');
+        }
+        const constraints = deviceId
+          ? { video: { deviceId: { exact: deviceId } } }
+          : { video: { facingMode: 'environment' } };
+        try {
+          scanStream = await navigator.mediaDevices.getUserMedia(constraints);
+        } catch (err) {
+          if (deviceId) {
+            console.warn('[Storage] Failed to open selected camera, falling back to default.', err);
+            return startScanWithDevice(null);
+          }
+          throw err;
+        }
+        if (!scanVideo) return;
+        scanVideo.srcObject = scanStream;
+        await scanVideo.play();
+        const cameras = await enumerateCameras();
+        const activeTrack = scanStream && scanStream.getVideoTracks && scanStream.getVideoTracks()[0];
+        const activeId = activeTrack && activeTrack.getSettings && activeTrack.getSettings().deviceId;
+        applyCameraOptions(cameras, deviceId || activeId || '');
+        if (scanMessageEl) scanMessageEl.textContent = 'Scanning for QR codes...';
+        scanAnimationFrameId = requestAnimationFrame(scanFrame);
+      } catch (err) {
+        console.error('[Storage] QR scan failed', err);
+        if (scanMessageEl) scanMessageEl.textContent = 'Unable to access the camera.';
+        stopScanSession();
+        showStorageNotice({
+          title: 'QR scan failed',
+          message: err && err.message ? err.message : 'Unable to access the camera.',
+          tone: 'error'
+        });
       }
     };
 
-    const ensureScanOverlay = () => {
-      if (!scanOverlay) {
-        if (window.OverlayFactory && typeof window.OverlayFactory.createStorageImportScanOverlay === 'function') {
-          scanOverlay = window.OverlayFactory.createStorageImportScanOverlay();
+    const startScanWithZxing = async (deviceId = null) => {
+      const ZX = resolveZxing();
+      if (!ZX || !ZX.BrowserMultiFormatReader) return false;
+      if (!zxingReader) {
+        try {
+          const hints = new Map();
+          if (ZX.DecodeHintType && ZX.BarcodeFormat) {
+            hints.set(ZX.DecodeHintType.POSSIBLE_FORMATS, [ZX.BarcodeFormat.QR_CODE]);
+            hints.set(ZX.DecodeHintType.TRY_HARDER, true);
+          }
+          zxingReader = new ZX.BrowserMultiFormatReader(hints, 750);
+        } catch (err) {
+          console.error('[Storage] Unable to init ZXing reader', err);
         }
       }
-      return scanOverlay;
+      if (!zxingReader) return false;
+      if (scanMessageEl) scanMessageEl.textContent = 'Requesting camera access...';
+      stopScanSession();
+      try {
+        if (scanVideo) {
+          // Ensure video is completely stopped before ZXing takes control
+          try { 
+            scanVideo.pause();
+            scanVideo.currentTime = 0;
+          } catch {}
+          try { scanVideo.srcObject = null; } catch {}
+          // Remove autoplay to prevent conflicts with ZXing
+          try { 
+            scanVideo.autoplay = false;
+            scanVideo.removeAttribute('autoplay');
+          } catch {}
+        }
+        const devices = await enumerateCameras();
+        const targetId = deviceId || (Array.isArray(devices) && devices[0] ? devices[0].deviceId : undefined) || undefined;
+        applyCameraOptions(devices, targetId || '');
+        scanControls = await zxingReader.decodeFromVideoDevice(
+          targetId || undefined,
+          scanVideo,
+          (result, err) => {
+            if (result && typeof result.getText === 'function') {
+              handleScanResult(result.getText());
+            } else if (err) {
+              const name = err.name || '';
+              const message = err.message || '';
+              const isNotFound = name === 'NotFoundException' || /No MultiFormat Readers were able to detect/i.test(message);
+              if (!isNotFound) {
+                console.warn('[Storage] Scan error', err);
+              }
+            }
+          }
+        );
+        try {
+          scanStream = scanVideo && scanVideo.srcObject ? scanVideo.srcObject : null;
+        } catch { scanStream = null; }
+        const activeTrack = scanVideo && scanVideo.srcObject && scanVideo.srcObject.getVideoTracks && scanVideo.srcObject.getVideoTracks()[0];
+        const activeId = activeTrack && activeTrack.getSettings && activeTrack.getSettings().deviceId;
+        applyCameraOptions(devices, activeId || targetId || '');
+        if (scanMessageEl) scanMessageEl.textContent = 'Scanning for QR codes...';
+        return true;
+      } catch (err) {
+        console.error('[Storage] QR scan failed (ZXing)', err);
+        if (scanMessageEl) scanMessageEl.textContent = 'Unable to access the camera.';
+        stopScanSession();
+        showStorageNotice({
+          title: 'QR scan failed',
+          message: err && err.message ? err.message : 'Unable to access the camera.',
+          tone: 'error'
+        });
+        return false;
+      }
+    };
+
+    const startScanWithDevice = async (deviceId = null) => {
+      const started = await startScanWithZxing(deviceId);
+      if (!started) {
+        await startScanWithJsQr(deviceId);
+      }
     };
 
     const openScanOverlay = async () => {
@@ -658,6 +963,8 @@
       scanMessageEl = document.getElementById('storageImportScanMessage');
       scanVideo = document.getElementById('storageImportScanVideo');
       scanCanvas = document.getElementById('storageImportScanCanvas');
+      scanCameraSelectRow = document.getElementById('storageImportCameraSelectRow');
+      scanCameraSelect = document.getElementById('storageImportCameraSelect');
       if (!scanOverlay.dataset.bound) {
         scanCloseBtn = document.getElementById('storageImportScanCloseBtn');
         if (scanCloseBtn) {
@@ -672,37 +979,22 @@
       if (scanMessageEl) scanMessageEl.textContent = 'Checking scanner readiness...';
       stopScanSession();
       scanLib = resolveJsQrLibrary();
-      if (!scanLib) {
-        const missingMsg = 'Scanner unavailable (missing jsQR library).';
+      const ZX = resolveZxing();
+      if (!scanLib && (!ZX || !ZX.BrowserMultiFormatReader)) {
+        const missingMsg = 'Scanner unavailable (missing QR libraries).';
         if (scanMessageEl) scanMessageEl.textContent = missingMsg;
-        console.error('[Storage] QR scanner requires jsQR but the library is unavailable.');
+        console.error('[Storage] QR scanner requires jsQR or ZXing but neither is available.');
         showStorageNotice({
           title: 'QR scanner unavailable',
-          message: 'The jsQR library failed to load. Reload the page and ensure `scripts/jsqr.min.js` can be reached.',
+          message: 'The QR libraries failed to load. Reload the page and ensure `scripts/jsqr.min.js` (or `scripts/zxing-lib.min.js`) can be reached.',
           tone: 'error'
         });
         return;
       }
-      if (scanMessageEl) scanMessageEl.textContent = 'Requesting camera access...';
-      try {
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-          throw new Error('Camera access is not supported in this browser.');
-        }
-        scanStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-        if (!scanVideo) return;
-        scanVideo.srcObject = scanStream;
-        await scanVideo.play();
-        if (scanMessageEl) scanMessageEl.textContent = 'Scanning for QR codes...';
-        scanAnimationFrameId = requestAnimationFrame(scanFrame);
-      } catch (err) {
-        console.error('[Storage] QR scan failed', err);
-        if (scanMessageEl) scanMessageEl.textContent = 'Unable to access the camera.';
-        stopScanSession();
-        showStorageNotice({
-          title: 'QR scan failed',
-          message: err && err.message ? err.message : 'Unable to access the camera.',
-          tone: 'error'
-        });
+      applyCameraOptions([], '');
+      const started = await startScanWithZxing(null);
+      if (!started) {
+        await startScanWithJsQr(null);
       }
     };
 
@@ -769,11 +1061,12 @@
     const processImportQuery = () => {
       if (typeof window === 'undefined') return;
       const params = new URLSearchParams(window.location.search);
-      const rawImportParam = params.get('import') || '';
+      const rawImportParam = params.get('i') || params.get('import') || '';
       if (!rawImportParam.trim()) return;
       importOverlay = ensureStorageImportOverlay();
       if (importOverlay) {
-        importOverlay.style.display = 'none';
+        importOverlay.style.display = 'flex';
+        importOverlayVisible = true;
       }
       let decoded = rawImportParam;
       try {
@@ -788,6 +1081,9 @@
         importCodeInput.value = normalizedCode;
       }
       params.delete('import');
+      params.delete('i');
+      params.delete('s');
+      applyStoredSourceToParams(params);
       const basePath = window.location.pathname;
       const newQuery = params.toString();
       const newUrl = newQuery ? `${basePath}?${newQuery}` : basePath;
@@ -846,12 +1142,9 @@
             }
             let importLink = null;
             if (code && typeof window !== 'undefined') {
-              const origin = window.location.origin || '';
-              const currentPath = window.location.pathname || '';
-              const directoryPath = currentPath.endsWith('/')
-                ? currentPath
-                : currentPath.replace(/\/[^/]*$/, '/');
-              importLink = `${origin}${directoryPath}?import=${encodeURIComponent(code)}`;
+              const params = new URLSearchParams(window.location.search || '');
+              const itemParam = params.get('t') || params.get('item') || params.get('?item') || '';
+              importLink = buildImportUrl(code, null, itemParam);
             }
             const statusMessage = copied
               ? (code ? `Import code copied to clipboard: ${code}` : 'Storage export succeeded. Code copied to clipboard.')

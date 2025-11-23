@@ -1435,13 +1435,13 @@ body.mm-notice-open {
   align-items: center;
   gap: 0.35rem;
   justify-content: center;
-  padding: 0.25rem 0;
+  padding: 0.25rem 0.35rem;
 }
 .storage-notice__qr div {
-  width: min(200px, 70vw);
+  width: min(260px, 80vw);
   height: auto;
   background: #fff;
-  padding: 0.4rem;
+  padding: 0.55rem;
   border-radius: 14px;
   border: 2px solid #fff;
   box-shadow: 0 8px 20px rgba(15,23,42,0.25), inset 0 0 0 1px rgba(0,0,0,0.06);
@@ -1456,8 +1456,9 @@ body.mm-notice-open {
 .storage-notice__qr canvas {
   width: 100%;
   height: auto;
-  max-width: 210px;
-  border-radius: 10px;
+  max-width: 260px;
+  border-radius: 0 !important; /* keep the code itself square */
+  background: #fff;
   display: block;
 }
 .storage-notice__qr-caption {

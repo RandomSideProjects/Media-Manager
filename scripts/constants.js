@@ -54,6 +54,7 @@ function setSourceKey(rawValue, options) {
     if (typeof alias === 'string' && alias && alias !== primary) history.push(alias);
   });
   sourceKeyHistory = history.filter((key, idx) => history.indexOf(key) === idx);
+  try { localStorage.setItem('currentSourceKey', primary); } catch {}
   return primary;
 }
 

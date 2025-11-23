@@ -78,18 +78,31 @@ window.OverlayFactory = (function() {
         ]),
         clippingSection,
         downloadsSection,
-        createElement('div', { className: 'setting-row recent-sources-setting' }, [
-          createElement('div', { className: 'recent-sources-label' }, [
-            createElement('span', { 'data-setting-tag': 'beta' }, ['Recent sources']),
-            createElement('small', {}, ['Show your last loaded sources on the home screen.'])
-          ]),
-          createElement('div', { className: 'recent-sources-controls' }, [
-            createElement('input', { type: 'checkbox', id: 'recentSourcesToggle', 'aria-label': 'Enable recent sources' }),
-            createElement('select', { id: 'recentSourcesPlacement', 'aria-label': 'Recent sources placement' }, [
-              createElement('option', { value: 'bottom' }, ['Bottom']),
-              createElement('option', { value: 'left' }, ['Left']),
-              createElement('option', { value: 'right' }, ['Right'])
+        createElement('div', { className: 'setting-category' }, [
+          createElement('div', { className: 'setting-category-header' }, ['General']),
+          createElement('div', { className: 'setting-row recent-sources-setting' }, [
+            createElement('div', { className: 'recent-sources-label' }, [
+              createElement('span', { 'data-setting-tag': 'beta' }, ['Recent sources']),
+              createElement('small', {}, ['Show your last loaded sources on the home screen.'])
+            ]),
+            createElement('div', { className: 'recent-sources-controls' }, [
+              createElement('input', { type: 'checkbox', id: 'recentSourcesToggle', 'aria-label': 'Enable recent sources' }),
+              createElement('select', { id: 'recentSourcesPlacement', 'aria-label': 'Recent sources placement' }, [
+                createElement('option', { value: 'bottom' }, ['Bottom']),
+                createElement('option', { value: 'left' }, ['Left']),
+                createElement('option', { value: 'right' }, ['Right'])
+              ])
             ])
+          ])
+        ]),
+        createElement('div', { className: 'setting-category' }, [
+          createElement('div', { className: 'setting-category-header' }, ['Storage']),
+          createElement('div', { className: 'setting-row' }, [
+            createElement('input', { type: 'checkbox', id: 'storageShowCameraOptionsToggle' }),
+            createElement('label', { for: 'storageShowCameraOptionsToggle' }, ['Show camera options (QR import)'])
+          ]),
+          createElement('small', { style: { opacity: '.7', marginTop: '4px', display: 'block' } }, [
+            'If enabled, the QR scanner will list available cameras so you can pick one.'
           ])
         ]),
         createElement('div', { className: 'setting-category' }, [
@@ -199,13 +212,20 @@ window.OverlayFactory = (function() {
         createElement('div', { className: 'scanner-video-wrap' }, [
           createElement('video', {
             id: 'storageImportScanVideo',
-            autoplay: '',
             muted: '',
             playsinline: ''
           }),
           createElement('div', { className: 'scanner-target' })
         ]),
         createElement('canvas', { id: 'storageImportScanCanvas', hidden: '' }),
+        createElement('div', {
+          id: 'storageImportCameraSelectRow',
+          className: 'scanner-camera-row',
+          style: { display: 'none', gap: '0.5em', alignItems: 'center' }
+        }, [
+          createElement('label', { for: 'storageImportCameraSelect' }, ['Camera']),
+          createElement('select', { id: 'storageImportCameraSelect' }, [])
+        ]),
         createElement('div', { id: 'storageImportScanMessage' }, ['Looking for a QR code...'])
       ])
     ]);
