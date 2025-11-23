@@ -453,7 +453,7 @@ jobs:
             }
             allAnimeSources.sort((a, b) => String(a.title).localeCompare(String(b.title)));
             
-            let animeSection = '## Anime Sources\n\n';
+            let animeSection = '## Normal Sources\n\n';
             for (const source of allAnimeSources) {
               const encodedFile = encodeURIComponent(source.file);
               const hostedUrl = `https://randomsideprojects.github.io/Media-Manager/index.html?source=Directorys%2FFiles%2FAnime%2F${encodedFile}`;
