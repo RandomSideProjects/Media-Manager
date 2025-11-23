@@ -44,7 +44,7 @@ jobs:
       - name: Generate and push anime sources
         shell: bash
         env:
-          COMMIT_MESSAGE: 'chore: update Directorys/AnimeSourceList.json and anime posters'
+          COMMIT_MESSAGE: 'chore: update Directorys/AnimeSourceList.json, anime posters, and README.md'
           COMMIT_USER_NAME: github-actions[bot]
           COMMIT_USER_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
         run: |
@@ -360,6 +360,20 @@ jobs:
                       fs.writeFileSync(posterAbs, webpBuf);
                       console.log('Wrote poster:', posterAbs);
                       poster = `./Posters/Anime/${posterName}`;
+                      
+                      // Update the source JSON file to use local poster path
+                      const posterPath = `../Posters/Anime/${posterName}`;
+                      if (json.Image && json.Image !== 'N/A') {
+                        json.Image = posterPath;
+                      } else if (json.image && json.image !== 'N/A') {
+                        json.image = posterPath;
+                      }
+                      try {
+                        fs.writeFileSync(path.join(FILE_DIR, file), JSON.stringify(json, null, 2));
+                        console.log('Updated poster path in source file:', file);
+                      } catch (e) {
+                        console.warn('Failed to update poster path in source file:', file, '-', e.message);
+                      }
                     }
                   } catch (e) {
                     console.warn('Poster build failed for', file, '-', e.message);
@@ -401,6 +415,72 @@ jobs:
             result.sources.sort((a, b) => String(a.title).localeCompare(String(b.title)));
 
             fs.writeFileSync(INDEX_FILE, JSON.stringify(result, null, 2));
+            
+            // Update README.md - Anime section
+            const README_FILE = 'Directorys/README.md';
+            let readmeContent = '';
+            
+            // Read existing README or create header
+            if (fs.existsSync(README_FILE)) {
+              try {
+                readmeContent = fs.readFileSync(README_FILE, 'utf8');
+              } catch (e) {
+                console.warn('Could not read existing README, creating new:', e.message);
+              }
+            }
+            
+            if (!readmeContent) {
+              readmeContent = '# Media Sources Directory\n\nThis directory contains all available media sources.\n\n';
+            }
+            
+            // Generate anime section - include ALL files, not just indexed ones
+            const allAnimeFiles = fs.readdirSync(FILE_DIR)
+              .filter(f => f.toLowerCase().endsWith('.json') && !f.toLowerCase().includes('example'))
+              .filter(f => !f.startsWith('.'));
+            
+            const allAnimeSources = [];
+            for (const file of allAnimeFiles) {
+              try {
+                const full = path.join(FILE_DIR, file);
+                const raw = fs.readFileSync(full, 'utf8');
+                const json = JSON.parse(raw);
+                const title = json.title || path.parse(file).name;
+                allAnimeSources.push({ file, title });
+              } catch (e) {
+                console.warn('Could not parse', file, 'for README, using filename as title');
+                allAnimeSources.push({ file, title: path.parse(file).name });
+              }
+            }
+            allAnimeSources.sort((a, b) => String(a.title).localeCompare(String(b.title)));
+            
+            let animeSection = '## Anime Sources\n\n';
+            for (const source of allAnimeSources) {
+              const encodedFile = encodeURIComponent(source.file);
+              const hostedUrl = `https://randomsideprojects.github.io/?source=${encodedFile}`;
+              animeSection += `- [${source.title}](${hostedUrl})\n`;
+            }
+            animeSection += '\n';
+            
+            // Replace or add anime section
+            const animeSectionRegex = /## Anime Sources\n\n[\s\S]*?(?=\n## |$)/;
+            if (animeSectionRegex.test(readmeContent)) {
+              readmeContent = readmeContent.replace(animeSectionRegex, animeSection.trim());
+            } else {
+              // Add anime section after manga section if it exists, otherwise at the end
+              const mangaSectionMatch = readmeContent.match(/(## Manga Sources\n\n[\s\S]*?)(\n## |$)/);
+              if (mangaSectionMatch) {
+                const beforeAnime = mangaSectionMatch[0].endsWith('\n## ') 
+                  ? readmeContent.slice(0, readmeContent.indexOf(mangaSectionMatch[0]) + mangaSectionMatch[1].length)
+                  : readmeContent.slice(0, readmeContent.indexOf(mangaSectionMatch[0]) + mangaSectionMatch[0].length - (mangaSectionMatch[2] === '$' ? 0 : mangaSectionMatch[2].length));
+                const afterAnime = mangaSectionMatch[2] === '$' ? '' : readmeContent.slice(readmeContent.indexOf(mangaSectionMatch[0]) + mangaSectionMatch[1].length);
+                readmeContent = beforeAnime + '\n' + animeSection + afterAnime;
+              } else {
+                readmeContent += animeSection;
+              }
+            }
+            
+            fs.writeFileSync(README_FILE, readmeContent);
+            console.log('Updated README.md with anime sources');
           })().catch(err => { console.error(err); process.exit(1); });
           NODE
           }
@@ -427,9 +507,11 @@ jobs:
             if [ -d "$POSTERS_DIR" ]; then
               status_paths+=("$POSTERS_DIR")
             fi
+            status_paths+=("Directorys/README.md")
+            status_paths+=("$FILE_DIR")
 
             if [ -z "$(git status --porcelain -- "${status_paths[@]}")" ]; then
-              echo "No changes detected for $INDEX_FILE or $POSTERS_DIR; nothing to commit."
+              echo "No changes detected for $INDEX_FILE, $POSTERS_DIR, README.md, or $FILE_DIR; nothing to commit."
               exit 0
             fi
 

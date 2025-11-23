@@ -234,6 +234,20 @@ jobs:
                       fs.writeFileSync(posterAbs, webpBuf);
                       console.log('Wrote poster:', posterAbs);
                       poster = `./Posters/Manga/${posterName}`;
+                      
+                      // Update the source JSON file to use local poster path
+                      const posterPath = `../Posters/Manga/${posterName}`;
+                      if (json.Image && json.Image !== 'N/A') {
+                        json.Image = posterPath;
+                      } else if (json.image && json.image !== 'N/A') {
+                        json.image = posterPath;
+                      }
+                      try {
+                        fs.writeFileSync(path.join(FILE_DIR, file), JSON.stringify(json, null, 2));
+                        console.log('Updated poster path in source file:', file);
+                      } catch (e) {
+                        console.warn('Failed to update poster path in source file:', file, '-', e.message);
+                      }
                     }
                   } catch (e) {
                     console.warn('Poster build failed for', file, '-', e.message);
@@ -270,11 +284,74 @@ jobs:
             result.sources.sort((a, b) => String(a.title).localeCompare(String(b.title)));
 
             fs.writeFileSync(INDEX_FILE, JSON.stringify(result, null, 2));
+            
+            // Update README.md - Manga section
+            const README_FILE = 'Directorys/README.md';
+            let readmeContent = '';
+            
+            // Read existing README or create header
+            if (fs.existsSync(README_FILE)) {
+              try {
+                readmeContent = fs.readFileSync(README_FILE, 'utf8');
+              } catch (e) {
+                console.warn('Could not read existing README, creating new:', e.message);
+              }
+            }
+            
+            if (!readmeContent) {
+              readmeContent = '# Media Sources Directory\n\nThis directory contains all available media sources.\n\n';
+            }
+            
+            // Generate manga section - include ALL files, not just indexed ones
+            const allMangaFiles = fs.readdirSync(FILE_DIR)
+              .filter(f => f.toLowerCase().endsWith('.json'))
+              .filter(f => !f.toLowerCase().includes('example'))
+              .filter(f => !f.startsWith('.'));
+            
+            const allMangaSources = [];
+            for (const file of allMangaFiles) {
+              try {
+                const full = path.join(FILE_DIR, file);
+                const raw = fs.readFileSync(full, 'utf8');
+                const json = JSON.parse(raw);
+                const title = json.title || path.parse(file).name;
+                allMangaSources.push({ file, title });
+              } catch (e) {
+                console.warn('Could not parse', file, 'for README, using filename as title');
+                allMangaSources.push({ file, title: path.parse(file).name });
+              }
+            }
+            allMangaSources.sort((a, b) => String(a.title).localeCompare(String(b.title)));
+            
+            let mangaSection = '## Manga Sources\n\n';
+            for (const source of allMangaSources) {
+              const encodedFile = encodeURIComponent(source.file);
+              const hostedUrl = `https://randomsideprojects.github.io/?source=${encodedFile}`;
+              mangaSection += `- [${source.title}](${hostedUrl})\n`;
+            }
+            mangaSection += '\n';
+            
+            // Replace or add manga section
+            const mangaSectionRegex = /## Manga Sources\n\n[\s\S]*?(?=\n## |$)/;
+            if (mangaSectionRegex.test(readmeContent)) {
+              readmeContent = readmeContent.replace(mangaSectionRegex, mangaSection.trim());
+            } else {
+              // Add manga section before anime section if it exists, otherwise at the end
+              const animeSectionIndex = readmeContent.indexOf('## Anime Sources');
+              if (animeSectionIndex !== -1) {
+                readmeContent = readmeContent.slice(0, animeSectionIndex) + mangaSection + readmeContent.slice(animeSectionIndex);
+              } else {
+                readmeContent += mangaSection;
+              }
+            }
+            
+            fs.writeFileSync(README_FILE, readmeContent);
+            console.log('Updated README.md with manga sources');
           })().catch(err => { console.error(err); process.exit(1); });
           NODE
       - name: Commit and push changes
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           branch: ${{ github.ref_name }}
-          commit_message: 'chore: update Directorys/MangaSourceList.json and manga posters'
-          file_pattern: 'Directorys/MangaSourceList.json Directorys/Posters/Manga/**'
+          commit_message: 'chore: update Directorys/MangaSourceList.json, manga posters, and README.md'
+          file_pattern: 'Directorys/MangaSourceList.json Directorys/Posters/Manga/** Directorys/README.md Directorys/Files/Manga/**'
