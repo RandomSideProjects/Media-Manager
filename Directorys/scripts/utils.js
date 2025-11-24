@@ -1,8 +1,47 @@
 "use strict";
 
+const RECENT_SOURCES_STORAGE_KEY = 'rsp_recent_sources_list_v1';
+
 // Functions
 function formatLocal(dt) {
   try { return new Date(dt).toLocaleString(); } catch { return ''; }
+}
+
+function readRecentSourceEntries() {
+  if (typeof localStorage === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem(RECENT_SOURCES_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!parsed || !Array.isArray(parsed.sources)) return [];
+    return parsed.sources;
+  } catch {
+    return [];
+  }
+}
+
+function buildRecentSourceTimestampMap() {
+  const entries = readRecentSourceEntries();
+  const map = new Map();
+  for (const entry of entries) {
+    if (!entry || typeof entry !== 'object') continue;
+    const key = typeof entry.path === 'string' ? entry.path : '';
+    if (!key) continue;
+    const recordedAt = entry.recordedAt || entry.recorded_at || entry.recorded_on || '';
+    const parsed = recordedAt ? Date.parse(recordedAt) : NaN;
+    const timestamp = Number.isFinite(parsed) ? parsed : 0;
+    const existing = map.get(key);
+    map.set(key, Math.max(existing || 0, timestamp));
+  }
+  return map;
+}
+
+function getPublicSourceOpenKey(meta) {
+  const openPath = (meta && typeof meta.path === 'string' && meta.path)
+    ? meta.path
+    : `./Files/${meta && meta.file ? meta.file : ''}`;
+  const normalized = openPath.replace(/^\.\//, '');
+  return `Directorys/${normalized}`;
 }
 
 function sortMeta(list, mode) {
@@ -26,6 +65,19 @@ function sortMeta(list, mode) {
         const at = a.LatestTime ? Date.parse(a.LatestTime) : (a._mtime||0);
         const bt = b.LatestTime ? Date.parse(b.LatestTime) : (b._mtime||0);
         return at - bt;
+      });
+      break; }
+    case 'recent': {
+      const timestampMap = buildRecentSourceTimestampMap();
+      arr.sort((a,b)=>{
+        const aKey = getPublicSourceOpenKey(a);
+        const bKey = getPublicSourceOpenKey(b);
+        const aTime = timestampMap.get(aKey) || 0;
+        const bTime = timestampMap.get(bKey) || 0;
+        if (aTime === bTime) {
+          return String(a.title || a.file).localeCompare(String(b.title || b.file));
+        }
+        return bTime - aTime;
       });
       break; }
   }
@@ -85,4 +137,3 @@ function fitPosterToCard(img, card) {
   img.style.objectFit = 'contain';
   img.style.objectPosition = 'center';
 }
-

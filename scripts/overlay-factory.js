@@ -349,7 +349,8 @@ window.OverlayFactory = (function() {
             createElement('label', {}, [createElement('input', { type: 'radio', name: 'sort', value: 'az' }), ' A–Z']),
             createElement('label', {}, [createElement('input', { type: 'radio', name: 'sort', value: 'za' }), ' Z–A']),
             createElement('label', {}, [createElement('input', { type: 'radio', name: 'sort', value: 'newold' }), ' New → Old']),
-            createElement('label', {}, [createElement('input', { type: 'radio', name: 'sort', value: 'oldnew' }), ' Old → New'])
+            createElement('label', {}, [createElement('input', { type: 'radio', name: 'sort', value: 'oldnew' }), ' Old → New']),
+            createElement('label', {}, [createElement('input', { type: 'radio', name: 'sort', value: 'recent' }), ' Last opened'])
           ])
         ]),
         createElement('div', { className: 'section' }, [
