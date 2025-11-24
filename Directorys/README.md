@@ -1,6 +1,7 @@
 # Media Sources Directory
 
 This directory contains all available media sources.
+These are also availible [here](https://randomsideprojects.github.io/Media-Manager/Directorys/index.html), but please note that some source may not be listed as they are hidden on the main page.
 
 ## Manga Sources
 
