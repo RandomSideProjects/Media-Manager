@@ -62,4 +62,3 @@ This directory contains all available media sources.
 - [My Dress-Up Darling](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FManga%2FMy_Dress-up_Darling.json)
 - [One-Punch Man](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FManga%2FOne-Punch_Man.json)
 - [The 100 Girlfriends Who Really, Really, Really, Really, REALLY Love You](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FManga%2FThe_100_Girlfriends_Who_Really%2C_Really%2C_Really%2C_Really%2C_REALLY_Love_You.json)
-
