@@ -13,6 +13,9 @@
   const VALID_PLACEMENTS = new Set(["bottom", "left", "right"]);
   const DEFAULT_PLACEMENT = "bottom";
   const INLINE_MAX_LENGTH = 150000; // 150 KB guardrail so it dont kill itself :/ should be plenty for most uses, will probably add an function to auto delete old ones later if i get around to it
+  const LEGACY_SOURCE_PREFIX = "Directorys/Files/";
+  const LEGACY_SOURCE_REPLACEMENT = "Sources/Files/";
+  const LEGACY_SOURCE_PREFIX_LOWER = LEGACY_SOURCE_PREFIX.toLowerCase();
   const recentRail = (typeof recentSourcesRail !== "undefined" && recentSourcesRail) ? recentSourcesRail : document.getElementById("recentSourcesRail");
   const urlInputField = (typeof urlInput !== "undefined" && urlInput) ? urlInput : document.getElementById("urlInput");
   const POINTER_COARSE_QUERY = (typeof window !== "undefined" && typeof window.matchMedia === "function")
@@ -35,7 +38,26 @@
       if (!raw) return [];
       const parsed = JSON.parse(raw);
       if (parsed && Array.isArray(parsed.sources)) {
-        return parsed.sources.filter(isValidEntry).slice(0, STORAGE_LIMIT);
+        let needPersist = false;
+        const normalizedSources = parsed.sources.map((entry) => {
+          if (!entry || typeof entry !== "object") return entry;
+          if (typeof entry.path === "string") {
+            const normalized = normalizeLegacySourcePath(entry.path);
+            if (normalized.changed) {
+              needPersist = true;
+              return { ...entry, path: normalized.value };
+            }
+          }
+          return entry;
+        });
+        const filtered = normalizedSources.filter(isValidEntry);
+        if (filtered.length !== parsed.sources.length) {
+          needPersist = true;
+        }
+        if (needPersist) {
+          persistItems(filtered);
+        }
+        return filtered.slice(0, STORAGE_LIMIT);
       }
     } catch (err) {
       console.warn("[RecentSources] Failed to parse stored list", err);
@@ -87,6 +109,25 @@
     const widthOk = window.innerWidth >= DESKTOP_MIN_WIDTH;
     const coarsePointer = POINTER_COARSE_QUERY ? POINTER_COARSE_QUERY.matches : false;
     return widthOk && !coarsePointer && isDesktopUserAgent();
+  }
+
+  function normalizeLegacySourcePath(rawValue) {
+    if (typeof rawValue !== "string") {
+      return { value: rawValue, changed: false };
+    }
+    const trimmed = rawValue.trim();
+    if (trimmed.length < LEGACY_SOURCE_PREFIX.length) {
+      return { value: rawValue, changed: false };
+    }
+    const candidate = trimmed.slice(0, LEGACY_SOURCE_PREFIX.length);
+    if (candidate.toLowerCase() !== LEGACY_SOURCE_PREFIX_LOWER) {
+      return { value: rawValue, changed: false };
+    }
+    const suffix = trimmed.slice(LEGACY_SOURCE_PREFIX.length);
+    return {
+      value: `${LEGACY_SOURCE_REPLACEMENT}${suffix}`,
+      changed: true
+    };
   }
 
   function isValidEntry(entry) {
@@ -240,6 +281,11 @@
       inlineKey = trimAndStoreInlinePayload(context.inlinePayload || "");
       if (!inlineKey) return null;
       entryPath = `inline::${inlineKey}`;
+    }
+
+    const normalizedEntryPath = normalizeLegacySourcePath(entryPath);
+    if (normalizedEntryPath.changed) {
+      entryPath = normalizedEntryPath.value;
     }
 
     const entry = {
