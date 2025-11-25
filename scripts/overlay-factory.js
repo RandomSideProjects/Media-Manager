@@ -336,7 +336,7 @@ window.OverlayFactory = (function() {
     return overlay;
   }
 
-  // Create sources settings overlay (for Directorys page)
+  // Create sources settings overlay (for Sources page)
   function createSourcesSettingsOverlay() {
     removeOverlay('sourcesSettingsOverlay');
     

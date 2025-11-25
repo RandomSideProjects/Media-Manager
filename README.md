@@ -22,7 +22,7 @@ RSP Media Manager is a browser-only library viewer for video and manga catalogs.
 | `scripts/` | Modular front-end logic (source loading, player controls, downloads, clipping, local-folder support, settings, pop-out, version badge). |
 | `Assets/` | Images, favicons, and `LastUpdated.txt` (drives the in-app “Version YYYY-MM-DD” badge). |
 | `Creator/` | Standalone web app for creating/editing directory JSON, uploading to Catbox, and managing posters/CBZ options. |
-| `Directorys/` | Public source listings (`index.html`, curated JSON files, posters, and supporting scripts). |
+| `Sources/` | Public source listings (`index.html`, curated JSON files, posters, and supporting scripts). |
 | `Tools/CBZcompress.py` | Helper script for batch recompressing `.cbz/.cbr` archives before publishing. |
 | `LICENSE` | Apache 2.0 license for the project. |
 
@@ -58,7 +58,7 @@ git pull
 
 - **URL:** Paste any reachable JSON manifest (`https://…/Series.json`).
 - **Catbox ID:** Enter the 6-character ID (e.g. `abc123`) and the app expands it to `https://files.catbox.moe/abc123.json`.
-- **Relative path:** Provide `Directorys/Files/Anime/Series.json` to load included examples.
+- **Relative path:** Provide `Sources/Files/Anime/Series.json` to load included examples.
 - **Inline JSON:** Paste raw JSON or a `data:application/json,…` URI to render an ad-hoc directory without hosting it.
 - **Local folder:** Click `Select Folder`, choose a directory with `index.json`, and the player wires up matching media/CBZ files automatically.
 
@@ -132,7 +132,7 @@ Host the JSON and media on a CORS-accessible service (Catbox, GitHub Pages, Clou
 
 - `Assets/LastUpdated.txt` feeds the in-app version badge. Update it alongside releases.
 - `Tools/CBZcompress.py` converts `.cbr` archives to `.cbz` and re-zips images to help keep manga libraries consistent before uploading.
-- `Directorys/index.html` provides curated source lists that point back into the main player.
+- `Sources/index.html` provides curated source lists that point back into the main player.
 
 ## License
 

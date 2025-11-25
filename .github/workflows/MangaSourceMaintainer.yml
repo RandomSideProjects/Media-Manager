@@ -3,7 +3,7 @@ name: MangaSourceMaintainer (DO NOT TOUCH)
 on:
   push:
     paths:
-      - 'Directorys/Files/Manga/**'
+      - 'Sources/Files/Manga/**'
   workflow_dispatch:
 
 permissions:
@@ -36,12 +36,12 @@ jobs:
       - name: Install image processor (sharp)
         run: npm install sharp@0.33
 
-      - name: Generate Directorys/MangaSourceList.json
+      - name: Generate Sources/MangaSourceList.json
         shell: bash
         run: |
           set -euo pipefail
-          FILE_DIR="Directorys/Files/Manga"
-          INDEX_FILE="Directorys/MangaSourceList.json"
+          FILE_DIR="Sources/Files/Manga"
+          INDEX_FILE="Sources/MangaSourceList.json"
 
           if [[ ! -d "$FILE_DIR" ]]; then
             echo "Directory '$FILE_DIR' does not exist; nothing to index."
@@ -62,9 +62,9 @@ jobs:
             return HIDDEN_JSON_KEYS.some((key) => entry[key] === true);
           }
 
-          const FILE_DIR = 'Directorys/Files/Manga';
-          const INDEX_FILE = 'Directorys/MangaSourceList.json';
-          const POSTERS_DIR = 'Directorys/Posters/Manga';
+          const FILE_DIR = 'Sources/Files/Manga';
+          const INDEX_FILE = 'Sources/MangaSourceList.json';
+          const POSTERS_DIR = 'Sources/Posters/Manga';
           if (!fs.existsSync(POSTERS_DIR)) fs.mkdirSync(POSTERS_DIR, { recursive: true });
 
           function safePosterName(title, fallback) {
@@ -286,7 +286,7 @@ jobs:
             fs.writeFileSync(INDEX_FILE, JSON.stringify(result, null, 2));
             
             // Update README.md - Manga section
-            const README_FILE = 'Directorys/README.md';
+            const README_FILE = 'Sources/README.md';
             let readmeContent = '';
             
             // Read existing README or create header
@@ -326,7 +326,7 @@ jobs:
             let mangaSection = '## Manga Sources\n\n';
             for (const source of allMangaSources) {
               const encodedFile = encodeURIComponent(source.file);
-              const hostedUrl = `https://randomsideprojects.github.io/Media-Manager/index.html?source=Directorys%2FFiles%2FManga%2F${encodedFile}`;
+              const hostedUrl = `https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FManga%2F${encodedFile}`;
               mangaSection += `- [${source.title}](${hostedUrl})\n`;
             }
             mangaSection += '\n';
@@ -353,5 +353,5 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           branch: ${{ github.ref_name }}
-          commit_message: 'chore: update Directorys/MangaSourceList.json, manga posters, and README.md'
-          file_pattern: 'Directorys/MangaSourceList.json Directorys/Posters/Manga/** Directorys/README.md Directorys/Files/Manga/**'
+          commit_message: 'chore: update Sources/MangaSourceList.json, manga posters, and README.md'
+          file_pattern: 'Sources/MangaSourceList.json Sources/Posters/Manga/** Sources/README.md Sources/Files/Manga/**'

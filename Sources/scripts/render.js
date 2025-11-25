@@ -105,7 +105,7 @@ function buildSourceCardFromMeta(meta) {
   btn.className = 'pill-button';
   btn.textContent = 'Open';
   btn.onclick = () => {
-    const openParam = `Directorys/${openPath.replace(/^\.\//,'')}`;
+    const openParam = `Sources/${openPath.replace(/^\.\//,'')}`;
     const src = encodeURIComponent(openParam);
     window.location.href = `../index.html?source=${src}`;
   };

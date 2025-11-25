@@ -586,7 +586,7 @@ async function downloadSourceFolder(options = {}) {
       const isCbz = ext === '.cbz';
       const prefix = (isCbz || isJsonVolume) ? 'V' : 'E';
       const pad = String(ei + 1).padStart(2, '0');
-      const folderPath = `Directorys/${zipRootName}/${sanitizedCategory}/`;
+      const folderPath = `Sources/${zipRootName}/${sanitizedCategory}/`;
       const placeholder = {
         title: epTitle,
         progressKey: progressBaseKey
@@ -1195,7 +1195,7 @@ async function downloadSourceFolder(options = {}) {
         if (type === 'json') {
           // JSON volume: fetch JSON, inline remote links as base64 data URIs, save JSON
           const epObj = catObjs[ci].episodes[ei];
-          const folderPath = `Directorys/${zipRootName}/${task.sanitizedCategory}/`;
+          const folderPath = `Sources/${zipRootName}/${task.sanitizedCategory}/`;
           const volFolderName = task.volumeFolderName;
           const volFolder = task.categoryFolder.folder(volFolderName);
           // Point to the nested index.json
@@ -1541,7 +1541,7 @@ async function downloadSourceFolder(options = {}) {
           if (!blob) throw new Error('Download failed');
           task.categoryFolder.file(fileName, blob);
           const epObj = catObjs[ci].episodes[ei];
-          epObj.src = placeholder && placeholder.src ? placeholder.src : `Directorys/${zipRootName}/${task.sanitizedCategory}/${fileName}`;
+          epObj.src = placeholder && placeholder.src ? placeholder.src : `Sources/${zipRootName}/${task.sanitizedCategory}/${fileName}`;
           try {
             const sz = Number(blob && blob.size);
             if (Number.isFinite(sz) && sz >= 0) {

@@ -15,7 +15,7 @@ const tempState = { urls: [] };
         const fetchUrl = isDirect ? input : new URL(input, window.location.href).href;
         const text = await (await fetch(fetchUrl)).text();
         data = JSON.parse(text);
-        openParam = isDirect ? input : `Directorys/${(input || '').replace(/^\.\//,'')}`;
+        openParam = isDirect ? input : `Sources/${(input || '').replace(/^\.\//,'')}`;
         displayName = displayName || (data && data.title) || input;
       } else if (input && typeof input === 'object') {
         data = input;
@@ -103,7 +103,7 @@ function createSourceCard(data, openTarget) {
   if (openTarget) {
     btn.onclick = () => {
       const isFull = /^https?:\/\//i.test(openTarget);
-      const srcParam = isFull ? openTarget : `Directorys/${openTarget.replace(/^\.\/?/, '')}`;
+      const srcParam = isFull ? openTarget : `Sources/${openTarget.replace(/^\.\/?/, '')}`;
       window.location.href = `../index.html?source=${encodeURIComponent(srcParam)}`;
     };
   } else {

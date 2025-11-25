@@ -2857,7 +2857,7 @@ async function uploadDirectoryToGithub() {
   const jsonString = JSON.stringify(directoryJson, null, 2);
   const formData = new FormData();
   formData.append('ghtoken', githubToken);
-  formData.append('path', `Directorys/Files/${isMangaMode() ? 'Manga' : 'Anime'}`);
+  formData.append('path', `Sources/Files/${isMangaMode() ? 'Manga' : 'Anime'}`);
   formData.append('mode', isMangaMode() ? 'manga' : 'anime');
   formData.append('fileName', fileName);
   if (title) formData.append('title', title);

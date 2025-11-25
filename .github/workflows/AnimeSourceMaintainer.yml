@@ -3,7 +3,7 @@ name: AnimeSourceMaintainer (DO NOT TOUCH)
 on:
   push:
     paths:
-      - 'Directorys/Files/Anime/**'
+      - 'Sources/Files/Anime/**'
   workflow_dispatch:
 
 concurrency:
@@ -44,15 +44,15 @@ jobs:
       - name: Generate and push anime sources
         shell: bash
         env:
-          COMMIT_MESSAGE: 'chore: update Directorys/AnimeSourceList.json, anime posters, and README.md'
+          COMMIT_MESSAGE: 'chore: update Sources/AnimeSourceList.json, anime posters, and README.md'
           COMMIT_USER_NAME: github-actions[bot]
           COMMIT_USER_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
         run: |
           set -euo pipefail
           BRANCH="${GITHUB_REF_NAME:-$(git rev-parse --abbrev-ref HEAD)}"
-          FILE_DIR="Directorys/Files/Anime"
-          INDEX_FILE="Directorys/AnimeSourceList.json"
-          POSTERS_DIR="Directorys/Posters/Anime"
+          FILE_DIR="Sources/Files/Anime"
+          INDEX_FILE="Sources/AnimeSourceList.json"
+          POSTERS_DIR="Sources/Posters/Anime"
 
           if [[ ! -d "$FILE_DIR" ]]; then
             echo "Directory '$FILE_DIR' does not exist; nothing to index."
@@ -189,9 +189,9 @@ jobs:
             return [];
           }
 
-          const FILE_DIR = 'Directorys/Files/Anime';
-          const INDEX_FILE = 'Directorys/AnimeSourceList.json';
-          const POSTERS_DIR = 'Directorys/Posters/Anime';
+          const FILE_DIR = 'Sources/Files/Anime';
+          const INDEX_FILE = 'Sources/AnimeSourceList.json';
+          const POSTERS_DIR = 'Sources/Posters/Anime';
           if (!fs.existsSync(POSTERS_DIR)) fs.mkdirSync(POSTERS_DIR, { recursive: true });
 
           function safePosterName(title, fallback) {
@@ -417,7 +417,7 @@ jobs:
             fs.writeFileSync(INDEX_FILE, JSON.stringify(result, null, 2));
             
             // Update README.md - Anime section
-            const README_FILE = 'Directorys/README.md';
+            const README_FILE = 'Sources/README.md';
             let readmeContent = '';
             
             // Read existing README or create header
@@ -456,7 +456,7 @@ jobs:
             let animeSection = '## Normal Sources\n\n';
             for (const source of allAnimeSources) {
               const encodedFile = encodeURIComponent(source.file);
-              const hostedUrl = `https://randomsideprojects.github.io/Media-Manager/index.html?source=Directorys%2FFiles%2FAnime%2F${encodedFile}`;
+              const hostedUrl = `https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2F${encodedFile}`;
               animeSection += `- [${source.title}](${hostedUrl})\n`;
             }
             animeSection += '\n';
@@ -507,7 +507,7 @@ jobs:
             if [ -d "$POSTERS_DIR" ]; then
               status_paths+=("$POSTERS_DIR")
             fi
-            status_paths+=("Directorys/README.md")
+            status_paths+=("Sources/README.md")
             status_paths+=("$FILE_DIR")
 
             if [ -z "$(git status --porcelain -- "${status_paths[@]}")" ]; then

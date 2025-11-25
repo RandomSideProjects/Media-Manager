@@ -41,7 +41,7 @@ function getPublicSourceOpenKey(meta) {
     ? meta.path
     : `./Files/${meta && meta.file ? meta.file : ''}`;
   const normalized = openPath.replace(/^\.\//, '');
-  return `Directorys/${normalized}`;
+  return `Sources/${normalized}`;
 }
 
 function sortMeta(list, mode) {
