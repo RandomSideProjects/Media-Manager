@@ -10,7 +10,7 @@ These are also availible [here](https://randomsideprojects.github.io/Media-Manag
 - [My Dress-up Darling](https://randomsideprojects.github.io/Media-Manager/?source=Sources%2FFiles%2FManga%2FMy_Dress-up_Darling.json)
 - [One-Punch Man](https://randomsideprojects.github.io/Media-Manager/?source=Sources%2FFiles%2FManga%2FOne-Punch_Man.json)
 
-## Anime Sources
+## Normal Sources
 
 - [A Condition Called Love](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FConditionLove.json)
 - [A Couple Of Cuckoos](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FCuckoos.json)
