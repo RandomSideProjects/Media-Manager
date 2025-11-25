@@ -56,3 +56,10 @@ This directory contains all available media sources.
 - [Wise Man's Grandchild](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FWise_Man_S_Grandchild.json)
 - [You are Ms. Servent (Kimi-wa Meido sama)](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FMeidoSama.json)
 
+## Manga Sources
+
+- [Bloom Into You](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FManga%2FBloom_Into_You.json)
+- [My Dress-Up Darling](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FManga%2FMy_Dress-up_Darling.json)
+- [One-Punch Man](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FManga%2FOne-Punch_Man.json)
+- [The 100 Girlfriends Who Really, Really, Really, Really, REALLY Love You](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FManga%2FThe_100_Girlfriends_Who_Really%2C_Really%2C_Really%2C_Really%2C_REALLY_Love_You.json)
+
