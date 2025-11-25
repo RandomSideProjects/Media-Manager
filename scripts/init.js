@@ -1,5 +1,61 @@
 "use strict";
 
+const LEGACY_SOURCE_PREFIX = 'Directorys/Files/';
+const LEGACY_SOURCE_REPLACEMENT = 'Sources/Files/';
+const LEGACY_SOURCE_PREFIX_LOWER = LEGACY_SOURCE_PREFIX.toLowerCase();
+
+function normalizeLegacySourcePath(rawValue) {
+  if (typeof rawValue !== 'string') {
+    return { value: rawValue, changed: false };
+  }
+  const trimmed = rawValue.trim();
+  if (trimmed.length < LEGACY_SOURCE_PREFIX.length) {
+    return { value: rawValue, changed: false };
+  }
+  const candidate = trimmed.slice(0, LEGACY_SOURCE_PREFIX.length);
+  if (candidate.toLowerCase() !== LEGACY_SOURCE_PREFIX_LOWER) {
+    return { value: rawValue, changed: false };
+  }
+  const suffix = trimmed.slice(LEGACY_SOURCE_PREFIX.length);
+  return {
+    value: `${LEGACY_SOURCE_REPLACEMENT}${suffix}`,
+    changed: true
+  };
+}
+
+function buildUrlWithSourceValue(value, searchString = window.location.search) {
+  try {
+    const params = new URLSearchParams(searchString);
+    if (value) {
+      params.set('source', value);
+    } else {
+      params.delete('source');
+    }
+    const basePath = window.location.pathname || '';
+    const query = params.toString();
+    return query ? `${basePath}?${query}` : basePath;
+  } catch {
+    return null;
+  }
+}
+
+function attemptLegacySourceRedirect() {
+  if (typeof window === 'undefined') return false;
+  const params = new URLSearchParams(window.location.search);
+  const rawSource = params.get('source') || '';
+  if (!rawSource.trim()) return false;
+  let decoded = rawSource;
+  try {
+    decoded = decodeURIComponent(rawSource);
+  } catch {}
+  const normalized = normalizeLegacySourcePath(decoded);
+  if (!normalized.changed) return false;
+  const newUrl = buildUrlWithSourceValue(normalized.value);
+  if (!newUrl) return false;
+  window.location.replace(newUrl);
+  return true;
+}
+
 function setRecentSourcesActive(flag) {
   if (window.RSPRecentSources && typeof window.RSPRecentSources.setSourceActive === 'function') {
     try {
@@ -44,6 +100,20 @@ async function loadSource(rawInput) {
       }
     }
   } catch {}
+
+  const normalizedLegacySource = normalizeLegacySourcePath(decodedRaw);
+  if (normalizedLegacySource.changed) {
+    decodedRaw = normalizedLegacySource.value;
+    if (urlInput) {
+      try { urlInput.value = normalizedLegacySource.value; }
+      catch {}
+    }
+    const normalizedUrl = buildUrlWithSourceValue(normalizedLegacySource.value);
+    if (normalizedUrl) {
+      try { window.history.replaceState(null, '', normalizedUrl); }
+      catch {}
+    }
+  }
 
   if (directJson) {
     srcUrl = '';
@@ -149,6 +219,7 @@ async function loadSource(rawInput) {
 }
 
 async function init() {
+  if (attemptLegacySourceRedirect()) return;
   const params = new URLSearchParams(window.location.search);
   const paramValue = params.get('source') || '';
 

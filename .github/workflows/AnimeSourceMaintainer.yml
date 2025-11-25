@@ -461,22 +461,17 @@ jobs:
             }
             animeSection += '\n';
             
-            // Replace or add anime section
-            const animeSectionRegex = /## Anime Sources\n\n[\s\S]*?(?=\n## |$)/;
-            if (animeSectionRegex.test(readmeContent)) {
-              readmeContent = readmeContent.replace(animeSectionRegex, animeSection.trim());
+            // Replace or add the normal sources section
+            const normalSectionRegex = /## Normal Sources\n\n[\s\S]*?(?=\n## |$)/g;
+            readmeContent = readmeContent.replace(normalSectionRegex, '');
+
+            const mangaSectionRegex = /## Manga Sources\n\n[\s\S]*?(?=\n## |$)/;
+            const mangaSectionMatch = readmeContent.match(mangaSectionRegex);
+            if (mangaSectionMatch) {
+              readmeContent = readmeContent.replace(mangaSectionRegex, match => `${match.trimEnd()}\n\n${animeSection}`);
             } else {
-              // Add anime section after manga section if it exists, otherwise at the end
-              const mangaSectionMatch = readmeContent.match(/(## Manga Sources\n\n[\s\S]*?)(\n## |$)/);
-              if (mangaSectionMatch) {
-                const beforeAnime = mangaSectionMatch[0].endsWith('\n## ') 
-                  ? readmeContent.slice(0, readmeContent.indexOf(mangaSectionMatch[0]) + mangaSectionMatch[1].length)
-                  : readmeContent.slice(0, readmeContent.indexOf(mangaSectionMatch[0]) + mangaSectionMatch[0].length - (mangaSectionMatch[2] === '$' ? 0 : mangaSectionMatch[2].length));
-                const afterAnime = mangaSectionMatch[2] === '$' ? '' : readmeContent.slice(readmeContent.indexOf(mangaSectionMatch[0]) + mangaSectionMatch[1].length);
-                readmeContent = beforeAnime + '\n' + animeSection + afterAnime;
-              } else {
-                readmeContent += animeSection;
-              }
+              const trimmedReadme = readmeContent.trimEnd();
+              readmeContent = trimmedReadme ? `${trimmedReadme}\n\n${animeSection}` : animeSection;
             }
             
             fs.writeFileSync(README_FILE, readmeContent);
