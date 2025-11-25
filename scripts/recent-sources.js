@@ -13,15 +13,8 @@
   const VALID_PLACEMENTS = new Set(["bottom", "left", "right"]);
   const DEFAULT_PLACEMENT = "bottom";
   const INLINE_MAX_LENGTH = 150000; // 150 KB guardrail so it dont kill itself :/ should be plenty for most uses, will probably add an function to auto delete old ones later if i get around to it
-  
-  
   const LEGACY_SOURCE_PREFIX = "Directorys/Files/";
-  const LEGACY_SOURCE_REPLACEMENT = "Sources/Files/"; 
-  
-
-  // this is to purge all of the old source paths to her, replace them with the new ones in local storage for a recent sources
-  // another one of the many pains that comes with finally fixing my errors that I made in June 2025
-  // was a pain in the ass to do it still :/
+  const LEGACY_SOURCE_REPLACEMENT = "Sources/Files/";
   const LEGACY_SOURCE_PREFIX_LOWER = LEGACY_SOURCE_PREFIX.toLowerCase();
   const recentRail = (typeof recentSourcesRail !== "undefined" && recentSourcesRail) ? recentSourcesRail : document.getElementById("recentSourcesRail");
   const urlInputField = (typeof urlInput !== "undefined" && urlInput) ? urlInput : document.getElementById("urlInput");
@@ -30,6 +23,39 @@
     : null;
   const MOBILE_UA_PATTERN = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
   const DESKTOP_MIN_WIDTH = 992;
+
+  function escapeRegExp(value) {
+    return (typeof value === "string" ? value : "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+
+  function replaceLegacyPaths(value) {
+    if (typeof value !== "string" || !value.includes(LEGACY_SOURCE_PREFIX)) return value;
+    const regex = new RegExp(escapeRegExp(LEGACY_SOURCE_PREFIX), "gi");
+    return value.replace(regex, LEGACY_SOURCE_REPLACEMENT);
+  }
+
+  function migrateLegacyPathsInLocalStorage() {
+    if (typeof window === "undefined" || !window.localStorage) return;
+    try {
+      const keys = [];
+      for (let i = 0; i < localStorage.length; i += 1) {
+        const key = localStorage.key(i);
+        if (key) keys.push(key);
+      }
+      keys.forEach((key) => {
+        const raw = localStorage.getItem(key);
+        if (typeof raw !== "string" || !raw.includes(LEGACY_SOURCE_PREFIX)) return;
+        const normalized = replaceLegacyPaths(raw);
+        if (normalized !== raw) {
+          localStorage.setItem(key, normalized);
+        }
+      });
+    } catch (err) {
+      console.warn("[RecentSources] Legacy migration failed", err);
+    }
+  }
+
+  migrateLegacyPathsInLocalStorage();
 
   const state = {
     enabled: readEnabledSetting(),
