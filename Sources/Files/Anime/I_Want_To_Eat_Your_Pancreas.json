@@ -1,0 +1,41 @@
+{
+  "title": "I Want To Eat Your Pancreas",
+  "Image": "https://files.catbox.moe/w8z164.webp",
+  "LatestTime": "2025-11-28T05:12:19.969Z",
+  "categories": [
+    {
+      "category": "Season 1",
+      "episodes": [
+        {
+          "title": "Part 1",
+          "src": "https://files.catbox.moe/z42p79.mp4",
+          "fileSizeBytes": 151326926,
+          "durationSeconds": 1632
+        },
+        {
+          "title": "Part 2",
+          "src": "https://files.catbox.moe/w2k304.mp4",
+          "fileSizeBytes": 117279341,
+          "durationSeconds": 1638
+        },
+        {
+          "title": "Part 3",
+          "src": "https://files.catbox.moe/loty28.mp4",
+          "fileSizeBytes": 141357508,
+          "durationSeconds": 1625
+        },
+        {
+          "title": "Part 4",
+          "src": "https://files.catbox.moe/iviesn.mp4",
+          "fileSizeBytes": 196070313,
+          "durationSeconds": 1628
+        }
+      ],
+      "separated": 1
+    }
+  ],
+  "totalFileSizeBytes": 606034088,
+  "totalDurationSeconds": 6523,
+  "separatedCategoryCount": 1,
+  "separatedItemCount": 4
+}
