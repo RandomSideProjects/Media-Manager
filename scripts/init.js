@@ -3,6 +3,30 @@
 const LEGACY_SOURCE_PREFIX = 'Directorys/Files/';
 const LEGACY_SOURCE_REPLACEMENT = 'Sources/Files/';
 const LEGACY_SOURCE_PREFIX_LOWER = LEGACY_SOURCE_PREFIX.toLowerCase();
+const DIRECTORY_POSTER_GAP = 8;
+
+function updateDirectoryHeaderPosterSpacing() {
+  if (!directoryHeader) return;
+  let space = 0;
+  if (directoryPoster && directoryPoster.style.display !== 'none') {
+    const width = directoryPoster.offsetWidth;
+    if (Number.isFinite(width) && width > 0) {
+      space = width + DIRECTORY_POSTER_GAP;
+    }
+  }
+  directoryHeader.style.setProperty('--poster-space', `${space}px`);
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('resize', updateDirectoryHeaderPosterSpacing);
+}
+
+if (directoryPoster) {
+  directoryPoster.addEventListener('load', updateDirectoryHeaderPosterSpacing);
+  directoryPoster.addEventListener('error', updateDirectoryHeaderPosterSpacing);
+}
+
+updateDirectoryHeaderPosterSpacing();
 
 function normalizeLegacySourcePath(rawValue) {
   if (typeof rawValue !== 'string') {
@@ -180,6 +204,7 @@ async function loadSource(rawInput) {
     if (directoryPoster) {
       if (imgUrl) { directoryPoster.src = imgUrl; directoryPoster.style.display = 'inline-block'; }
       else { try { directoryPoster.removeAttribute('src'); } catch {} directoryPoster.style.display = 'none'; }
+      updateDirectoryHeaderPosterSpacing();
     }
 
     if (directoryHeader) directoryHeader.style.display = 'flex';

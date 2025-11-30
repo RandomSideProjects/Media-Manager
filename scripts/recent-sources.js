@@ -199,6 +199,9 @@
     let separatedCategoryCount = 0;
     let episodeCount = 0;
     let separatedItemCount = 0;
+    let separatedEpisodeCount = 0;
+    let separatedEpisodeItemCount = 0;
+    let separatedCategoryItemCount = 0;
     let totalFileSizeBytes = 0;
     let totalDurationSeconds = 0;
 
@@ -208,12 +211,18 @@
       else categoryCount += 1;
       const episodes = Array.isArray(category && category.episodes) ? category.episodes : [];
       episodes.forEach((episode) => {
-        const episodeSeparated = isSeparatedCategory || Number(episode && (episode.separated ?? episode.seperated)) === 1;
+        const episodeSeparated = Number(episode && (episode.separated ?? episode.seperated)) === 1;
         const parts = Array.isArray(episode && episode.sources) ? episode.sources : [];
-        if (episodeSeparated) {
-          separatedItemCount += parts.length ? parts.length : 1;
+        const partsCount = parts.length ? parts.length : 1;
+
+        if (isSeparatedCategory) {
+          separatedCategoryItemCount += partsCount;
         } else {
           episodeCount += 1;
+          if (episodeSeparated) {
+            separatedEpisodeCount += 1;
+            separatedEpisodeItemCount += partsCount;
+          }
         }
 
         let duration = Number(episode && episode.durationSeconds);
@@ -243,12 +252,15 @@
       totalDurationSeconds = aggregatedDuration;
     }
 
+    separatedItemCount = separatedCategoryItemCount + separatedEpisodeItemCount;
+    const separatedEpisodeExtraParts = Math.max(0, separatedEpisodeItemCount - separatedEpisodeCount);
+
     return {
       categoryCount,
       separatedCategoryCount,
       episodeCount,
       separatedItemCount,
-      itemCount: episodeCount + separatedItemCount,
+      itemCount: episodeCount + separatedCategoryItemCount + separatedEpisodeExtraParts,
       totalFileSizeBytes,
       totalDurationSeconds
     };

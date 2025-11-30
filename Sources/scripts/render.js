@@ -3,6 +3,11 @@
 // Variables (top)
 // None specific for this file; uses global SOURCES_* and utils.
 
+function setCountParagraph(p, count, singular, plural) {
+  p.innerHTML = `<strong>${count}</strong> ${count === 1 ? singular : plural}`;
+  p.style.display = count > 0 ? 'block' : 'none';
+}
+
 // Build a card from manifest/meta entry
 function buildSourceCardFromMeta(meta) {
   const title = meta.title || meta.file || 'Untitled';
@@ -52,14 +57,14 @@ function buildSourceCardFromMeta(meta) {
   const p2 = document.createElement('p');
   const p3 = document.createElement('p');
   if (isManga) {
-    p1.innerHTML = `<strong>${volumeCount}</strong> ${volumeCount === 1 ? 'Volume' : 'Volumes'}`;
-    p2.innerHTML = `<strong>${pageCountRaw}</strong> ${pageCountRaw === 1 ? 'Page' : 'Pages'}`;
+    setCountParagraph(p1, volumeCount, 'Volume', 'Volumes');
+    setCountParagraph(p2, pageCountRaw, 'Page', 'Pages');
     p3.style.display = 'none';
   } else {
-    p1.innerHTML = `<strong>${categoryCount}</strong> ${categoryCount === 1 ? 'Season' : 'Seasons'}`;
-    p2.innerHTML = `<strong>${episodeCount}</strong> ${episodeCount === 1 ? 'Episode' : 'Episodes'}`;
+    setCountParagraph(p1, categoryCount, 'Season', 'Seasons');
+    setCountParagraph(p2, episodeCount, 'Episode', 'Episodes');
     if (hasSeparatedMeta) {
-      p3.innerHTML = `<strong>${separatedCategoryCount}</strong> ${separatedCategoryCount === 1 ? 'Movie' : 'Movies'}`;
+      setCountParagraph(p3, separatedCategoryCount, 'Movie', 'Movies');
     } else {
       p3.style.display = 'none';
     }
@@ -127,25 +132,23 @@ function buildSourceCardFromMeta(meta) {
     } else {
       const inSeasonMode = p1.textContent.includes('Season');
       if (inSeasonMode) {
-        p1.innerHTML = `<strong>${categoryCount}</strong> ${categoryCount === 1 ? 'Category' : 'Categories'}`;
-        p2.innerHTML = `<strong>${itemCount}</strong> ${itemCount === 1 ? 'Item' : 'Items'}`;
+        setCountParagraph(p1, categoryCount, 'Category', 'Categories');
+        setCountParagraph(p2, itemCount, 'Item', 'Items');
         timeP.style.display = meta.LatestTime ? 'block' : 'none';
         sizeP.style.display = (typeof meta.totalFileSizeBytes === 'number') ? 'block' : 'none';
         durP.style.display = (typeof meta.totalDurationSeconds === 'number') ? 'block' : 'none';
         if (hasSeparatedMeta) {
           const separatedCountForItems = separatedItemCount > 0 ? separatedItemCount : separatedCategoryCount;
-          p3.innerHTML = `<strong>${separatedCountForItems}</strong> ${separatedCountForItems === 1 ? 'Separated Item' : 'Separated Items'}`;
-          p3.style.display = 'block';
+          setCountParagraph(p3, separatedCountForItems, 'Separated Item', 'Separated Items');
         }
       } else {
-        p1.innerHTML = `<strong>${categoryCount}</strong> ${categoryCount === 1 ? 'Season' : 'Seasons'}`;
-        p2.innerHTML = `<strong>${episodeCount}</strong> ${episodeCount === 1 ? 'Episode' : 'Episodes'}`;
+        setCountParagraph(p1, categoryCount, 'Season', 'Seasons');
+        setCountParagraph(p2, episodeCount, 'Episode', 'Episodes');
         timeP.style.display = 'none';
         sizeP.style.display = 'none';
         durP.style.display = 'none';
         if (hasSeparatedMeta) {
-          p3.innerHTML = `<strong>${separatedCategoryCount}</strong> ${separatedCategoryCount === 1 ? 'Movie' : 'Movies'}`;
-          p3.style.display = 'block';
+          setCountParagraph(p3, separatedCategoryCount, 'Movie', 'Movies');
         }
       }
     }
@@ -240,14 +243,14 @@ function buildSourceCard(data, openSourceParam, fileNameForFallback) {
   const p2 = document.createElement('p');
   const p3 = document.createElement('p');
   if (isManga) {
-    p1.innerHTML = `<strong>${volumeCount}</strong> ${volumeCount === 1 ? 'Volume' : 'Volumes'}`;
-    p2.innerHTML = `<strong>${pageCount}</strong> ${pageCount === 1 ? 'Page' : 'Pages'}`;
+    setCountParagraph(p1, volumeCount, 'Volume', 'Volumes');
+    setCountParagraph(p2, pageCount, 'Page', 'Pages');
     p3.style.display = 'none';
   } else {
-    p1.innerHTML = `<strong>${seasons}</strong> ${seasons === 1 ? 'Season' : 'Seasons'}`;
-    p2.innerHTML = `<strong>${episodes}</strong> ${episodes === 1 ? 'Episode' : 'Episodes'}`;
+    setCountParagraph(p1, seasons, 'Season', 'Seasons');
+    setCountParagraph(p2, episodes, 'Episode', 'Episodes');
     if (hasSeparatedMeta) {
-      p3.innerHTML = `<strong>${separatedCategoryCount}</strong> ${separatedCategoryCount === 1 ? 'Movie' : 'Movies'}`;
+      setCountParagraph(p3, separatedCategoryCount, 'Movie', 'Movies');
     } else {
       p3.style.display = 'none';
     }
@@ -296,23 +299,21 @@ function buildSourceCard(data, openSourceParam, fileNameForFallback) {
     } else {
       const inSeasonMode = p1.textContent.includes('Season');
       if (inSeasonMode) {
-        p1.innerHTML = `<strong>${seasons}</strong> ${seasons === 1 ? 'Category' : 'Categories'}`;
-        p2.innerHTML = `<strong>${itemCount}</strong> ${itemCount === 1 ? 'Item' : 'Items'}`;
+        setCountParagraph(p1, seasons, 'Category', 'Categories');
+        setCountParagraph(p2, itemCount, 'Item', 'Items');
         sizeP.style.display = totalBytes ? 'block' : 'none';
         durP.style.display = totalSecs ? 'block' : 'none';
         if (hasSeparatedMeta) {
           const separatedCountForItems = separatedItemCount > 0 ? separatedItemCount : separatedCategoryCount;
-          p3.innerHTML = `<strong>${separatedCountForItems}</strong> ${separatedCountForItems === 1 ? 'Separated Item' : 'Separated Items'}`;
-          p3.style.display = 'block';
+          setCountParagraph(p3, separatedCountForItems, 'Separated Item', 'Separated Items');
         }
       } else {
-        p1.innerHTML = `<strong>${seasons}</strong> ${seasons === 1 ? 'Season' : 'Seasons'}`;
-        p2.innerHTML = `<strong>${episodes}</strong> ${episodes === 1 ? 'Episode' : 'Episodes'}`;
+        setCountParagraph(p1, seasons, 'Season', 'Seasons');
+        setCountParagraph(p2, episodes, 'Episode', 'Episodes');
         sizeP.style.display = 'none';
         durP.style.display = 'none';
         if (hasSeparatedMeta) {
-          p3.innerHTML = `<strong>${separatedCategoryCount}</strong> ${separatedCategoryCount === 1 ? 'Movie' : 'Movies'}`;
-          p3.style.display = 'block';
+          setCountParagraph(p3, separatedCategoryCount, 'Movie', 'Movies');
         }
       }
     }

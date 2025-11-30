@@ -11,8 +11,8 @@ try {
       } catch {}
       activeDownloadObjectUrls.clear();
     };
-    window.addEventListener('pagehide', cleanupAllObjectUrls);
-    window.addEventListener('beforeunload', cleanupAllObjectUrls);
+    // Do not hook these cleanups to unload events so active downloads keep streaming
+    // even if the user navigates away; we rely on the scheduled 2‑hour cleanup instead.
   }
 } catch {}
 
@@ -449,6 +449,7 @@ async function downloadSourceFolder(options = {}) {
   const selectedSet = options.selectedCategories instanceof Set ? options.selectedCategories : null;
   // selectedEpisodesBySeason: { [seasonIndex]: Set(episodeIndex) }
   const selectedEpisodesBySeason = (options.selectedEpisodesBySeason && typeof options.selectedEpisodesBySeason === 'object') ? options.selectedEpisodesBySeason : null;
+  const logDl = (...args) => { try { console.log('[Downloads]', ...args); } catch {} };
   function scheduleObjectUrlCleanup(url) {
     if (!url) return null;
     activeDownloadObjectUrls.add(url);
@@ -534,6 +535,7 @@ async function downloadSourceFolder(options = {}) {
   let endEarlyPromptActive = false;
   let endEarlyChoiceMade = false;
   const xhrs = [];
+  const activeFetchControllers = [];
 
   const zip = new JSZip();
   const titleText = (directoryTitle.textContent || 'directory').trim() || 'directory';
@@ -750,6 +752,14 @@ async function downloadSourceFolder(options = {}) {
   const rowProgressValues = Array(tasks.length).fill(0);
   const rowStates = Array(tasks.length).fill('queued');
   const fallbackTotalBytes = Array(tasks.length).fill(null);
+  function getVisibilityAwareTimeout(baseMs) {
+    try {
+      if (typeof document !== 'undefined' && document.hidden) {
+        return Math.max(baseMs, 15 * 60 * 1000); // 15 minutes when tab is hidden to avoid background throttling aborts
+      }
+    } catch {}
+    return baseMs;
+  }
 
   function applyRowBackground(idx) {
     const row = rowEls[idx];
@@ -813,10 +823,15 @@ async function downloadSourceFolder(options = {}) {
   }
   rowEls = Array(tasks.length).fill(null);
   rowCompleted = Array(tasks.length).fill(false);
-  const REQUEST_IDLE_TIMEOUT_MS = 90000;
-  const FETCH_TOTAL_TIMEOUT_MS = 300000;
+  // Allow long-lived downloads; disable idle/time-based aborts.
+  const REQUEST_IDLE_TIMEOUT_MS = 0; // 0 = no inactivity timeout
+  const FETCH_TOTAL_TIMEOUT_MS = 0; // 0 = no total fetch timeout
 
   function createXhrInactivityWatchdog(xhr, rejectWithCleanup) {
+    // If timeout is disabled, return a no-op watchdog.
+    if (!REQUEST_IDLE_TIMEOUT_MS || REQUEST_IDLE_TIMEOUT_MS <= 0) {
+      return { cancel() {} };
+    }
     let finished = false;
     let timerId = null;
 
@@ -837,7 +852,7 @@ async function downloadSourceFolder(options = {}) {
     const restart = () => {
       if (finished) return;
       if (timerId !== null) clearTimeout(timerId);
-      timerId = setTimeout(onTimeout, REQUEST_IDLE_TIMEOUT_MS);
+      timerId = setTimeout(onTimeout, getVisibilityAwareTimeout(REQUEST_IDLE_TIMEOUT_MS));
     };
 
     xhr.addEventListener('loadstart', restart);
@@ -859,22 +874,28 @@ async function downloadSourceFolder(options = {}) {
     const controller = new AbortController();
     const opts = { ...options, signal: controller.signal };
     let timedOut = false;
-    const timeoutId = setTimeout(() => {
-      timedOut = true;
-      controller.abort();
-    }, timeoutMs);
+    const effectiveTimeout = getVisibilityAwareTimeout(timeoutMs);
+    const timeoutId = (timeoutMs && timeoutMs > 0)
+      ? setTimeout(() => {
+          timedOut = true;
+          controller.abort();
+        }, effectiveTimeout)
+      : null;
+    activeFetchControllers.push(controller);
     try {
       const response = await fetch(resource, opts);
-      clearTimeout(timeoutId);
       return response;
     } catch (err) {
-      clearTimeout(timeoutId);
       if (timedOut || (err && err.name === 'AbortError')) {
         const e = new Error('Timeout');
         e.code = 'timeout';
         throw e;
       }
       throw err;
+    } finally {
+      clearTimeout(timeoutId);
+      const idx = activeFetchControllers.indexOf(controller);
+      if (idx >= 0) activeFetchControllers.splice(idx, 1);
     }
   }
   let plannedTotalBytes = 0;
@@ -1060,6 +1081,12 @@ async function downloadSourceFolder(options = {}) {
     } else {
       abortActiveDownloads = true;
       try { remainingLabel.textContent = 'Ending active downloads immediately…'; } catch {}
+      activeFetchControllers.forEach((controller) => {
+        if (controller && typeof controller.abort === 'function') {
+          try { controller.abort(); } catch {}
+        }
+      });
+      activeFetchControllers.length = 0;
       xhrs.forEach((xhr) => { if (xhr && typeof xhr.abort === 'function') { try { xhr.abort(); } catch {} } });
     }
   }
@@ -1101,6 +1128,12 @@ async function downloadSourceFolder(options = {}) {
     stopRequested = true;
     cancelRequested = true;
     xhrs.forEach((xhr) => { if (xhr && typeof xhr.abort === 'function') { try { xhr.abort(); } catch {} } });
+    activeFetchControllers.forEach((controller) => {
+      if (controller && typeof controller.abort === 'function') {
+        try { controller.abort(); } catch {}
+      }
+    });
+    activeFetchControllers.length = 0;
     try { overlay.remove(); } catch {}
   });
 
@@ -1192,6 +1225,7 @@ async function downloadSourceFolder(options = {}) {
       const { ci, ei, episode, placeholder, type } = task;
       try {
         setStatus(idx, 'Starting…', { color: '#6ec1e4' });
+        logDl('Start', { idx, type, category: ci, episode: ei, src: episode && episode.src });
         if (type === 'json') {
           // JSON volume: fetch JSON, inline remote links as base64 data URIs, save JSON
           const epObj = catObjs[ci].episodes[ei];
@@ -1500,16 +1534,17 @@ async function downloadSourceFolder(options = {}) {
             watchdog = createXhrInactivityWatchdog(xhr, rejectWithCleanup);
             xhr.addEventListener('loadend', cleanup);
             xhr.open('GET', episode.src); xhr.responseType = 'blob';
-            xhr.addEventListener('progress', e => {
-              if (e.lengthComputable) {
-                setRowProgress(idx, (e.loaded / Math.max(1, e.total)) * 100);
-                loadedBytes[idx] = e.loaded;
-                totalBytes[idx] = e.total;
-                const totalLoaded = sumBytes(loadedBytes);
-                const totalTotal = sumBytes(totalBytes);
-                updateSpeedAndEta({ totalLoaded, totalTotal });
-                const remainingBytes = totalBytes[idx] - loadedBytes[idx];
-                const remainingMB = (remainingBytes / (1024 * 1024)).toFixed(2);
+              xhr.addEventListener('progress', e => {
+                if (e.lengthComputable) {
+                  setRowProgress(idx, (e.loaded / Math.max(1, e.total)) * 100);
+                  loadedBytes[idx] = e.loaded;
+                  totalBytes[idx] = e.total;
+                  logDl('Progress', { idx, loaded: e.loaded, total: e.total, url: episode.src });
+                  const totalLoaded = sumBytes(loadedBytes);
+                  const totalTotal = sumBytes(totalBytes);
+                  updateSpeedAndEta({ totalLoaded, totalTotal });
+                  const remainingBytes = totalBytes[idx] - loadedBytes[idx];
+                  const remainingMB = (remainingBytes / (1024 * 1024)).toFixed(2);
                 setStatus(idx, `${remainingMB} MB left`, { color: '#6ec1e4' });
                 updateRemainingLabel();
               } else {
@@ -1539,6 +1574,7 @@ async function downloadSourceFolder(options = {}) {
           }
 
           if (!blob) throw new Error('Download failed');
+          logDl('Downloaded blob', { idx, size: blob && blob.size, fileName, url: episode && episode.src });
           task.categoryFolder.file(fileName, blob);
           const epObj = catObjs[ci].episodes[ei];
           epObj.src = placeholder && placeholder.src ? placeholder.src : `Sources/${zipRootName}/${task.sanitizedCategory}/${fileName}`;
@@ -1565,12 +1601,14 @@ async function downloadSourceFolder(options = {}) {
           setStatus(idx, 'Done', { color: '#7fe7a9' });
           rowCompleted[idx] = true;
           applyVisibilityAll();
+          logDl('Completed', { idx, type, category: ci, episode: ei });
         }
       } catch (err) {
         const errorContext = type === 'separated'
           ? (task.parts && task.parts[0] && task.parts[0].remoteUrl)
           : (episode && episode.src);
         console.error('Error downloading', errorContext, err);
+        logDl('Error', { idx, type, category: ci, episode: ei, error: String(err && err.message || err) });
         const failureContext = placeholder && placeholder.src ? placeholder : episode;
         markDownloadFailed(idx, err, ci, ei, failureContext || {}, { cancelled: stopRequested });
       }
@@ -1662,6 +1700,7 @@ async function downloadSourceFolder(options = {}) {
     } catch {}
 
     streamingAttempted = true;
+    logDl('StreamSaver start', { zip: `${zipBase}.zip` });
     cancelBtn.disabled = true;
     try {
       speedLabel.textContent = 'Streaming zip…';
@@ -1691,6 +1730,7 @@ async function downloadSourceFolder(options = {}) {
             if (Number.isFinite(pct)) {
               try { etaLabel.textContent = `Packaging: ${pct.toFixed(1)}%`; } catch {}
             }
+            logDl('Stream chunk', { emittedBytes, pct: metadata && metadata.percent });
           });
           helper.on('error', (err) => controller.error(err));
           helper.on('end', () => controller.close());
@@ -1704,10 +1744,12 @@ async function downloadSourceFolder(options = {}) {
         etaLabel.textContent = 'Streaming complete.';
         remainingLabel.textContent = 'Archive saved to disk.';
       } catch {}
+      logDl('StreamSaver complete', { emittedBytes });
       try { speak('Download Complete'); } catch {}
       return true;
     } catch (err) {
       console.error('Streamed download failed', err);
+      logDl('StreamSaver failed', { error: String(err && err.message || err) });
       try { etaLabel.textContent = 'Streaming failed – retrying with in-memory packaging…'; } catch {}
       return false;
     } finally {
@@ -1740,7 +1782,9 @@ async function downloadSourceFolder(options = {}) {
         const pct = Number(metadata && metadata.percent);
         if (Number.isFinite(pct)) etaLabel.textContent = `Packaging: ${pct.toFixed(1)}%`;
       } catch {}
+      logDl('Zip packaging', { pct: metadata && metadata.percent });
     });
+    logDl('Packaging complete', { size: content && content.size });
     objectUrl = URL.createObjectURL(content);
     objectUrlCleanupTimer = scheduleObjectUrlCleanup(objectUrl);
     const a = document.createElement('a');
