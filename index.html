@@ -7,20 +7,24 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <button id="themeToggle" title="Toggle Theme">☾</button>
-  <button id="settingsBtn" title="Settings" onclick="console.log('Settings button clicked directly')">
-    ⚙
-  </button>
-  <nav class="tabs">
-    <button onclick="location.href='./index.html'" class="tab-button">Home</button>
-    <div class="dropdown">
-      <button class="tab-button dropbtn">Sources</button>
-      <div class="dropdown-content">
-        <button onclick="location.href='./Creator/index.html'" class="tab-button dropdown-item">Modify or Create</button>
-        <button onclick="location.href='./Sources/index.html'" class="tab-button dropdown-item">Public sources</button>
+  <div class="toolbar">
+    <nav class="tabs">
+      <button onclick="location.href='./index.html'" class="tab-button">Home</button>
+      <div class="dropdown">
+        <button class="tab-button dropbtn">Sources</button>
+        <div class="dropdown-content">
+          <button onclick="location.href='./Creator/index.html'" class="tab-button dropdown-item">Modify or Create</button>
+          <button onclick="location.href='./Sources/index.html'" class="tab-button dropdown-item">Public sources</button>
+        </div>
       </div>
+    </nav>
+    <div class="toolbar-actions toolbar-actions--left">
+      <button id="settingsBtn" title="Settings" aria-label="Open settings">⚙</button>
     </div>
-  </nav>
+    <div class="toolbar-actions toolbar-actions--right">
+      <button id="themeToggle" title="Toggle Theme" aria-label="Toggle theme">☾</button>
+    </div>
+  </div>
   <header>RSP Media Manager</header>
   <div id="homeMainRegion">
     <section id="recentSourcesRail" class="recent-sources" aria-label="Recent sources" hidden></section>
