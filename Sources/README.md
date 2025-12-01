@@ -1,4 +1,8 @@
+<<<<<<< Updated upstream
 # Sources
+=======
+# Media Sources Directory
+>>>>>>> Stashed changes
 
 This directory contains all available media sources.
 
