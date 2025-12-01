@@ -19,6 +19,28 @@ html {
   cursor: pointer;
   box-shadow: 0 4px 10px rgba(0,0,0,0.35);
 }
+
+#simpleSourceLink {
+  position: fixed;
+  left: 14px;
+  bottom: 14px;
+  z-index: 1001;
+  padding: 0.6em 1em;
+  border-radius: 10px;
+  background: #1f1f1f;
+  color: #f1f1f1;
+  text-decoration: none;
+  font-weight: 700;
+  border: 1px solid #2a2a2a;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.35);
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+#simpleSourceLink:hover {
+  background: #252525;
+}
+#simpleSourceLink:active {
+  transform: translateY(1px);
+}
 /* Settings overlay */
 #sourcesSettingsOverlay {
   position: fixed;
