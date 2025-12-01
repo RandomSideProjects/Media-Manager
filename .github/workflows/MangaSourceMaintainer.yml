@@ -215,7 +215,7 @@ jobs:
                     
                     if (fs.existsSync(posterAbs)) {
                       console.log('Poster already exists, skipping:', posterAbs);
-                      poster = `./Posters/Manga/${posterName}`;
+                      poster = `./Sources/Posters/Manga/${posterName}`;
                     } else {
                       let sourceBuffer;
                       if (imgUrl.startsWith('data:')) {

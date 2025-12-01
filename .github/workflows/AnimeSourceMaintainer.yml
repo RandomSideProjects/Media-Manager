@@ -362,7 +362,7 @@ jobs:
                       poster = `./Posters/Anime/${posterName}`;
                       
                       // Update the source JSON file to use local poster path
-                      const posterPath = `./Posters/Anime/${posterName}`;
+                      const posterPath = `./Sources/Posters/Anime/${posterName}`;
                       if (json.Image && json.Image !== 'N/A') {
                         json.Image = posterPath;
                       } else if (json.image && json.image !== 'N/A') {
