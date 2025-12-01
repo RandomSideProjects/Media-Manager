@@ -35,7 +35,7 @@ This directory contains all available media sources.
 - [In Another World With My Smartphone](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FAnotherWorldSmartphone.json)
 - [Kaguya-Sama: Love Is War](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FLoveIsWar.json)
 - [Kill la Kill](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FKill_La_Kill.json)
-- [KONOSUBA -God's blessing on this wonderful world!](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FKonosuba_God_S_Blessing_On_This_Wonderful_World.json)
+- [KONOSUBA](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FKonosuba_God_S_Blessing_On_This_Wonderful_World.json)
 - [Love Flops](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FLove_Flops.json)
 - [Love, Chunibyo & Other Delusions](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FLove_Chunibyo_Other_Delusions.json)
 - [More Than a Married Couple, But Not Lovers](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FMarriedNotLovers.json)
