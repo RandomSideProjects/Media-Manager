@@ -159,11 +159,67 @@ function findNextDistinctIndex(startIdx) {
   return flatList.length;
 }
 
+function fitLongTitle(el, container, metaEl) {
+  if (!el || !container) return;
+  const minFont = 10;
+  let fontSize = parseFloat(window.getComputedStyle(el).fontSize) || 16;
+  const metaHeight = metaEl ? metaEl.offsetHeight : 0;
+  const availableHeight = Math.max(container.clientHeight - metaHeight - 12, 12);
+  el.style.maxHeight = `${availableHeight}px`;
+  el.style.minHeight = '0';
+
+  let iterations = 0;
+  while (iterations < 40 && fontSize > minFont && (el.scrollHeight > el.clientHeight || el.scrollWidth > el.clientWidth)) {
+    fontSize -= 1;
+    el.style.fontSize = `${fontSize}px`;
+    iterations += 1;
+  }
+  if (fontSize > minFont) {
+    fontSize -= 1;
+    el.style.fontSize = `${fontSize}px`;
+  }
+}
+
+function attachLongTitleTooltip(button, text) {
+  if (!button || !text) return;
+  const tooltip = document.createElement('div');
+  tooltip.className = 'episode-tooltip';
+  tooltip.textContent = text;
+  button.appendChild(tooltip);
+
+  let hoverTimer = null;
+  const show = () => { tooltip.style.display = 'block'; };
+  const hide = () => {
+    tooltip.style.display = 'none';
+    if (hoverTimer) {
+      clearTimeout(hoverTimer);
+      hoverTimer = null;
+    }
+  };
+  const startTimer = () => {
+    hide();
+    hoverTimer = setTimeout(show, 3000);
+  };
+
+  button.addEventListener('mouseenter', startTimer);
+  button.addEventListener('mouseleave', hide);
+  button.addEventListener('focusin', startTimer);
+  button.addEventListener('focusout', hide);
+}
+
 function renderEpisodeList() {
   episodeList.innerHTML = '';
   flatList = [];
   const showCategoryTitle = Array.isArray(videoList) && videoList.length > 1;
   let separatedGroupCounter = 0;
+  const longTitleQueue = [];
+
+  const extractEpisodeNumber = (rawTitle) => {
+    if (!rawTitle || typeof rawTitle !== 'string') return null;
+    const match = rawTitle.trim().match(/^episode\s+(\d+)$/i);
+    if (!match) return null;
+    return match[1];
+  };
 
   videoList.forEach((category, categoryIdx) => {
     const categoryTitle = (category && category.category) ? category.category : `Category ${categoryIdx + 1}`;
@@ -213,17 +269,52 @@ function renderEpisodeList() {
 
       const button = document.createElement('button');
       button.className = 'episode-button separated-category';
-      const left = document.createElement('span');
-      left.textContent = categoryTitle;
       const right = document.createElement('span');
       right.className = 'episode-meta';
+      const titleText = categoryTitle.trim();
+      const episodeNumber = extractEpisodeNumber(titleText);
+      const isShortTitle = !episodeNumber && titleText.length > 0 && titleText.length <= 5;
+      const isLongTitle = !episodeNumber && titleText.length > 5;
       const partsLabel = `${entries.length} part${entries.length === 1 ? '' : 's'}`;
+      const countEl = document.createElement('span');
+      countEl.className = 'episode-count';
+      countEl.textContent = partsLabel;
       if (totalDuration > 0) {
-        right.textContent = `${partsLabel} · ${formatTime(totalDuration)}`;
+        right.textContent = `${formatTime(totalDuration)}`;
       } else {
-        right.textContent = partsLabel;
+        right.textContent = '';
       }
-      button.append(left, right);
+
+      if (episodeNumber) {
+        const numEl = document.createElement('span');
+        numEl.className = 'episode-number';
+        numEl.textContent = episodeNumber;
+        const titleEl = document.createElement('span');
+        titleEl.className = 'episode-title';
+        titleEl.textContent = 'Episode';
+        button.classList.add('episode--numbered');
+        button.append(titleEl, numEl, countEl, right);
+      } else if (isShortTitle) {
+        const numEl = document.createElement('span');
+        numEl.className = 'episode-number';
+        numEl.textContent = titleText;
+        button.classList.add('episode--numbered');
+        button.append(numEl, countEl, right);
+      } else if (isLongTitle) {
+        const longEl = document.createElement('span');
+        longEl.className = 'episode-long';
+        longEl.textContent = titleText;
+        button.classList.add('episode--long');
+        button.append(longEl, countEl, right);
+        longTitleQueue.push({ el: longEl, container: button, metaEl: right });
+        attachLongTitleTooltip(button, titleText);
+      } else {
+        const titleEl = document.createElement('span');
+        titleEl.className = 'episode-title';
+        titleEl.textContent = titleText;
+        button.append(titleEl, countEl, right);
+      }
+
       button.addEventListener('click', () => {
         if (resumeKey) localStorage.setItem('lastEpSrc', resumeKey);
         writeSourceScopedValue('SavedItem', String(startIndex));
@@ -274,9 +365,14 @@ function renderEpisodeList() {
       button.className = 'episode-button';
 
       const left = document.createElement('span');
+      left.className = 'episode-title';
       left.textContent = entry.title || `Item ${index + 1}`;
       const right = document.createElement('span');
       right.className = 'episode-meta';
+      const titleText = (entry.title || `Item ${index + 1}`).trim();
+      const episodeNumber = extractEpisodeNumber(titleText);
+      const isShortTitle = !episodeNumber && titleText.length > 0 && titleText.length <= 5;
+      const isLongTitle = !episodeNumber && titleText.length > 5;
 
       const isManga = isEpisodeManga(entry);
       if (isManga) {
@@ -323,7 +419,32 @@ function renderEpisodeList() {
         }
       }
 
-      button.append(left, right);
+      if (episodeNumber) {
+        const numEl = document.createElement('span');
+        numEl.className = 'episode-number';
+        numEl.textContent = episodeNumber;
+        const titleEl = document.createElement('span');
+        titleEl.className = 'episode-title';
+        titleEl.textContent = 'Episode';
+        button.classList.add('episode--numbered');
+        button.append(titleEl, numEl, right);
+      } else if (isShortTitle) {
+        const numEl = document.createElement('span');
+        numEl.className = 'episode-number';
+        numEl.textContent = titleText;
+        button.classList.add('episode--numbered');
+        button.append(numEl, right);
+      } else if (isLongTitle) {
+        const longEl = document.createElement('span');
+        longEl.className = 'episode-long';
+        longEl.textContent = titleText;
+        button.classList.add('episode--long');
+        button.append(longEl, right);
+        longTitleQueue.push({ el: longEl, container: button, metaEl: right });
+        attachLongTitleTooltip(button, titleText);
+      } else {
+        button.append(left, right);
+      }
       button.addEventListener('click', () => {
         const resumeKey = resolveResumeKeyForItem(entry);
         if (resumeKey) localStorage.setItem('lastEpSrc', resumeKey);
@@ -344,6 +465,12 @@ function renderEpisodeList() {
     empty.className = 'empty-state';
     empty.textContent = 'No items available in this source yet.';
     episodeList.appendChild(empty);
+  }
+
+  if (longTitleQueue.length) {
+    requestAnimationFrame(() => {
+      longTitleQueue.forEach(({ el, container, metaEl }) => fitLongTitle(el, container, metaEl));
+    });
   }
 }
 

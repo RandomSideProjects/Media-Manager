@@ -294,48 +294,139 @@ button:hover {
   align-items: center;
   gap: 1em;
 }
+#episodeList {
+  width: 100%;
+  max-width: 1100px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0.75rem;
+  align-items: stretch;
+}
 .category-title {
   font-size: 1.2em;
   font-weight: bold;
-  margin-top: 1em;
+  margin-top: 0.75em;
+  margin-bottom: 0.25em;
+  grid-column: 1 / -1;
+  text-align: left;
 }
 .episode-button {
-  width: min(100%, 720px);
-  max-width: 720px;
-  padding: 1em;
-  padding-right: 150px;
-  background: #222;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  padding: 0.8rem;
+  background: #1f1f1f;
   border-radius: 12px;
-  border: 2px solid transparent;
-  transition: all 0.3s;
+  border: 1px solid rgba(255,255,255,0.08);
+  transition: all 0.25s ease;
   cursor: pointer;
-  text-align: left;
-  position: relative; /* allow right-side meta absolute positioning */
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: stretch;
+  gap: 0.4rem;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.25);
 }
 .episode-button:hover {
-  border-color: #007bff;
-  background-color: #2a2a2a;
+  border-color: #3a82ff;
+  background-color: #262a35;
+  transform: translateY(-2px);
+  box-shadow: 0 16px 36px rgba(0,0,0,0.32);
 }
 .episode-button.separated-category {
   font-weight: 600;
 }
-
-.episode-meta {
-  color: #b6b6b6;
-  font-size: 0.9em;
+.episode-title {
+  font-size: 0.98em;
+  line-height: 1.25;
+  width: 100%;
+  color: var(--text);
+  word-break: break-word;
+  min-height: 0;
+}
+.episode-button.episode--numbered .episode-title {
+  font-size: 0.85em;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+.episode-number {
+  font-size: 2.4em;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  width: 100%;
+  color: var(--text);
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.episode-count {
+  color: #cbd1dd;
+  font-size: 0.95em;
+  font-weight: 700;
+  width: 100%;
+  text-align: center;
+  padding-top: 0.15rem;
   white-space: nowrap;
-  max-width: 40%;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.episode-long {
+  flex: 1 1 auto;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-weight: 700;
+  font-size: 1.05em;
+  line-height: 1.15;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  padding: 0 4px;
+  min-height: 0;
+}
+
+.episode-meta {
+  color: #cbd1dd;
+  font-size: 0.95em;
+  width: 100%;
+  text-align: center;
+  margin-top: auto;
+  padding-top: 0.45rem;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  min-height: 1.35em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.episode-tooltip {
   position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
+  left: 0;
+  top: calc(100% + 6px);
+  background: #111;
+  border: 1px solid #444;
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 0.8em;
+  color: #f1f1f1;
+  box-shadow: 0 6px 14px rgba(0,0,0,0.4);
+  pointer-events: none;
+  white-space: pre-line;
+  display: none;
+  z-index: 5;
+  max-width: 280px;
 }
 #episodeList .empty-state {
   padding: 1em;
   text-align: center;
   opacity: 0.7;
+  grid-column: 1 / -1;
 }
 #urlInputContainer {
   display: none;
@@ -355,15 +446,17 @@ button:hover {
 #directoryTitle {
   color: var(--text) !important;
   font-weight: bold;
-  font-size: 1.5em;
+  font-size: clamp(2rem, 3.125vw + 0.5rem, 3.25rem);
   margin: 0;
   display: none; /* revealed with header */
-  text-align: left;
+  text-align: center;
   flex: 1 1 0;
   min-width: 0;
   line-height: 1.2;
   display: flex;
   align-items: center;
+  justify-content: center;
+  padding: 0 0.35rem;
 }
 
 /* Title + poster header */
@@ -375,13 +468,14 @@ button:hover {
   justify-content: flex-start;
   width: 100%;
   min-height: 180px;
-  padding: 1.25rem 1.5rem;
+  padding: 0;
   gap: 24px;
   flex-direction: row;
   flex-wrap: wrap;
   max-width: min(720px, 100%);
   margin: 0 auto;
   border-radius: 20px;
+  justify-content: center;
 }
 
 #directoryPoster {
@@ -394,7 +488,7 @@ button:hover {
   border: 1px solid #333;
   background: #2a2a2a;
   flex: 0 0 auto;
-  order: 0;
+  order: 2;
   box-shadow: 0 8px 24px rgba(0,0,0,0.35);
   z-index: 0;
   align-self: center;
