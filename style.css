@@ -359,8 +359,11 @@ button:hover {
   margin: 0;
   display: none; /* revealed with header */
   text-align: left;
-  max-width: min(480px, 60vw);
+  flex: 1 1 0;
+  min-width: 0;
   line-height: 1.2;
+  display: flex;
+  align-items: center;
 }
 
 /* Title + poster header */
@@ -369,13 +372,16 @@ button:hover {
   margin-bottom: 1em;
   position: relative;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   width: 100%;
-  min-height: 200px;
-  padding: 0 2rem;
-  gap: 32px;
+  min-height: 180px;
+  padding: 1.25rem 1.5rem;
+  gap: 24px;
   flex-direction: row;
   flex-wrap: wrap;
+  max-width: min(720px, 100%);
+  margin: 0 auto;
+  border-radius: 20px;
 }
 
 #directoryPoster {
@@ -391,6 +397,7 @@ button:hover {
   order: 0;
   box-shadow: 0 8px 24px rgba(0,0,0,0.35);
   z-index: 0;
+  align-self: center;
 }
 
 #directoryHeader {
@@ -400,7 +407,11 @@ button:hover {
 header {
   font-size: 0.9em;
   color: #aaa;
-  margin-top: 1em;
+  margin: 1em auto 0;
+  text-align: center;
+  max-width: min(960px, 100%);
+  width: 100%;
+  padding: 0;
 }
 
 .toolbar {
@@ -420,7 +431,7 @@ header {
   right: 0;
 }
 
-.toolbar-actions {
+ .toolbar-actions {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
@@ -429,7 +440,7 @@ header {
 }
 
 .toolbar-actions--left {
-  right: 4rem;
+  right: 5rem;
   left: auto;
 }
 
@@ -461,26 +472,17 @@ header {
   transform: scale(0.96);
 }
 
-@media (max-width: 768px) {
-  .toolbar-actions--left {
-    right: auto;
-    left: 1rem;
-  }
-}
-
 .toolbar .dropdown-content {
   z-index: 1002;
 }
 
 @media (max-width: 768px) {
-  .toolbar {
-    padding: 0.35em 0.75em;
-  }
   .directory-header {
     flex-direction: column;
     align-items: center;
     gap: 12px;
     padding: 0 1rem;
+    margin: 0 auto;
   }
   #directoryPoster {
     max-width: 280px;
@@ -492,6 +494,16 @@ header {
   #directoryTitle {
     text-align: center;
     max-width: 100%;
+    width: 100%;
+    flex: unset;
+  }
+  .toolbar-actions--left {
+    right: auto;
+    left: 1rem;
+  }
+  .toolbar-actions--right {
+    right: 1rem;
+    left: auto;
   }
 }
 
