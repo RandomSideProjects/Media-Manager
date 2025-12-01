@@ -1,3 +1,7 @@
+---
+title: Media Sources Directory
+layout: default
+---
 # Media Sources Directory
 
 This directory contains all available media sources.
