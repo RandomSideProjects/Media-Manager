@@ -213,6 +213,25 @@ function renderEpisodeList() {
   const showCategoryTitle = Array.isArray(videoList) && videoList.length > 1;
   let separatedGroupCounter = 0;
   const longTitleQueue = [];
+  let tileCount = 0;
+
+  videoList.forEach((category) => {
+    const episodes = Array.isArray(category && category.episodes) ? category.episodes : [];
+    const useSeparated = shouldTreatCategoryAsSeparated(category);
+    if (useSeparated) {
+      if (episodes.length) tileCount += 1;
+    } else {
+      tileCount += episodes.length;
+    }
+  });
+  episodeList.classList.toggle('single-tile', tileCount === 1);
+
+  const normalizeSingleTitle = (text) => {
+    if (tileCount === 1 && typeof text === 'string' && /^season\\s*1$/i.test(text.trim())) {
+      return 'Movie';
+    }
+    return text;
+  };
 
   const extractEpisodeNumber = (rawTitle) => {
     if (!rawTitle || typeof rawTitle !== 'string') return null;
@@ -222,7 +241,8 @@ function renderEpisodeList() {
   };
 
   videoList.forEach((category, categoryIdx) => {
-    const categoryTitle = (category && category.category) ? category.category : `Category ${categoryIdx + 1}`;
+    const categoryTitleRaw = (category && category.category) ? category.category : `Category ${categoryIdx + 1}`;
+    const categoryTitle = normalizeSingleTitle(categoryTitleRaw);
     const episodes = Array.isArray(category && category.episodes) ? category.episodes : [];
     const useSeparated = shouldTreatCategoryAsSeparated(category);
 
@@ -271,7 +291,7 @@ function renderEpisodeList() {
       button.className = 'episode-button separated-category';
       const right = document.createElement('span');
       right.className = 'episode-meta';
-      const titleText = categoryTitle.trim();
+      const titleText = normalizeSingleTitle(categoryTitle.trim());
       const episodeNumber = extractEpisodeNumber(titleText);
       const isShortTitle = !episodeNumber && titleText.length > 0 && titleText.length <= 5;
       const isLongTitle = !episodeNumber && titleText.length > 5;
@@ -369,7 +389,8 @@ function renderEpisodeList() {
       left.textContent = entry.title || `Item ${index + 1}`;
       const right = document.createElement('span');
       right.className = 'episode-meta';
-      const titleText = (entry.title || `Item ${index + 1}`).trim();
+      const rawTitle = (entry.title || `Item ${index + 1}`).trim();
+      const titleText = normalizeSingleTitle(rawTitle);
       const episodeNumber = extractEpisodeNumber(titleText);
       const isShortTitle = !episodeNumber && titleText.length > 0 && titleText.length <= 5;
       const isLongTitle = !episodeNumber && titleText.length > 5;

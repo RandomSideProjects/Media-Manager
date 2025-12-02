@@ -65,9 +65,15 @@ function buildSourceCardFromMeta(meta) {
   const p1 = document.createElement('p');
   const p2 = document.createElement('p');
   const p3 = document.createElement('p');
+  const isSingleMovie = (!isManga && categoryCount === 0 && episodeCount === 0 && separatedCategoryCount === 1);
   if (isManga) {
     setCountParagraph(p1, volumeCount, 'Volume', 'Volumes');
     setCountParagraph(p2, pageCountRaw, 'Page', 'Pages');
+    p3.style.display = 'none';
+  } else if (isSingleMovie) {
+    p1.textContent = 'Movie';
+    p1.style.display = 'block';
+    p2.style.display = 'none';
     p3.style.display = 'none';
   } else {
     setCountParagraph(p1, categoryCount, 'Season', 'Seasons');
@@ -132,11 +138,11 @@ function buildSourceCardFromMeta(meta) {
   card.addEventListener('contextmenu', e => {
     e.preventDefault();
     const showingDetails = timeP.style.display === 'block' || sizeP.style.display === 'block' || durP.style.display === 'block';
-    if (isManga) {
+    if (isManga || isSingleMovie) {
       // Toggle details only
       timeP.style.display = showingDetails ? 'none' : (meta.LatestTime ? 'block' : 'none');
       sizeP.style.display = showingDetails ? 'none' : ((typeof meta.totalFileSizeBytes === 'number') ? 'block' : 'none');
-      durP.style.display = 'none';
+      durP.style.display = isManga ? 'none' : (showingDetails ? 'none' : ((typeof meta.totalDurationSeconds === 'number') ? 'block' : 'none'));
     } else {
       const inSeasonMode = p1.textContent.includes('Season');
       if (inSeasonMode) {
@@ -250,9 +256,15 @@ function buildSourceCard(data, openSourceParam, fileNameForFallback) {
   const p1 = document.createElement('p');
   const p2 = document.createElement('p');
   const p3 = document.createElement('p');
+  const isSingleMovie = (!isManga && seasons === 0 && episodes === 0 && separatedCategoryCount === 1);
   if (isManga) {
     setCountParagraph(p1, volumeCount, 'Volume', 'Volumes');
     setCountParagraph(p2, pageCount, 'Page', 'Pages');
+    p3.style.display = 'none';
+  } else if (isSingleMovie) {
+    p1.textContent = 'Movie';
+    p1.style.display = 'block';
+    p2.style.display = 'none';
     p3.style.display = 'none';
   } else {
     setCountParagraph(p1, seasons, 'Season', 'Seasons');
@@ -300,7 +312,7 @@ function buildSourceCard(data, openSourceParam, fileNameForFallback) {
   // Right-click terminology toggle / details
   card.addEventListener('contextmenu', e => {
     e.preventDefault();
-    if (isManga) {
+    if (isManga || isSingleMovie) {
       const showingDetails = sizeP.style.display === 'block' || durP.style.display === 'block';
       sizeP.style.display = showingDetails ? 'none' : (totalBytes ? 'block' : 'none');
       durP.style.display = showingDetails ? 'none' : (totalSecs ? 'block' : 'none');
