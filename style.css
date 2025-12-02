@@ -319,7 +319,7 @@ button:hover {
   margin-top: 0.75em;
   margin-bottom: 0.25em;
   grid-column: 1 / -1;
-  text-align: left;
+  text-align: center;
 }
 .episode-button {
   width: 100%;
@@ -339,6 +339,11 @@ button:hover {
   justify-content: stretch;
   gap: calc(0.4rem * var(--tile-scale));
   box-shadow: 0 12px 32px rgba(0,0,0,0.25);
+}
+.episode-button.single-center {
+  grid-column: 1 / -1;
+  justify-self: center;
+  max-width: 220px;
 }
 .episode-button:hover {
   border-color: #3a82ff;

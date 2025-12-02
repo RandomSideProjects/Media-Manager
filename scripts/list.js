@@ -210,24 +210,32 @@ function attachLongTitleTooltip(button, text) {
 function renderEpisodeList() {
   episodeList.innerHTML = '';
   flatList = [];
-  const showCategoryTitle = Array.isArray(videoList) && videoList.length > 1;
+  const hasMultipleCategories = Array.isArray(videoList) && videoList.length > 1;
+  const showCategoryTitle = hasMultipleCategories;
   let separatedGroupCounter = 0;
   const longTitleQueue = [];
   let tileCount = 0;
+  let separatedTiles = 0;
+  let nonSeparatedTiles = 0;
 
   videoList.forEach((category) => {
     const episodes = Array.isArray(category && category.episodes) ? category.episodes : [];
     const useSeparated = shouldTreatCategoryAsSeparated(category);
     if (useSeparated) {
-      if (episodes.length) tileCount += 1;
+      if (episodes.length) {
+        tileCount += 1;
+        separatedTiles += 1;
+      }
     } else {
       tileCount += episodes.length;
+      nonSeparatedTiles += episodes.length;
     }
   });
-  episodeList.classList.toggle('single-tile', tileCount === 1);
+  const singleTileSeparatedOnly = tileCount === 1 && separatedTiles === 1;
+  episodeList.classList.toggle('single-tile', singleTileSeparatedOnly);
 
   const normalizeSingleTitle = (text) => {
-    if (tileCount === 1 && typeof text === 'string' && /^season\\s*1$/i.test(text.trim())) {
+    if (singleTileSeparatedOnly && typeof text === 'string' && /^season\s*1$/i.test(text.trim())) {
       return 'Movie';
     }
     return text;
@@ -245,6 +253,7 @@ function renderEpisodeList() {
     const categoryTitle = normalizeSingleTitle(categoryTitleRaw);
     const episodes = Array.isArray(category && category.episodes) ? category.episodes : [];
     const useSeparated = shouldTreatCategoryAsSeparated(category);
+    const singleCenter = showCategoryTitle && !useSeparated && episodes.length === 1;
 
     if (showCategoryTitle) {
       const catTitle = document.createElement('div');
@@ -383,6 +392,7 @@ function renderEpisodeList() {
 
       const button = document.createElement('button');
       button.className = 'episode-button';
+      if (singleCenter) button.classList.add('single-center');
 
       const left = document.createElement('span');
       left.className = 'episode-title';
