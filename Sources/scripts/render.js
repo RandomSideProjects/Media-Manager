@@ -28,6 +28,15 @@ function buildSourceCardFromMeta(meta) {
   const volumeCount   = isManga ? (typeof meta.volumeCount === 'number' ? meta.volumeCount : 0) : 0;
   const pageCountRaw  = isManga ? (Number.isFinite(Number(meta.totalPagecount)) ? Number(meta.totalPagecount) : (typeof meta.pageCount === 'number' ? meta.pageCount : 0)) : 0;
   const openPath = meta.path || `./Files/${meta.file || ''}`;
+  const openTarget = (() => {
+    const raw = String(openPath || '').trim();
+    if (!raw) return '';
+    const isAbsolute = /^https?:\/\//i.test(raw) || raw.startsWith('blob:');
+    if (isAbsolute) return raw;
+    const trimmed = raw.replace(/^\.\//, '').replace(/^\/+/, '');
+    if (trimmed.toLowerCase().startsWith('sources/')) return trimmed;
+    return `Sources/${trimmed}`;
+  })();
 
   const card = document.createElement('div');
   card.className = 'source-card';
@@ -110,8 +119,7 @@ function buildSourceCardFromMeta(meta) {
   btn.className = 'pill-button';
   btn.textContent = 'Open';
   btn.onclick = () => {
-    const openParam = `Sources/${openPath.replace(/^\.\//,'')}`;
-    const src = encodeURIComponent(openParam);
+    const src = encodeURIComponent(openTarget);
     window.location.href = `../index.html?source=${src}`;
   };
 

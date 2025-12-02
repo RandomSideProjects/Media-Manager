@@ -9,10 +9,10 @@ on:
     # but still include source lists explicitly.
     paths:
       - '**'
-      - '!Directorys/Files/Anime/**'
-      - '!Directorys/Files/Manga/**'
-      - 'Directorys/AnimeSourceList.json'
-      - 'Directorys/MangaSourceList.json'
+      - '!Sources/Files/Anime/**'
+      - '!Sources/Files/Manga/**'
+      - 'Sources/AnimeSourceList.json'
+      - 'Sources/MangaSourceList.json'
 
   # Triggers after maintainer workflows complete
   workflow_run:
