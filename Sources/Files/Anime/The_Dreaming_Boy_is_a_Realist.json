@@ -1,6 +1,7 @@
 {
   "title": "The Dreaming Boy is a Realist",
-  "Image": "./Sources/Posters/Anime/The_Dreaming_Boy_is_a_Realist.webp",
+  "poster": "./Sources/Posters/Anime/The_Dreaming_Boy_is_a_Realist.webp",
+  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/The_Dreaming_Boy_is_a_Realist.webp",
   "categories": [
     {
       "category": "Season 1",

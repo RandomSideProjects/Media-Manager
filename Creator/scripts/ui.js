@@ -25,6 +25,16 @@ const maintainerHiddenToggle = document.getElementById('maintainerHiddenToggle')
 let isFolderUploading = false;
 let maintainerHidden = false;
 const HIDDEN_JSON_KEYS = ['hidden', 'Hidden', 'maintainerHidden'];
+const IMAGE_BACKUP_BASE_URL = 'https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/';
+function resolveRemotePosterUrl(primaryUrl) {
+  if (!primaryUrl) return '';
+  const str = String(primaryUrl).trim();
+  if (!str) return '';
+  if (/^https?:\/\//i.test(str)) return str;
+  const trimmed = str.replace(/^\.\//, '').replace(/^\/+/, '');
+  const normalized = trimmed.startsWith('Sources/') ? trimmed : `Sources/${trimmed}`;
+  return IMAGE_BACKUP_BASE_URL + normalized;
+}
 if (typeof window !== 'undefined') {
   window.isFolderUploading = false;
 }
@@ -2814,6 +2824,8 @@ function buildLocalDirectoryJSON() {
   const imageField = posterImageUrl || 'N/A';
   const base = {
     title,
+    poster: imageField,
+    remoteposter: resolveRemotePosterUrl(imageField),
     Image: imageField,
     categories,
     LatestTime: new Date().toISOString(),

@@ -1,6 +1,7 @@
 {
   "title": "Nyaight Of The Living Cat",
-  "Image": "./Sources/Posters/Anime/Nyaight_Of_The_Living_Cat.webp",
+  "poster": "./Sources/Posters/Anime/Nyaight_Of_The_Living_Cat.webp",
+  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Nyaight_Of_The_Living_Cat.webp",
   "LatestTime": "2025-10-19T03:10:54.126Z",
   "categories": [
     {

@@ -1,6 +1,7 @@
 {
   "title": "The Ice Guy and His Cool Female Colleague",
-  "Image": "./Sources/Posters/Anime/The_Ice_Guy_and_His_Cool_Female_Colleague.webp",
+  "poster": "./Sources/Posters/Anime/The_Ice_Guy_and_His_Cool_Female_Colleague.webp",
+  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/The_Ice_Guy_and_His_Cool_Female_Colleague.webp",
   "categories": [
     {
       "category": "Season 1",

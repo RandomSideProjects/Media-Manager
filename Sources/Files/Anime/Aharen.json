@@ -1,6 +1,7 @@
 {
   "title": "Aharen Is Indecipherable",
-  "Image": "./Sources/Posters/Anime/Aharen_Is_Indecipherable.webp",
+  "poster": "./Sources/Posters/Anime/Aharen_Is_Indecipherable.webp",
+  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Aharen_Is_Indecipherable.webp",
   "categories": [
     {
       "category": "Season 1",

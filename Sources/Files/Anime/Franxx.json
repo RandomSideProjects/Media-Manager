@@ -1,6 +1,7 @@
 {
   "title": "DARLING in the FRANXX",
-  "Image": "./Sources/Posters/Anime/DARLING_in_the_FRANXX.webp",
+  "poster": "./Sources/Posters/Anime/DARLING_in_the_FRANXX.webp",
+  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/DARLING_in_the_FRANXX.webp",
   "categories": [
     {
       "category": "Season 1 ",

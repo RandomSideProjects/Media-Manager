@@ -1,6 +1,7 @@
 {
   "title": "Tomo-chan Is A Girl!",
-  "Image": "./Sources/Posters/Anime/Tomo-chan_Is_A_Girl!.webp",
+  "poster": "./Sources/Posters/Anime/Tomo-chan_Is_A_Girl!.webp",
+  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Tomo-chan_Is_A_Girl!.webp",
   "categories": [
     {
       "category": "Season 1",

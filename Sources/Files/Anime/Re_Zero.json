@@ -1,6 +1,7 @@
 {
   "title": "Re: Zero",
-  "Image": "./Sources/Posters/Anime/Re_Zero.webp",
+  "poster": "./Sources/Posters/Anime/Re_Zero.webp",
+  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Re_Zero.webp",
   "LatestTime": "2025-10-14T02:12:39.044Z",
   "categories": [
     {

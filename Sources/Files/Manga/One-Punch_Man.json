@@ -1,6 +1,7 @@
 {
   "title": "One-Punch Man",
-  "Image": "./Posters/Manga/One-Punch_Man.webp",
+  "poster": "./Posters/Manga/One-Punch_Man.webp",
+  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Manga/One-Punch_Man.webp",
   "categories": [
     {
       "category": "Volumes",

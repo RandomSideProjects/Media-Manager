@@ -1,7 +1,8 @@
 {
   "title": "More Than a Married Couple, But Not Lovers",
   "LatestTime": "2025-08-11T12:36:00",
-  "Image": "./Sources/Posters/Anime/More_Than_a_Married_Couple,_But_Not_Lovers.webp",
+  "poster": "./Sources/Posters/Anime/More_Than_a_Married_Couple,_But_Not_Lovers.webp",
+  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/More_Than_a_Married_Couple,_But_Not_Lovers.webp",
   "categories": [
     {
       "category": "Season 1",
