@@ -7,6 +7,7 @@ This directory contains all available media sources.
 - [My Dress-Up Darling](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FManga%2FMy_Dress-up_Darling.json)
 - [One-Punch Man](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FManga%2FOne-Punch_Man.json)
 - [The 100 Girlfriends Who Really, Really, Really, Really, REALLY Love You](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FManga%2FThe_100_Girlfriends_Who_Really%2C_Really%2C_Really%2C_Really%2C_REALLY_Love_You.json)
+
 ## Normal Sources
 
 - [A Condition Called Love](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FConditionLove.json)
@@ -61,6 +62,7 @@ This directory contains all available media sources.
 - [Watari-kun's ****** Is About To Collapse](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FWatari_Kun_S_Is_About_To_Collapse.json)
 - [Wise Man's Grandchild](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FWise_Man_S_Grandchild.json)
 - [You are Ms. Servent (Kimi-wa Meido sama)](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FMeidoSama.json)
+- [Your Lie in April](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FYour_Lie_In_April.json)
 
 
 ## Anime Sources
