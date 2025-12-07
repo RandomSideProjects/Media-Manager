@@ -1,0 +1,149 @@
+{
+  "title": "Your Lie in April",
+  "Image": "https://files.catbox.moe/pc0zug.webp",
+  "poster": "https://files.catbox.moe/pc0zug.webp",
+  "remoteposter": "https://files.catbox.moe/pc0zug.webp",
+  "LatestTime": "2025-12-07T05:34:24.600Z",
+  "categories": [
+    {
+      "category": "Season 1",
+      "episodes": [
+        {
+          "title": "Episode 1",
+          "src": "https://files.catbox.moe/e4d3vh.mp4",
+          "fileSizeBytes": 174256480,
+          "durationSeconds": 1373
+        },
+        {
+          "title": "Episode 2",
+          "src": "https://files.catbox.moe/t3918z.mp4",
+          "fileSizeBytes": 138845592,
+          "durationSeconds": 1373
+        },
+        {
+          "title": "Episode 3",
+          "src": "https://files.catbox.moe/tkmtr6.mp4",
+          "fileSizeBytes": 134711509,
+          "durationSeconds": 1372
+        },
+        {
+          "title": "Episode 4",
+          "src": "https://files.catbox.moe/dyp53z.mp4",
+          "fileSizeBytes": 154362219,
+          "durationSeconds": 1372
+        },
+        {
+          "title": "Episode 5",
+          "src": "https://files.catbox.moe/vcvm1h.mp4",
+          "fileSizeBytes": 139201243,
+          "durationSeconds": 1370
+        },
+        {
+          "title": "Episode 6",
+          "src": "https://files.catbox.moe/1u2255.mp4",
+          "fileSizeBytes": 149015715,
+          "durationSeconds": 1374
+        },
+        {
+          "title": "Episode 7",
+          "src": "https://files.catbox.moe/arr51f.mp4",
+          "fileSizeBytes": 120296566,
+          "durationSeconds": 1372
+        },
+        {
+          "title": "Episode 8",
+          "src": "https://files.catbox.moe/u03zb4.mp4",
+          "fileSizeBytes": 122356014,
+          "durationSeconds": 1374
+        },
+        {
+          "title": "Episode 9",
+          "src": "https://files.catbox.moe/raivne.mp4",
+          "fileSizeBytes": 115432775,
+          "durationSeconds": 1372
+        },
+        {
+          "title": "Episode 10",
+          "src": "https://files.catbox.moe/mhxhql.mp4",
+          "fileSizeBytes": 120321102,
+          "durationSeconds": 1373
+        },
+        {
+          "title": "Episode 11",
+          "src": "https://files.catbox.moe/eeyp93.mp4",
+          "fileSizeBytes": 119126607,
+          "durationSeconds": 1373
+        },
+        {
+          "title": "Episode 12",
+          "src": "https://files.catbox.moe/wzkcmk.mp4",
+          "fileSizeBytes": 134214601,
+          "durationSeconds": 1374
+        },
+        {
+          "title": "Episode 13",
+          "src": "https://files.catbox.moe/1m4405.mp4",
+          "fileSizeBytes": 130066035,
+          "durationSeconds": 1371
+        },
+        {
+          "title": "Episode 14",
+          "src": "https://files.catbox.moe/0pxzw8.mp4",
+          "fileSizeBytes": 140573711,
+          "durationSeconds": 1372
+        },
+        {
+          "title": "Episode 15",
+          "src": "https://files.catbox.moe/efmxo6.mp4",
+          "fileSizeBytes": 99648249,
+          "durationSeconds": 1371
+        },
+        {
+          "title": "Episode 16",
+          "src": "https://files.catbox.moe/z8fhyb.mp4",
+          "fileSizeBytes": 142708318,
+          "durationSeconds": 1371
+        },
+        {
+          "title": "Episode 17",
+          "src": "https://files.catbox.moe/btiily.mp4",
+          "fileSizeBytes": 100380890,
+          "durationSeconds": 1372
+        },
+        {
+          "title": "Episode 18",
+          "src": "https://files.catbox.moe/26r7up.mp4",
+          "fileSizeBytes": 126294331,
+          "durationSeconds": 1371
+        },
+        {
+          "title": "Episode 19",
+          "src": "https://files.catbox.moe/fc8mzw.mp4",
+          "fileSizeBytes": 123336479,
+          "durationSeconds": 1372
+        },
+        {
+          "title": "Episode 20",
+          "src": "https://files.catbox.moe/orjmt5.mp4",
+          "fileSizeBytes": 107334151,
+          "durationSeconds": 1372
+        },
+        {
+          "title": "Episode 21",
+          "src": "https://files.catbox.moe/syevsh.mp4",
+          "fileSizeBytes": 122897007,
+          "durationSeconds": 1371
+        },
+        {
+          "title": "Episode 22",
+          "src": "https://files.catbox.moe/hz4lo6.mp4",
+          "fileSizeBytes": 168667389,
+          "durationSeconds": 1372
+        }
+      ]
+    }
+  ],
+  "totalFileSizeBytes": 2884046983,
+  "totalDurationSeconds": 30187,
+  "hidden": true
+}
