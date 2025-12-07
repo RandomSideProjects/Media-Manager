@@ -668,6 +668,19 @@
       "totalFileSizeBytes": 1662931471,
       "totalDurationSeconds": 16560,
       "LatestTime": "2025-08-11T12:36:00"
+    },
+    {
+      "file": "Your_Lie_In_April.json",
+      "path": "./Files/Anime/Your_Lie_In_April.json",
+      "title": "Your Lie in April",
+      "poster": "https://files.catbox.moe/pc0zug.webp",
+      "remoteposter": "https://files.catbox.moe/pc0zug.webp",
+      "categoryCount": 1,
+      "episodeCount": 22,
+      "itemCount": 22,
+      "totalFileSizeBytes": 2884046983,
+      "totalDurationSeconds": 30187,
+      "LatestTime": "2025-12-07T05:34:24.600Z"
     }
   ]
 }
