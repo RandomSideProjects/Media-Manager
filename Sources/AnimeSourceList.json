@@ -462,6 +462,21 @@
       "LatestTime": "2025-08-11T12:36:00"
     },
     {
+      "file": "Rascal_Does_Not_Dream_Of_A_Bunny_Girl_Senpai.json",
+      "path": "./Files/Anime/Rascal_Does_Not_Dream_Of_A_Bunny_Girl_Senpai.json",
+      "title": "Rascal Does Not Dream Of A Bunny Girl Senpai",
+      "poster": "./Posters/Anime/Rascal_Does_Not_Dream_Of_A_Bunny_Girl_Senpai.webp",
+      "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Rascal_Does_Not_Dream_Of_A_Bunny_Girl_Senpai.webp",
+      "categoryCount": 2,
+      "episodeCount": 26,
+      "itemCount": 35,
+      "separatedCategoryCount": 3,
+      "separatedItemCount": 9,
+      "totalFileSizeBytes": 4045025043,
+      "totalDurationSeconds": 53625,
+      "LatestTime": "2025-12-07T20:35:47.574Z"
+    },
+    {
       "file": "Re_Zero.json",
       "path": "./Files/Anime/Re_Zero.json",
       "title": "Re: Zero",
@@ -473,19 +488,6 @@
       "totalFileSizeBytes": 9572793036,
       "totalDurationSeconds": 108650,
       "LatestTime": "2025-10-14T02:12:39.044Z"
-    },
-    {
-      "file": "Kanokari.json",
-      "path": "./Files/Anime/Kanokari.json",
-      "title": "Rent-A-Girlfriend! ",
-      "poster": "./Posters/Anime/Rent-A-Girlfriend!.webp",
-      "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Rent-A-Girlfriend!.webp",
-      "categoryCount": 1,
-      "episodeCount": 12,
-      "itemCount": 12,
-      "totalFileSizeBytes": 1657971941,
-      "totalDurationSeconds": 17574,
-      "LatestTime": "2025-08-11T12:36:00"
     },
     {
       "file": "Roshidere.json",
