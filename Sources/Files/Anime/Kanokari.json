@@ -1,7 +1,8 @@
 {
   "title": "Rent-A-Girlfriend! ",
   "LatestTime": "2025-08-11T12:36:00",
-  "Image": "./Sources/Posters/Anime/Rent-A-Girlfriend!.webp",
+  "poster": "./Sources/Posters/Anime/Rent-A-Girlfriend!.webp",
+  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Rent-A-Girlfriend!.webp",
   "categories": [
     {
       "category": "Season 1",

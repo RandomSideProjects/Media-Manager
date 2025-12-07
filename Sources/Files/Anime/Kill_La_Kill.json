@@ -1,6 +1,7 @@
 {
   "title": "Kill la Kill",
-  "Image": "./Sources/Posters/Anime/Kill_la_Kill.webp",
+  "poster": "./Sources/Posters/Anime/Kill_la_Kill.webp",
+  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Kill_la_Kill.webp",
   "LatestTime": "2025-12-01T00:13:33.409Z",
   "categories": [
     {

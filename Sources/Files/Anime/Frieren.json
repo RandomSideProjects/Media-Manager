@@ -1,6 +1,7 @@
 {
   "title": "Frieren: Beyond Journey's End",
-  "Image": "./Sources/Posters/Anime/Frieren_Beyond_Journey's_End.webp",
+  "poster": "./Sources/Posters/Anime/Frieren_Beyond_Journey's_End.webp",
+  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Frieren_Beyond_Journey's_End.webp",
   "categories": [
     {
       "category": "Season 1",

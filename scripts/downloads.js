@@ -548,7 +548,14 @@ async function downloadSourceFolder(options = {}) {
   let localId;
   try { const n = Math.floor((Date.now() + Math.random() * 1000000)) % 1000000; localId = `Local${String(n).padStart(6, '0')}`; }
   catch { localId = 'Local000000'; }
-  const manifest = { title: titleText, Image: sourceImageUrl || 'N/A', categories: [], LocalID: localId };
+  const { remoteposter: backupPoster } = extractPosterPair({ poster: sourceImageUrl, remoteposter: resolveRemotePosterUrl(sourceImageUrl || '') });
+  const manifest = {
+    title: titleText,
+    poster: sourceImageUrl || 'N/A',
+    remoteposter: backupPoster || '',
+    categories: [],
+    LocalID: localId
+  };
   const catFolders = [];
   const catObjs = [];
   const sanitizedCats = videoList.map(cat => safeZipSegment(cat.category));
@@ -1659,7 +1666,7 @@ async function downloadSourceFolder(options = {}) {
       });
     } catch { return null; }
   }
-  if (sourceImageUrl) { try { const dataUrl = await fetchAsDataURL(sourceImageUrl); if (dataUrl) manifest.Image = dataUrl; } catch {} }
+  if (sourceImageUrl) { try { const dataUrl = await fetchAsDataURL(sourceImageUrl); if (dataUrl) manifest.poster = dataUrl; } catch {} }
   rootFolder.file('index.json', JSON.stringify(manifest, null, 2));
   // Update summary to reflect completed transfers before packaging
   try { speedLabel.textContent = 'Speed: 0.00 MB/s'; } catch {}

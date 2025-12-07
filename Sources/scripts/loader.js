@@ -5,6 +5,12 @@
 
 const HIDDEN_ENTRY_KEYS = ["hidden", "Hidden", "maintainerHidden"];
 
+function withPosterFallbacks(entry) {
+  if (!entry || typeof entry !== "object") return entry;
+  const { poster, remoteposter } = extractPosterPair(entry);
+  return { ...entry, poster, remoteposter };
+}
+
 function shouldSkipManifestEntry(entry) {
   if (!entry || typeof entry !== "object") return false;
   return HIDDEN_ENTRY_KEYS.some((key) => entry[key] === true);
@@ -106,7 +112,7 @@ async function loadSources() {
 
     if (Array.isArray(manifest.sources)) {
       const decorated = manifest.sources
-        .map((entry, idx) => ({ entry, originalIdx: idx }))
+        .map((entry, idx) => ({ entry: withPosterFallbacks(entry), originalIdx: idx }))
         .filter(({ entry }) => !shouldSkipManifestEntry(entry));
       const skipped = manifest.sources.length - decorated.length;
       if (skipped > 0) {
@@ -121,7 +127,7 @@ async function loadSources() {
         const lower = String(fileName).toLowerCase();
         if (!lower.endsWith('.json') || lower === 'exampledir.json') continue;
         if (shouldSkipManifestEntry({ file: fileName, path: filePath })) continue;
-        temp.push({
+        temp.push(withPosterFallbacks({
           file: fileName,
           path: filePath,
           title: fileName.replace(/\.json$/i, ''),
@@ -130,7 +136,7 @@ async function loadSources() {
           episodeCount: 0,
           LatestTime: null,
           _idx: idx++
-        });
+        }));
       }
       SOURCES_META = temp;
     }

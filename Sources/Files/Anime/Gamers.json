@@ -1,6 +1,7 @@
 {
   "title": "Gamers!",
-  "Image": "./Sources/Posters/Anime/Gamers!.webp",
+  "poster": "./Sources/Posters/Anime/Gamers!.webp",
+  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Gamers!.webp",
   "categories": [
     {
       "category": "Season 1",

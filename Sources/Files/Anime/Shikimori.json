@@ -1,6 +1,7 @@
 {
   "title": "Shikimori's Not Just a Cutie",
-  "Image": "./Sources/Posters/Anime/Shikimori's_Not_Just_a_Cutie.webp",
+  "poster": "./Sources/Posters/Anime/Shikimori's_Not_Just_a_Cutie.webp",
+  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Shikimori's_Not_Just_a_Cutie.webp",
   "categories": [
     {
       "category": "Season 1",

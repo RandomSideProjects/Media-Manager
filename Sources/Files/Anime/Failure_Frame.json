@@ -1,6 +1,7 @@
 {
   "title": "Failure Frame",
-  "Image": "./Sources/Posters/Anime/Failure_Frame.webp",
+  "poster": "./Sources/Posters/Anime/Failure_Frame.webp",
+  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Failure_Frame.webp",
   "categories": [
     {
       "category": "Season 1",

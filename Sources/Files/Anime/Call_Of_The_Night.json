@@ -1,6 +1,7 @@
 {
   "title": "Call Of The Night",
-  "Image": "./Sources/Posters/Anime/Call_Of_The_Night.webp",
+  "poster": "./Sources/Posters/Anime/Call_Of_The_Night.webp",
+  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Call_Of_The_Night.webp",
   "categories": [
     {
       "category": "Season 1",

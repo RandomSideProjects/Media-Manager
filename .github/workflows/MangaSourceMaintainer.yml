@@ -56,6 +56,17 @@ jobs:
           const sharp = require('sharp');
 
           const HIDDEN_JSON_KEYS = ['hidden', 'Hidden', 'maintainerHidden'];
+          const IMAGE_BACKUP_BASE_URL = 'https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/';
+
+          function resolveRemotePosterUrl(primaryUrl) {
+            if (!primaryUrl) return '';
+            const str = String(primaryUrl).trim();
+            if (!str) return '';
+            if (/^https?:\/\//i.test(str)) return str;
+            const trimmed = str.replace(/^\.\//, '').replace(/^\/+/, '');
+            const normalized = trimmed.startsWith('Sources/') ? trimmed : `Sources/${trimmed}`;
+            return IMAGE_BACKUP_BASE_URL + normalized;
+          }
 
           function isMaintainerHidden(entry) {
             if (!entry || typeof entry !== 'object') return false;
@@ -116,6 +127,16 @@ jobs:
               if (url && url.startsWith('//')) url = 'https:' + url;
               doRequest(url, maxRedirects);
             });
+          }
+
+          async function isUrlReachable(url) {
+            if (!url || typeof url !== 'string') return false;
+            try {
+              await fetchBuffer(url, 7000, 2);
+              return true;
+            } catch {
+              return false;
+            }
           }
 
           (async () => {
@@ -207,15 +228,25 @@ jobs:
 
                 // Build poster file in repo (WebP, height=512) and reference by path
                 let poster = null;
-                const imgUrl = (json.Image && json.Image !== 'N/A') ? json.Image : (json.image && json.image !== 'N/A' ? json.image : null);
+                const existingRemote = (typeof json.remoteposter === 'string' && json.remoteposter) ? json.remoteposter.trim() : '';
+                let remoteReachable = await isUrlReachable(existingRemote);
+                let remoteposter = remoteReachable ? existingRemote : (existingRemote || null);
+                const imgUrl = (json.poster && json.poster !== 'N/A')
+                  ? json.poster
+                  : (json.Image && json.Image !== 'N/A')
+                    ? json.Image
+                    : (json.image && json.image !== 'N/A' ? json.image : null);
                 if (imgUrl) {
                   try {
                     const posterName = safePosterName(title, path.parse(file).name) + '.webp';
                     const posterAbs = path.join(POSTERS_DIR, posterName);
-                    
+
                     if (fs.existsSync(posterAbs)) {
                       console.log('Poster already exists, skipping:', posterAbs);
                       poster = `./Sources/Posters/Manga/${posterName}`;
+                      if (!remoteReachable) {
+                        remoteposter = resolveRemotePosterUrl(poster);
+                      }
                     } else {
                       let sourceBuffer;
                       if (imgUrl.startsWith('data:')) {
@@ -234,13 +265,25 @@ jobs:
                       fs.writeFileSync(posterAbs, webpBuf);
                       console.log('Wrote poster:', posterAbs);
                       poster = `./Posters/Manga/${posterName}`;
-                      
+                      if (!remoteReachable) {
+                        remoteposter = resolveRemotePosterUrl(poster);
+                        remoteReachable = true;
+                      }
+
                       // Update the source JSON file to use local poster path
                       const posterPath = `./Posters/Manga/${posterName}`;
-                      if (json.Image && json.Image !== 'N/A') {
+                      if (json.poster && json.poster !== 'N/A') {
+                        json.poster = posterPath;
+                      } else if (json.Image && json.Image !== 'N/A') {
                         json.Image = posterPath;
                       } else if (json.image && json.image !== 'N/A') {
                         json.image = posterPath;
+                      } else {
+                        json.poster = posterPath;
+                      }
+                      if (!remoteReachable) {
+                        json.remoteposter = resolveRemotePosterUrl(posterPath);
+                        remoteReachable = true;
                       }
                       try {
                         fs.writeFileSync(path.join(FILE_DIR, file), JSON.stringify(json, null, 2));
@@ -254,12 +297,28 @@ jobs:
                   }
                 }
 
+                if (!json.remoteposter && !remoteReachable) {
+                  const posterForRemote = poster || json.poster || json.Image || json.image || '';
+                  const inferredRemote = resolveRemotePosterUrl(posterForRemote);
+                  if (inferredRemote) {
+                    json.remoteposter = inferredRemote;
+                    remoteposter = remoteposter || inferredRemote;
+                    remoteReachable = true;
+                    try {
+                      fs.writeFileSync(path.join(FILE_DIR, file), JSON.stringify(json, null, 2));
+                    } catch (e) {
+                      console.warn('Unable to backfill remoteposter for', file, '-', e.message);
+                    }
+                  }
+                }
+
                 // Update or add the source entry
                 existingMap.set(file, {
                   file,
                   path: `./Files/Manga/${file}`,
                   title,
                   poster,
+                  remoteposter: remoteposter || json.remoteposter || resolveRemotePosterUrl(poster || json.poster || json.Image || json.image || ''),
                   volumeCount,
                   pageCount,
                   totalPagecount,

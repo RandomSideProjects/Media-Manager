@@ -25,6 +25,16 @@ const maintainerHiddenToggle = document.getElementById('maintainerHiddenToggle')
 let isFolderUploading = false;
 let maintainerHidden = false;
 const HIDDEN_JSON_KEYS = ['hidden', 'Hidden', 'maintainerHidden'];
+const IMAGE_BACKUP_BASE_URL = 'https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/';
+function resolveRemotePosterUrl(primaryUrl) {
+  if (!primaryUrl) return '';
+  const str = String(primaryUrl).trim();
+  if (!str) return '';
+  if (/^https?:\/\//i.test(str)) return str;
+  const trimmed = str.replace(/^\.\//, '').replace(/^\/+/, '');
+  const normalized = trimmed.startsWith('Sources/') ? trimmed : `Sources/${trimmed}`;
+  return IMAGE_BACKUP_BASE_URL + normalized;
+}
 if (typeof window !== 'undefined') {
   window.isFolderUploading = false;
 }
@@ -2471,7 +2481,13 @@ function applyDirectoryJson(json) {
     throw new Error('JSON payload must be an object');
   }
   const categoriesData = Array.isArray(json.categories) ? json.categories : [];
-  posterImageUrl = (json.Image && json.Image !== 'N/A') ? json.Image : '';
+  const providedPoster = [
+    json.poster,
+    json.Image,
+    json.image,
+    json.remoteposter
+  ].find((val) => val && val !== 'N/A');
+  posterImageUrl = providedPoster ? providedPoster : '';
   if (posterImageUrl) {
     setPosterPreviewSource(posterImageUrl, { isBlob: false });
     if (posterWrapper) posterWrapper.style.display = 'inline-block';
@@ -2500,7 +2516,8 @@ function applyDirectoryJson(json) {
   updateOutput();
   const contentOnly = {
     title: json.title || '',
-    Image: posterImageUrl || 'N/A',
+    poster: posterImageUrl || 'N/A',
+    remoteposter: resolveRemotePosterUrl(posterImageUrl),
     categories: categoriesData
   };
   try { window.lastContent = JSON.stringify(contentOnly); } catch {}
@@ -2814,7 +2831,8 @@ function buildLocalDirectoryJSON() {
   const imageField = posterImageUrl || 'N/A';
   const base = {
     title,
-    Image: imageField,
+    poster: imageField,
+    remoteposter: resolveRemotePosterUrl(imageField),
     categories,
     LatestTime: new Date().toISOString(),
     totalFileSizeBytes: totalBytes || 0

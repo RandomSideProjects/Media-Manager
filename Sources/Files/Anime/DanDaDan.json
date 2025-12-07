@@ -1,6 +1,7 @@
 {
   "title": "DanDaDan",
-  "Image": "./Sources/Posters/Anime/DanDaDan.webp",
+  "poster": "./Sources/Posters/Anime/DanDaDan.webp",
+  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/DanDaDan.webp",
   "categories": [
     {
       "category": "Season 1",

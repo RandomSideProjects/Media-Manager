@@ -1,7 +1,8 @@
 {
   "title": "A Condition Called Love",
   "LatestTime": "2025-08-11T12:36:00",
-  "Image": "./Sources/Posters/Anime/A_Condition_Called_Love.webp",
+  "poster": "./Sources/Posters/Anime/A_Condition_Called_Love.webp",
+  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/A_Condition_Called_Love.webp",
   "categories": [
     {
       "category": "Season 1",

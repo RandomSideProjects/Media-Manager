@@ -1,6 +1,7 @@
 {
   "title": "Love Flops",
-  "Image": "./Sources/Posters/Anime/Love_Flops.webp",
+  "poster": "./Sources/Posters/Anime/Love_Flops.webp",
+  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Love_Flops.webp",
   "categories": [
     {
       "category": "Season 1",

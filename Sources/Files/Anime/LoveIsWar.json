@@ -1,6 +1,7 @@
 {
   "title": "Kaguya-Sama: Love Is War",
-  "Image": "./Sources/Posters/Anime/Kaguya-Sama_Love_Is_War.webp",
+  "poster": "./Sources/Posters/Anime/Kaguya-Sama_Love_Is_War.webp",
+  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Kaguya-Sama_Love_Is_War.webp",
   "categories": [
     {
       "category": "Season 1 - Love Is War",
