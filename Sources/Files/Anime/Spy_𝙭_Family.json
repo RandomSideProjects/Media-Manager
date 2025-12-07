@@ -1,6 +1,7 @@
 {
   "title": "Spy 𝙭 Family",
-  "Image": "./Sources/Posters/Anime/Spy_𝙭_Family.webp",
+  "poster": "./Sources/Posters/Anime/Spy_𝙭_Family.webp",
+  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Spy_𝙭_Family.webp",
   "categories": [
     {
       "category": "Season 1",

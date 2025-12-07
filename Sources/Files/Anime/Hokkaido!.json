@@ -1,6 +1,7 @@
 {
   "title": "Hokkaido Gals Are Super Adorable!",
-  "Image": "./Sources/Posters/Anime/Hokkaido_Gals_Are_Super_Adorable!.webp",
+  "poster": "./Sources/Posters/Anime/Hokkaido_Gals_Are_Super_Adorable!.webp",
+  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Hokkaido_Gals_Are_Super_Adorable!.webp",
   "categories": [
     {
       "category": "Season 1",

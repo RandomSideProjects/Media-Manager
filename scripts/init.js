@@ -199,11 +199,19 @@ async function loadSource(rawInput) {
     urlInputContainer.style.display = 'none';
     directoryTitle.textContent = srcTitle;
     try { document.title = `${(srcTitle || '').trim() || 'Source'} on RSP Media Manager`; } catch {}
-    const imgUrl = (typeof json.Image === 'string' && json.Image !== 'N/A') ? json.Image : (typeof json.image === 'string' && json.image !== 'N/A' ? json.image : '');
+    const { poster: imgUrl, remoteposter: image2Poster } = extractPosterPair(json);
     sourceImageUrl = imgUrl || '';
     if (directoryPoster) {
-      if (imgUrl) { directoryPoster.src = imgUrl; directoryPoster.style.display = 'inline-block'; }
-      else { try { directoryPoster.removeAttribute('src'); } catch {} directoryPoster.style.display = 'none'; }
+      const hidePoster = () => { directoryPoster.style.display = 'none'; updateDirectoryHeaderPosterSpacing(); };
+      const showPoster = imgUrl || image2Poster;
+      if (showPoster) {
+        applyPosterFallback(directoryPoster, imgUrl, image2Poster, hidePoster);
+        directoryPoster.style.display = 'inline-block';
+      } else {
+        try { directoryPoster.removeAttribute('src'); } catch {}
+        hidePoster();
+      }
+      directoryPoster.addEventListener('load', updateDirectoryHeaderPosterSpacing, { once: true });
       updateDirectoryHeaderPosterSpacing();
     }
 

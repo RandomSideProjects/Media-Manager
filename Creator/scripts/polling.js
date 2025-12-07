@@ -2,6 +2,16 @@
 
 // Variables (top)
 let lastContent = null; // JSON string snapshot for polling compare
+const IMAGE_BACKUP_BASE_URL = 'https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/';
+function resolveRemotePosterUrl(primaryUrl) {
+  if (!primaryUrl) return '';
+  const str = String(primaryUrl).trim();
+  if (!str) return '';
+  if (/^https?:\/\//i.test(str)) return str;
+  const trimmed = str.replace(/^\.\//, '').replace(/^\/+/, '');
+  const normalized = trimmed.startsWith('Sources/') ? trimmed : `Sources/${trimmed}`;
+  return IMAGE_BACKUP_BASE_URL + normalized;
+}
 
 async function autoUploadFromContent(contentObj) {
   const payload = { ...contentObj, LatestTime: new Date().toISOString() };
@@ -124,7 +134,14 @@ function startAutoUploadPolling() {
       : ((typeof window !== 'undefined' && typeof window.posterImageUrl !== 'undefined') ? window.posterImageUrl : '');
     const imageField = posterValue || 'N/A';
     // Build payload (omit duration aggregate for manga mode)
-    const contentOnly = { title: titleVal, Image: imageField, categories: cats, totalFileSizeBytes };
+    const contentOnly = {
+      title: titleVal,
+      poster: imageField,
+      remoteposter: resolveRemotePosterUrl(imageField),
+      Image: imageField,
+      categories: cats,
+      totalFileSizeBytes
+    };
     const hiddenEnabled = (() => {
       if (typeof window === 'undefined') return false;
       if (window.mm_creatorHidden === true) return true;

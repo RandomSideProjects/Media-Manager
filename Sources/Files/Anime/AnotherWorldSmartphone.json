@@ -1,6 +1,7 @@
 {
   "title": "In Another World With My Smartphone",
-  "Image": "./Sources/Posters/Anime/In_Another_World_With_My_Smartphone.webp",
+  "poster": "./Sources/Posters/Anime/In_Another_World_With_My_Smartphone.webp",
+  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/In_Another_World_With_My_Smartphone.webp",
   "categories": [
     {
       "category": "Season 1",

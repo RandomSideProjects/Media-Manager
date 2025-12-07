@@ -1,6 +1,7 @@
 {
   "title": "My Dress-Up Darling",
-  "Image": "./Posters/Manga/My_Dress-Up_Darling.webp",
+  "poster": "./Posters/Manga/My_Dress-Up_Darling.webp",
+  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Manga/My_Dress-Up_Darling.webp",
   "categories": [
     {
       "category": "Volumes",

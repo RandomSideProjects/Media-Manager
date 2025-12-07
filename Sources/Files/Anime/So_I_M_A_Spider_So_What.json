@@ -1,6 +1,7 @@
 {
   "title": "So I'm a Spider, So What?",
-  "Image": "./Sources/Posters/Anime/So_I'm_a_Spider,_So_What_.webp",
+  "poster": "./Sources/Posters/Anime/So_I'm_a_Spider,_So_What_.webp",
+  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/So_I'm_a_Spider,_So_What_.webp",
   "LatestTime": "2025-11-29T06:07:30.123Z",
   "categories": [
     {

@@ -1,7 +1,8 @@
 {
   "title": "Roshidere (Alya Hides Her Feelings In Russian)",
   "LatestTime": "2025-08-11T12:36:00",
-  "Image": "./Sources/Posters/Anime/Roshidere_(Alya_Hides_Her_Feelings_In_Russian).webp",
+  "poster": "./Sources/Posters/Anime/Roshidere_(Alya_Hides_Her_Feelings_In_Russian).webp",
+  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Roshidere_(Alya_Hides_Her_Feelings_In_Russian).webp",
   "categories": [
     {
       "category": "Season 1",

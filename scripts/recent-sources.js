@@ -309,9 +309,7 @@
     const sourceTitle = typeof json.title === "string" && json.title.trim() ? json.title.trim() : (context.fallbackTitle || "Untitled source");
     const summary = summarizeSource(json);
     const recordedAt = new Date().toISOString();
-    const poster = (typeof json.Image === "string" && json.Image !== "N/A")
-      ? json.Image
-      : (typeof json.image === "string" && json.image !== "N/A" ? json.image : (context.poster || ""));
+    const { poster, remoteposter: image2 } = extractPosterPair({ ...json, poster: (json && json.poster) || context.poster });
 
     const openKind = context.kind === "local"
       ? "local"
@@ -338,6 +336,9 @@
       path: entryPath,
       title: sourceTitle,
       poster: poster || "",
+      remoteposter: image2 || "",
+      Image: poster || "",
+      Image2: image2 || "",
       categoryCount: summary.categoryCount,
       separatedCategoryCount: summary.separatedCategoryCount,
       episodeCount: summary.episodeCount,
@@ -401,15 +402,15 @@
   function buildCard(entry) {
     const wrapper = document.createElement("div");
     wrapper.className = "source-card recent-source-card";
-    if (!entry.poster) wrapper.classList.add("no-thumb");
-    if (entry.poster) {
+    const { poster, remoteposter: backup } = extractPosterPair(entry);
+    if (!poster && !backup) wrapper.classList.add("no-thumb");
+    if (poster || backup) {
       const img = document.createElement("img");
       img.className = "source-thumb";
       img.alt = `${entry.title} poster`;
-      img.src = entry.poster;
       img.loading = "lazy";
       img.referrerPolicy = "no-referrer";
-      img.addEventListener("error", () => { img.style.display = "none"; wrapper.classList.add("no-thumb"); });
+      applyPosterFallback(img, poster, backup, () => wrapper.classList.add("no-thumb"));
       wrapper.appendChild(img);
     }
 
