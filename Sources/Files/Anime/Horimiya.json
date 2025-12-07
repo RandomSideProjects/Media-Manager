@@ -1,6 +1,7 @@
 {
   "title": "Horimiya",
-  "Image": "./Sources/Posters/Anime/Horimiya.webp",
+  "poster": "./Sources/Posters/Anime/Horimiya.webp",
+  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Horimiya.webp",
   "categories": [
     {
       "category": "Season 1 (Horimiya)",

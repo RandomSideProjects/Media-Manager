@@ -67,19 +67,16 @@ function createSourceCard(data, openTarget) {
   card.className = 'source-card';
 
   // Left: poster image (preserve aspect ratio, no cropping)
-  const imgUrl = (typeof data.Image === 'string' && data.Image !== 'N/A')
-    ? data.Image
-    : (typeof data.image === 'string' && data.image !== 'N/A' ? data.image : '');
-  if (imgUrl) {
+  const { poster: imgUrl, remoteposter: fallbackPoster } = extractPosterPair(data);
+  if (imgUrl || fallbackPoster) {
     const img = document.createElement('img');
     img.className = 'source-thumb';
     img.alt = `${title} poster`;
-    img.src = imgUrl;
     img.referrerPolicy = 'no-referrer';
-    img.addEventListener('error', () => { img.style.display = 'none'; });
     img.addEventListener('load', () => fitPosterToCard(img, card));
-    if (img.complete && img.naturalWidth) fitPosterToCard(img, card);
     window.addEventListener('resize', () => fitPosterToCard(img, card));
+    applyPosterFallback(img, imgUrl, fallbackPoster, () => { img.style.display = 'none'; card.classList.add('no-thumb'); });
+    if (img.complete && img.naturalWidth) fitPosterToCard(img, card);
     card.appendChild(img);
   } else {
     card.classList.add('no-thumb');

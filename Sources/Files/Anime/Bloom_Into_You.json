@@ -1,6 +1,7 @@
 {
   "title": "Bloom Into You",
-  "Image": "./Sources/Posters/Anime/Bloom_Into_You.webp",
+  "poster": "./Sources/Posters/Anime/Bloom_Into_You.webp",
+  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Bloom_Into_You.webp",
   "LatestTime": "2025-10-27T13:09:59.506Z",
   "categories": [
     {

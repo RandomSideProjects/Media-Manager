@@ -1,6 +1,7 @@
 {
   "title": "GO! GO! LOSER RANGER!",
-  "Image": "./Sources/Posters/Anime/GO!_GO!_LOSER_RANGER!.webp",
+  "poster": "./Sources/Posters/Anime/GO!_GO!_LOSER_RANGER!.webp",
+  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/GO!_GO!_LOSER_RANGER!.webp",
   "categories": [
     {
       "category": "Season 1",

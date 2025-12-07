@@ -1,6 +1,7 @@
 {
   "title": "Chillin' In A World With Level 2 Super Powers",
-  "Image": "./Sources/Posters/Anime/Chillin'_In_A_World_With_Level_2_Super_Powers.webp",
+  "poster": "./Sources/Posters/Anime/Chillin'_In_A_World_With_Level_2_Super_Powers.webp",
+  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Chillin'_In_A_World_With_Level_2_Super_Powers.webp",
   "categories": [
     {
       "category": "Season 1",

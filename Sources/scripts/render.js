@@ -41,16 +41,15 @@ function buildSourceCardFromMeta(meta) {
   const card = document.createElement('div');
   card.className = 'source-card';
 
-  const posterSrc = meta.poster || meta.image;
-  if (!SOURCES_HIDE_POSTERS && posterSrc && String(posterSrc).toLowerCase() !== 'null') {
+  const { poster: posterSrc, remoteposter: backupPoster } = extractPosterPair(meta);
+  if (!SOURCES_HIDE_POSTERS && (posterSrc || backupPoster) && String(posterSrc || backupPoster).toLowerCase() !== 'null') {
     const img = document.createElement('img');
     img.className = 'source-thumb';
     img.alt = `${title} poster`;
-    img.src = posterSrc;
-    img.addEventListener('error', () => { img.style.display = 'none'; });
     img.addEventListener('load', () => fitPosterToCard(img, card));
-    if (img.complete && img.naturalWidth) fitPosterToCard(img, card);
     window.addEventListener('resize', () => fitPosterToCard(img, card));
+    applyPosterFallback(img, posterSrc, backupPoster, () => { img.style.display = 'none'; card.classList.add('no-thumb'); });
+    if (img.complete && img.naturalWidth) fitPosterToCard(img, card);
     card.appendChild(img);
   } else {
     card.classList.add('no-thumb');
@@ -227,19 +226,16 @@ function buildSourceCard(data, openSourceParam, fileNameForFallback) {
   card.className = 'source-card';
 
   // Left: poster image (preserve aspect ratio)
-  const imgUrl = (typeof data.Image === 'string' && data.Image !== 'N/A')
-    ? data.Image
-    : (typeof data.image === 'string' && data.image !== 'N/A' ? data.image : '');
-  if (imgUrl) {
+  const { poster: imgUrl, remoteposter: fallbackPoster } = extractPosterPair(data);
+  if (imgUrl || fallbackPoster) {
     const img = document.createElement('img');
     img.className = 'source-thumb';
     img.alt = `${title} poster`;
-    img.src = imgUrl;
     img.referrerPolicy = 'no-referrer';
-    img.addEventListener('error', () => { img.style.display = 'none'; });
     img.addEventListener('load', () => fitPosterToCard(img, card));
-    if (img.complete && img.naturalWidth) fitPosterToCard(img, card);
     window.addEventListener('resize', () => fitPosterToCard(img, card));
+    applyPosterFallback(img, imgUrl, fallbackPoster, () => { img.style.display = 'none'; card.classList.add('no-thumb'); });
+    if (img.complete && img.naturalWidth) fitPosterToCard(img, card);
     card.appendChild(img);
   } else {
     card.classList.add('no-thumb');
