@@ -449,19 +449,6 @@
       "LatestTime": "2025-08-15T00:53:37.020Z"
     },
     {
-      "file": "BunnyGirlSenpai.json",
-      "path": "./Files/Anime/BunnyGirlSenpai.json",
-      "title": "Rascal Does Not Dream Of A Bunny Girl Senpai",
-      "poster": "./Posters/Anime/Rascal_Does_Not_Dream_Of_A_Bunny_Girl_Senpai.webp",
-      "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Rascal_Does_Not_Dream_Of_A_Bunny_Girl_Senpai.webp",
-      "categoryCount": 2,
-      "episodeCount": 16,
-      "itemCount": 16,
-      "totalFileSizeBytes": 1825301092,
-      "totalDurationSeconds": 23963,
-      "LatestTime": "2025-08-11T12:36:00"
-    },
-    {
       "file": "Rascal_Does_Not_Dream_Of_A_Bunny_Girl_Senpai.json",
       "path": "./Files/Anime/Rascal_Does_Not_Dream_Of_A_Bunny_Girl_Senpai.json",
       "title": "Rascal Does Not Dream Of A Bunny Girl Senpai",

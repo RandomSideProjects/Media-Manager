@@ -45,7 +45,6 @@ This directory contains all available media sources.
 - [Nyaight Of The Living Cat](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FNyaight_Of_The_Living_Cat.json)
 - [One-Punch Man](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FOne-Punch_Man.json)
 - [Quintessential Quintuplets](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FQuintuplets.json)
-- [Rascal Does Not Dream Of A Bunny Girl Senpai](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FBunnyGirlSenpai.json)
 - [Rascal Does Not Dream Of A Bunny Girl Senpai](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FRascal_Does_Not_Dream_Of_A_Bunny_Girl_Senpai.json)
 - [Re: Zero](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FRe_Zero.json)
 - [Roshidere (Alya Hides Her Feelings In Russian)](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FRoshidere.json)
