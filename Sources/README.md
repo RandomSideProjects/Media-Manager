@@ -47,7 +47,6 @@ This directory contains all available media sources.
 - [Quintessential Quintuplets](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FQuintuplets.json)
 - [Rascal Does Not Dream Of A Bunny Girl Senpai](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FBunnyGirlSenpai.json)
 - [Re: Zero](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FRe_Zero.json)
-- [Rent-A-Girlfriend! ](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FKanokari.json)
 - [Roshidere (Alya Hides Her Feelings In Russian)](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FRoshidere.json)
 - [Shikimori's Not Just a Cutie](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FShikimori.json)
 - [So I'm a Spider, So What?](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FSo_I_M_A_Spider_So_What.json)

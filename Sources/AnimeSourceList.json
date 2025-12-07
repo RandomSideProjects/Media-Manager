@@ -475,19 +475,6 @@
       "LatestTime": "2025-10-14T02:12:39.044Z"
     },
     {
-      "file": "Kanokari.json",
-      "path": "./Files/Anime/Kanokari.json",
-      "title": "Rent-A-Girlfriend! ",
-      "poster": "./Posters/Anime/Rent-A-Girlfriend!.webp",
-      "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Rent-A-Girlfriend!.webp",
-      "categoryCount": 1,
-      "episodeCount": 12,
-      "itemCount": 12,
-      "totalFileSizeBytes": 1657971941,
-      "totalDurationSeconds": 17574,
-      "LatestTime": "2025-08-11T12:36:00"
-    },
-    {
       "file": "Roshidere.json",
       "path": "./Files/Anime/Roshidere.json",
       "title": "Roshidere (Alya Hides Her Feelings In Russian)",
