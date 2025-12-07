@@ -30,6 +30,7 @@ function resolveRemotePosterUrl(primaryUrl) {
   if (!primaryUrl) return '';
   const str = String(primaryUrl).trim();
   if (!str) return '';
+  if (str.toLowerCase() === 'n/a') return '';
   if (/^https?:\/\//i.test(str)) return str;
   const trimmed = str.replace(/^\.\//, '').replace(/^\/+/, '');
   const normalized = trimmed.startsWith('Sources/') ? trimmed : `Sources/${trimmed}`;
@@ -2517,9 +2518,10 @@ function applyDirectoryJson(json) {
   const contentOnly = {
     title: json.title || '',
     poster: posterImageUrl || 'N/A',
-    remoteposter: resolveRemotePosterUrl(posterImageUrl),
     categories: categoriesData
   };
+  const appliedRemote = resolveRemotePosterUrl(posterImageUrl);
+  if (appliedRemote) contentOnly.remoteposter = appliedRemote;
   try { window.lastContent = JSON.stringify(contentOnly); } catch {}
   if (outputEl) outputEl.textContent = '';
   clearPendingLoadFile();
@@ -2796,7 +2798,8 @@ async function refreshAllEpisodeMetadata() {
 }
 
 // Local JSON download on A/Z keypress
-function buildLocalDirectoryJSON() {
+function buildLocalDirectoryJSON(options = {}) {
+  const includeLatestTime = (options && options.includeLatestTime !== false);
   const title = document.getElementById('dirTitle').value.trim();
   const categories = [];
   let totalBytes = 0;
@@ -2829,14 +2832,19 @@ function buildLocalDirectoryJSON() {
     }
   });
   const imageField = posterImageUrl || 'N/A';
+  const remotePosterUrl = resolveRemotePosterUrl(imageField);
   const base = {
     title,
     poster: imageField,
-    remoteposter: resolveRemotePosterUrl(imageField),
     categories,
-    LatestTime: new Date().toISOString(),
     totalFileSizeBytes: totalBytes || 0
   };
+  if (remotePosterUrl) {
+    base.remoteposter = remotePosterUrl;
+  }
+  if (includeLatestTime) {
+    base.LatestTime = new Date().toISOString();
+  }
   if (!isMangaMode()) base.totalDurationSeconds = totalSecs || 0; else base.totalPagecount = totalPages || 0;
   if (!isMangaMode() && separatedCategoryCount > 0) {
     base.separatedCategoryCount = separatedCategoryCount;
@@ -2846,6 +2854,10 @@ function buildLocalDirectoryJSON() {
     base.hidden = true;
   }
   return base;
+}
+
+if (typeof window !== 'undefined') {
+  window.mm_buildLocalDirectoryJSON = (opts) => buildLocalDirectoryJSON(opts);
 }
 
 async function uploadDirectoryToGithub() {

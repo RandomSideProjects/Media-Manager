@@ -13,6 +13,7 @@ function resolveRemotePosterUrl(primaryUrl) {
   if (!primaryUrl) return '';
   const str = String(primaryUrl).trim();
   if (!str) return '';
+  if (str.toLowerCase() === 'n/a') return '';
   if (/^https?:\/\//i.test(str)) return str;
   const trimmed = str.replace(/^\.\//, '').replace(/^\/+/, '');
   const normalized = trimmed.startsWith('Sources/') ? trimmed : `Sources/${trimmed}`;
@@ -28,9 +29,9 @@ function extractPosterPair(entry) {
     : (typeof entry.Image === 'string' && entry.Image !== 'N/A')
       ? entry.Image
       : (typeof entry.image === 'string' && entry.image !== 'N/A' ? entry.image : '');
-  const remoteposter = (typeof entry.remoteposter === 'string' && entry.remoteposter)
+  const remoteposter = (typeof entry.remoteposter === 'string' && entry.remoteposter && entry.remoteposter !== 'N/A')
     ? entry.remoteposter
-    : (typeof entry.Image2 === 'string' && entry.Image2)
+    : (typeof entry.Image2 === 'string' && entry.Image2 && entry.Image2 !== 'N/A')
       ? entry.Image2
       : resolveRemotePosterUrl(poster);
   return { poster: poster || '', remoteposter: remoteposter || '' };
@@ -38,7 +39,10 @@ function extractPosterPair(entry) {
 
 function applyPosterFallback(img, primaryUrl, backupUrl, onFail) {
   if (!img) return;
-  const fallback = backupUrl || resolveRemotePosterUrl(primaryUrl);
+  const normalizedPrimary = (primaryUrl || '').toString().trim();
+  const primarySafe = normalizedPrimary && normalizedPrimary.toLowerCase() !== 'n/a' ? normalizedPrimary : '';
+  const backupSafe = (backupUrl || '').toString().trim();
+  const fallback = (backupSafe && backupSafe.toLowerCase() !== 'n/a') ? backupSafe : resolveRemotePosterUrl(primarySafe);
   let triedBackup = false;
   const hidePoster = () => {
     img.style.display = 'none';
@@ -55,8 +59,8 @@ function applyPosterFallback(img, primaryUrl, backupUrl, onFail) {
     }
     hidePoster();
   });
-  if (primaryUrl) {
-    img.src = primaryUrl;
+  if (primarySafe) {
+    img.src = primarySafe;
   } else if (fallback) {
     img.src = fallback;
   } else {

@@ -364,7 +364,7 @@ function initializeUploadSettingsPanel() {
   });
 }
 
-// Test JSON sender + 'Q' hotkey
+// Test JSON sender (dev-only)
 async function mm_sendTestJson() {
   try {
     const st = loadUploadSettings();
@@ -410,6 +410,35 @@ async function mm_sendTestJson() {
 }
 window.mm_sendTestJson = mm_sendTestJson;
 
+async function mm_manualUploadSource() {
+  try {
+    const builder = (typeof window !== 'undefined' && typeof window.mm_buildLocalDirectoryJSON === 'function')
+      ? window.mm_buildLocalDirectoryJSON
+      : null;
+    if (!builder) throw new Error('Creator payload builder unavailable');
+    const payload = builder({ includeLatestTime: false });
+    if (!payload || typeof payload !== 'object') throw new Error('Could not build source payload');
+    const uploader = (typeof window !== 'undefined' && typeof window.mm_autoUploadFromContent === 'function')
+      ? window.mm_autoUploadFromContent
+      : (typeof autoUploadFromContent === 'function' ? autoUploadFromContent : null);
+    if (!uploader) throw new Error('Upload helper unavailable');
+    await uploader(payload);
+    return true;
+  } catch (err) {
+    console.error('[MM][ManualUpload] ❌ Failed:', err);
+    if (typeof window !== 'undefined' && typeof window.showStorageNotice === 'function') {
+      window.showStorageNotice({
+        title: 'Manual Upload',
+        message: err && err.message ? err.message : 'Upload failed',
+        tone: 'error',
+        autoCloseMs: 5000
+      });
+    }
+    return false;
+  }
+}
+window.mm_manualUploadSource = mm_manualUploadSource;
+
 // Create settings panel immediately so dev-menu.js can access its elements
 ensureUploadSettingsPanel();
 
@@ -419,6 +448,6 @@ document.addEventListener('keydown', (e) => {
     const tag = (e.target && e.target.tagName) || '';
     if (tag === 'INPUT' || tag === 'TEXTAREA') return;
     e.preventDefault();
-    mm_sendTestJson();
+    mm_manualUploadSource();
   } catch {}
 });
