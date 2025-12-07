@@ -26,6 +26,17 @@ let isFolderUploading = false;
 let maintainerHidden = false;
 const HIDDEN_JSON_KEYS = ['hidden', 'Hidden', 'maintainerHidden'];
 const IMAGE_BACKUP_BASE_URL = 'https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/';
+
+function getSiteBasePath() {
+  if (typeof window === 'undefined' || !window.location) return '/';
+  const path = window.location.pathname || '/';
+  const creatorIdx = path.indexOf('/Creator/');
+  if (creatorIdx >= 0) return path.slice(0, creatorIdx + 1);
+  if (path.endsWith('/')) return path;
+  const lastSlash = path.lastIndexOf('/');
+  return lastSlash >= 0 ? path.slice(0, lastSlash + 1) : '/';
+}
+
 function resolveRemotePosterUrl(primaryUrl) {
   if (!primaryUrl) return '';
   const str = String(primaryUrl).trim();
@@ -35,6 +46,19 @@ function resolveRemotePosterUrl(primaryUrl) {
   const trimmed = str.replace(/^\.\//, '').replace(/^\/+/, '');
   const normalized = trimmed.startsWith('Sources/') ? trimmed : `Sources/${trimmed}`;
   return IMAGE_BACKUP_BASE_URL + normalized;
+}
+
+function resolvePosterPreviewUrl(primaryUrl, remoteUrl) {
+  const raw = (primaryUrl || '').trim();
+  const remote = (remoteUrl || resolveRemotePosterUrl(raw) || '').trim();
+  if (!raw) return remote;
+  if (/^(?:https?:|data:|blob:)/i.test(raw)) return raw;
+  const trimmed = raw.replace(/^\.\//, '').replace(/^\/+/, '');
+  const normalizedPath = trimmed.startsWith('Sources/') ? trimmed : `Sources/${trimmed}`;
+  const basePath = getSiteBasePath();
+  const withBase = `${basePath}${normalizedPath}`.replace(/\\/g, '/');
+  const cleaned = withBase.startsWith('/') ? withBase : `/${withBase}`;
+  return cleaned || remote;
 }
 if (typeof window !== 'undefined') {
   window.isFolderUploading = false;
@@ -2489,8 +2513,9 @@ function applyDirectoryJson(json) {
     json.remoteposter
   ].find((val) => val && val !== 'N/A');
   posterImageUrl = providedPoster ? providedPoster : '';
+  const previewPosterUrl = resolvePosterPreviewUrl(posterImageUrl, json.remoteposter);
   if (posterImageUrl) {
-    setPosterPreviewSource(posterImageUrl, { isBlob: false });
+    setPosterPreviewSource(previewPosterUrl, { isBlob: false });
     if (posterWrapper) posterWrapper.style.display = 'inline-block';
     if (posterInput) posterInput.style.display = 'none';
   } else {
