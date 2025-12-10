@@ -269,5 +269,6 @@
   "LatestTime": "2025-08-22T03:48:20.383Z",
   "totalFileSizeBytes": 4767720497,
   "totalDurationSeconds": 57018,
-  "Image": "./Sources/Posters/Anime/Kaguya-Sama_Love_Is_War.webp"
+  "Image": "./Sources/Posters/Anime/Kaguya-Sama_Love_Is_War.webp",
+  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Kaguya-Sama_Love_Is_War.webp"
 }

@@ -292,5 +292,6 @@
   ],
   "totalFileSizeBytes": 2007448081,
   "totalDurationSeconds": 17232,
-  "Image": "./Sources/Posters/Anime/Campfire_Cooking_in_Another_World_with_My_Absurd_Skill.webp"
+  "Image": "./Sources/Posters/Anime/Campfire_Cooking_in_Another_World_with_My_Absurd_Skill.webp",
+  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Campfire_Cooking_in_Another_World_with_My_Absurd_Skill.webp"
 }

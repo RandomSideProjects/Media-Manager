@@ -4,234 +4,255 @@
       "file": "ConditionLove.json",
       "path": "./Files/Anime/ConditionLove.json",
       "title": "A Condition Called Love",
+      "poster": "./Posters/Anime/A_Condition_Called_Love.webp",
+      "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/A_Condition_Called_Love.webp",
       "categoryCount": 1,
       "episodeCount": 12,
       "itemCount": 12,
       "totalFileSizeBytes": 713864585,
       "totalDurationSeconds": 17025,
-      "LatestTime": "2025-08-11T12:36:00",
-      "Image": "./Posters/Anime/A_Condition_Called_Love.webp"
+      "LatestTime": "2025-08-11T12:36:00"
     },
     {
       "file": "Cuckoos.json",
       "path": "./Files/Anime/Cuckoos.json",
       "title": "A Couple Of Cuckoos",
+      "poster": "./Posters/Anime/A_Couple_Of_Cuckoos.webp",
+      "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/A_Couple_Of_Cuckoos.webp",
       "categoryCount": 2,
       "episodeCount": 30,
       "itemCount": 30,
       "totalFileSizeBytes": 2738128615,
       "totalDurationSeconds": 41691,
-      "LatestTime": "2025-09-06T18:20:33.268Z",
-      "Image": "./Posters/Anime/A_Couple_Of_Cuckoos.webp"
+      "LatestTime": "2025-09-06T18:20:33.268Z"
     },
     {
       "file": "Aharen.json",
       "path": "./Files/Anime/Aharen.json",
       "title": "Aharen Is Indecipherable",
+      "poster": "./Posters/Anime/Aharen_Is_Indecipherable.webp",
+      "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Aharen_Is_Indecipherable.webp",
       "categoryCount": 2,
       "episodeCount": 24,
       "itemCount": 24,
       "totalFileSizeBytes": 3148753748,
       "totalDurationSeconds": 34833,
-      "LatestTime": "2025-09-07T06:49:49.243Z",
-      "Image": "./Posters/Anime/Aharen_Is_Indecipherable.webp"
+      "LatestTime": "2025-09-07T06:49:49.243Z"
     },
     {
       "file": "NeverThoughtGirlOnline.json",
       "path": "./Files/Anime/NeverThoughtGirlOnline.json",
       "title": "And You Thought There Is Never A Girl Online?",
+      "poster": "./Posters/Anime/And_You_Thought_There_Is_Never_A_Girl_Online_.webp",
+      "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/And_You_Thought_There_Is_Never_A_Girl_Online_.webp",
       "categoryCount": 1,
       "episodeCount": 12,
       "itemCount": 12,
       "totalFileSizeBytes": 1664642548,
       "totalDurationSeconds": 17412,
-      "LatestTime": "2025-08-24T04:59:43.415Z",
-      "Image": "./Posters/Anime/And_You_Thought_There_Is_Never_A_Girl_Online_.webp"
+      "LatestTime": "2025-08-24T04:59:43.415Z"
     },
     {
       "file": "ApothDiaries.json",
       "path": "./Files/Anime/ApothDiaries.json",
       "title": "Apothecary diaries",
+      "poster": "./Posters/Anime/Apothecary_diaries.webp",
+      "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Apothecary_diaries.webp",
       "categoryCount": 2,
       "episodeCount": 48,
       "itemCount": 48,
       "totalFileSizeBytes": 3661880855,
       "totalDurationSeconds": 67423,
-      "LatestTime": "2025-09-10T02:01:39.815Z",
-      "Image": "./Posters/Anime/Apothecary_diaries.webp"
+      "LatestTime": "2025-09-10T02:01:39.815Z"
     },
     {
       "file": "Bloom_Into_You.json",
       "path": "./Files/Anime/Bloom_Into_You.json",
       "title": "Bloom Into You",
+      "poster": "./Posters/Anime/Bloom_Into_You.webp",
+      "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Bloom_Into_You.webp",
       "categoryCount": 1,
       "episodeCount": 13,
       "itemCount": 13,
       "totalFileSizeBytes": 6249917153,
       "totalDurationSeconds": 24019,
-      "LatestTime": "2025-10-27T13:09:59.506Z",
-      "Image": "./Posters/Anime/Bloom_Into_You.webp"
+      "LatestTime": "2025-10-27T13:09:59.506Z"
     },
     {
       "file": "Call_Of_The_Night.json",
       "path": "./Files/Anime/Call_Of_The_Night.json",
       "title": "Call Of The Night",
+      "poster": "./Posters/Anime/Call_Of_The_Night.webp",
+      "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Call_Of_The_Night.webp",
       "categoryCount": 2,
       "episodeCount": 25,
       "itemCount": 25,
       "totalFileSizeBytes": 3301840883,
       "totalDurationSeconds": 34793,
-      "LatestTime": "2025-11-05T20:12:58.906Z",
-      "Image": "./Posters/Anime/Call_Of_The_Night.webp"
+      "LatestTime": "2025-11-05T20:12:58.906Z"
     },
     {
       "file": "Campfire_Cooking_In_Another_World_With_My_Absurd_Skill.json",
       "path": "./Files/Anime/Campfire_Cooking_In_Another_World_With_My_Absurd_Skill.json",
       "title": "Campfire Cooking in Another World with My Absurd Skill",
+      "poster": "./Posters/Anime/Campfire_Cooking_in_Another_World_with_My_Absurd_Skill.webp",
+      "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Campfire_Cooking_in_Another_World_with_My_Absurd_Skill.webp",
       "categoryCount": 1,
       "episodeCount": 12,
       "itemCount": 12,
       "totalFileSizeBytes": 2007448081,
       "totalDurationSeconds": 17232,
-      "LatestTime": "2025-10-24T04:12:22.124Z",
-      "Image": "./Posters/Anime/Campfire_Cooking_in_Another_World_with_My_Absurd_Skill.webp"
+      "LatestTime": "2025-10-24T04:12:22.124Z"
     },
     {
       "file": "ChillinLvl2SCP.json",
       "path": "./Files/Anime/ChillinLvl2SCP.json",
       "title": "Chillin' In A World With Level 2 Super Powers",
+      "poster": "./Posters/Anime/Chillin'_In_A_World_With_Level_2_Super_Powers.webp",
+      "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Chillin'_In_A_World_With_Level_2_Super_Powers.webp",
       "categoryCount": 1,
       "episodeCount": 12,
       "itemCount": 12,
       "totalFileSizeBytes": 1301085726,
       "totalDurationSeconds": 17292,
-      "LatestTime": "2025-08-15T00:45:40.890Z",
-      "Image": "./Posters/Anime/Chillin'_In_A_World_With_Level_2_Super_Powers.webp"
+      "LatestTime": "2025-08-15T00:45:40.890Z"
     },
     {
       "file": "DanDaDan.json",
       "path": "./Files/Anime/DanDaDan.json",
       "title": "DanDaDan",
+      "poster": "./Posters/Anime/DanDaDan.webp",
+      "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/DanDaDan.webp",
       "categoryCount": 2,
       "episodeCount": 24,
       "itemCount": 24,
       "totalFileSizeBytes": 3369972016,
       "totalDurationSeconds": 34428,
-      "LatestTime": "2025-09-18T20:18:57.760Z",
-      "Image": "./Posters/Anime/DanDaDan.webp"
+      "LatestTime": "2025-09-18T20:18:57.760Z"
     },
     {
       "file": "Franxx.json",
       "path": "./Files/Anime/Franxx.json",
       "title": "DARLING in the FRANXX",
+      "poster": "./Posters/Anime/DARLING_in_the_FRANXX.webp",
+      "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/DARLING_in_the_FRANXX.webp",
       "categoryCount": 1,
       "episodeCount": 24,
       "itemCount": 24,
       "totalFileSizeBytes": 2275740927,
       "totalDurationSeconds": 34559,
-      "LatestTime": "2025-09-05T05:25:34.010Z",
-      "Image": "./Posters/Anime/DARLING_in_the_FRANXX.webp"
+      "LatestTime": "2025-09-05T05:25:34.010Z"
     },
     {
       "file": "Dealing_With_Mikadono_Sisters_Is_A_Breeze.json",
       "path": "./Files/Anime/Dealing_With_Mikadono_Sisters_Is_A_Breeze.json",
       "title": "Dealing With Mikadono Sisters Is A Breeze",
+      "poster": "./Posters/Anime/Dealing_With_Mikadono_Sisters_Is_A_Breeze.webp",
+      "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Dealing_With_Mikadono_Sisters_Is_A_Breeze.webp",
       "categoryCount": 1,
       "episodeCount": 12,
       "itemCount": 12,
       "totalFileSizeBytes": 1918180857,
       "totalDurationSeconds": 17100,
-      "LatestTime": "2025-10-08T23:40:29.119Z",
-      "Image": "./Posters/Anime/Dealing_With_Mikadono_Sisters_Is_A_Breeze.webp"
+      "LatestTime": "2025-10-08T23:40:29.119Z"
     },
     {
       "file": "Failure_Frame.json",
       "path": "./Files/Anime/Failure_Frame.json",
       "title": "Failure Frame",
+      "poster": "./Posters/Anime/Failure_Frame.webp",
+      "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Failure_Frame.webp",
       "categoryCount": 1,
       "episodeCount": 12,
       "itemCount": 12,
       "totalFileSizeBytes": 1904872376,
       "totalDurationSeconds": 17397,
-      "LatestTime": "2025-08-15T00:33:47.052Z",
-      "Image": "./Posters/Anime/Failure_Frame.webp"
+      "LatestTime": "2025-08-15T00:33:47.052Z"
     },
     {
       "file": "Farming_Life_In_Another_World.json",
       "path": "./Files/Anime/Farming_Life_In_Another_World.json",
       "title": "Farming Life In Another World",
+      "poster": "./Posters/Anime/Farming_Life_In_Another_World.webp",
+      "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Farming_Life_In_Another_World.webp",
       "categoryCount": 1,
       "episodeCount": 12,
       "itemCount": 12,
       "totalFileSizeBytes": 1879729543,
       "totalDurationSeconds": 17181,
-      "LatestTime": "2025-09-24T12:49:34.195Z",
-      "Image": "./Posters/Anime/Farming_Life_In_Another_World.webp"
+      "LatestTime": "2025-09-24T12:49:34.195Z"
     },
     {
       "file": "Frieren.json",
       "path": "./Files/Anime/Frieren.json",
       "title": "Frieren: Beyond Journey's End",
+      "poster": "./Posters/Anime/Frieren_Beyond_Journey's_End.webp",
+      "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Frieren_Beyond_Journey's_End.webp",
       "categoryCount": 1,
       "episodeCount": 28,
       "itemCount": 28,
       "totalFileSizeBytes": 4550926547,
       "totalDurationSeconds": 41399,
-      "LatestTime": "2025-09-07T05:58:52.948Z",
-      "Image": "./Posters/Anime/Frieren_Beyond_Journey's_End.webp"
+      "LatestTime": "2025-09-07T05:58:52.948Z"
     },
     {
       "file": "Gamers.json",
       "path": "./Files/Anime/Gamers.json",
       "title": "Gamers!",
+      "poster": "./Posters/Anime/Gamers!.webp",
+      "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Gamers!.webp",
       "categoryCount": 1,
       "episodeCount": 12,
       "itemCount": 12,
       "totalFileSizeBytes": 913931868,
       "totalDurationSeconds": 17118,
-      "LatestTime": "2025-09-05T07:20:01.007Z",
-      "Image": "./Posters/Anime/Gamers!.webp"
+      "LatestTime": "2025-09-05T07:20:01.007Z"
     },
     {
       "file": "GGLR.json",
       "path": "./Files/Anime/GGLR.json",
       "title": "GO! GO! LOSER RANGER!",
+      "poster": "./Posters/Anime/GO!_GO!_LOSER_RANGER!.webp",
+      "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/GO!_GO!_LOSER_RANGER!.webp",
       "categoryCount": 2,
       "episodeCount": 24,
       "itemCount": 24,
       "totalFileSizeBytes": 4054815404,
       "totalDurationSeconds": 34362,
-      "LatestTime": "2025-09-07T05:59:36.421Z",
-      "Image": "./Posters/Anime/GO!_GO!_LOSER_RANGER!.webp"
+      "LatestTime": "2025-09-07T05:59:36.421Z"
     },
     {
       "file": "Hokkaido!.json",
       "path": "./Files/Anime/Hokkaido!.json",
       "title": "Hokkaido Gals Are Super Adorable!",
+      "poster": "./Posters/Anime/Hokkaido_Gals_Are_Super_Adorable!.webp",
+      "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Hokkaido_Gals_Are_Super_Adorable!.webp",
       "categoryCount": 1,
       "episodeCount": 12,
       "itemCount": 12,
       "totalFileSizeBytes": 1469343927,
       "totalDurationSeconds": 17280,
-      "LatestTime": "2025-09-05T05:11:52.044Z",
-      "Image": "./Posters/Anime/Hokkaido_Gals_Are_Super_Adorable!.webp"
+      "LatestTime": "2025-09-05T05:11:52.044Z"
     },
     {
       "file": "Horimiya.json",
       "path": "./Files/Anime/Horimiya.json",
       "title": "Horimiya",
+      "poster": "./Posters/Anime/Horimiya.webp",
+      "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Horimiya.webp",
       "categoryCount": 2,
       "episodeCount": 26,
       "itemCount": 26,
       "totalFileSizeBytes": 2827094047,
       "totalDurationSeconds": 37173,
-      "LatestTime": "2025-08-14T00:45:54.033Z",
-      "Image": "./Posters/Anime/Horimiya.webp"
+      "LatestTime": "2025-08-14T00:45:54.033Z"
     },
     {
       "file": "I_Want_To_Eat_Your_Pancreas.json",
       "path": "./Files/Anime/I_Want_To_Eat_Your_Pancreas.json",
       "title": "I Want To Eat Your Pancreas",
+      "poster": "./Posters/Anime/I_Want_To_Eat_Your_Pancreas.webp",
+      "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/I_Want_To_Eat_Your_Pancreas.webp",
       "categoryCount": 0,
       "episodeCount": 0,
       "itemCount": 4,
@@ -239,49 +260,53 @@
       "separatedItemCount": 4,
       "totalFileSizeBytes": 606034088,
       "totalDurationSeconds": 6523,
-      "LatestTime": "2025-11-28T05:17:08.886Z",
-      "Image": "./Posters/Anime/I_Want_To_Eat_Your_Pancreas.webp"
+      "LatestTime": "2025-11-28T05:17:08.886Z"
     },
     {
       "file": "AnotherWorldSmartphone.json",
       "path": "./Files/Anime/AnotherWorldSmartphone.json",
       "title": "In Another World With My Smartphone",
+      "poster": "./Posters/Anime/In_Another_World_With_My_Smartphone.webp",
+      "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/In_Another_World_With_My_Smartphone.webp",
       "categoryCount": 2,
       "episodeCount": 24,
       "itemCount": 24,
       "totalFileSizeBytes": 3130241596,
       "totalDurationSeconds": 34224,
-      "LatestTime": "2025-09-05T04:01:07.498Z",
-      "Image": "./Posters/Anime/In_Another_World_With_My_Smartphone.webp"
+      "LatestTime": "2025-09-05T04:01:07.498Z"
     },
     {
       "file": "LoveIsWar.json",
       "path": "./Files/Anime/LoveIsWar.json",
       "title": "Kaguya-Sama: Love Is War",
+      "poster": "./Posters/Anime/Kaguya-Sama_Love_Is_War.webp",
+      "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Kaguya-Sama_Love_Is_War.webp",
       "categoryCount": 4,
       "episodeCount": 41,
       "itemCount": 41,
       "totalFileSizeBytes": 4767720497,
       "totalDurationSeconds": 57018,
-      "LatestTime": "2025-08-22T03:48:20.383Z",
-      "Image": "./Posters/Anime/Kaguya-Sama_Love_Is_War.webp"
+      "LatestTime": "2025-08-22T03:48:20.383Z"
     },
     {
       "file": "Kill_La_Kill.json",
       "path": "./Files/Anime/Kill_La_Kill.json",
       "title": "Kill la Kill",
+      "poster": "./Posters/Anime/Kill_la_Kill.webp",
+      "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Kill_la_Kill.webp",
       "categoryCount": 1,
       "episodeCount": 24,
       "itemCount": 24,
       "totalFileSizeBytes": 5223177254,
       "totalDurationSeconds": 35291,
-      "LatestTime": "2025-12-01T00:13:33.409Z",
-      "Image": "./Posters/Anime/Kill_la_Kill.webp"
+      "LatestTime": "2025-12-01T00:13:33.409Z"
     },
     {
       "file": "Konosuba_God_S_Blessing_On_This_Wonderful_World.json",
       "path": "./Files/Anime/Konosuba_God_S_Blessing_On_This_Wonderful_World.json",
       "title": "KONOSUBA",
+      "poster": "./Posters/Anime/KONOSUBA.webp",
+      "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/KONOSUBA.webp",
       "categoryCount": 3,
       "episodeCount": 30,
       "itemCount": 34,
@@ -289,133 +314,144 @@
       "separatedItemCount": 4,
       "totalFileSizeBytes": 5070684574,
       "totalDurationSeconds": 48579,
-      "LatestTime": "2025-11-22T03:49:20.551Z",
-      "Image": "./Posters/Anime/KONOSUBA.webp"
+      "LatestTime": "2025-11-22T03:49:20.551Z"
     },
     {
       "file": "Love_Flops.json",
       "path": "./Files/Anime/Love_Flops.json",
       "title": "Love Flops",
+      "poster": "./Posters/Anime/Love_Flops.webp",
+      "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Love_Flops.webp",
       "categoryCount": 1,
       "episodeCount": 12,
       "itemCount": 12,
       "totalFileSizeBytes": 2286419019,
       "totalDurationSeconds": 17052,
-      "LatestTime": "2025-09-07T07:04:35.767Z",
-      "Image": "./Posters/Anime/Love_Flops.webp"
+      "LatestTime": "2025-09-07T07:04:35.767Z"
     },
     {
       "file": "Love_Chunibyo_Other_Delusions.json",
       "path": "./Files/Anime/Love_Chunibyo_Other_Delusions.json",
       "title": "Love, Chunibyo & Other Delusions",
+      "poster": "./Posters/Anime/Love,_Chunibyo_&_Other_Delusions.webp",
+      "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Love,_Chunibyo_&_Other_Delusions.webp",
       "categoryCount": 1,
       "episodeCount": 12,
       "itemCount": 12,
       "totalFileSizeBytes": 1425910903,
       "totalDurationSeconds": 16992,
-      "LatestTime": "2025-10-11T05:39:02.686Z",
-      "Image": "./Posters/Anime/Love,_Chunibyo_&_Other_Delusions.webp"
+      "LatestTime": "2025-10-11T05:39:02.686Z"
     },
     {
       "file": "MarriedNotLovers.json",
       "path": "./Files/Anime/MarriedNotLovers.json",
       "title": "More Than a Married Couple, But Not Lovers",
+      "poster": "./Posters/Anime/More_Than_a_Married_Couple,_But_Not_Lovers.webp",
+      "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/More_Than_a_Married_Couple,_But_Not_Lovers.webp",
       "categoryCount": 1,
       "episodeCount": 12,
       "itemCount": 12,
       "totalFileSizeBytes": 1264865331,
       "totalDurationSeconds": 17426,
-      "LatestTime": "2025-08-11T12:36:00",
-      "Image": "./Posters/Anime/More_Than_a_Married_Couple,_But_Not_Lovers.webp"
+      "LatestTime": "2025-08-11T12:36:00"
     },
     {
       "file": "My_Deer_Friend_Nokotan.json",
       "path": "./Files/Anime/My_Deer_Friend_Nokotan.json",
       "title": "My Deer Friend Nokotan",
+      "poster": "./Posters/Anime/My_Deer_Friend_Nokotan.webp",
+      "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/My_Deer_Friend_Nokotan.webp",
       "categoryCount": 1,
       "episodeCount": 12,
       "itemCount": 12,
       "totalFileSizeBytes": 1959815768,
       "totalDurationSeconds": 16992,
-      "LatestTime": "2025-09-05T02:57:26.963Z",
-      "Image": "./Posters/Anime/My_Deer_Friend_Nokotan.webp"
+      "LatestTime": "2025-09-05T02:57:26.963Z"
     },
     {
       "file": "My_Dress_Up_Darling.json",
       "path": "./Files/Anime/My_Dress_Up_Darling.json",
       "title": "My Dress-up Darling",
+      "poster": "./Posters/Anime/My_Dress-up_Darling.webp",
+      "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/My_Dress-up_Darling.webp",
       "categoryCount": 2,
       "episodeCount": 24,
       "itemCount": 24,
       "totalFileSizeBytes": 3377862336,
       "totalDurationSeconds": 34147,
-      "LatestTime": "2025-10-05T06:13:35.816Z",
-      "Image": "./Posters/Anime/My_Dress-up_Darling.webp"
+      "LatestTime": "2025-10-05T06:13:35.816Z"
     },
     {
       "file": "My Love Story With Yamada-kun At Lv999.json",
       "path": "./Files/Anime/My Love Story With Yamada-kun At Lv999.json",
       "title": "My Love Story With Yamada-kun At Lv999",
+      "poster": "./Posters/Anime/My_Love_Story_With_Yamada-kun_At_Lv999.webp",
+      "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/My_Love_Story_With_Yamada-kun_At_Lv999.webp",
       "categoryCount": 1,
       "episodeCount": 13,
       "itemCount": 13,
       "totalFileSizeBytes": 1838483814,
       "totalDurationSeconds": 18550,
-      "LatestTime": "2025-09-06T05:20:44.454Z",
-      "Image": "./Posters/Anime/My_Love_Story_With_Yamada-kun_At_Lv999.webp"
+      "LatestTime": "2025-09-06T05:20:44.454Z"
     },
     {
       "file": "TinySenpai.json",
       "path": "./Files/Anime/TinySenpai.json",
       "title": "My Tiny Senpai",
+      "poster": "./Posters/Anime/My_Tiny_Senpai.webp",
+      "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/My_Tiny_Senpai.webp",
       "categoryCount": 1,
       "episodeCount": 12,
       "itemCount": 12,
       "totalFileSizeBytes": 1412942619,
       "totalDurationSeconds": 16551,
-      "LatestTime": "2025-08-11T12:36:00",
-      "Image": "./Posters/Anime/My_Tiny_Senpai.webp"
+      "LatestTime": "2025-08-11T12:36:00"
     },
     {
       "file": "Nyaight_Of_The_Living_Cat.json",
       "path": "./Files/Anime/Nyaight_Of_The_Living_Cat.json",
       "title": "Nyaight Of The Living Cat",
+      "poster": "./Posters/Anime/Nyaight_Of_The_Living_Cat.webp",
+      "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Nyaight_Of_The_Living_Cat.webp",
       "categoryCount": 1,
       "episodeCount": 12,
       "itemCount": 12,
       "totalFileSizeBytes": 1495600829,
       "totalDurationSeconds": 17250,
-      "LatestTime": "2025-10-19T03:10:54.126Z",
-      "Image": "./Posters/Anime/Nyaight_Of_The_Living_Cat.webp"
+      "LatestTime": "2025-10-19T03:10:54.126Z"
     },
     {
       "file": "One_Piece.json",
       "path": "./Files/Anime/One_Piece.json",
       "title": "One Piece",
+      "poster": null,
+      "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/N/A",
       "categoryCount": 1,
       "episodeCount": 1057,
       "itemCount": 1057,
       "totalFileSizeBytes": 135607247131,
       "totalDurationSeconds": 1518221,
-      "LatestTime": "2025-12-10T02:46:01.851Z",
-      "Image": null
+      "LatestTime": "2025-12-10T02:46:01.851Z"
     },
     {
       "file": "One-Punch_Man.json",
       "path": "./Files/Anime/One-Punch_Man.json",
       "title": "One-Punch Man",
+      "poster": "./Posters/Anime/One-Punch_Man.webp",
+      "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/One-Punch_Man.webp",
       "categoryCount": 2,
       "episodeCount": 24,
       "itemCount": 24,
       "totalFileSizeBytes": 3909689780,
       "totalDurationSeconds": 34682,
-      "LatestTime": "2025-09-10T19:12:40.080Z",
-      "Image": "./Posters/Anime/One-Punch_Man.webp"
+      "LatestTime": "2025-09-10T19:12:40.080Z"
     },
     {
       "file": "Quintuplets.json",
       "path": "./Files/Anime/Quintuplets.json",
       "title": "Quintessential Quintuplets",
+      "poster": "./Posters/Anime/Quintessential_Quintuplets.webp",
+      "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Quintessential_Quintuplets.webp",
       "categoryCount": 2,
       "episodeCount": 24,
       "itemCount": 31,
@@ -423,13 +459,14 @@
       "separatedItemCount": 7,
       "totalFileSizeBytes": 4732678956,
       "totalDurationSeconds": 42855,
-      "LatestTime": "2025-08-15T00:53:37.020Z",
-      "Image": "./Posters/Anime/Quintessential_Quintuplets.webp"
+      "LatestTime": "2025-08-15T00:53:37.020Z"
     },
     {
       "file": "Rascal_Does_Not_Dream_Of_A_Bunny_Girl_Senpai.json",
       "path": "./Files/Anime/Rascal_Does_Not_Dream_Of_A_Bunny_Girl_Senpai.json",
       "title": "Rascal Does Not Dream Of A Bunny Girl Senpai",
+      "poster": "./Posters/Anime/Rascal_Does_Not_Dream_Of_A_Bunny_Girl_Senpai.webp",
+      "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Rascal_Does_Not_Dream_Of_A_Bunny_Girl_Senpai.webp",
       "categoryCount": 2,
       "episodeCount": 26,
       "itemCount": 35,
@@ -437,188 +474,202 @@
       "separatedItemCount": 9,
       "totalFileSizeBytes": 4045025043,
       "totalDurationSeconds": 53625,
-      "LatestTime": "2025-12-07T20:35:47.574Z",
-      "Image": "./Posters/Anime/Rascal_Does_Not_Dream_Of_A_Bunny_Girl_Senpai.webp"
+      "LatestTime": "2025-12-07T20:35:47.574Z"
     },
     {
       "file": "Re_Zero.json",
       "path": "./Files/Anime/Re_Zero.json",
       "title": "Re: Zero",
+      "poster": "./Posters/Anime/Re_Zero.webp",
+      "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Re_Zero.webp",
       "categoryCount": 3,
       "episodeCount": 66,
       "itemCount": 66,
       "totalFileSizeBytes": 9572793036,
       "totalDurationSeconds": 108650,
-      "LatestTime": "2025-10-14T02:12:39.044Z",
-      "Image": "./Posters/Anime/Re_Zero.webp"
+      "LatestTime": "2025-10-14T02:12:39.044Z"
     },
     {
       "file": "Roshidere.json",
       "path": "./Files/Anime/Roshidere.json",
       "title": "Roshidere (Alya Hides Her Feelings In Russian)",
+      "poster": "./Posters/Anime/Roshidere_(Alya_Hides_Her_Feelings_In_Russian).webp",
+      "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Roshidere_(Alya_Hides_Her_Feelings_In_Russian).webp",
       "categoryCount": 1,
       "episodeCount": 12,
       "itemCount": 12,
       "totalFileSizeBytes": 2062491393,
       "totalDurationSeconds": 17640,
-      "LatestTime": "2025-08-11T12:36:00",
-      "Image": "./Posters/Anime/Roshidere_(Alya_Hides_Her_Feelings_In_Russian).webp"
+      "LatestTime": "2025-08-11T12:36:00"
     },
     {
       "file": "Shikimori.json",
       "path": "./Files/Anime/Shikimori.json",
       "title": "Shikimori's Not Just a Cutie",
+      "poster": "./Posters/Anime/Shikimori's_Not_Just_a_Cutie.webp",
+      "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Shikimori's_Not_Just_a_Cutie.webp",
       "categoryCount": 1,
       "episodeCount": 12,
       "itemCount": 12,
       "totalFileSizeBytes": 1538838962,
       "totalDurationSeconds": 16860,
-      "LatestTime": "2025-09-05T05:01:05.937Z",
-      "Image": "./Posters/Anime/Shikimori's_Not_Just_a_Cutie.webp"
+      "LatestTime": "2025-09-05T05:01:05.937Z"
     },
     {
       "file": "So_I_M_A_Spider_So_What.json",
       "path": "./Files/Anime/So_I_M_A_Spider_So_What.json",
       "title": "So I'm a Spider, So What?",
+      "poster": "./Posters/Anime/So_I'm_a_Spider,_So_What_.webp",
+      "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/So_I'm_a_Spider,_So_What_.webp",
       "categoryCount": 1,
       "episodeCount": 24,
       "itemCount": 24,
       "totalFileSizeBytes": 3400620656,
       "totalDurationSeconds": 34152,
-      "LatestTime": "2025-11-29T06:07:30.123Z",
-      "Image": "./Posters/Anime/So_I'm_a_Spider,_So_What_.webp"
+      "LatestTime": "2025-11-29T06:07:30.123Z"
     },
     {
       "file": "Solo_Leveling.json",
       "path": "./Files/Anime/Solo_Leveling.json",
       "title": "Solo Leveling",
+      "poster": "./Posters/Anime/Solo_Leveling.webp",
+      "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Solo_Leveling.webp",
       "categoryCount": 2,
       "episodeCount": 25,
       "itemCount": 25,
       "totalFileSizeBytes": 3131550331,
       "totalDurationSeconds": 35500,
-      "LatestTime": "2025-09-28T01:18:29.309Z",
-      "Image": "./Posters/Anime/Solo_Leveling.webp"
+      "LatestTime": "2025-09-28T01:18:29.309Z"
     },
     {
-      "file": "Spy_\ud835\ude6d_Family.json",
-      "path": "./Files/Anime/Spy_\ud835\ude6d_Family.json",
-      "title": "Spy \ud835\ude6d Family",
+      "file": "Spy_x_Family.json",
+      "path": "./Files/Anime/Spy_x_Family.json",
+      "title": "Spy 𝙭 Family",
+      "poster": "./Posters/Anime/Spy_𝙭_Family.webp",
+      "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Spy_𝙭_Family.webp",
       "categoryCount": 2,
       "episodeCount": 37,
       "itemCount": 37,
       "totalFileSizeBytes": 3701878060,
       "totalDurationSeconds": 53340,
-      "LatestTime": "2025-09-06T19:36:25.302Z",
-      "Image": "./Posters/Anime/Spy_x_Family.webp"
+      "LatestTime": "2025-09-06T19:36:25.302Z"
     },
     {
       "file": "Hyakano.json",
       "path": "./Files/Anime/Hyakano.json",
       "title": "The 100 Girlfriends Who Really, Really, Really, Really, Really Love You",
+      "poster": "./Posters/Anime/The_100_Girlfriends_Who_Really,_Really,_Really,_Really,_Really_Love_You.webp",
+      "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/The_100_Girlfriends_Who_Really,_Really,_Really,_Really,_Really_Love_You.webp",
       "categoryCount": 2,
       "episodeCount": 24,
       "itemCount": 24,
       "totalFileSizeBytes": 3796211196,
       "totalDurationSeconds": 34218,
-      "LatestTime": "2025-08-11T12:36:00",
-      "Image": "./Posters/Anime/The_100_Girlfriends_Who_Really,_Really,_Really,_Really,_Really_Love_You.webp"
+      "LatestTime": "2025-08-11T12:36:00"
     },
     {
       "file": "The_Dreaming_Boy_is_a_Realist.json",
       "path": "./Files/Anime/The_Dreaming_Boy_is_a_Realist.json",
       "title": "The Dreaming Boy is a Realist",
+      "poster": "./Posters/Anime/The_Dreaming_Boy_is_a_Realist.webp",
+      "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/The_Dreaming_Boy_is_a_Realist.webp",
       "categoryCount": 1,
       "episodeCount": 12,
       "itemCount": 12,
       "totalFileSizeBytes": 1001234277,
       "totalDurationSeconds": 17064,
-      "LatestTime": "2025-09-13T17:25:08.637Z",
-      "Image": "./Posters/Anime/The_Dreaming_Boy_is_a_Realist.webp"
+      "LatestTime": "2025-09-13T17:25:08.637Z"
     },
     {
       "file": "IceGuy.json",
       "path": "./Files/Anime/IceGuy.json",
       "title": "The Ice Guy and His Cool Female Colleague",
+      "poster": "./Posters/Anime/The_Ice_Guy_and_His_Cool_Female_Colleague.webp",
+      "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/The_Ice_Guy_and_His_Cool_Female_Colleague.webp",
       "categoryCount": 1,
       "episodeCount": 12,
       "itemCount": 12,
       "totalFileSizeBytes": 949573746,
       "totalDurationSeconds": 17040,
-      "LatestTime": "2025-09-05T05:35:15.833Z",
-      "Image": "./Posters/Anime/The_Ice_Guy_and_His_Cool_Female_Colleague.webp"
+      "LatestTime": "2025-09-05T05:35:15.833Z"
     },
     {
       "file": "Shiunji_Children.json",
       "path": "./Files/Anime/Shiunji_Children.json",
       "title": "The Shiunji Family Children",
+      "poster": "./Posters/Anime/The_Shiunji_Family_Children.webp",
+      "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/The_Shiunji_Family_Children.webp",
       "categoryCount": 1,
       "episodeCount": 12,
       "itemCount": 12,
       "totalFileSizeBytes": 1506263286,
       "totalDurationSeconds": 17060,
-      "LatestTime": "2025-09-05T05:07:12.860Z",
-      "Image": "./Posters/Anime/The_Shiunji_Family_Children.webp"
+      "LatestTime": "2025-09-05T05:07:12.860Z"
     },
     {
       "file": "Tomochan.json",
       "path": "./Files/Anime/Tomochan.json",
       "title": "Tomo-chan Is A Girl!",
+      "poster": "./Posters/Anime/Tomo-chan_Is_A_Girl!.webp",
+      "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Tomo-chan_Is_A_Girl!.webp",
       "categoryCount": 1,
       "episodeCount": 13,
       "itemCount": 13,
       "totalFileSizeBytes": 1088823358,
       "totalDurationSeconds": 18486,
-      "LatestTime": "2025-09-05T05:26:32.932Z",
-      "Image": "./Posters/Anime/Tomo-chan_Is_A_Girl!.webp"
+      "LatestTime": "2025-09-05T05:26:32.932Z"
     },
     {
       "file": "Toradora.json",
       "path": "./Files/Anime/Toradora.json",
       "title": "Toradora!",
+      "poster": "./Posters/Anime/Toradora!.webp",
+      "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Toradora!.webp",
       "categoryCount": 3,
       "episodeCount": 30,
       "itemCount": 30,
       "totalFileSizeBytes": 2722012564,
       "totalDurationSeconds": 38386,
-      "LatestTime": "2025-09-06T05:24:17.927Z",
-      "Image": "./Posters/Anime/Toradora!.webp"
+      "LatestTime": "2025-09-06T05:24:17.927Z"
     },
     {
       "file": "Watari_Kun_S_Is_About_To_Collapse.json",
       "path": "./Files/Anime/Watari_Kun_S_Is_About_To_Collapse.json",
       "title": "Watari-kun's ****** Is About To Collapse",
+      "poster": "./Posters/Anime/Watari-kun's_Is_About_To_Collapse.webp",
+      "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Watari-kun's_Is_About_To_Collapse.webp",
       "categoryCount": 1,
       "episodeCount": 11,
       "itemCount": 11,
       "totalFileSizeBytes": 1383893794,
       "totalDurationSeconds": 15620,
-      "LatestTime": "2025-09-29T13:14:13.490Z",
-      "Image": "./Posters/Anime/Watari-kun's_Is_About_To_Collapse.webp"
+      "LatestTime": "2025-09-29T13:14:13.490Z"
     },
     {
       "file": "Wise_Man_S_Grandchild.json",
       "path": "./Files/Anime/Wise_Man_S_Grandchild.json",
       "title": "Wise Man's Grandchild",
+      "poster": "./Posters/Anime/Wise_Man's_Grandchild.webp",
+      "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Wise_Man's_Grandchild.webp",
       "categoryCount": 1,
       "episodeCount": 12,
       "itemCount": 12,
       "totalFileSizeBytes": 1663738722,
       "totalDurationSeconds": 17145,
-      "LatestTime": "2025-09-28T04:27:33.010Z",
-      "Image": "./Posters/Anime/Wise_Man's_Grandchild.webp"
+      "LatestTime": "2025-09-28T04:27:33.010Z"
     },
     {
       "file": "MeidoSama.json",
       "path": "./Files/Anime/MeidoSama.json",
       "title": "You are Ms. Servent (Kimi-wa Meido sama)",
+      "poster": "./Posters/Anime/You_are_Ms__Servent_(Kimi-wa_Meido_sama).webp",
+      "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/You_are_Ms__Servent_(Kimi-wa_Meido_sama).webp",
       "categoryCount": 1,
       "episodeCount": 12,
       "itemCount": 12,
       "totalFileSizeBytes": 1662931471,
       "totalDurationSeconds": 16560,
-      "LatestTime": "2025-08-11T12:36:00",
-      "Image": "./Posters/Anime/You_are_Ms__Servent_(Kimi-wa_Meido_sama).webp"
+      "LatestTime": "2025-08-11T12:36:00"
     },
     {
       "file": "Your_Lie_In_April.json",
@@ -629,9 +680,7 @@
       "itemCount": 22,
       "totalFileSizeBytes": 2884046983,
       "totalDurationSeconds": 30187,
-      "LatestTime": "2025-12-07T05:34:24.600Z",
-      "Image": "./Posters/Anime/Your_Lie_in_April.webp"
+      "LatestTime": "2025-12-07T05:34:24.600Z"
     }
   ]
 }
-
