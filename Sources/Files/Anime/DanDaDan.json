@@ -159,6 +159,5 @@
   "LatestTime": "2025-09-18T20:18:57.760Z",
   "totalFileSizeBytes": 3369972016,
   "totalDurationSeconds": 34428,
-  "Image": "./Sources/Posters/Anime/DanDaDan.webp",
-  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/DanDaDan.webp"
+  "Image": "./Sources/Posters/Anime/DanDaDan.webp"
 }

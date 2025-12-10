@@ -154,6 +154,5 @@
   "LatestTime": "2025-09-05T05:25:34.010Z",
   "totalFileSizeBytes": 2275740927,
   "totalDurationSeconds": 34559,
-  "Image": "./Sources/Posters/Anime/DARLING_in_the_FRANXX.webp",
-  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/DARLING_in_the_FRANXX.webp"
+  "Image": "./Sources/Posters/Anime/DARLING_in_the_FRANXX.webp"
 }

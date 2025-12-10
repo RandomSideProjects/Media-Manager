@@ -82,6 +82,5 @@
   "LatestTime": "2025-09-13T17:25:08.637Z",
   "totalFileSizeBytes": 1001234277,
   "totalDurationSeconds": 17064,
-  "Image": "./Sources/Posters/Anime/The_Dreaming_Boy_is_a_Realist.webp",
-  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/The_Dreaming_Boy_is_a_Realist.webp"
+  "Image": "./Sources/Posters/Anime/The_Dreaming_Boy_is_a_Realist.webp"
 }
