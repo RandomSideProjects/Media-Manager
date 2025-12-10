@@ -424,14 +424,14 @@
       "file": "One_Piece.json",
       "path": "./Files/Anime/One_Piece.json",
       "title": "One Piece",
-      "poster": null,
-      "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/N/A",
+      "poster": "./Posters/Anime/One_Piece.webp",
+      "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/One_Piece.webp",
       "categoryCount": 1,
       "episodeCount": 1057,
       "itemCount": 1057,
       "totalFileSizeBytes": 135607247131,
       "totalDurationSeconds": 1518221,
-      "LatestTime": null
+      "LatestTime": "2025-12-10T03:54:59.586Z"
     },
     {
       "file": "One-Punch_Man.json",
