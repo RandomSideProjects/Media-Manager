@@ -82,11 +82,5 @@
   ],
   "totalFileSizeBytes": 1425910903,
   "totalDurationSeconds": 16992,
-<<<<<<< Updated upstream
-  "Image": "./Sources/Posters/Anime/Love,_Chunibyo_&_Other_Delusions.webp",
-  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Love,_Chunibyo_&_Other_Delusions.webp"
-}
-=======
   "Image": "./Sources/Posters/Anime/Love,_Chunibyo_&_Other_Delusions.webp"
 }
->>>>>>> Stashed changes

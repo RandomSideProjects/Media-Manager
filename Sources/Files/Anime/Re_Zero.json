@@ -436,11 +436,5 @@
   ],
   "totalFileSizeBytes": 9572793036,
   "totalDurationSeconds": 108650,
-<<<<<<< Updated upstream
-  "Image": "./Sources/Posters/Anime/Re_Zero.webp",
-  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Re_Zero.webp"
-}
-=======
   "Image": "./Sources/Posters/Anime/Re_Zero.webp"
 }
->>>>>>> Stashed changes

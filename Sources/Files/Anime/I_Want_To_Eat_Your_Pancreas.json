@@ -37,11 +37,5 @@
   "totalDurationSeconds": 6523,
   "separatedCategoryCount": 1,
   "separatedItemCount": 4,
-<<<<<<< Updated upstream
-  "Image": "./Sources/Posters/Anime/I_Want_To_Eat_Your_Pancreas.webp",
-  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/I_Want_To_Eat_Your_Pancreas.webp"
-}
-=======
   "Image": "./Sources/Posters/Anime/I_Want_To_Eat_Your_Pancreas.webp"
 }
->>>>>>> Stashed changes

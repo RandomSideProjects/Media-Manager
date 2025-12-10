@@ -200,11 +200,5 @@
   "LatestTime": "2025-09-06T05:24:17.927Z",
   "totalFileSizeBytes": 2722012564,
   "totalDurationSeconds": 38386,
-<<<<<<< Updated upstream
-  "Image": "./Sources/Posters/Anime/Toradora!.webp",
-  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Toradora!.webp"
-}
-=======
   "Image": "./Sources/Posters/Anime/Toradora!.webp"
 }
->>>>>>> Stashed changes

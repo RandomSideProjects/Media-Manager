@@ -82,11 +82,5 @@
   "LatestTime": "2025-08-15T00:45:40.890Z",
   "totalFileSizeBytes": 1301085726,
   "totalDurationSeconds": 17292,
-<<<<<<< Updated upstream
-  "Image": "./Sources/Posters/Anime/Chillin'_In_A_World_With_Level_2_Super_Powers.webp",
-  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Chillin'_In_A_World_With_Level_2_Super_Powers.webp"
-}
-=======
   "Image": "./Sources/Posters/Anime/Chillin'_In_A_World_With_Level_2_Super_Powers.webp"
 }
->>>>>>> Stashed changes
