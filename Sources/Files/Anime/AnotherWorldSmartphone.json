@@ -1,7 +1,5 @@
 {
   "title": "In Another World With My Smartphone",
-  "poster": "./Sources/Posters/Anime/In_Another_World_With_My_Smartphone.webp",
-  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/In_Another_World_With_My_Smartphone.webp",
   "categories": [
     {
       "category": "Season 1",
@@ -160,5 +158,6 @@
   ],
   "LatestTime": "2025-09-05T04:01:07.498Z",
   "totalFileSizeBytes": 3130241596,
-  "totalDurationSeconds": 34224
+  "totalDurationSeconds": 34224,
+  "Image": "./Sources/Posters/Anime/In_Another_World_With_My_Smartphone.webp"
 }

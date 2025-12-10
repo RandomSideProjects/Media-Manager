@@ -199,13 +199,13 @@ async function loadSource(rawInput) {
     urlInputContainer.style.display = 'none';
     directoryTitle.textContent = srcTitle;
     try { document.title = `${(srcTitle || '').trim() || 'Source'} on RSP Media Manager`; } catch {}
-    const { poster: imgUrl, remoteposter: image2Poster } = extractPosterPair(json);
+    const imgUrl = extractPoster(json);
     sourceImageUrl = imgUrl || '';
     if (directoryPoster) {
       const hidePoster = () => { directoryPoster.style.display = 'none'; updateDirectoryHeaderPosterSpacing(); };
-      const showPoster = imgUrl || image2Poster;
-      if (showPoster) {
-        applyPosterFallback(directoryPoster, imgUrl, image2Poster, hidePoster);
+      if (imgUrl) {
+        directoryPoster.onerror = hidePoster;
+        directoryPoster.src = imgUrl;
         directoryPoster.style.display = 'inline-block';
       } else {
         try { directoryPoster.removeAttribute('src'); } catch {}

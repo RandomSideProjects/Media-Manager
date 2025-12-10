@@ -1,7 +1,5 @@
 {
   "title": "Bloom Into You",
-  "poster": "./Posters/Manga/Bloom_Into_You.webp",
-  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Manga/Bloom_Into_You.webp",
   "LatestTime": "2025-11-03T08:45:58.213Z",
   "categories": [
     {
@@ -59,5 +57,6 @@
     }
   ],
   "totalFileSizeBytes": 2623674107,
-  "totalPagecount": 1481
+  "totalPagecount": 1481,
+  "Image": "./Posters/Manga/Bloom_Into_You.webp"
 }

@@ -1,7 +1,5 @@
 {
   "title": "Solo Leveling",
-  "poster": "./Sources/Posters/Anime/Solo_Leveling.webp",
-  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Solo_Leveling.webp",
   "LatestTime": "2025-09-28T01:18:29.309Z",
   "categories": [
     {
@@ -166,5 +164,6 @@
     }
   ],
   "totalFileSizeBytes": 3131550331,
-  "totalDurationSeconds": 35500
+  "totalDurationSeconds": 35500,
+  "Image": "./Sources/Posters/Anime/Solo_Leveling.webp"
 }

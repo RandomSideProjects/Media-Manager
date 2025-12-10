@@ -1,7 +1,5 @@
 {
   "title": "Campfire Cooking in Another World with My Absurd Skill",
-  "poster": "./Sources/Posters/Anime/Campfire_Cooking_in_Another_World_with_My_Absurd_Skill.webp",
-  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Campfire_Cooking_in_Another_World_with_My_Absurd_Skill.webp",
   "LatestTime": "2025-10-24T04:12:22.124Z",
   "categories": [
     {
@@ -293,5 +291,6 @@
     }
   ],
   "totalFileSizeBytes": 2007448081,
-  "totalDurationSeconds": 17232
+  "totalDurationSeconds": 17232,
+  "Image": "./Sources/Posters/Anime/Campfire_Cooking_in_Another_World_with_My_Absurd_Skill.webp"
 }

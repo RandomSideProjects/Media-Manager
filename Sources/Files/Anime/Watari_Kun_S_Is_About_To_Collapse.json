@@ -1,7 +1,5 @@
 {
   "title": "Watari-kun's ****** Is About To Collapse",
-  "poster": "./Sources/Posters/Anime/Watari-kun's_Is_About_To_Collapse.webp",
-  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Watari-kun's_Is_About_To_Collapse.webp",
   "LatestTime": "2025-09-29T13:14:13.490Z",
   "categories": [
     {
@@ -77,5 +75,6 @@
     }
   ],
   "totalFileSizeBytes": 1383893794,
-  "totalDurationSeconds": 15620
+  "totalDurationSeconds": 15620,
+  "Image": "./Sources/Posters/Anime/Watari-kun's_Is_About_To_Collapse.webp"
 }

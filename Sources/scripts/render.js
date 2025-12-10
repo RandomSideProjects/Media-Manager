@@ -41,14 +41,15 @@ function buildSourceCardFromMeta(meta) {
   const card = document.createElement('div');
   card.className = 'source-card';
 
-  const { poster: posterSrc, remoteposter: backupPoster } = extractPosterPair(meta);
-  if (!SOURCES_HIDE_POSTERS && (posterSrc || backupPoster) && String(posterSrc || backupPoster).toLowerCase() !== 'null') {
+  const posterSrc = extractPoster(meta);
+  if (!SOURCES_HIDE_POSTERS && posterSrc && String(posterSrc).toLowerCase() !== 'null') {
     const img = document.createElement('img');
     img.className = 'source-thumb';
     img.alt = `${title} poster`;
     img.addEventListener('load', () => fitPosterToCard(img, card));
     window.addEventListener('resize', () => fitPosterToCard(img, card));
-    applyPosterFallback(img, posterSrc, backupPoster, () => { img.style.display = 'none'; card.classList.add('no-thumb'); });
+    img.onerror = () => { img.style.display = 'none'; card.classList.add('no-thumb'); };
+    img.src = posterSrc;
     if (img.complete && img.naturalWidth) fitPosterToCard(img, card);
     card.appendChild(img);
   } else {
@@ -226,15 +227,16 @@ function buildSourceCard(data, openSourceParam, fileNameForFallback) {
   card.className = 'source-card';
 
   // Left: poster image (preserve aspect ratio)
-  const { poster: imgUrl, remoteposter: fallbackPoster } = extractPosterPair(data);
-  if (imgUrl || fallbackPoster) {
+  const imgUrl = extractPoster(data);
+  if (imgUrl) {
     const img = document.createElement('img');
     img.className = 'source-thumb';
     img.alt = `${title} poster`;
     img.referrerPolicy = 'no-referrer';
     img.addEventListener('load', () => fitPosterToCard(img, card));
     window.addEventListener('resize', () => fitPosterToCard(img, card));
-    applyPosterFallback(img, imgUrl, fallbackPoster, () => { img.style.display = 'none'; card.classList.add('no-thumb'); });
+    img.onerror = () => { img.style.display = 'none'; card.classList.add('no-thumb'); };
+    img.src = imgUrl;
     if (img.complete && img.naturalWidth) fitPosterToCard(img, card);
     card.appendChild(img);
   } else {

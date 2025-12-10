@@ -7,81 +7,13 @@ let sourceKeyHistory = [];
 let flatList = [];
 let currentIndex = 0;
 let sourceImageUrl = '';
-const IMAGE_BACKUP_BASE_URL = 'https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/';
 
-function resolveRemotePosterUrl(primaryUrl) {
-  if (!primaryUrl) return '';
-  const str = String(primaryUrl).trim();
-  if (!str) return '';
-  if (str.toLowerCase() === 'n/a') return '';
-  if (/^https?:\/\//i.test(str)) return str;
-  const trimmed = str.replace(/^\.\//, '').replace(/^\/+/, '');
-  const normalized = trimmed.startsWith('Sources/') ? trimmed : `Sources/${trimmed}`;
-  return IMAGE_BACKUP_BASE_URL + normalized;
-}
-
-const resolveImage2Url = resolveRemotePosterUrl;
-
-function preferRelativePosterPath(posterValue) {
-  const raw = (posterValue || '').toString().trim();
-  if (!raw || raw.toLowerCase() === 'n/a') return '';
-  if (!/^https?:\/\//i.test(raw)) return raw;
-  try {
-    const url = new URL(raw);
-    const pathMatch = (url.pathname || '').match(/\/Sources\/Posters\/.+$/i);
-    if (pathMatch) {
-      return `.${pathMatch[0]}`;
-    }
-  } catch {}
-  return raw;
-}
-
-function extractPosterPair(entry) {
-  if (!entry || typeof entry !== 'object') return { poster: '', remoteposter: '' };
-  const poster = preferRelativePosterPath(
-    (typeof entry.poster === 'string' && entry.poster !== 'N/A')
-      ? entry.poster
-      : (typeof entry.Image === 'string' && entry.Image !== 'N/A')
-        ? entry.Image
-        : (typeof entry.image === 'string' && entry.image !== 'N/A' ? entry.image : '')
-  );
-  const remoteposter = (typeof entry.remoteposter === 'string' && entry.remoteposter && entry.remoteposter !== 'N/A')
-    ? entry.remoteposter
-    : (typeof entry.Image2 === 'string' && entry.Image2 && entry.Image2 !== 'N/A')
-      ? entry.Image2
-      : resolveRemotePosterUrl(poster);
-  return { poster: poster || '', remoteposter: remoteposter || '' };
-}
-
-function applyPosterFallback(img, primaryUrl, backupUrl, onFail) {
-  if (!img) return;
-  const normalizedPrimary = (primaryUrl || '').toString().trim();
-  const primarySafe = normalizedPrimary && normalizedPrimary.toLowerCase() !== 'n/a' ? normalizedPrimary : '';
-  const backupSafe = (backupUrl || '').toString().trim();
-  const fallback = (backupSafe && backupSafe.toLowerCase() !== 'n/a') ? backupSafe : resolveRemotePosterUrl(primarySafe);
-  let triedBackup = false;
-  const hidePoster = () => {
-    img.style.display = 'none';
-    try { img.removeAttribute('src'); } catch {}
-    if (typeof onFail === 'function') {
-      try { onFail(); } catch {}
-    }
-  };
-  img.addEventListener('error', () => {
-    if (!triedBackup && fallback && img.src !== fallback) {
-      triedBackup = true;
-      img.src = fallback;
-      return;
-    }
-    hidePoster();
-  });
-  if (primarySafe) {
-    img.src = primarySafe;
-  } else if (fallback) {
-    img.src = fallback;
-  } else {
-    hidePoster();
-  }
+function extractPoster(entry) {
+  if (!entry || typeof entry !== 'object') return '';
+  if (typeof entry.Image === 'string' && entry.Image !== 'N/A') return entry.Image;
+  if (typeof entry.image === 'string' && entry.image !== 'N/A') return entry.image;
+  if (typeof entry.poster === 'string' && entry.poster !== 'N/A') return entry.poster;
+  return '';
 }
 
 function hashStringToKey(value) {

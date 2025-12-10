@@ -1,7 +1,5 @@
 {
   "title": "Hazbin Hotel",
-  "poster": "N/A",
-  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/N/A",
   "categories": [
     {
       "category": "Season 1",
@@ -136,5 +134,6 @@
   "LatestTime": "2025-11-20T23:08:53.461Z",
   "totalFileSizeBytes": 3203810415,
   "totalDurationSeconds": 25953,
-  "hidden": true
+  "hidden": true,
+  "Image": "N/A"
 }

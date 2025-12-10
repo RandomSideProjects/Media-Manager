@@ -25,7 +25,6 @@ const maintainerHiddenToggle = document.getElementById('maintainerHiddenToggle')
 let isFolderUploading = false;
 let maintainerHidden = false;
 const HIDDEN_JSON_KEYS = ['hidden', 'Hidden', 'maintainerHidden'];
-const IMAGE_BACKUP_BASE_URL = 'https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/';
 
 function getSiteBasePath() {
   if (typeof window === 'undefined' || !window.location) return '/';
@@ -37,28 +36,16 @@ function getSiteBasePath() {
   return lastSlash >= 0 ? path.slice(0, lastSlash + 1) : '/';
 }
 
-function resolveRemotePosterUrl(primaryUrl) {
-  if (!primaryUrl) return '';
-  const str = String(primaryUrl).trim();
-  if (!str) return '';
-  if (str.toLowerCase() === 'n/a') return '';
-  if (/^https?:\/\//i.test(str)) return str;
-  const trimmed = str.replace(/^\.\//, '').replace(/^\/+/, '');
-  const normalized = trimmed.startsWith('Sources/') ? trimmed : `Sources/${trimmed}`;
-  return IMAGE_BACKUP_BASE_URL + normalized;
-}
-
-function resolvePosterPreviewUrl(primaryUrl, remoteUrl) {
+function resolvePosterPreviewUrl(primaryUrl) {
   const raw = (primaryUrl || '').trim();
-  const remote = (remoteUrl || resolveRemotePosterUrl(raw) || '').trim();
-  if (!raw) return remote;
+  if (!raw) return '';
   if (/^(?:https?:|data:|blob:)/i.test(raw)) return raw;
   const trimmed = raw.replace(/^\.\//, '').replace(/^\/+/, '');
   const normalizedPath = trimmed.startsWith('Sources/') ? trimmed : `Sources/${trimmed}`;
   const basePath = getSiteBasePath();
   const withBase = `${basePath}${normalizedPath}`.replace(/\\/g, '/');
   const cleaned = withBase.startsWith('/') ? withBase : `/${withBase}`;
-  return cleaned || remote;
+  return cleaned || '';
 }
 if (typeof window !== 'undefined') {
   window.isFolderUploading = false;
@@ -2510,10 +2497,12 @@ function applyDirectoryJson(json) {
     json.poster,
     json.Image,
     json.image,
-    json.remoteposter
+    json.Image,
+    json.image,
+    json.poster
   ].find((val) => val && val !== 'N/A');
   posterImageUrl = providedPoster ? providedPoster : '';
-  const previewPosterUrl = resolvePosterPreviewUrl(posterImageUrl, json.remoteposter);
+  const previewPosterUrl = resolvePosterPreviewUrl(posterImageUrl);
   if (posterImageUrl) {
     setPosterPreviewSource(previewPosterUrl, { isBlob: false });
     if (posterWrapper) posterWrapper.style.display = 'inline-block';
@@ -2542,11 +2531,9 @@ function applyDirectoryJson(json) {
   updateOutput();
   const contentOnly = {
     title: json.title || '',
-    poster: posterImageUrl || 'N/A',
+    Image: posterImageUrl || 'N/A',
     categories: categoriesData
   };
-  const appliedRemote = resolveRemotePosterUrl(posterImageUrl);
-  if (appliedRemote) contentOnly.remoteposter = appliedRemote;
   try { window.lastContent = JSON.stringify(contentOnly); } catch {}
   if (outputEl) outputEl.textContent = '';
   clearPendingLoadFile();
@@ -2857,16 +2844,12 @@ function buildLocalDirectoryJSON(options = {}) {
     }
   });
   const imageField = posterImageUrl || 'N/A';
-  const remotePosterUrl = resolveRemotePosterUrl(imageField);
   const base = {
     title,
-    poster: imageField,
+    Image: imageField,
     categories,
     totalFileSizeBytes: totalBytes || 0
   };
-  if (remotePosterUrl) {
-    base.remoteposter = remotePosterUrl;
-  }
   if (includeLatestTime) {
     base.LatestTime = new Date().toISOString();
   }

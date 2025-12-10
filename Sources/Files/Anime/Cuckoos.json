@@ -1,7 +1,5 @@
 {
   "title": "A Couple Of Cuckoos",
-  "poster": "./Sources/Posters/Anime/A_Couple_Of_Cuckoos.webp",
-  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/A_Couple_Of_Cuckoos.webp",
   "categories": [
     {
       "category": "Season 1",
@@ -196,5 +194,6 @@
   ],
   "LatestTime": "2025-09-06T18:20:33.268Z",
   "totalFileSizeBytes": 2738128615,
-  "totalDurationSeconds": 41691
+  "totalDurationSeconds": 41691,
+  "Image": "./Sources/Posters/Anime/A_Couple_Of_Cuckoos.webp"
 }

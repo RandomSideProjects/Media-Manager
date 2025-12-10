@@ -1,7 +1,5 @@
 {
-  "title": "Spy 𝙭 Family",
-  "poster": "./Sources/Posters/Anime/Spy_𝙭_Family.webp",
-  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Spy_𝙭_Family.webp",
+  "title": "Spy \ud835\ude6d Family",
   "categories": [
     {
       "category": "Season 1",
@@ -238,5 +236,6 @@
   ],
   "LatestTime": "2025-09-06T19:36:25.302Z",
   "totalFileSizeBytes": 3701878060,
-  "totalDurationSeconds": 53340
+  "totalDurationSeconds": 53340,
+  "Image": "./Sources/Posters/Anime/Spy_\ud835\ude6d_Family.webp"
 }

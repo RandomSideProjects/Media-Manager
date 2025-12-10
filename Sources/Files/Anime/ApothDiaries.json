@@ -1,7 +1,5 @@
 {
   "title": "Apothecary diaries",
-  "poster": "./Sources/Posters/Anime/Apothecary_diaries.webp",
-  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Apothecary_diaries.webp",
   "categories": [
     {
       "category": "Season 1",
@@ -304,5 +302,6 @@
   ],
   "LatestTime": "2025-09-10T02:01:39.815Z",
   "totalFileSizeBytes": 3661880855,
-  "totalDurationSeconds": 67423
+  "totalDurationSeconds": 67423,
+  "Image": "./Sources/Posters/Anime/Apothecary_diaries.webp"
 }

@@ -7,17 +7,6 @@ let lastAutoUploadFailedAt = 0;     // Timestamp of last auto-upload failure
 let autoUploadInFlight = false;
 let inflightContentStr = null;
 const AUTO_UPLOAD_RETRY_DELAY_MS = 2000;
-const POLLING_IMAGE_BACKUP_BASE_URL = 'https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/';
-function resolveRemotePosterUrl(primaryUrl) {
-  if (!primaryUrl) return '';
-  const str = String(primaryUrl).trim();
-  if (!str) return '';
-  if (str.toLowerCase() === 'n/a') return '';
-  if (/^https?:\/\//i.test(str)) return str;
-  const trimmed = str.replace(/^\.\//, '').replace(/^\/+/, '');
-  const normalized = trimmed.startsWith('Sources/') ? trimmed : `Sources/${trimmed}`;
-  return POLLING_IMAGE_BACKUP_BASE_URL + normalized;
-}
 
 function buildAutoUploadPayload() {
   try {
@@ -112,16 +101,12 @@ function buildAutoUploadPayload() {
     ? posterImageUrl
     : ((typeof window !== 'undefined' && typeof window.posterImageUrl !== 'undefined') ? window.posterImageUrl : '');
   const imageField = posterValue || 'N/A';
-  const remotePosterUrl = resolveRemotePosterUrl(imageField);
   const contentOnly = {
     title: titleVal,
-    poster: imageField,
+    Image: imageField,
     categories: cats,
     totalFileSizeBytes
   };
-  if (remotePosterUrl) {
-    contentOnly.remoteposter = remotePosterUrl;
-  }
   const hiddenEnabled = (() => {
     if (typeof window === 'undefined') return false;
     if (window.mm_creatorHidden === true) return true;

@@ -1,7 +1,5 @@
 {
   "title": "Horimiya",
-  "poster": "./Sources/Posters/Anime/Horimiya.webp",
-  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Horimiya.webp",
   "categories": [
     {
       "category": "Season 1 (Horimiya)",
@@ -172,5 +170,6 @@
   ],
   "LatestTime": "2025-08-14T00:45:54.033Z",
   "totalFileSizeBytes": 2827094047,
-  "totalDurationSeconds": 37173
+  "totalDurationSeconds": 37173,
+  "Image": "./Sources/Posters/Anime/Horimiya.webp"
 }

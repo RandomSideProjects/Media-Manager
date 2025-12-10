@@ -1,7 +1,5 @@
 {
   "title": "My Dress-up Darling",
-  "poster": "./Sources/Posters/Anime/My_Dress-up_Darling.webp",
-  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/My_Dress-up_Darling.webp",
   "LatestTime": "2025-10-05T06:13:35.816Z",
   "categories": [
     {
@@ -160,5 +158,6 @@
     }
   ],
   "totalFileSizeBytes": 3377862336,
-  "totalDurationSeconds": 34147
+  "totalDurationSeconds": 34147,
+  "Image": "./Sources/Posters/Anime/My_Dress-up_Darling.webp"
 }

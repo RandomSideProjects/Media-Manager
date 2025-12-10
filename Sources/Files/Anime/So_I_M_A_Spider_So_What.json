@@ -1,7 +1,5 @@
 {
   "title": "So I'm a Spider, So What?",
-  "poster": "./Sources/Posters/Anime/So_I'm_a_Spider,_So_What_.webp",
-  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/So_I'm_a_Spider,_So_What_.webp",
   "LatestTime": "2025-11-29T06:07:30.123Z",
   "categories": [
     {
@@ -169,5 +167,6 @@
     }
   ],
   "totalFileSizeBytes": 3400620656,
-  "totalDurationSeconds": 34152
+  "totalDurationSeconds": 34152,
+  "Image": "./Sources/Posters/Anime/So_I'm_a_Spider,_So_What_.webp"
 }

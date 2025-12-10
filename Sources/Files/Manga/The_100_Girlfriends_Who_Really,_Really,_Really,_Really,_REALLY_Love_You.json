@@ -1,7 +1,5 @@
 {
   "title": "The 100 Girlfriends Who Really, Really, Really, Really, REALLY Love You",
-  "poster": "./Posters/Manga/The_100_Girlfriends_Who_Really,_Really,_Really,_Really,_REALLY_Love_You.webp",
-  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Manga/The_100_Girlfriends_Who_Really,_Really,_Really,_Really,_REALLY_Love_You.webp",
   "categories": [
     {
       "category": "Volumes",
@@ -89,5 +87,6 @@
   ],
   "LatestTime": "2025-09-16T14:07:47.543Z",
   "totalFileSizeBytes": 1429487053,
-  "totalPagecount": 2736
+  "totalPagecount": 2736,
+  "Image": "./Posters/Manga/The_100_Girlfriends_Who_Really,_Really,_Really,_Really,_REALLY_Love_You.webp"
 }

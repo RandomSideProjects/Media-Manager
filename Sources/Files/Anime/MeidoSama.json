@@ -1,8 +1,6 @@
 {
   "title": "You are Ms. Servent (Kimi-wa Meido sama)",
   "LatestTime": "2025-08-11T12:36:00",
-  "poster": "./Sources/Posters/Anime/You_are_Ms__Servent_(Kimi-wa_Meido_sama).webp",
-  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/You_are_Ms__Servent_(Kimi-wa_Meido_sama).webp",
   "categories": [
     {
       "category": "Season 1",
@@ -83,5 +81,6 @@
     }
   ],
   "totalFileSizeBytes": 1662931471,
-  "totalDurationSeconds": 16560
+  "totalDurationSeconds": 16560,
+  "Image": "./Sources/Posters/Anime/You_are_Ms__Servent_(Kimi-wa_Meido_sama).webp"
 }

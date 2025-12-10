@@ -1,7 +1,5 @@
 {
   "title": "KONOSUBA",
-  "poster": "./Sources/Posters/Anime/KONOSUBA.webp",
-  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/KONOSUBA.webp",
   "LatestTime": "2025-11-22T03:49:20.551Z",
   "categories": [
     {
@@ -232,5 +230,6 @@
   "totalFileSizeBytes": 5070684574,
   "totalDurationSeconds": 48579,
   "separatedCategoryCount": 1,
-  "separatedItemCount": 4
+  "separatedItemCount": 4,
+  "Image": "./Sources/Posters/Anime/KONOSUBA.webp"
 }

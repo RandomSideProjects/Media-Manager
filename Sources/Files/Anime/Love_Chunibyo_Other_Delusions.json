@@ -1,7 +1,5 @@
 {
   "title": "Love, Chunibyo & Other Delusions",
-  "poster": "./Sources/Posters/Anime/Love,_Chunibyo_&_Other_Delusions.webp",
-  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Love,_Chunibyo_&_Other_Delusions.webp",
   "LatestTime": "2025-10-11T05:39:02.686Z",
   "categories": [
     {
@@ -83,5 +81,6 @@
     }
   ],
   "totalFileSizeBytes": 1425910903,
-  "totalDurationSeconds": 16992
+  "totalDurationSeconds": 16992,
+  "Image": "./Sources/Posters/Anime/Love,_Chunibyo_&_Other_Delusions.webp"
 }

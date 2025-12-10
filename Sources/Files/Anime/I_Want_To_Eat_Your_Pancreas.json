@@ -1,7 +1,5 @@
 {
   "title": "I Want To Eat Your Pancreas",
-  "poster": "./Sources/Posters/Anime/I_Want_To_Eat_Your_Pancreas.webp",
-  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/I_Want_To_Eat_Your_Pancreas.webp",
   "LatestTime": "2025-11-28T05:17:08.886Z",
   "categories": [
     {
@@ -38,5 +36,6 @@
   "totalFileSizeBytes": 606034088,
   "totalDurationSeconds": 6523,
   "separatedCategoryCount": 1,
-  "separatedItemCount": 4
+  "separatedItemCount": 4,
+  "Image": "./Sources/Posters/Anime/I_Want_To_Eat_Your_Pancreas.webp"
 }

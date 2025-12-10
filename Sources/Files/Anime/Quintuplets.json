@@ -1,7 +1,5 @@
 {
   "title": "Quintessential Quintuplets",
-  "poster": "./Sources/Posters/Anime/Quintessential_Quintuplets.webp",
-  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Quintessential_Quintuplets.webp",
   "categories": [
     {
       "category": "Season 1",
@@ -208,5 +206,6 @@
   ],
   "LatestTime": "2025-08-15T00:53:37.020Z",
   "totalFileSizeBytes": 4732678956,
-  "totalDurationSeconds": 42855
+  "totalDurationSeconds": 42855,
+  "Image": "./Sources/Posters/Anime/Quintessential_Quintuplets.webp"
 }

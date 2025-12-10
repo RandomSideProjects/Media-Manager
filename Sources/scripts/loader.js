@@ -7,8 +7,8 @@ const HIDDEN_ENTRY_KEYS = ["hidden", "Hidden", "maintainerHidden"];
 
 function withPosterFallbacks(entry) {
   if (!entry || typeof entry !== "object") return entry;
-  const { poster, remoteposter } = extractPosterPair(entry);
-  return { ...entry, poster, remoteposter };
+  const poster = extractPoster(entry);
+  return { ...entry, Image: poster };
 }
 
 function shouldSkipManifestEntry(entry) {
