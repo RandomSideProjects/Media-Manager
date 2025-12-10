@@ -82,5 +82,6 @@
   "LatestTime": "2025-09-05T07:20:01.007Z",
   "totalFileSizeBytes": 913931868,
   "totalDurationSeconds": 17118,
-  "Image": "./Sources/Posters/Anime/Gamers!.webp"
+  "Image": "./Sources/Posters/Anime/Gamers!.webp",
+  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Gamers!.webp"
 }

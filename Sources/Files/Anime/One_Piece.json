@@ -2,7 +2,6 @@
   "title": "One Piece",
   "Image": "N/A",
   "poster": "N/A",
-  "LatestTime": "2025-12-10T03:07:52.408Z",
   "LatestTime": "2025-12-10T02:46:01.851Z",
   "categories": [
     {
@@ -6354,5 +6353,6 @@
     }
   ],
   "totalFileSizeBytes": 135607247131,
-  "totalDurationSeconds": 1518221
+  "totalDurationSeconds": 1518221,
+  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/N/A"
 }

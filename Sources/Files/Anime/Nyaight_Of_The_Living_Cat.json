@@ -82,5 +82,6 @@
   ],
   "totalFileSizeBytes": 1495600829,
   "totalDurationSeconds": 17250,
-  "Image": "./Sources/Posters/Anime/Nyaight_Of_The_Living_Cat.webp"
+  "Image": "./Sources/Posters/Anime/Nyaight_Of_The_Living_Cat.webp",
+  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Nyaight_Of_The_Living_Cat.webp"
 }
