@@ -1,101 +1,51 @@
 # [RSP Media Manager](https://randomsideprojects.github.io/Media-Manager/)
-![img](https://github.com/RandomSideProjects/Media-Manager/blob/main/Assets/Favicon.png?raw=true)
+![RSP Media Manager logo](https://github.com/RandomSideProjects/Media-Manager/blob/main/Assets/Favicon.png?raw=true)
 
-RSP Media Manager is a browser-only library viewer for video and manga catalogs. Load a JSON directory from Catbox, GitHub Pages, or your own filesystem and the app handles playback, progress tracking, downloads, clipping, and a CBZ reader—no server required.
+Browser-only player for video libraries and CBZ manga archives. Point it at a JSON manifest—from Catbox, GitHub Pages, or a local folder—and it handles playback, progress, downloads, clipping, and manga reading without any backend.
 
-## Highlights
-
-- Runs entirely client-side: open `index.html` locally or visit the [hosted build](https://randomsideprojects.github.io/Media-Manager/).
-- Accepts JSON URLs, 6-character Catbox IDs, pasted JSON, or a local folder containing `index.json` + media.
+## Why use it
+- Runs completely client-side; open `index.html` locally or use the [hosted build](https://randomsideprojects.github.io/Media-Manager/).
+- Accepts JSON URLs, 6-character Catbox IDs, pasted JSON/data URIs, or a local folder containing `index.json` + media.
 - Remembers progress, resumes automatically, and can jump straight to the next episode/volume.
-- Built-in download manager with optional season/episode selection, size estimates, and configurable concurrency.
-- Optional clip recorder that uploads to Catbox (or lets you download the WebM) with an on/off toggle and preview mode.
-- Integrated CBZ viewer with progress overlay, page tracking, and StreamSaver-based downloads for large archives.
-- Theme toggle, pop-out/theater mode, and a persistent settings panel that lets you clear the app’s storage when needed.
+- Built-in download manager with size estimates, selective season/episode downloads, concurrency control, and StreamSaver for large archives.
+- Optional clip recorder that uploads to Catbox (or lets you download the WebM) with preview and a quick on/off toggle.
+- Integrated CBZ reader with progress overlay and page tracking.
+- Theme toggle, pop-out/theater mode, and a persistent settings panel with a storage reset.
 
-## Project Layout
+## Quick start
+1) Clone: `git clone https://github.com/RandomSideProjects/Media-Manager.git && cd Media-Manager`  
+2) Open `index.html` directly, or serve the folder:  
+   - `python Tools/serve_parent.py --port 8000` (rooted at the repo)  
+   - or `python -m http.server 8000`  
+3) Load a source (URL, Catbox ID, inline JSON, or a folder with `index.json`). The app works offline after the first load because all logic runs in the browser.
 
-| Path | Purpose |
-| --- | --- |
-| `index.html` | Main player UI (video + manga) and script entrypoints. |
-| `style.css` | Global styling, themes, and CBZ-specific layout. |
-| `scripts/` | Modular front-end logic (source loading, player controls, downloads, clipping, local-folder support, settings, pop-out, version badge). |
-| `Assets/` | Images, favicons, and `LastUpdated.txt` (drives the in-app “Version YYYY-MM-DD” badge). |
-| `Creator/` | Standalone web app for creating/editing directory JSON, uploading to Catbox, and managing posters/CBZ options. |
-| `Sources/` | Public source listings (`index.html`, curated JSON files, posters, and supporting scripts). |
-| `Tools/CBZcompress.py` | Helper script for batch recompressing `.cbz/.cbr` archives before publishing. |
-| `LICENSE` | Apache 2.0 license for the project. |
+## Loading sources
+- **Direct URL:** Paste any reachable JSON manifest (`https://…/Series.json`).
+- **Catbox ID:** Enter the 6-character ID; the app expands to `https://files.catbox.moe/<id>.json`.
+- **Relative path:** Use bundled examples like `Sources/Files/Anime/Quintuplets.json`.
+- **Inline JSON:** Paste raw JSON or a `data:application/json,…` URI for quick ad-hoc catalogs.
+- **Local folder:** `Select Folder` expects `index.json` and matching media/CBZ files. Works best in Chromium with `webkitdirectory`.
+- **Deep link:** Append `?source=<value>&item=<episode-number>` to `index.html` to open a specific source/item.
 
-## Requirements
+## Player basics
+- Resume banner highlights where you left off or skips ahead if the last item was nearly finished.
+- `≡` returns to the list, `⤴` opens a pop-out window, and `Next Item` advances manually.
+- Manga/CBZ volumes show a page counter and overlay while archives unpack.
+- Settings pane toggles clipping, selective downloads, download concurrency, and a `CLEAR STORAGE` action to wipe local data.
+- Version badge in the corner reads `Assets/LastUpdated.txt` (update alongside releases).
 
-- A modern Chromium, Firefox, or Safari build. Clipping relies on MediaRecorder + captureStream, so the latest Chromium-based browsers offer the best experience.
-- For local-folder ingestion (`Select Folder`), use a browser that supports the `webkitdirectory` file input attribute (Chromium-based recommended).
-- When opening via `file://`, some browsers block `fetch` for local JSON. This is usually a setting and can be turned off.
+## Downloads & clipping
+- `Download Source` saves the entire directory; enable **Selective downloads** in Settings to pick seasons/episodes with live size estimates.
+- StreamSaver streams large downloads without exhausting memory; tune concurrency in Settings to balance speed vs network load.
+- Enable **Clipping** (and **Clip preview** if desired) to record short segments. Success paths upload to Catbox; failures still offer a local WebM download.
 
-## Installation
+## Creator web app
+Launch `Creator/index.html` for a guided editor that can import existing manifests, convert folders full of media/CBZ files, upload posters/assets to Catbox, and manage manga options like CBZ expansion. Upload settings (library type, anonymous mode, concurrency) persist locally so you can fine-tune workflows.
 
-```bash
-git clone https://github.com/RandomSideProjects/Media-Manager.git
-cd Media-Manager
-```
-
-You can open `index.html` directly or serve the folder with your favorite static host. The site works offline once loaded because all logic is client-side.
-
-### Updating Your Clone
-
-```bash
-git pull
-```
-
-## Using the Player
-
-### Launching
-
-- Double-click `index.html`, or run a local server and browse to `http://localhost:8000/index.html`.
-- To deep-link to a source, append `?source=<value>` (and optionally `&item=<episode-number>`).
-
-### Loading a Source
-
-- **URL:** Paste any reachable JSON manifest (`https://…/Series.json`).
-- **Catbox ID:** Enter the 6-character ID (e.g. `abc123`) and the app expands it to `https://files.catbox.moe/abc123.json`.
-- **Relative path:** Provide `Sources/Files/Anime/Series.json` to load included examples.
-- **Inline JSON:** Paste raw JSON or a `data:application/json,…` URI to render an ad-hoc directory without hosting it.
-- **Local folder:** Click `Select Folder`, choose a directory with `index.json`, and the player wires up matching media/CBZ files automatically.
-
-### Playback & Navigation
-
-- Resume banner highlights where you left off or jumps to the next episode if the last one was nearly finished.
-- `≡` returns to the episode list, `⤴` opens the current item in a pop-out window, and `Next Item` advances manually.
-- Manga/CBZ volumes show a page counter and use an overlay while the archive is unpacked.
-
-### Downloads
-
-Click `Download Source` to save the entire directory. If **Selective downloads** are enabled in Settings, a picker lets you choose specific seasons or episodes with live size estimates. StreamSaver streams large archives without exhausting memory; adjust the concurrency slider in Settings to balance speed vs. network load.
-
-### Clipping
-
-Enable **Clipping** (and **Clip preview** if desired) in the Settings overlay. When active, `Clip` records a short segment around the current timestamp, shows progress, then uploads to Catbox. If the upload fails you can still download the WebM locally.
-
-### Theme, Settings, and Storage
-
-- `☾` toggles the theme.
-- The gear icon opens Settings: clipping toggles, selective downloads, download concurrency, and a `CLEAR STORAGE` action to wipe saved progress/preferences.
-- Version badge in the bottom-right reads `Assets/LastUpdated.txt`; update that file when you ship updates.
-
-## Creating & Maintaining Directories
-
-### Creator Web App
-
-- Launch `Creator/index.html` for a guided editor that can import an existing JSON, upload assets/posters to Catbox, convert folders full of media/CBZ files, and manage manga-specific options like CBZ expansion for uploads.
-- Upload settings (library type, anonymous mode, concurrency) persist locally so you can fine-tune Catbox workflows.
-
-### Manual JSON Schema
-
-Each directory JSON should resemble:
-
+## JSON schema (abridged)
 ```json
 {
-  "title": "Your Series Title",
+  "title": "Series Title",
   "Image": "https://files.catbox.moe/example.jpg",
   "LatestTime": "2025-09-18T20:19:19",
   "categories": [
@@ -115,29 +65,24 @@ Each directory JSON should resemble:
   "totalDurationSeconds": 1511
 }
 ```
+Required: `title`, `categories[].category`, `categories[].episodes[].title`, `categories[].episodes[].src`.  
+Recommended: `Image`/`image`, `LatestTime`, `fileSizeBytes` + `totalFileSizeBytes`, `durationSeconds` + `totalDurationSeconds`, `VolumePageCount` for CBZ, and `progressKey` for locally hosted items.
 
-**Required**: `title`, `categories[].category`, `categories[].episodes[].title`, `categories[].episodes[].src`.
+## Tooling
+- `Assets/LastUpdated.txt` feeds the in-app version badge.
+- `Sources/index.html` lists curated example sources.
+- `Tools/CBZcompress.py` converts `.cbr` to `.cbz` and re-zips pages for cleaner uploads.
+- `Tools/MediaTool.py` splits large videos into size-capped chunks using FFmpeg (CLI prompt + optional Tk GUI).
+- `Tools/serve_parent.py` starts a threaded HTTP server rooted at the repo for quick local testing.
 
-**Optional but recommended**:
-- `Image` or `image`: Poster art shown above the episode list.
-- `LatestTime`: ISO 8601 timestamp to signal freshness.
-- `fileSizeBytes`, `totalFileSizeBytes`: Powers size estimates in the download picker.
-- `durationSeconds`, `totalDurationSeconds`: Used for runtime displays.
-- `VolumePageCount`: For CBZ volumes, informs the page counter.
-- `progressKey`: Stable identifier for locally hosted items (auto-added by the folder loader).
-
-Host the JSON and media on a CORS-accessible service (Catbox, GitHub Pages, Cloudflare R2, etc.).
-
-## Tooling & Maintenance
-
-- `Assets/LastUpdated.txt` feeds the in-app version badge. Update it alongside releases.
-- `Tools/CBZcompress.py` converts `.cbr` archives to `.cbz` and re-zips images to help keep manga libraries consistent before uploading.
-- `Sources/index.html` provides curated source lists that point back into the main player.
+## Requirements & notes
+- Modern Chromium, Firefox, or Safari. Clipping relies on MediaRecorder + captureStream (best in Chromium-based browsers).
+- For `file://` usage, some browsers block `fetch` for local JSON—toggle that setting if needed.
+- Local-folder ingestion depends on `webkitdirectory` support (Chromium recommended).
 
 ## License
-
-Licensed under the [Apache License 2.0](LICENSE).
+Apache 2.0, see `LICENSE`.
 
 ---
 
-Last updated: 2025-09-20
+Last updated: 2025-12-08

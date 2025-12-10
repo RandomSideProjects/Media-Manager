@@ -1,7 +1,6 @@
 {
   "title": "Rascal Does Not Dream Of A Bunny Girl Senpai",
-  "Image": "https://randomsideprojects.github.io/Media-Manager/Sources/Posters/Rascal_Does_Not_Dream_Of_A_Bunny_Girl_Senpai.webp",
-  "poster": "https://randomsideprojects.github.io/Media-Manager/Sources/Posters/Rascal_Does_Not_Dream_Of_A_Bunny_Girl_Senpai.webp",
+  "poster": "./Sources/Posters/Anime/Rascal_Does_Not_Dream_Of_A_Bunny_Girl_Senpai.webp",
   "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Rascal_Does_Not_Dream_Of_A_Bunny_Girl_Senpai.webp",
   "LatestTime": "2025-12-07T20:35:47.574Z",
   "categories": [
@@ -89,7 +88,7 @@
       ]
     },
     {
-      "category": "Rascal Does Not Dream of a Dreaming Gir",
+      "category": "Rascal Does Not Dream of a Dreaming Girl",
       "episodes": [
         {
           "title": "Part 1",

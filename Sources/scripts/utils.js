@@ -16,13 +16,29 @@ function resolveRemotePosterUrl(primaryUrl) {
 
 const resolveImage2Url = resolveRemotePosterUrl;
 
+function preferRelativePosterPath(posterValue) {
+  const raw = (posterValue || '').toString().trim();
+  if (!raw || raw.toLowerCase() === 'n/a') return '';
+  if (!/^https?:\/\//i.test(raw)) return raw;
+  try {
+    const url = new URL(raw);
+    const pathMatch = (url.pathname || '').match(/\/Sources\/Posters\/.+$/i);
+    if (pathMatch) {
+      return `.${pathMatch[0]}`;
+    }
+  } catch {}
+  return raw;
+}
+
 function extractPosterPair(entry) {
   if (!entry || typeof entry !== 'object') return { poster: '', remoteposter: '' };
-  const poster = (typeof entry.poster === 'string' && entry.poster !== 'N/A')
-    ? entry.poster
-    : (typeof entry.Image === 'string' && entry.Image !== 'N/A')
-      ? entry.Image
-      : (typeof entry.image === 'string' && entry.image !== 'N/A' ? entry.image : '');
+  const poster = preferRelativePosterPath(
+    (typeof entry.poster === 'string' && entry.poster !== 'N/A')
+      ? entry.poster
+      : (typeof entry.Image === 'string' && entry.Image !== 'N/A')
+        ? entry.Image
+        : (typeof entry.image === 'string' && entry.image !== 'N/A' ? entry.image : '')
+  );
   const remoteposter = (typeof entry.remoteposter === 'string' && entry.remoteposter && entry.remoteposter !== 'N/A')
     ? entry.remoteposter
     : (typeof entry.Image2 === 'string' && entry.Image2 && entry.Image2 !== 'N/A')
