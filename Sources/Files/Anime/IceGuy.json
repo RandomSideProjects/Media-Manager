@@ -82,6 +82,11 @@
   "LatestTime": "2025-09-05T05:35:15.833Z",
   "totalFileSizeBytes": 949573746,
   "totalDurationSeconds": 17040,
+<<<<<<< Updated upstream
   "Image": "./Sources/Posters/Anime/The_Ice_Guy_and_His_Cool_Female_Colleague.webp",
   "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/The_Ice_Guy_and_His_Cool_Female_Colleague.webp"
 }
+=======
+  "Image": "./Sources/Posters/Anime/The_Ice_Guy_and_His_Cool_Female_Colleague.webp"
+}
+>>>>>>> Stashed changes

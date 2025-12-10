@@ -178,6 +178,11 @@
   "LatestTime": "2025-09-07T05:58:52.948Z",
   "totalFileSizeBytes": 4550926547,
   "totalDurationSeconds": 41399,
+<<<<<<< Updated upstream
   "Image": "./Sources/Posters/Anime/Frieren_Beyond_Journey's_End.webp",
   "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Frieren_Beyond_Journey's_End.webp"
 }
+=======
+  "Image": "./Sources/Posters/Anime/Frieren_Beyond_Journey's_End.webp"
+}
+>>>>>>> Stashed changes

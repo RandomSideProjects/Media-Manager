@@ -159,6 +159,11 @@
   "LatestTime": "2025-09-07T05:59:36.421Z",
   "totalFileSizeBytes": 4054815404,
   "totalDurationSeconds": 34362,
+<<<<<<< Updated upstream
   "Image": "./Sources/Posters/Anime/GO!_GO!_LOSER_RANGER!.webp",
   "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/GO!_GO!_LOSER_RANGER!.webp"
 }
+=======
+  "Image": "./Sources/Posters/Anime/GO!_GO!_LOSER_RANGER!.webp"
+}
+>>>>>>> Stashed changes

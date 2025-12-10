@@ -207,6 +207,11 @@
   "LatestTime": "2025-08-15T00:53:37.020Z",
   "totalFileSizeBytes": 4732678956,
   "totalDurationSeconds": 42855,
+<<<<<<< Updated upstream
   "Image": "./Sources/Posters/Anime/Quintessential_Quintuplets.webp",
   "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Quintessential_Quintuplets.webp"
 }
+=======
+  "Image": "./Sources/Posters/Anime/Quintessential_Quintuplets.webp"
+}
+>>>>>>> Stashed changes

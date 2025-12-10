@@ -163,6 +163,11 @@
   "LatestTime": "2025-11-05T20:12:58.906Z",
   "totalFileSizeBytes": 3301840883,
   "totalDurationSeconds": 31997,
+<<<<<<< Updated upstream
   "Image": "./Sources/Posters/Anime/Call_Of_The_Night.webp",
   "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Call_Of_The_Night.webp"
 }
+=======
+  "Image": "./Sources/Posters/Anime/Call_Of_The_Night.webp"
+}
+>>>>>>> Stashed changes

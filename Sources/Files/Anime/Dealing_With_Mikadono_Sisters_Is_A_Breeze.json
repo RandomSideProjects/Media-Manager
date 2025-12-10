@@ -82,6 +82,11 @@
   ],
   "totalFileSizeBytes": 1918180857,
   "totalDurationSeconds": 17100,
+<<<<<<< Updated upstream
   "Image": "./Sources/Posters/Anime/Dealing_With_Mikadono_Sisters_Is_A_Breeze.webp",
   "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Dealing_With_Mikadono_Sisters_Is_A_Breeze.webp"
 }
+=======
+  "Image": "./Sources/Posters/Anime/Dealing_With_Mikadono_Sisters_Is_A_Breeze.webp"
+}
+>>>>>>> Stashed changes

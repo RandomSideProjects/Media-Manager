@@ -82,6 +82,11 @@
   "LatestTime": "2025-09-05T05:11:52.044Z",
   "totalFileSizeBytes": 1469343927,
   "totalDurationSeconds": 17280,
+<<<<<<< Updated upstream
   "Image": "./Sources/Posters/Anime/Hokkaido_Gals_Are_Super_Adorable!.webp",
   "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Hokkaido_Gals_Are_Super_Adorable!.webp"
 }
+=======
+  "Image": "./Sources/Posters/Anime/Hokkaido_Gals_Are_Super_Adorable!.webp"
+}
+>>>>>>> Stashed changes

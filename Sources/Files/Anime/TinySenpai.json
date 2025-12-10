@@ -82,6 +82,11 @@
   ],
   "totalFileSizeBytes": 1412942619,
   "totalDurationSeconds": 16551,
+<<<<<<< Updated upstream
   "Image": "./Sources/Posters/Anime/My_Tiny_Senpai.webp",
   "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/My_Tiny_Senpai.webp"
 }
+=======
+  "Image": "./Sources/Posters/Anime/My_Tiny_Senpai.webp"
+}
+>>>>>>> Stashed changes

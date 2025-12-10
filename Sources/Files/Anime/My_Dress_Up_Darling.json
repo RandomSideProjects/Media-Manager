@@ -159,6 +159,11 @@
   ],
   "totalFileSizeBytes": 3377862336,
   "totalDurationSeconds": 34147,
+<<<<<<< Updated upstream
   "Image": "./Sources/Posters/Anime/My_Dress-up_Darling.webp",
   "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/My_Dress-up_Darling.webp"
 }
+=======
+  "Image": "./Sources/Posters/Anime/My_Dress-up_Darling.webp"
+}
+>>>>>>> Stashed changes

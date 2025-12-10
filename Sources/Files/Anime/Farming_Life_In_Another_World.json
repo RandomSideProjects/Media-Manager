@@ -82,6 +82,11 @@
   "LatestTime": "2025-09-24T12:49:34.195Z",
   "totalFileSizeBytes": 1879729543,
   "totalDurationSeconds": 17181,
+<<<<<<< Updated upstream
   "Image": "./Sources/Posters/Anime/Farming_Life_In_Another_World.webp",
   "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Farming_Life_In_Another_World.webp"
 }
+=======
+  "Image": "./Sources/Posters/Anime/Farming_Life_In_Another_World.webp"
+}
+>>>>>>> Stashed changes

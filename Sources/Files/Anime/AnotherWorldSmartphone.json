@@ -159,6 +159,11 @@
   "LatestTime": "2025-09-05T04:01:07.498Z",
   "totalFileSizeBytes": 3130241596,
   "totalDurationSeconds": 34224,
+<<<<<<< Updated upstream
   "Image": "./Sources/Posters/Anime/In_Another_World_With_My_Smartphone.webp",
   "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/In_Another_World_With_My_Smartphone.webp"
 }
+=======
+  "Image": "./Sources/Posters/Anime/In_Another_World_With_My_Smartphone.webp"
+}
+>>>>>>> Stashed changes

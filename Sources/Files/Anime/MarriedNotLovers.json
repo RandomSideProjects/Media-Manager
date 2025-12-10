@@ -82,6 +82,11 @@
   ],
   "totalFileSizeBytes": 1264865331,
   "totalDurationSeconds": 17426,
+<<<<<<< Updated upstream
   "Image": "./Sources/Posters/Anime/More_Than_a_Married_Couple,_But_Not_Lovers.webp",
   "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/More_Than_a_Married_Couple,_But_Not_Lovers.webp"
 }
+=======
+  "Image": "./Sources/Posters/Anime/More_Than_a_Married_Couple,_But_Not_Lovers.webp"
+}
+>>>>>>> Stashed changes

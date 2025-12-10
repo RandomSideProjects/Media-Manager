@@ -82,6 +82,11 @@
   ],
   "totalFileSizeBytes": 1662931471,
   "totalDurationSeconds": 16560,
+<<<<<<< Updated upstream
   "Image": "./Sources/Posters/Anime/You_are_Ms__Servent_(Kimi-wa_Meido_sama).webp",
   "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/You_are_Ms__Servent_(Kimi-wa_Meido_sama).webp"
 }
+=======
+  "Image": "./Sources/Posters/Anime/You_are_Ms__Servent_(Kimi-wa_Meido_sama).webp"
+}
+>>>>>>> Stashed changes

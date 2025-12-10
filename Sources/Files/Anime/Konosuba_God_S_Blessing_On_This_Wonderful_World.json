@@ -231,6 +231,11 @@
   "totalDurationSeconds": 48579,
   "separatedCategoryCount": 1,
   "separatedItemCount": 4,
+<<<<<<< Updated upstream
   "Image": "./Sources/Posters/Anime/KONOSUBA.webp",
   "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/KONOSUBA.webp"
 }
+=======
+  "Image": "./Sources/Posters/Anime/KONOSUBA.webp"
+}
+>>>>>>> Stashed changes

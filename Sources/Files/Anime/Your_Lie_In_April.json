@@ -142,6 +142,11 @@
     }
   ],
   "totalFileSizeBytes": 2884046983,
+<<<<<<< Updated upstream
   "totalDurationSeconds": 30187,
   "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Your_Lie_in_April.webp"
 }
+=======
+  "totalDurationSeconds": 30187
+}
+>>>>>>> Stashed changes
