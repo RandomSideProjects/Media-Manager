@@ -501,16 +501,16 @@
       "Image": "./Posters/Anime/Solo_Leveling.webp"
     },
     {
-      "file": "Spy_\ud835\ude6d_Family.json",
-      "path": "./Files/Anime/Spy_\ud835\ude6d_Family.json",
-      "title": "Spy \ud835\ude6d Family",
+      "file": "Spy_x_Family.json",
+      "path": "./Files/Anime/Spy_x_Family.json",
+      "title": "Spy x Family",
       "categoryCount": 2,
       "episodeCount": 37,
       "itemCount": 37,
       "totalFileSizeBytes": 3701878060,
       "totalDurationSeconds": 53340,
       "LatestTime": "2025-09-06T19:36:25.302Z",
-      "Image": "./Posters/Anime/Spy_\ud835\ude6d_Family.webp"
+      "Image": "./Posters/Anime/Spy_x_Family.webp"
     },
     {
       "file": "Hyakano.json",
