@@ -82,5 +82,6 @@
   ],
   "totalFileSizeBytes": 1663738722,
   "totalDurationSeconds": 17145,
-  "Image": "./Sources/Posters/Anime/Wise_Man's_Grandchild.webp"
+  "Image": "./Sources/Posters/Anime/Wise_Man's_Grandchild.webp",
+  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Wise_Man's_Grandchild.webp"
 }

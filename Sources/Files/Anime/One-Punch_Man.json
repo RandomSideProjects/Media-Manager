@@ -159,5 +159,6 @@
   "LatestTime": "2025-09-10T19:12:40.080Z",
   "totalFileSizeBytes": 3909689780,
   "totalDurationSeconds": 34682,
-  "Image": "./Sources/Posters/Anime/One-Punch_Man.webp"
+  "Image": "./Sources/Posters/Anime/One-Punch_Man.webp",
+  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/One-Punch_Man.webp"
 }
