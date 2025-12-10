@@ -1,6 +1,7 @@
 {
   "title": "One Piece",
-  "Image": "N/A",
+  "Image": "https://files.catbox.moe/9re1sw.webp",
+  "LatestTime": "2025-12-10T03:54:59.586Z",
   "categories": [
     {
       "category": "Season 1",
@@ -6351,5 +6352,5 @@
     }
   ],
   "totalFileSizeBytes": 135607247131,
-  "totalDurationSeconds": 1518221,
+  "totalDurationSeconds": 1518221
 }
