@@ -168,5 +168,6 @@
   ],
   "totalFileSizeBytes": 3400620656,
   "totalDurationSeconds": 34152,
-  "Image": "./Sources/Posters/Anime/So_I'm_a_Spider,_So_What_.webp"
+  "Image": "./Sources/Posters/Anime/So_I'm_a_Spider,_So_What_.webp",
+  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/So_I'm_a_Spider,_So_What_.webp"
 }

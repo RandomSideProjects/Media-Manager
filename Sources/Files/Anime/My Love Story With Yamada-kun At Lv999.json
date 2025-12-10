@@ -88,5 +88,6 @@
   "LatestTime": "2025-09-06T05:20:44.454Z",
   "totalFileSizeBytes": 1838483814,
   "totalDurationSeconds": 18550,
-  "Image": "./Sources/Posters/Anime/My_Love_Story_With_Yamada-kun_At_Lv999.webp"
+  "Image": "./Sources/Posters/Anime/My_Love_Story_With_Yamada-kun_At_Lv999.webp",
+  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/My_Love_Story_With_Yamada-kun_At_Lv999.webp"
 }

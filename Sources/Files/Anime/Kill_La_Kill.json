@@ -364,5 +364,6 @@
   ],
   "totalFileSizeBytes": 5223177254,
   "totalDurationSeconds": 35291,
-  "Image": "./Sources/Posters/Anime/Kill_la_Kill.webp"
+  "Image": "./Sources/Posters/Anime/Kill_la_Kill.webp",
+  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Kill_la_Kill.webp"
 }

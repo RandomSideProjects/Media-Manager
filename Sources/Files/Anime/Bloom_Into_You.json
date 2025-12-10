@@ -390,5 +390,6 @@
   ],
   "totalFileSizeBytes": 6249917153,
   "totalDurationSeconds": 24019,
-  "Image": "./Sources/Posters/Anime/Bloom_Into_You.webp"
+  "Image": "./Sources/Posters/Anime/Bloom_Into_You.webp",
+  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Bloom_Into_You.webp"
 }

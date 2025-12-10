@@ -159,5 +159,6 @@
   "LatestTime": "2025-09-07T06:49:49.243Z",
   "totalFileSizeBytes": 3148753748,
   "totalDurationSeconds": 34833,
-  "Image": "./Sources/Posters/Anime/Aharen_Is_Indecipherable.webp"
+  "Image": "./Sources/Posters/Anime/Aharen_Is_Indecipherable.webp",
+  "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Aharen_Is_Indecipherable.webp"
 }
