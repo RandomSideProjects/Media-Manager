@@ -431,7 +431,7 @@
       "itemCount": 1057,
       "totalFileSizeBytes": 135607247131,
       "totalDurationSeconds": 1518221,
-      "LatestTime": "2025-12-10T02:46:01.851Z"
+      "LatestTime": null
     },
     {
       "file": "One-Punch_Man.json",
@@ -675,6 +675,8 @@
       "file": "Your_Lie_In_April.json",
       "path": "./Files/Anime/Your_Lie_In_April.json",
       "title": "Your Lie in April",
+      "poster": "./Posters/Anime/Your_Lie_in_April.webp",
+      "remoteposter": "https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/refs/heads/main/Sources/Posters/Anime/Your_Lie_in_April.webp",
       "categoryCount": 1,
       "episodeCount": 22,
       "itemCount": 22,
