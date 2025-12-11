@@ -145,6 +145,18 @@
       "LatestTime": "2025-10-08T23:40:29.119Z"
     },
     {
+      "file": "Domestic_Girlfriend.json",
+      "path": "./Files/Anime/Domestic_Girlfriend.json",
+      "title": "Domestic Girlfriend",
+      "poster": "./Posters/Anime/Domestic_Girlfriend.webp",
+      "categoryCount": 1,
+      "episodeCount": 12,
+      "itemCount": 12,
+      "totalFileSizeBytes": 1143272176,
+      "totalDurationSeconds": 18255,
+      "LatestTime": "2025-12-11T05:29:11.472Z"
+    },
+    {
       "file": "Failure_Frame.json",
       "path": "./Files/Anime/Failure_Frame.json",
       "title": "Failure Frame",

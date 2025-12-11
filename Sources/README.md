@@ -7,6 +7,7 @@ This directory contains all available media sources.
 - [My Dress-Up Darling](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FManga%2FMy_Dress-up_Darling.json)
 - [One-Punch Man](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FManga%2FOne-Punch_Man.json)
 - [The 100 Girlfriends Who Really, Really, Really, Really, REALLY Love You](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FManga%2FThe_100_Girlfriends_Who_Really%2C_Really%2C_Really%2C_Really%2C_REALLY_Love_You.json)
+
 ## Normal Sources
 
 - [A Condition Called Love](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FConditionLove.json)
@@ -21,6 +22,7 @@ This directory contains all available media sources.
 - [DanDaDan](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FDanDaDan.json)
 - [DARLING in the FRANXX](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FFranxx.json)
 - [Dealing With Mikadono Sisters Is A Breeze](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FDealing_With_Mikadono_Sisters_Is_A_Breeze.json)
+- [Domestic Girlfriend](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FDomestic_Girlfriend.json)
 - [Failure Frame](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FFailure_Frame.json)
 - [Farming Life In Another World](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FFarming_Life_In_Another_World.json)
 - [Frieren: Beyond Journey's End](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FFrieren.json)
