@@ -453,7 +453,7 @@
                     const adj = Math.max(0, Math.min(100, base + pct / totalSteps));
                     rowCtx.setProgress(adj);
                   },
-                  { context: 'batch', signal: uploadAbortController.signal }
+                  { context: 'batch', signal: uploadAbortController.signal, allowProxy: false }
                 );
                 pageUrls.push(url);
               }
@@ -475,7 +475,7 @@
                   const adj = Math.max(0, Math.min(100, base + pct / totalSteps));
                   rowCtx.setProgress(adj);
                 },
-                { context: 'batch', signal: uploadAbortController.signal }
+                { context: 'batch', signal: uploadAbortController.signal, allowProxy: false }
               );
               if (epSrcInput) epSrcInput.value = url;
               if (epError) epError.textContent = '';
@@ -512,7 +512,7 @@
                   const loaded = Number.isFinite(fileSizeBytes) ? (pct / 100) * fileSizeBytes : undefined;
                   rowCtx.setProgress(pct, { loadedBytes: loaded });
                 },
-                { context: 'batch', signal: uploadAbortController.signal }
+                { context: 'batch', signal: uploadAbortController.signal, allowProxy: false }
               );
               if (epSrcInput) epSrcInput.value = url;
               if (epError) epError.textContent = '';
@@ -741,7 +741,7 @@
                   const loaded = Number.isFinite(fileSizeBytes) ? (pct / 100) * fileSizeBytes : undefined;
                   rowCtx.setProgress(pct, { loadedBytes: loaded });
                 },
-                { context: 'batch', signal: uploadAbortController.signal }
+                { context: 'batch', signal: uploadAbortController.signal, allowProxy: false }
               );
               if (epSrcInput) epSrcInput.value = url;
               if (epError) epError.textContent = '';

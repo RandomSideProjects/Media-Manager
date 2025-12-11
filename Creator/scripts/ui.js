@@ -1226,7 +1226,7 @@ folderInput.addEventListener('change', async (e) => {
                   const loaded = Number.isFinite(totalBytes) ? (pct / 100) * totalBytes : undefined;
                   rowCtx.setProgress(pct, { loadedBytes: loaded });
                 },
-                { context: 'batch' }
+                { context: 'batch', allowProxy: false }
               );
               epSrcInput.value = url;
               if (epError) epError.textContent = '';
@@ -1460,7 +1460,7 @@ folderInput.addEventListener('change', async (e) => {
                 const loaded = Number.isFinite(fileSizeBytes) ? (pct / 100) * fileSizeBytes : undefined;
                 rowCtx.setProgress(pct, { loadedBytes: loaded });
               },
-              { context: 'batch' }
+              { context: 'batch', allowProxy: false }
             );
             if (epSrcInput) epSrcInput.value = url;
             if (epError) epError.textContent = '';
@@ -1951,7 +1951,7 @@ function addEpisode(container, data) {
         if (typeof opts.onProgress === 'function') {
           opts.onProgress(pct);
         }
-      }, { context: 'manual' });
+      }, { context: 'manual', allowProxy: false });
       if (row._srcInput) row._srcInput.value = url;
       applyPartMetadata(row, { fileSize: file.size });
       if (Number.isFinite(durationEstimate) && durationEstimate > 0) {
@@ -2171,7 +2171,7 @@ function addEpisode(container, data) {
             const ext = (() => { const m = name.toLowerCase().match(/\.(jpe?g|png|gif|webp|bmp)$/); return m ? m[0] : '.png'; })();
             const pageFile = new File([imgBlob], `${i + 1}${ext}`, { type: imgBlob.type || 'application/octet-stream' });
             const base = (i / totalSteps) * 100;
-            const url = await uploadToCatboxWithProgress(pageFile, pct => { const adj = Math.max(0, Math.min(100, base + pct / totalSteps)); progressBar.value = adj; try { uploadingMsg.textContent = `Processing ${Math.round(adj)}%`; } catch {} }, { context: 'manual' });
+            const url = await uploadToCatboxWithProgress(pageFile, pct => { const adj = Math.max(0, Math.min(100, base + pct / totalSteps)); progressBar.value = adj; try { uploadingMsg.textContent = `Processing ${Math.round(adj)}%`; } catch {} }, { context: 'manual', allowProxy: false });
             pageUrls.push(url);
           }
           const pagesMap = {};
@@ -2182,7 +2182,7 @@ function addEpisode(container, data) {
           let volNum = 1;
           try { const m = (epTitle.value||'').match(/(\d+)/); if (m) volNum = parseInt(m[1], 10) || 1; } catch {}
           const volFile = new File([volBlob], `${volNum}.json`, { type: 'application/json' });
-          const url = await uploadToCatboxWithProgress(volFile, pct => { const base = ((names.length) / totalSteps) * 100; const adj = Math.max(0, Math.min(100, base + pct / totalSteps)); progressBar.value = adj; try { uploadingMsg.textContent = `Processing ${Math.round(adj)}%`; } catch {} }, { context: 'manual' });
+          const url = await uploadToCatboxWithProgress(volFile, pct => { const base = ((names.length) / totalSteps) * 100; const adj = Math.max(0, Math.min(100, base + pct / totalSteps)); progressBar.value = adj; try { uploadingMsg.textContent = `Processing ${Math.round(adj)}%`; } catch {} }, { context: 'manual', allowProxy: false });
           epSrc.value = url;
           try { epDiv.dataset.VolumePageCount = String(pageUrls.length); epDiv.dataset.volumePageCount = String(pageUrls.length); } catch {}
           epError.textContent = '';
@@ -2191,7 +2191,7 @@ function addEpisode(container, data) {
           epSrc.value = '';
         }
       } else {
-        try { const url = await uploadToCatboxWithProgress(file, (percent) => { progressBar.value = percent; try { uploadingMsg.textContent = `Uploading ${Math.round(percent)}%`; } catch {} }, { context: 'manual' }); epSrc.value = url; epError.textContent = ''; }
+        try { const url = await uploadToCatboxWithProgress(file, (percent) => { progressBar.value = percent; try { uploadingMsg.textContent = `Uploading ${Math.round(percent)}%`; } catch {} }, { context: 'manual', allowProxy: false }); epSrc.value = url; epError.textContent = ''; }
         catch (err) { epError.innerHTML = '<span style="color:red">Upload failed</span>'; epSrc.value = ''; }
       }
     } else {
@@ -2214,7 +2214,7 @@ function addEpisode(container, data) {
       epError.innerHTML = '';
       const uploadingMsg = document.createElement('span'); uploadingMsg.style.color = 'blue'; uploadingMsg.textContent = 'Uploading'; epError.appendChild(uploadingMsg);
       const progressBar = document.createElement('progress'); progressBar.max = 100; progressBar.value = 0; progressBar.style.marginLeft = '0.5em'; epError.appendChild(progressBar);
-      try { const url = await uploadToCatboxWithProgress(file, (percent) => { progressBar.value = percent; try { uploadingMsg.textContent = `Uploading ${Math.round(percent)}%`; } catch {} }, { context: 'manual' }); epSrc.value = url; epError.textContent = ''; }
+      try { const url = await uploadToCatboxWithProgress(file, (percent) => { progressBar.value = percent; try { uploadingMsg.textContent = `Uploading ${Math.round(percent)}%`; } catch {} }, { context: 'manual', allowProxy: false }); epSrc.value = url; epError.textContent = ''; }
       catch (err) { epError.innerHTML = '<span style="color:red">Upload failed</span>'; epSrc.value = ''; }
     }
   });

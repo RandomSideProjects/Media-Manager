@@ -3,6 +3,7 @@
 // Variables (top)
 const UPLOADER_CATBOX_BACKEND_URL = 'https://mm.littlehacker303.workers.dev/catbox/user/api.php';
 const CUSTOM_CATBOX_LIMIT = 104857600;
+const DIRECT_CATBOX_UPLOAD_URL = 'https://catbox.moe/user/api.php';
 
 function getActiveCatboxDefault() {
   if (typeof window !== 'undefined') {
@@ -67,8 +68,32 @@ function defaultCatboxUploadUrl() {
   return getActiveCatboxDefault();
 }
 
-function resolveCatboxUploadUrl(settings, { fileSizeBytes } = {}) {
+function isProxyCatboxUrl(url) {
+  if (!url) return false;
+  try {
+    const trimmed = String(url).trim();
+    if (!trimmed) return false;
+    const lower = trimmed.toLowerCase();
+    if (lower.startsWith('https://mm.littlehacker303.workers.dev/catbox/')) return true;
+    if (lower.startsWith('https://mmback.littlehacker303.workers.dev/catbox/')) return true;
+    if (typeof window !== 'undefined' && typeof window.MM_PROXY_CATBOX_UPLOAD_URL === 'string') {
+      const proxy = window.MM_PROXY_CATBOX_UPLOAD_URL.trim().toLowerCase();
+      if (proxy && lower === proxy) return true;
+    }
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+function resolveCatboxUploadUrl(settings, { fileSizeBytes, allowProxy = true } = {}) {
   const raw = settings && typeof settings.catboxUploadUrl === 'string' ? settings.catboxUploadUrl.trim() : '';
+  if (!allowProxy) {
+    if (raw && !isProxyCatboxUrl(raw)) {
+      return raw;
+    }
+    return DIRECT_CATBOX_UPLOAD_URL;
+  }
   if (raw && Number.isFinite(fileSizeBytes) && fileSizeBytes >= CUSTOM_CATBOX_LIMIT) {
     return getActiveCatboxDefault();
   }
@@ -82,6 +107,7 @@ function assertUploadSizeLimit() {
 
 // opts: { context?: 'batch'|'manual' }
 async function uploadToCatbox(file, opts) {
+  const options = (opts && typeof opts === 'object') ? opts : {};
   const form = new FormData();
   form.append('reqtype', 'fileupload');
   form.append('fileToUpload', file);
@@ -92,7 +118,7 @@ async function uploadToCatbox(file, opts) {
   let isAnon = (typeof settings.anonymous === 'boolean') ? settings.anonymous : true;
   // Per-flow overrides when master anonymous is enabled
   try {
-    const ctx = opts && opts.context;
+    const ctx = options.context;
     if (isAnon && ctx === 'batch' && typeof settings.anonymousBatch === 'boolean') isAnon = !!settings.anonymousBatch;
     if (isAnon && ctx === 'manual' && typeof settings.anonymousManual === 'boolean') isAnon = !!settings.anonymousManual;
   } catch {}
@@ -102,7 +128,7 @@ async function uploadToCatbox(file, opts) {
   }
 
   const fileSizeBytes = file && typeof file.size === 'number' ? file.size : undefined;
-  const uploadUrl = resolveCatboxUploadUrl(settings, { fileSizeBytes });
+  const uploadUrl = resolveCatboxUploadUrl(settings, { fileSizeBytes, allowProxy: options.allowProxy !== false });
   assertUploadSizeLimit(uploadUrl, fileSizeBytes);
 
   const res = await fetch(uploadUrl, {
@@ -123,7 +149,7 @@ function uploadToCatboxWithProgress(file, onProgress, opts) {
     const st = readUploadSettings();
     const settings = st && typeof st === 'object' ? st : { anonymous: true, userhash: '' };
     const fileSizeBytes = file && typeof file.size === 'number' ? file.size : undefined;
-    const uploadUrl = resolveCatboxUploadUrl(settings, { fileSizeBytes });
+    const uploadUrl = resolveCatboxUploadUrl(settings, { fileSizeBytes, allowProxy: options.allowProxy !== false });
     assertUploadSizeLimit(uploadUrl, fileSizeBytes);
     const xhr = new XMLHttpRequest();
     xhr.open('POST', uploadUrl);
