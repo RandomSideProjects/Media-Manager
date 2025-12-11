@@ -1,0 +1,86 @@
+{
+  "title": "Domestic Girlfriend",
+  "Image": "./Sources/Posters/Anime/Domestic_Girlfriend.webp",
+  "LatestTime": "2025-12-11T05:29:11.472Z",
+  "categories": [
+    {
+      "category": "Season 1",
+      "episodes": [
+        {
+          "title": "Episode 1",
+          "src": "https://files.catbox.moe/q1id5k.mp4",
+          "fileSizeBytes": 107240226,
+          "durationSeconds": 1630
+        },
+        {
+          "title": "Episode 2",
+          "src": "https://files.catbox.moe/yf0b5q.mp4",
+          "fileSizeBytes": 85907088,
+          "durationSeconds": 1499
+        },
+        {
+          "title": "Episode 3",
+          "src": "https://files.catbox.moe/e0g38l.mp4",
+          "fileSizeBytes": 96837633,
+          "durationSeconds": 1499
+        },
+        {
+          "title": "Episode 4",
+          "src": "https://files.catbox.moe/pzzyp3.mp4",
+          "fileSizeBytes": 103553115,
+          "durationSeconds": 1499
+        },
+        {
+          "title": "Episode 5",
+          "src": "https://files.catbox.moe/558x2d.mp4",
+          "fileSizeBytes": 94841111,
+          "durationSeconds": 1578
+        },
+        {
+          "title": "Episode 6",
+          "src": "https://files.catbox.moe/z7jk6b.mp4",
+          "fileSizeBytes": 100828419,
+          "durationSeconds": 1499
+        },
+        {
+          "title": "Episode 7",
+          "src": "https://files.catbox.moe/bpcyz6.mp4",
+          "fileSizeBytes": 98499204,
+          "durationSeconds": 1484
+        },
+        {
+          "title": "Episode 8",
+          "src": "https://files.catbox.moe/5g0bap.mp4",
+          "fileSizeBytes": 89122457,
+          "durationSeconds": 1484
+        },
+        {
+          "title": "Episode 9",
+          "src": "https://files.catbox.moe/r3up5c.mp4",
+          "fileSizeBytes": 89282551,
+          "durationSeconds": 1484
+        },
+        {
+          "title": "Episode 10",
+          "src": "https://files.catbox.moe/zk264w.mp4",
+          "fileSizeBytes": 83382560,
+          "durationSeconds": 1483
+        },
+        {
+          "title": "Episode 11",
+          "src": "https://files.catbox.moe/zgm73v.mp4",
+          "fileSizeBytes": 117213943,
+          "durationSeconds": 1632
+        },
+        {
+          "title": "Episode 12",
+          "src": "https://files.catbox.moe/g8d18c.mp4",
+          "fileSizeBytes": 76563869,
+          "durationSeconds": 1484
+        }
+      ]
+    }
+  ],
+  "totalFileSizeBytes": 1143272176,
+  "totalDurationSeconds": 18255
+}
