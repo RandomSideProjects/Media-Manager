@@ -69,7 +69,8 @@ function loadUploadSettings(){
         githubWorkerUrl: normalizeGithubWorkerUrlValue(SETTINGS_DEFAULT_GITHUB_WORKER_URL),
         catboxUploadUrl: defaultCatboxUploadUrl(),
         webhookUrl: '',
-        separationTag: false
+        separationTag: false,
+        folderUploadYellWhenHidden: true
       };
       return initial;
     }
@@ -87,6 +88,7 @@ function loadUploadSettings(){
       cbzExpandManual: (typeof p.cbzExpandManual === 'boolean') ? p.cbzExpandManual : true,
       compressPosters: compress,
       separationTag: !!p.separationTag,
+      folderUploadYellWhenHidden: (typeof p.folderUploadYellWhenHidden === 'boolean') ? p.folderUploadYellWhenHidden : true,
       githubWorkerUrl: normalizedGithubUrl,
       githubToken: (typeof p.githubToken === 'string') ? p.githubToken : '',
       catboxUploadUrl: (typeof p.catboxUploadUrl === 'string' && p.catboxUploadUrl.trim()) ? p.catboxUploadUrl.trim() : defaultCatboxUploadUrl(),
@@ -107,7 +109,8 @@ function loadUploadSettings(){
     catboxUploadUrl: defaultCatboxUploadUrl(),
     catboxOverrideMode: 'default',
     webhookUrl: '',
-    separationTag: false
+    separationTag: false,
+    folderUploadYellWhenHidden: true
   };
   return fallback;
 }
@@ -123,6 +126,7 @@ function saveUploadSettings(s){
     cbzExpandManual: !!s.cbzExpandManual,
     compressPosters: (typeof s.compressPosters === 'boolean') ? s.compressPosters : true,
     separationTag: !!s.separationTag,
+    folderUploadYellWhenHidden: (typeof s.folderUploadYellWhenHidden === 'boolean') ? s.folderUploadYellWhenHidden : true,
     githubWorkerUrl: normalizeGithubWorkerUrlValue((typeof s.githubWorkerUrl === 'string') ? s.githubWorkerUrl.trim() : ''),
     githubToken: (typeof s.githubToken === 'string') ? s.githubToken.trim() : '',
     catboxUploadUrl: (typeof s.catboxUploadUrl === 'string') ? s.catboxUploadUrl.trim() : '',
@@ -171,6 +175,7 @@ let mmCbzExpandBatch = null;
 let mmCbzExpandManual = null;
 let mmPosterCompressToggle = null;
 let mmSeparationToggle = null;
+let mmFolderUploadYellToggle = null;
 let mmCatboxUrlInput = null;
 let devMenuRow = null;
 let devMenuStatus = null;
@@ -198,6 +203,7 @@ function ensureUploadSettingsPanel() {
       mmCbzExpandManual = document.getElementById('mmCbzExpandManual');
       mmPosterCompressToggle = document.getElementById('mmPosterCompressToggle');
       mmSeparationToggle = document.getElementById('mmSeparationToggle');
+      mmFolderUploadYellToggle = document.getElementById('mmFolderUploadYellToggle');
       devMenuRow = document.getElementById('devMenuRow');
       devMenuStatus = document.getElementById('devMenuStatus');
       
@@ -295,6 +301,7 @@ function initializeUploadSettingsPanel() {
   }
   if (mmPosterCompressToggle) mmPosterCompressToggle.checked = (typeof st.compressPosters === 'boolean') ? st.compressPosters : true;
   if (mmSeparationToggle) mmSeparationToggle.checked = !!st.separationTag;
+  if (mmFolderUploadYellToggle) mmFolderUploadYellToggle.checked = (typeof st.folderUploadYellWhenHidden === 'boolean') ? st.folderUploadYellWhenHidden : true;
   if (mmUploadConcRange) {
     mmUploadConcRange.value = String(st.uploadConcurrency || 2);
     if (mmUploadConcValue) mmUploadConcValue.textContent = String(st.uploadConcurrency || 2);
@@ -356,7 +363,8 @@ function initializeUploadSettingsPanel() {
       cbzExpandBatch: mmCbzExpandBatch ? !!mmCbzExpandBatch.checked : true,
       cbzExpandManual: mmCbzExpandManual ? !!mmCbzExpandManual.checked : true,
       compressPosters: mmPosterCompressToggle ? !!mmPosterCompressToggle.checked : true,
-      separationTag: mmSeparationToggle ? !!mmSeparationToggle.checked : false
+      separationTag: mmSeparationToggle ? !!mmSeparationToggle.checked : false,
+      folderUploadYellWhenHidden: mmFolderUploadYellToggle ? !!mmFolderUploadYellToggle.checked : true
     };
     saveUploadSettings(saved);
     try { window.dispatchEvent(new CustomEvent('mm_settings_saved', { detail: saved })); } catch {}

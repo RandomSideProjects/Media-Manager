@@ -638,6 +638,12 @@ window.OverlayFactory = (function() {
           }),
           createElement('span', { id: 'mmUploadConcurrencyValue', style: { minWidth: '2em', textAlign: 'right' } }, ['2'])
         ]),
+        createElement('div', { className: 'mm-settings-row' }, [
+          createElement('label', { className: 'mm-toggle', style: { gap: '.4em', alignItems: 'center' } }, [
+            createElement('input', { type: 'checkbox', id: 'mmFolderUploadYellToggle', checked: 'checked' }),
+            createElement('span', {}, ['Folder upload: yell when tab is hidden'])
+          ])
+        ]),
         createElement('div', { 
           className: 'mm-settings-row dev-menu-row', 
           id: 'devMenuRow', 

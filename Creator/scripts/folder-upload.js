@@ -169,38 +169,250 @@
       folderOverlay.id = 'folderUploadOverlay';
       document.body.appendChild(folderOverlay);
     }
-    Object.assign(folderOverlay.style, {
-      position:'fixed', inset:'0', background:'rgba(0,0,0,0.85)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:'10030'
-    });
-    folderOverlay.innerHTML = `
-      <div style="background:#1a1a1a; padding:1em; border-radius:8px; width:90%; max-width:700px; color:#f1f1f1; font-family:inherit;">
-        <h2 style="margin-top:0; font-size:1.4em;">Uploading Folder</h2>
-        <div id="folderUploadList" style="display:grid; gap:8px; max-height:50vh; overflow:auto;"></div>
-        <div style="margin-top:0.75em; display:flex; justify-content:space-between; align-items:center; gap:0.75em;">
-          <div id="folderUploadSummary" style="font-size:0.9em;">0 / 0 completed</div>
-          <button id="folderUploadCancel" type="button" style="background:#ff5f5f; color:#111; border:none; border-radius:4px; padding:0.45em 1em; cursor:pointer; font-weight:600;">Cancel</button>
-        </div>
-      </div>`;
-    folderOverlay.style.display = 'flex';
+
+    const getFolderUploadYellDefault = () => {
+      try {
+        const p = JSON.parse(localStorage.getItem('mm_upload_settings') || '{}');
+        return (typeof p.folderUploadYellWhenHidden === 'boolean') ? p.folderUploadYellWhenHidden : true;
+      } catch {
+        return true;
+      }
+    };
+
+    const removeShowButton = () => {
+      const existing = document.getElementById('folderUploadShowBtn');
+      if (existing) existing.remove();
+    };
+
+    const ensureShowButton = () => {
+      let btn = document.getElementById('folderUploadShowBtn');
+      if (btn) return btn;
+      btn = document.createElement('button');
+      btn.id = 'folderUploadShowBtn';
+      btn.type = 'button';
+      btn.className = 'folder-upload-control-btn';
+      btn.setAttribute('aria-label', 'Show upload popup');
+      btn.innerHTML = '<img src="../Assets/show.png" alt="Show">';
+      document.body.appendChild(btn);
+      return btn;
+    };
+
+    const showOverlay = () => {
+      if (!folderOverlay) return;
+      folderOverlay.style.display = 'flex';
+      removeShowButton();
+    };
+
+    const hideOverlay = () => {
+      if (!folderOverlay) return;
+      folderOverlay.style.display = 'none';
+      const showBtn = ensureShowButton();
+      showBtn.onclick = showOverlay;
+    };
+
+    const VISIBILITY_YELL_MESSAGE = 'For the upload to continue, please have the page open';
+    const originalTitle = (typeof document !== 'undefined' && document) ? document.title : '';
+    let titlePulseInterval = null;
+    let titlePulseState = false;
+    let didYellForCurrentHiddenState = false;
+    let visibilityDelayTimeout = null;
+    let ttsYellInterval = null;
+    let lastTtsAt = 0;
+    let visibilityYellEnabledForUpload = getFolderUploadYellDefault();
+
+    const speakVisibilityWarning = () => {
+      try {
+        if (typeof window === 'undefined' || !window) return false;
+        const synth = window.speechSynthesis;
+        if (!synth || typeof window.SpeechSynthesisUtterance !== 'function') return false;
+        if (synth.speaking || synth.pending) {
+          try { synth.cancel(); } catch {}
+        }
+        const now = Date.now();
+        if (now - lastTtsAt < 1500) return true;
+        lastTtsAt = now;
+        const utterance = new window.SpeechSynthesisUtterance(VISIBILITY_YELL_MESSAGE);
+        utterance.volume = 1;
+        utterance.rate = 1.12;
+        utterance.pitch = 1;
+        try { synth.speak(utterance); } catch { return false; }
+        return true;
+      } catch {
+        return false;
+      }
+    };
+
+    const startTtsYelling = () => {
+      if (ttsYellInterval) return;
+      speakVisibilityWarning();
+      ttsYellInterval = setInterval(() => {
+        try {
+          if (typeof document !== 'undefined' && document && document.hidden) {
+            speakVisibilityWarning();
+          }
+        } catch {}
+      }, 6000);
+    };
+
+    const stopTtsYelling = () => {
+      if (ttsYellInterval) clearInterval(ttsYellInterval);
+      ttsYellInterval = null;
+      try {
+        if (typeof window !== 'undefined' && window && window.speechSynthesis) {
+          window.speechSynthesis.cancel();
+        }
+      } catch {}
+    };
+
+    const startTitlePulse = () => {
+      if (titlePulseInterval) return;
+      if (!visibilityYellEnabledForUpload) return;
+      didYellForCurrentHiddenState = true;
+      startTtsYelling();
+      if (typeof document !== 'undefined' && document) {
+        document.title = VISIBILITY_YELL_MESSAGE;
+        titlePulseInterval = setInterval(() => {
+          titlePulseState = !titlePulseState;
+          document.title = titlePulseState ? VISIBILITY_YELL_MESSAGE : originalTitle;
+        }, 1000);
+      }
+    };
+
+    const stopTitlePulse = () => {
+      if (titlePulseInterval) clearInterval(titlePulseInterval);
+      titlePulseInterval = null;
+      titlePulseState = false;
+      stopTtsYelling();
+      if (typeof document !== 'undefined' && document) {
+        document.title = originalTitle;
+      }
+    };
+
+    const onVisibilityChange = () => {
+      try {
+        if (!visibilityYellEnabledForUpload) {
+          if (visibilityDelayTimeout) {
+            clearTimeout(visibilityDelayTimeout);
+            visibilityDelayTimeout = null;
+          }
+          stopTitlePulse();
+          didYellForCurrentHiddenState = false;
+          return;
+        }
+        if (typeof document !== 'undefined' && document && document.hidden) {
+          if (!visibilityDelayTimeout) {
+            didYellForCurrentHiddenState = false;
+            visibilityDelayTimeout = setTimeout(() => {
+              visibilityDelayTimeout = null;
+              try {
+                if (visibilityYellEnabledForUpload && typeof document !== 'undefined' && document && document.hidden) {
+                  startTitlePulse();
+                }
+              } catch {}
+            }, 1500);
+          }
+          return;
+        }
+        if (visibilityDelayTimeout) {
+          clearTimeout(visibilityDelayTimeout);
+          visibilityDelayTimeout = null;
+        }
+        stopTitlePulse();
+        didYellForCurrentHiddenState = false;
+      } catch {}
+    };
+
+    // If a previous upload left a show button around, remove it when starting a new overlay.
+    removeShowButton();
+
+		    Object.assign(folderOverlay.style, {
+		      position:'fixed', inset:'0', background:'rgba(0,0,0,0.85)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:'10030'
+		    });
+		    folderOverlay.innerHTML = `
+		      <div style="background:#1a1a1a; padding:1em; border-radius:8px; width:90%; max-width:700px; color:#f1f1f1; font-family:inherit; position:relative;">
+		        <div class="folder-upload-header-row">
+		          <h2 style="margin:0; font-size:1.4em;">Uploading Folder</h2>
+		          <label id="folderUploadYellToggleWrap" class="mm-toggle" style="gap:.4em; align-items:center;">
+		            <input type="checkbox" id="folderUploadYellToggle">
+		            <span>Yell</span>
+		          </label>
+		        </div>
+		        <button id="folderUploadHideBtn" type="button" class="folder-upload-control-btn" aria-label="Hide upload popup">
+		          <img src="../Assets/hide.png" alt="Hide">
+		        </button>
+		        <div id="folderUploadList" style="display:grid; gap:8px; max-height:50vh; overflow:auto;"></div>
+		        <div style="margin-top:0.75em; display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:0.75em;">
+		          <div id="folderUploadSummary" style="font-size:0.9em; grid-column:2; justify-self:center; text-align:center;">0 / 0 completed</div>
+		          <button id="folderUploadCancel" type="button" style="grid-column:3; justify-self:end; background:#ff5f5f; color:#111; border:none; border-radius:4px; padding:0.45em 1em; cursor:pointer; font-weight:600;">Cancel</button>
+		        </div>
+		      </div>`;
+    showOverlay();
     const folderUploadList = folderOverlay.querySelector('#folderUploadList');
     const folderUploadSummary = folderOverlay.querySelector('#folderUploadSummary');
-    const cancelBtn = folderOverlay.querySelector('#folderUploadCancel');
-    let completedCount = 0;
-    folderUploadSummary.textContent = `0 / ${summaryTotal} completed`;
-    const uploadAbortController = new AbortController();
-    let cancelRequested = false;
-    const isCancelled = () => cancelRequested || uploadAbortController.signal.aborted;
+		    const cancelBtn = folderOverlay.querySelector('#folderUploadCancel');
+		    const hideBtn = folderOverlay.querySelector('#folderUploadHideBtn');
+		    const yellToggle = folderOverlay.querySelector('#folderUploadYellToggle');
+			    let completedCount = 0;
+			    let plannedTotal = summaryTotal;
+			    folderUploadSummary.textContent = `0 / ${plannedTotal} completed`;
+	    const uploadAbortController = new AbortController();
+	    let cancelRequested = false;
+	    const isCancelled = () => cancelRequested || uploadAbortController.signal.aborted;
+	    const abortableDelay = (ms) => new Promise((resolve) => {
+	      const signal = uploadAbortController.signal;
+	      if (!Number.isFinite(ms) || ms <= 0 || isCancelled()) {
+	        resolve();
+	        return;
+	      }
+	      let timeoutId = null;
+	      const cleanup = () => {
+	        if (signal && typeof signal.removeEventListener === 'function') {
+	          try { signal.removeEventListener('abort', onAbort); } catch {}
+	        }
+	      };
+	      const onAbort = () => {
+	        if (timeoutId) clearTimeout(timeoutId);
+	        cleanup();
+	        resolve();
+	      };
+	      timeoutId = setTimeout(() => {
+	        cleanup();
+	        resolve();
+	      }, ms);
+	      if (signal && typeof signal.addEventListener === 'function') {
+	        if (signal.aborted) {
+	          onAbort();
+	          return;
+	        }
+	        signal.addEventListener('abort', onAbort);
+	      }
+	    });
 
-    if (cancelBtn) {
-      cancelBtn.addEventListener('click', () => {
-        if (cancelRequested) return;
-        cancelRequested = true;
-        cancelBtn.disabled = true;
-        cancelBtn.textContent = 'Cancelling...';
-        folderUploadSummary.textContent = `Cancelling... ${completedCount} / ${summaryTotal} completed`;
-        try { uploadAbortController.abort(); } catch {}
-      });
-    }
+		    if (hideBtn) hideBtn.addEventListener('click', hideOverlay);
+		    if (yellToggle) {
+		      yellToggle.checked = !!visibilityYellEnabledForUpload;
+		      yellToggle.addEventListener('change', () => {
+		        visibilityYellEnabledForUpload = !!yellToggle.checked;
+		        onVisibilityChange();
+		      });
+		    }
+
+    try {
+      document.addEventListener('visibilitychange', onVisibilityChange);
+      onVisibilityChange();
+    } catch {}
+
+	    if (cancelBtn) {
+	      cancelBtn.addEventListener('click', () => {
+	        if (cancelRequested) return;
+	        cancelRequested = true;
+	        try { window.isFolderUploading = false; } catch {}
+	        cancelBtn.disabled = true;
+	        cancelBtn.textContent = 'Cancelling...';
+		        folderUploadSummary.textContent = `Cancelling... ${completedCount} / ${plannedTotal} completed`;
+	        try { uploadAbortController.abort(); } catch {}
+	      });
+	    }
 
     const formatBytesCompact = (bytes) => {
       if (!Number.isFinite(bytes) || bytes < 0) return 'Unknown';
@@ -482,7 +694,7 @@
               rowCtx.setStatus('Done', { color: '#6ec1e4' });
               rowCtx.setProgress(100, { state: 'complete' });
               completedCount++;
-              folderUploadSummary.textContent = `${completedCount} / ${summaryTotal} completed`;
+              folderUploadSummary.textContent = `${completedCount} / ${plannedTotal} completed`;
               return;
             } catch (err) {
               if (isCancelled() || (err && err.name === 'AbortError')) {
@@ -519,22 +731,22 @@
               rowCtx.setStatus('Done', { color: '#6ec1e4' });
               rowCtx.setProgress(100, { state: 'complete', loadedBytes: fileSizeBytes });
               completedCount++;
-              folderUploadSummary.textContent = `${completedCount} / ${summaryTotal} completed`;
+	              folderUploadSummary.textContent = `${completedCount} / ${plannedTotal} completed`;
               return;
             } catch (err) {
               if (isCancelled() || (err && err.name === 'AbortError')) {
                 markCancelled();
                 return;
               }
-              if (attempt < maxAttempts) {
-                const base = 800 * Math.pow(2, attempt - 1);
-                const jitter = base * (0.3 + Math.random() * 0.4);
-                await new Promise(r => setTimeout(r, base + jitter));
-                if (isCancelled()) {
-                  markCancelled();
-                  return;
-                }
-                continue;
+	              if (attempt < maxAttempts) {
+	                const base = 800 * Math.pow(2, attempt - 1);
+	                const jitter = base * (0.3 + Math.random() * 0.4);
+	                await abortableDelay(base + jitter);
+	                if (isCancelled()) {
+	                  markCancelled();
+	                  return;
+	                }
+	                continue;
               }
               rowCtx.setStatus('Failed', { color: '#ff4444' });
               rowCtx.setProgress(0, { state: 'failed' });
@@ -552,7 +764,7 @@
         return;
       }
       console.debug('[Creator] Folder upload entry count', processEntries.length);
-      folderUploadSummary.textContent = `0 / ${summaryTotal} completed`;
+	      folderUploadSummary.textContent = `0 / ${plannedTotal} completed`;
 
       processEntries.forEach((entry) => {
         if (!entry || isCancelled()) return;
@@ -658,20 +870,21 @@
               }
               const current = partRows[idx];
               const partSize = Number.isFinite(current.size) ? current.size : 0;
-              try {
-                if (typeof epDiv._handlePartFileUpload === 'function') {
-                  await epDiv._handlePartFileUpload(current.row, current.file, {
-                    onProgress: (pct) => {
-                      const normalized = Math.max(0, Math.min(100, Number(pct) || 0)) / 100;
-                      const overallProgress = ((uploadedParts + normalized) / partRows.length) * 100;
-                      const loadedBytes = uploadedBytes + (partSize > 0 ? normalized * partSize : 0);
-                      rowCtx.setProgress(overallProgress, { loadedBytes, totalBytes: totalSize });
-                    }
-                  });
-                }
-              } catch (err) {
-                console.error('[Creator] Failed to upload part from folder', err);
-              }
+	                  try {
+	                    if (typeof epDiv._handlePartFileUpload === 'function') {
+	                      await epDiv._handlePartFileUpload(current.row, current.file, {
+	                        onProgress: (pct) => {
+	                          const normalized = Math.max(0, Math.min(100, Number(pct) || 0)) / 100;
+	                          const overallProgress = ((uploadedParts + normalized) / partRows.length) * 100;
+	                          const loadedBytes = uploadedBytes + (partSize > 0 ? normalized * partSize : 0);
+	                          rowCtx.setProgress(overallProgress, { loadedBytes, totalBytes: totalSize });
+	                        },
+	                        signal: uploadAbortController.signal
+	                      });
+	                    }
+	                  } catch (err) {
+	                    console.error('[Creator] Failed to upload part from folder', err);
+	                  }
               const uploaded = current.row && current.row._srcInput && current.row._srcInput.value && current.row._srcInput.value.trim();
               if (uploaded) {
                 uploadedParts += 1;
@@ -683,7 +896,7 @@
               rowCtx.setStatus('Done', { color: '#6ec1e4' });
               rowCtx.setProgress(100, { state: 'complete' });
               completedCount++;
-              folderUploadSummary.textContent = `${completedCount} / ${summaryTotal} completed`;
+	              folderUploadSummary.textContent = `${completedCount} / ${plannedTotal} completed`;
             } else if (!isCancelled()) {
               rowCtx.setStatus(`Uploaded ${uploadedParts} of ${partRows.length}`, { color: '#ff4444' });
               rowCtx.setProgress((uploadedParts / partRows.length) * 100, { state: 'failed' });
@@ -748,22 +961,22 @@
               rowCtx.setStatus('Done', { color: '#6ec1e4' });
               rowCtx.setProgress(100, { state: 'complete', loadedBytes: fileSizeBytes });
               completedCount++;
-              folderUploadSummary.textContent = `${completedCount} / ${summaryTotal} completed`;
+	              folderUploadSummary.textContent = `${completedCount} / ${plannedTotal} completed`;
               return;
             } catch (err) {
               if (isCancelled() || (err && err.name === 'AbortError')) {
                 markCancelled();
                 return;
               }
-              if (attempt < maxAttempts) {
-                const base = 800 * Math.pow(2, attempt - 1);
-                const jitter = base * (0.3 + Math.random() * 0.4);
-                await new Promise(r => setTimeout(r, base + jitter));
-                continue;
-              }
-              rowCtx.setStatus('Failed', { color: '#ff4444' });
-              rowCtx.setProgress(0, { state: 'failed' });
-              if (epError) epError.innerHTML = '<span style="color:red">Upload failed</span>';
+	              if (attempt < maxAttempts) {
+	                const base = 800 * Math.pow(2, attempt - 1);
+	                const jitter = base * (0.3 + Math.random() * 0.4);
+	                await abortableDelay(base + jitter);
+	                continue;
+	              }
+	              rowCtx.setStatus('Failed', { color: '#ff4444' });
+	              rowCtx.setProgress(0, { state: 'failed' });
+	              if (epError) epError.innerHTML = '<span style="color:red">Upload failed</span>';
               return;
             }
           }
@@ -790,13 +1003,27 @@
       await Promise.all(workers);
     };
 
-    try {
-      await runWithConcurrency(taskFns, getUploadConcurrency());
-    } finally {
+	    // After tasks are queued, use the actual task count for x/y so mixed groups can't drift.
+	    try {
+	      plannedTotal = Math.max(1, taskFns.length);
+	      if (completedCount > plannedTotal) completedCount = plannedTotal;
+	      if (folderUploadSummary) folderUploadSummary.textContent = `${completedCount} / ${plannedTotal} completed`;
+	    } catch {}
+
+	    try {
+	      await runWithConcurrency(taskFns, getUploadConcurrency());
+	    } finally {
       try { window.isFolderUploading = false; } catch {}
-      if (cancelRequested && folderUploadSummary) {
-        folderUploadSummary.textContent = `Cancelled ${completedCount} / ${summaryTotal} completed`;
-      }
+      try { document.removeEventListener('visibilitychange', onVisibilityChange); } catch {}
+      try {
+        if (visibilityDelayTimeout) clearTimeout(visibilityDelayTimeout);
+        visibilityDelayTimeout = null;
+      } catch {}
+      stopTitlePulse();
+	      if (cancelRequested && folderUploadSummary) {
+	        folderUploadSummary.textContent = `Cancelled ${completedCount} / ${plannedTotal} completed`;
+	      }
+      removeShowButton();
       if (folderOverlay) folderOverlay.remove();
     }
   };

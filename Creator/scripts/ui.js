@@ -1910,14 +1910,15 @@ function addEpisode(container, data) {
     syncEpisodeMainSrc();
   }
 
-  async function handlePartFileUpload(row, file, options = {}) {
-    if (!row || !file) return;
-    const opts = (options && typeof options === 'object') ? options : {};
-    if (!isMangaMode() && file.size > 200 * 1024 * 1024) {
-      if (row._statusEl) {
-        row._statusEl.style.color = '#ff6b6b';
-        row._statusEl.textContent = 'Files over 200 MB must be uploaded manually.';
-      }
+	  async function handlePartFileUpload(row, file, options = {}) {
+	    if (!row || !file) return;
+	    const opts = (options && typeof options === 'object') ? options : {};
+	    const signal = opts.signal;
+	    if (!isMangaMode() && file.size > 200 * 1024 * 1024) {
+	      if (row._statusEl) {
+	        row._statusEl.style.color = '#ff6b6b';
+	        row._statusEl.textContent = 'Files over 200 MB must be uploaded manually.';
+	      }
       if (row._fileInput) row._fileInput.value = '';
       if (opts.onError) {
         opts.onError(new Error('File too large for automated upload'));
@@ -1940,39 +1941,47 @@ function addEpisode(container, data) {
         if (!Number.isNaN(d) && d > 0) durationEstimate = d;
       } catch {}
     }
-    try {
-      const url = await uploadToCatboxWithProgress(file, pct => {
-        progress.value = pct;
-        if (row._statusEl) {
-          row._statusEl.style.color = '#9ecbff';
-          row._statusEl.textContent = `Uploading ${Math.round(pct)}%`;
-          row._statusEl.appendChild(progress);
-        }
-        if (typeof opts.onProgress === 'function') {
-          opts.onProgress(pct);
-        }
-      }, { context: 'manual', allowProxy: false });
-      if (row._srcInput) row._srcInput.value = url;
-      applyPartMetadata(row, { fileSize: file.size });
-      if (Number.isFinite(durationEstimate) && durationEstimate > 0) {
-        applyPartMetadata(row, { duration: durationEstimate });
-      }
+	    try {
+	      const url = await uploadToCatboxWithProgress(file, pct => {
+	        progress.value = pct;
+	        if (row._statusEl) {
+	          row._statusEl.style.color = '#9ecbff';
+	          row._statusEl.textContent = `Uploading ${Math.round(pct)}%`;
+	          row._statusEl.appendChild(progress);
+	        }
+	        if (typeof opts.onProgress === 'function') {
+	          opts.onProgress(pct);
+	        }
+	      }, { context: 'manual', allowProxy: false, signal });
+	      if (row._srcInput) row._srcInput.value = url;
+	      applyPartMetadata(row, { fileSize: file.size });
+	      if (Number.isFinite(durationEstimate) && durationEstimate > 0) {
+	        applyPartMetadata(row, { duration: durationEstimate });
+	      }
       if (row._statusEl) row._statusEl.textContent = '';
       syncEpisodeMainSrc();
       if (typeof opts.onComplete === 'function') {
         opts.onComplete({ url });
       }
-    } catch (err) {
-      if (row._statusEl) {
-        row._statusEl.style.color = '#ff6b6b';
-        row._statusEl.textContent = 'Upload failed';
-      }
-      if (row._srcInput) row._srcInput.value = '';
-      if (typeof opts.onError === 'function') {
-        opts.onError(err);
-      }
-    }
-  }
+	    } catch (err) {
+	      const aborted = (err && err.name === 'AbortError') || (signal && signal.aborted);
+	      if (aborted) {
+	        if (row._statusEl) {
+	          row._statusEl.style.color = '#cccccc';
+	          row._statusEl.textContent = 'Cancelled';
+	        }
+	        return;
+	      }
+	      if (row._statusEl) {
+	        row._statusEl.style.color = '#ff6b6b';
+	        row._statusEl.textContent = 'Upload failed';
+	      }
+	      if (row._srcInput) row._srcInput.value = '';
+	      if (typeof opts.onError === 'function') {
+	        opts.onError(err);
+	      }
+	    }
+	  }
 
   function addPartRow(partData) {
     const partIndex = (epDiv._partRows || []).length + 1;
@@ -2354,13 +2363,18 @@ function addEpisode(container, data) {
 
   if (!isMangaMode()) {
     const allowEpisodeSeparation = !categorySeparated;
-    const hasSeparatedData = allowEpisodeSeparation && data && coerceSeparatedFlag(data.separated ?? data.seperated);
     const partsData = [];
-    if (hasSeparatedData) {
+    const separatedFlag = allowEpisodeSeparation && data && coerceSeparatedFlag(data.separated ?? data.seperated);
+    if (allowEpisodeSeparation && data) {
       if (Array.isArray(data.sources)) partsData.push(...data.sources);
       else if (Array.isArray(data.parts)) partsData.push(...data.parts);
       else if (Array.isArray(data.items)) partsData.push(...data.items);
       else if (Array.isArray(data.__separatedParts)) partsData.push(...data.__separatedParts);
+    }
+    const hasSeparatedData = !!separatedFlag || partsData.length > 0;
+    if (hasSeparatedData) {
+      // Preserve legacy separated sources even when the separation-tag UI is disabled.
+      epDiv.dataset.forceSeparated = '1';
     }
     if (hasSeparatedData && partsData.length) {
       separatedToggle.checked = true;
@@ -2414,9 +2428,10 @@ function extractEpisodeDataFromElement(epDiv, { isManga } = {}) {
   let totalDuration = toNumber(epDiv.dataset ? epDiv.dataset.durationSeconds : 0);
   let totalPages = toNumber(epDiv.dataset ? (epDiv.dataset.volumePageCount || epDiv.dataset.VolumePageCount) : 0);
 
-  const episode = { title, src: rawSrc };
+  const episode = { title };
 
   if (isMangaModeLocal) {
+    episode.src = rawSrc;
     if (totalFileSize > 0) episode.fileSizeBytes = Math.round(totalFileSize);
     if (totalPages > 0) episode.VolumePageCount = Math.round(totalPages);
     if (!episode.title || !episode.src) return null;
@@ -2451,7 +2466,6 @@ function extractEpisodeDataFromElement(epDiv, { isManga } = {}) {
     }).filter(Boolean);
 
     if (separatedParts.length) {
-      if (!episode.src) episode.src = separatedParts[0].src;
       const aggregatedSize = partSizeCount > 0 ? partsTotalSize : totalFileSize;
       const aggregatedDuration = partDurationCount > 0 ? partsTotalDuration : totalDuration;
       if (aggregatedSize > 0) {
@@ -2464,17 +2478,18 @@ function extractEpisodeDataFromElement(epDiv, { isManga } = {}) {
         totalDuration = aggregatedDuration;
       }
       episode.separated = 1;
-      episode.seperated = 1;
       episode.sources = separatedParts;
     }
   }
 
   if (!separatedEnabled) {
+    episode.src = rawSrc;
     if (totalFileSize > 0) episode.fileSizeBytes = Math.round(totalFileSize);
     if (totalDuration > 0) episode.durationSeconds = Math.round(totalDuration);
   }
 
-  if (!episode.title || !episode.src) return null;
+  if (!episode.title) return null;
+  if (!separatedParts.length && !episode.src) return null;
 
   return {
     episode,
