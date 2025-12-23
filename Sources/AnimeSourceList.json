@@ -443,12 +443,12 @@
       "path": "./Files/Anime/Ranma_1_2_2024.json",
       "title": "Ranma ½ (2024)",
       "poster": "./Posters/Anime/Ranma_½_(2024).webp",
-      "categoryCount": 1,
-      "episodeCount": 12,
-      "itemCount": 12,
-      "totalFileSizeBytes": 2676266795,
-      "totalDurationSeconds": 17594,
-      "LatestTime": "2025-12-23T05:45:44.126Z"
+      "categoryCount": 2,
+      "episodeCount": 24,
+      "itemCount": 24,
+      "totalFileSizeBytes": 5175695952,
+      "totalDurationSeconds": 35111,
+      "LatestTime": "2025-12-23T06:53:30.966Z"
     },
     {
       "file": "Rascal_Does_Not_Dream_Of_A_Bunny_Girl_Senpai.json",
