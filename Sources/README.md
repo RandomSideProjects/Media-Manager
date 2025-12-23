@@ -47,6 +47,7 @@ This directory contains all available media sources.
 - [One Piece](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FOne_Piece.json)
 - [One-Punch Man](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FOne-Punch_Man.json)
 - [Quintessential Quintuplets](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FQuintuplets.json)
+- [Ranma ½ (2024)](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FRanma_1_2_2024.json)
 - [Rascal Does Not Dream Of A Bunny Girl Senpai](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FRascal_Does_Not_Dream_Of_A_Bunny_Girl_Senpai.json)
 - [Re: Zero](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FRe_Zero.json)
 - [Roshidere (Alya Hides Her Feelings In Russian)](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FRoshidere.json)
