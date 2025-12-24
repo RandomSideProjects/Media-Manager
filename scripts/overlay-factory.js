@@ -725,24 +725,36 @@ window.OverlayFactory = (function() {
             ])
           ]),
 
-          createElement('div', { className: 'dev-menu-section' }, [
-            createElement('h4', {}, ['Clip Backend']),
-            createElement('div', { className: 'dev-field' }, [
-              createElement('label', { for: 'devClipBackendUrl' }, ['Clip backend URL']),
-              createElement('input', {
-                type: 'text',
-                id: 'devClipBackendUrl',
-                className: 'dev-field-input',
-                placeholder: 'https://mm.littlehacker303.workers.dev/clip'
-              }),
-              createElement('p', { className: 'dev-menu-hint' }, ['Override the clip/set segment endpoint.'])
-            ])
-          ]),
-          
-          createElement('div', { className: 'dev-menu-section' }, [
-            createElement('h4', {}, ['Quick Actions']),
-            createElement('div', { id: 'devActionGrid', className: 'dev-action-grid' }, [
-              createElement('button', { type: 'button', 'data-dev-action': 'notice:info' }, ['Test Info Notice']),
+	          createElement('div', { className: 'dev-menu-section' }, [
+	            createElement('h4', {}, ['Clip Backend']),
+	            createElement('div', { className: 'dev-field' }, [
+	              createElement('label', { for: 'devClipBackendUrl' }, ['Clip backend URL']),
+	              createElement('input', {
+	                type: 'text',
+	                id: 'devClipBackendUrl',
+	                className: 'dev-field-input',
+	                placeholder: 'https://mm.littlehacker303.workers.dev/clip'
+	              }),
+	              createElement('p', { className: 'dev-menu-hint' }, ['Override the clip/set segment endpoint.'])
+	            ])
+	          ]),
+
+	          createElement('div', { className: 'dev-menu-section' }, [
+	            createElement('h4', {}, ['Playback']),
+	            createElement('div', { className: 'dev-field' }, [
+	              createElement('label', { for: 'devPartPreloadMethod' }, ['Part preload method']),
+	              createElement('select', { id: 'devPartPreloadMethod', className: 'dev-field-input' }, [
+	                createElement('option', { value: 'fetch' }, ['Fetch']),
+	                createElement('option', { value: 'video' }, ['Video (fallback)'])
+	              ]),
+	              createElement('p', { className: 'dev-menu-hint select' }, ['Force how separated-part prefetch warms the next part.'])
+	            ])
+	          ]),
+ 	          
+	          createElement('div', { className: 'dev-menu-section' }, [
+	            createElement('h4', {}, ['Quick Actions']),
+	            createElement('div', { id: 'devActionGrid', className: 'dev-action-grid' }, [
+	              createElement('button', { type: 'button', 'data-dev-action': 'notice:info' }, ['Test Info Notice']),
               createElement('button', { type: 'button', 'data-dev-action': 'notice:error' }, ['Test Error Notice']),
               createElement('button', { type: 'button', 'data-dev-action': 'storage:menu' }, ['Storage Menu']),
               createElement('button', { type: 'button', 'data-dev-action': 'catbox:detect' }, ['Detect Catbox']),

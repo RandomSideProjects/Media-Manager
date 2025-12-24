@@ -19,6 +19,7 @@
   let catboxUrlInput = null;
   let catboxModeSelect = null;
   let clipBackendUrlInput = null;
+  let partPreloadMethodSelect = null;
   let sourceKeyLabel = null;
   let menuRow = null;
   let menuStatus = null;
@@ -40,6 +41,7 @@
     catboxModeSelect = document.getElementById("devCatboxMode");
     clipBackendStateLabel = document.getElementById("devClipEndpointLabel");
     clipBackendUrlInput = document.getElementById("devClipBackendUrl");
+    partPreloadMethodSelect = document.getElementById("devPartPreloadMethod");
     sourceKeyLabel = document.getElementById("devSourceKeyLabel");
     menuRow = document.getElementById("devMenuRow");
     menuStatus = document.getElementById("devMenuStatus");
@@ -50,6 +52,8 @@
   const STORAGE_MENU_DELAY_MS = 90;
   const CLIP_BACKEND_STORAGE_KEY = "clipBackendUrl";
   const DEFAULT_CLIP_BACKEND = "https://mm.littlehacker303.workers.dev/clip";
+  const PART_PRELOAD_METHOD_KEY = "dev:partPreloadMethod";
+  const DEFAULT_PART_PRELOAD_METHOD = "fetch";
 
   function isDevModeEnabled() {
     if (typeof window === "undefined") return false;
@@ -124,6 +128,28 @@
     }
   }
 
+  function getStoredPartPreloadMethod() {
+    try {
+      const stored = localStorage.getItem(PART_PRELOAD_METHOD_KEY);
+      const value = (typeof stored === "string") ? stored.trim().toLowerCase() : "";
+      if (value === "video") return "video";
+      if (value === "fetch") return "fetch";
+      return DEFAULT_PART_PRELOAD_METHOD;
+    } catch {
+      return DEFAULT_PART_PRELOAD_METHOD;
+    }
+  }
+
+  function setStoredPartPreloadMethod(value) {
+    const normalized = (typeof value === "string") ? value.trim().toLowerCase() : "";
+    const next = (normalized === "video") ? "video" : "fetch";
+    try { localStorage.setItem(PART_PRELOAD_METHOD_KEY, next); } catch {}
+    try {
+      window.dispatchEvent(new CustomEvent("mm:part-preload-method-changed", { detail: { method: next } }));
+    } catch {}
+    return next;
+  }
+
   function getCatboxSettings() {
     try {
       const stored = localStorage.getItem("mm_upload_settings");
@@ -187,6 +213,7 @@
     }
     refreshCatboxControls();
     refreshClipBackendInput();
+    refreshPartPreloadControls();
   }
 
   function refreshAll() {
@@ -205,6 +232,12 @@
   function refreshClipBackendInput() {
     if (!clipBackendUrlInput) return;
     clipBackendUrlInput.value = getClipBackendFromStorage() || DEFAULT_CLIP_BACKEND;
+  }
+
+  function refreshPartPreloadControls() {
+    if (!partPreloadMethodSelect) return;
+    partPreloadMethodSelect.value = getStoredPartPreloadMethod();
+    partPreloadMethodSelect.disabled = !isDevModeEnabled();
   }
 
   function updateDevMenuAvailability() {
@@ -525,6 +558,15 @@
       };
       clipBackendUrlInput.addEventListener("change", commitClipBackend);
       clipBackendUrlInput.addEventListener("blur", commitClipBackend);
+    }
+
+    if (partPreloadMethodSelect) {
+      partPreloadMethodSelect.addEventListener("change", () => {
+        const next = setStoredPartPreloadMethod(partPreloadMethodSelect.value);
+        partPreloadMethodSelect.value = next;
+        refreshDiagnostics();
+        showDevNotice("info", `Part preload method set to ${next === "video" ? "Video (fallback)" : "Fetch"}.`);
+      });
     }
   }
 

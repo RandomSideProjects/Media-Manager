@@ -104,6 +104,257 @@ function getPartDuration(meta, item, index) {
   return Number.isFinite(d) && d > 0 ? d : 0;
 }
 
+// --- Separated part prefetch (best-effort) ---
+// Goal: warm up the browser cache with ~first 10% of the next part so the switch is less likely to stall.
+const SEPARATED_NEXT_PART_PREFETCH_FRACTION = 0.10;
+const SEPARATED_NEXT_PART_PREFETCH_TRIGGER_RATIO = 0.80; // start prefetch when current part is ~80% done
+const SEPARATED_NEXT_PART_PREFETCH_TRIGGER_REMAINING_SECONDS = 90; // or within last N seconds
+const SEPARATED_NEXT_PART_PREFETCH_MIN_BUFFER_AHEAD_SECONDS = 6; // avoid competing with current playback
+const SEPARATED_NEXT_PART_PREFETCH_MIN_BYTES = 512 * 1024;
+const SEPARATED_NEXT_PART_PREFETCH_MAX_BYTES = 25 * 1024 * 1024;
+const SEPARATED_NEXT_PART_PREFETCH_FALLBACK_BYTES = 8 * 1024 * 1024;
+const SEPARATED_NEXT_PART_PREFETCH_METHOD_KEY = 'dev:partPreloadMethod'; // 'fetch' | 'video'
+
+let separatedNextPartPrefetchState = {
+  src: '',
+  targetPartIndex: -1,
+  controller: null
+};
+
+const separatedNextPartPrefetchHistory = new Map(); // src -> { ok, attempts, ts }
+let separatedNextPartPrefetchVideo = null;
+
+function clampNumber(value, min, max) {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return min;
+  return Math.max(min, Math.min(num, max));
+}
+
+function getSeparatedNextPartPrefetchMethod() {
+  try {
+    const stored = localStorage.getItem(SEPARATED_NEXT_PART_PREFETCH_METHOD_KEY);
+    const value = (typeof stored === 'string') ? stored.trim().toLowerCase() : '';
+    if (value === 'video') return 'video';
+    return 'fetch';
+  } catch {
+    return 'fetch';
+  }
+}
+
+function resetSeparatedNextPartPrefetch() {
+  if (separatedNextPartPrefetchState.controller) {
+    try { separatedNextPartPrefetchState.controller.abort(); } catch {}
+  }
+  separatedNextPartPrefetchState.controller = null;
+  separatedNextPartPrefetchState.src = '';
+  separatedNextPartPrefetchState.targetPartIndex = -1;
+  if (separatedNextPartPrefetchVideo) {
+    try { separatedNextPartPrefetchVideo.pause(); } catch {}
+    try { separatedNextPartPrefetchVideo.removeAttribute('src'); } catch {}
+    try { separatedNextPartPrefetchVideo.load(); } catch {}
+  }
+}
+
+function recordSeparatedNextPartPrefetch(src, ok) {
+  if (!src) return;
+  const prev = separatedNextPartPrefetchHistory.get(src);
+  const attempts = (prev && Number.isFinite(prev.attempts)) ? prev.attempts + 1 : 1;
+  separatedNextPartPrefetchHistory.set(src, { ok: !!ok, attempts, ts: Date.now() });
+  if (separatedNextPartPrefetchHistory.size > 200) {
+    const entries = Array.from(separatedNextPartPrefetchHistory.entries())
+      .sort((a, b) => (a[1].ts || 0) - (b[1].ts || 0));
+    for (let i = 0; i < Math.max(0, entries.length - 200); i++) {
+      separatedNextPartPrefetchHistory.delete(entries[i][0]);
+    }
+  }
+}
+
+function computeSeparatedNextPartPrefetchBytes(part) {
+  const size = Number(part && part.fileSizeBytes);
+  if (Number.isFinite(size) && size > 0) {
+    const requested = Math.ceil(size * SEPARATED_NEXT_PART_PREFETCH_FRACTION);
+    const clamped = clampNumber(requested, SEPARATED_NEXT_PART_PREFETCH_MIN_BYTES, SEPARATED_NEXT_PART_PREFETCH_MAX_BYTES);
+    return Math.min(size, clamped);
+  }
+  return SEPARATED_NEXT_PART_PREFETCH_FALLBACK_BYTES;
+}
+
+function safeBufferedEnd(el) {
+  try {
+    if (!el || !el.buffered || el.buffered.length === 0) return 0;
+    return Number(el.buffered.end(el.buffered.length - 1)) || 0;
+  } catch {
+    return 0;
+  }
+}
+
+async function prefetchFirstBytes(url, bytes, signal) {
+  if (!url || typeof url !== 'string') return false;
+  if (typeof fetch !== 'function') return false;
+  const targetBytes = Math.max(1, Math.floor(Number(bytes) || 0));
+  if (targetBytes <= 0) return false;
+
+  try {
+    const headers = new Headers();
+    headers.set('Range', `bytes=0-${Math.max(0, targetBytes - 1)}`);
+    const res = await fetch(url, { method: 'GET', headers, cache: 'force-cache', credentials: 'omit', signal });
+    if (!res) return false;
+
+    // Some hosts ignore range; we still stop reading early.
+    const okStatus = res.status === 206 || res.status === 200;
+    if (!okStatus) return false;
+
+    if (!res.body || typeof res.body.getReader !== 'function') return true;
+    const reader = res.body.getReader();
+    let received = 0;
+    while (received < targetBytes) {
+      const next = await reader.read();
+      if (!next || next.done) break;
+      const value = next.value;
+      received += value ? (value.byteLength || value.length || 0) : 0;
+      if (signal && signal.aborted) break;
+    }
+    try { await reader.cancel(); } catch {}
+    return received > 0;
+  } catch {
+    return false;
+  }
+}
+
+function ensureSeparatedNextPartPrefetchVideo() {
+  if (separatedNextPartPrefetchVideo) return separatedNextPartPrefetchVideo;
+  if (typeof document === 'undefined') return null;
+  try {
+    const el = document.createElement('video');
+    el.muted = true;
+    el.preload = 'auto';
+    el.playsInline = true;
+    el.setAttribute('aria-hidden', 'true');
+    el.style.position = 'fixed';
+    el.style.left = '-9999px';
+    el.style.top = '0';
+    el.style.width = '1px';
+    el.style.height = '1px';
+    el.style.opacity = '0';
+    el.style.pointerEvents = 'none';
+    document.body.appendChild(el);
+    separatedNextPartPrefetchVideo = el;
+    return separatedNextPartPrefetchVideo;
+  } catch {
+    return null;
+  }
+}
+
+function prefetchNextPartViaVideoElement(url, targetSeconds, signal) {
+  const el = ensureSeparatedNextPartPrefetchVideo();
+  if (!el) return Promise.resolve(false);
+  return new Promise((resolve) => {
+    let done = false;
+    const finalize = (ok) => {
+      if (done) return;
+      done = true;
+      el.removeEventListener('progress', onProgress);
+      el.removeEventListener('error', onError);
+      try { el.pause(); } catch {}
+      try { el.removeAttribute('src'); } catch {}
+      try { el.load(); } catch {}
+      resolve(!!ok);
+    };
+    const onError = () => finalize(false);
+    const onProgress = () => {
+      const bufferedEnd = safeBufferedEnd(el);
+      if (bufferedEnd >= targetSeconds) finalize(true);
+    };
+    if (signal) {
+      try {
+        if (signal.aborted) return finalize(false);
+        signal.addEventListener('abort', () => finalize(false), { once: true });
+      } catch {}
+    }
+    el.addEventListener('progress', onProgress);
+    el.addEventListener('error', onError);
+    try {
+      el.src = url;
+      el.load();
+    } catch {
+      finalize(false);
+      return;
+    }
+    // Safety timeout: we only want a small warm-up, not a full background download.
+    setTimeout(() => finalize(safeBufferedEnd(el) > 0), 6000);
+  });
+}
+
+function maybePrefetchSeparatedNextPart(item) {
+  if (!item || !video) return;
+  if (!hasSeparatedParts(item)) return;
+  const meta = getSeparatedMeta(item);
+  if (!meta || !Array.isArray(meta.parts) || meta.parts.length < 2) return;
+
+  const currentPartIndex = (item && Number.isFinite(Number(item.__activePartIndex))) ? Number(item.__activePartIndex) : 0;
+  const nextIndex = currentPartIndex + 1;
+  if (nextIndex < 0 || nextIndex >= meta.parts.length) return;
+  const nextPart = meta.parts[nextIndex];
+  const nextSrc = nextPart && typeof nextPart.src === 'string' ? nextPart.src : '';
+  if (!nextSrc) return;
+
+  const history = separatedNextPartPrefetchHistory.get(nextSrc);
+  if (history && history.ok) return;
+  if (history && history.attempts >= 2) return;
+  if (separatedNextPartPrefetchState.src === nextSrc) return;
+
+  const currentTime = Number(video.currentTime) || 0;
+  const currentDuration = (Number.isFinite(video.duration) && video.duration > 0)
+    ? Number(video.duration)
+    : getPartDuration(meta, item, currentPartIndex);
+  const ratio = currentDuration > 0 ? (currentTime / currentDuration) : 0;
+  const remaining = currentDuration > 0 ? (currentDuration - currentTime) : Infinity;
+
+  const bufferedEnd = safeBufferedEnd(video);
+  const bufferAhead = bufferedEnd > currentTime ? (bufferedEnd - currentTime) : 0;
+
+  const shouldStart = (ratio >= SEPARATED_NEXT_PART_PREFETCH_TRIGGER_RATIO)
+    || (Number.isFinite(remaining) && remaining <= SEPARATED_NEXT_PART_PREFETCH_TRIGGER_REMAINING_SECONDS);
+  if (!shouldStart) return;
+  const allowAggressive = Number.isFinite(remaining) && remaining <= 30;
+  if (!allowAggressive && bufferAhead < SEPARATED_NEXT_PART_PREFETCH_MIN_BUFFER_AHEAD_SECONDS) return;
+
+  if (separatedNextPartPrefetchState.controller) {
+    try { separatedNextPartPrefetchState.controller.abort(); } catch {}
+  }
+  const controller = new AbortController();
+  separatedNextPartPrefetchState.controller = controller;
+  separatedNextPartPrefetchState.src = nextSrc;
+  separatedNextPartPrefetchState.targetPartIndex = nextIndex;
+
+  const nextDuration = getPartDuration(meta, item, nextIndex);
+  const targetSeconds = nextDuration > 0
+    ? Math.max(1, Math.floor(nextDuration * SEPARATED_NEXT_PART_PREFETCH_FRACTION))
+    : 0;
+
+  const method = getSeparatedNextPartPrefetchMethod();
+  const task = (method === 'video')
+    ? prefetchNextPartViaVideoElement(nextSrc, targetSeconds, controller.signal)
+    : prefetchFirstBytes(nextSrc, computeSeparatedNextPartPrefetchBytes(nextPart), controller.signal)
+      .then((ok) => {
+        if (ok) return true;
+        if (targetSeconds <= 0) return false;
+        // Fallback for hosts without CORS/range support: best-effort warm-up via hidden video element.
+        return prefetchNextPartViaVideoElement(nextSrc, targetSeconds, controller.signal);
+      });
+
+  task
+    .then((ok) => recordSeparatedNextPartPrefetch(nextSrc, ok))
+    .catch(() => recordSeparatedNextPartPrefetch(nextSrc, false))
+    .finally(() => {
+      if (separatedNextPartPrefetchState.controller === controller) {
+        separatedNextPartPrefetchState.controller = null;
+        separatedNextPartPrefetchState.src = '';
+        separatedNextPartPrefetchState.targetPartIndex = -1;
+      }
+    });
+}
+
 function computeSeparatedProgress(item, currentPartTime) {
   const meta = getSeparatedMeta(item);
   const safeCurrent = Math.max(0, Number(currentPartTime) || 0);
@@ -250,6 +501,7 @@ function seekAggregated(item, targetTimeSeconds, shouldPlay) {
 }
 
 function setSeparatedPartSource(item, partIndex, options) {
+  resetSeparatedNextPartPrefetch();
   const meta = getSeparatedMeta(item);
   if (!meta) return;
   const targetIndex = Math.max(0, Math.min(partIndex, meta.parts.length - 1));
@@ -985,6 +1237,7 @@ if (typeof window !== 'undefined' && typeof navigator !== 'undefined') {
 }
 
 function loadVideo(index) {
+  resetSeparatedNextPartPrefetch();
   const item = flatList[index];
   updateChaptersSelection(null);
   const resumeKey = resolveResumeKeyForItem(item);
@@ -1198,6 +1451,7 @@ if (video) {
         if (part && part.src) {
           try { localStorage.setItem(part.src, video.currentTime); } catch {}
         }
+        maybePrefetchSeparatedNextPart(curItem);
       } else {
         const safeDuration = (Number.isFinite(video.duration) && video.duration > 0) ? video.duration : null;
         if (nextBtn) {
@@ -1266,6 +1520,7 @@ if (nextBtn) {
 
 if (backBtn) {
   backBtn.addEventListener("click", () => {
+    resetSeparatedNextPartPrefetch();
     try { video.pause(); } catch {}
     unloadCbz();
     updateEpisodeTimeOverlay(null, 0);
