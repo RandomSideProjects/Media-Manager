@@ -745,9 +745,10 @@ window.OverlayFactory = (function() {
 	              createElement('label', { for: 'devPartPreloadMethod' }, ['Part preload method']),
 	              createElement('select', { id: 'devPartPreloadMethod', className: 'dev-field-input' }, [
 	                createElement('option', { value: 'fetch' }, ['Fetch']),
-	                createElement('option', { value: 'video' }, ['Video (fallback)'])
+	                createElement('option', { value: 'video' }, ['Video (fallback)']),
+	                createElement('option', { value: 'swap' }, ['Video (swap elements)'])
 	              ]),
-	              createElement('p', { className: 'dev-menu-hint select' }, ['Force how separated-part prefetch warms the next part.'])
+	              createElement('p', { className: 'dev-menu-hint select' }, ['Force how separated-part preload warms the next part (swap mode may use more bandwidth).'])
 	            ])
 	          ]),
  	          

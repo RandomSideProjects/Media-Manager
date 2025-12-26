@@ -53,7 +53,7 @@
   const CLIP_BACKEND_STORAGE_KEY = "clipBackendUrl";
   const DEFAULT_CLIP_BACKEND = "https://mm.littlehacker303.workers.dev/clip";
   const PART_PRELOAD_METHOD_KEY = "dev:partPreloadMethod";
-  const DEFAULT_PART_PRELOAD_METHOD = "fetch";
+  const DEFAULT_PART_PRELOAD_METHOD = "swap";
 
   function isDevModeEnabled() {
     if (typeof window === "undefined") return false;
@@ -134,6 +134,7 @@
       const value = (typeof stored === "string") ? stored.trim().toLowerCase() : "";
       if (value === "video") return "video";
       if (value === "fetch") return "fetch";
+      if (value === "swap") return "swap";
       return DEFAULT_PART_PRELOAD_METHOD;
     } catch {
       return DEFAULT_PART_PRELOAD_METHOD;
@@ -142,7 +143,7 @@
 
   function setStoredPartPreloadMethod(value) {
     const normalized = (typeof value === "string") ? value.trim().toLowerCase() : "";
-    const next = (normalized === "video") ? "video" : "fetch";
+    const next = (normalized === "video") ? "video" : (normalized === "swap" ? "swap" : "fetch");
     try { localStorage.setItem(PART_PRELOAD_METHOD_KEY, next); } catch {}
     try {
       window.dispatchEvent(new CustomEvent("mm:part-preload-method-changed", { detail: { method: next } }));
@@ -565,7 +566,8 @@
         const next = setStoredPartPreloadMethod(partPreloadMethodSelect.value);
         partPreloadMethodSelect.value = next;
         refreshDiagnostics();
-        showDevNotice("info", `Part preload method set to ${next === "video" ? "Video (fallback)" : "Fetch"}.`);
+        const label = next === "swap" ? "Video (swap elements)" : (next === "video" ? "Video (fallback)" : "Fetch");
+        showDevNotice("info", `Part preload method set to ${label}.`);
       });
     }
   }

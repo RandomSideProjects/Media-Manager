@@ -113,7 +113,7 @@ const SEPARATED_NEXT_PART_PREFETCH_MIN_BUFFER_AHEAD_SECONDS = 6; // avoid compet
 const SEPARATED_NEXT_PART_PREFETCH_MIN_BYTES = 512 * 1024;
 const SEPARATED_NEXT_PART_PREFETCH_MAX_BYTES = 25 * 1024 * 1024;
 const SEPARATED_NEXT_PART_PREFETCH_FALLBACK_BYTES = 8 * 1024 * 1024;
-const SEPARATED_NEXT_PART_PREFETCH_METHOD_KEY = 'dev:partPreloadMethod'; // 'fetch' | 'video'
+const SEPARATED_NEXT_PART_PREFETCH_METHOD_KEY = 'dev:partPreloadMethod'; // 'fetch' | 'video' | 'swap'
 
 let separatedNextPartPrefetchState = {
   src: '',
@@ -123,6 +123,18 @@ let separatedNextPartPrefetchState = {
 
 const separatedNextPartPrefetchHistory = new Map(); // src -> { ok, attempts, ts }
 let separatedNextPartPrefetchVideo = null;
+
+let separatedSwapPreload = {
+  stack: null,
+  standby1: null,
+  standby1Src: '',
+  standby2: null,
+  standby2Src: '',
+  slot1: { src: '', bytesTarget: 0, controller: null },
+  slot2: { src: '', bytesTarget: 0, controller: null }
+};
+
+let activeVideoListenersAttachedTo = null;
 
 function clampNumber(value, min, max) {
   const num = Number(value);
@@ -135,10 +147,134 @@ function getSeparatedNextPartPrefetchMethod() {
     const stored = localStorage.getItem(SEPARATED_NEXT_PART_PREFETCH_METHOD_KEY);
     const value = (typeof stored === 'string') ? stored.trim().toLowerCase() : '';
     if (value === 'video') return 'video';
-    return 'fetch';
+    if (value === 'swap') return 'swap';
+    if (value === 'fetch') return 'fetch';
+    return 'swap';
   } catch {
-    return 'fetch';
+    return 'swap';
   }
+}
+
+function ensureSeparatedSwapStack() {
+  if (!video || typeof document === 'undefined') return null;
+  const parent = video.parentElement;
+  if (!parent) return null;
+  if (parent && parent.classList && parent.classList.contains('mm-video-stack')) {
+    separatedSwapPreload.stack = parent;
+    return parent;
+  }
+  try {
+    const stack = document.createElement('div');
+    stack.className = 'mm-video-stack';
+    parent.insertBefore(stack, video);
+    stack.appendChild(video);
+    separatedSwapPreload.stack = stack;
+    return stack;
+  } catch {
+    return null;
+  }
+}
+
+function ensureSeparatedSwapStandby() {
+  const stack = ensureSeparatedSwapStack();
+  if (!stack || typeof document === 'undefined') return null;
+  if (separatedSwapPreload.standby1 && separatedSwapPreload.standby1.isConnected) return separatedSwapPreload.standby1;
+  try {
+    const standby = document.createElement('video');
+    standby.muted = true;
+    standby.preload = 'auto';
+    standby.playsInline = true;
+    standby.setAttribute('aria-hidden', 'true');
+    standby.setAttribute('data-mm-video-role', 'standby-1');
+    standby.classList.add('mm-video-hidden');
+    // Match common player attributes where possible
+    try { standby.controls = !!(video && video.controls); } catch {}
+    stack.appendChild(standby);
+    separatedSwapPreload.standby1 = standby;
+    separatedSwapPreload.standby1Src = '';
+    return separatedSwapPreload.standby1;
+  } catch {
+    return null;
+  }
+}
+
+function ensureSeparatedSwapStandby2() {
+  const stack = ensureSeparatedSwapStack();
+  if (!stack || typeof document === 'undefined') return null;
+  if (separatedSwapPreload.standby2 && separatedSwapPreload.standby2.isConnected) return separatedSwapPreload.standby2;
+  try {
+    const standby = document.createElement('video');
+    standby.muted = true;
+    standby.preload = 'auto';
+    standby.playsInline = true;
+    standby.setAttribute('aria-hidden', 'true');
+    standby.setAttribute('data-mm-video-role', 'standby-2');
+    standby.classList.add('mm-video-hidden');
+    try { standby.controls = !!(video && video.controls); } catch {}
+    stack.appendChild(standby);
+    separatedSwapPreload.standby2 = standby;
+    separatedSwapPreload.standby2Src = '';
+    return separatedSwapPreload.standby2;
+  } catch {
+    return null;
+  }
+}
+
+function abortSwapFetchSlot(slot) {
+  const st = slot === 2 ? separatedSwapPreload.slot2 : separatedSwapPreload.slot1;
+  if (st && st.controller) {
+    try { st.controller.abort(); } catch {}
+  }
+  if (st) {
+    st.controller = null;
+    st.src = '';
+    st.bytesTarget = 0;
+  }
+}
+
+function clearSwapFetchController(controller) {
+  if (!controller) return;
+  if (separatedSwapPreload.slot1 && separatedSwapPreload.slot1.controller === controller) {
+    separatedSwapPreload.slot1.controller = null;
+  }
+  if (separatedSwapPreload.slot2 && separatedSwapPreload.slot2.controller === controller) {
+    separatedSwapPreload.slot2.controller = null;
+  }
+}
+
+function resetSeparatedSwapPreload() {
+  abortSwapFetchSlot(1);
+  abortSwapFetchSlot(2);
+
+  const standby1 = separatedSwapPreload.standby1;
+  const standby2 = separatedSwapPreload.standby2;
+  separatedSwapPreload.standby1Src = '';
+  separatedSwapPreload.standby2Src = '';
+  if (standby1) {
+    try { standby1.pause(); } catch {}
+    try { standby1.removeAttribute('src'); } catch {}
+    try { standby1.load(); } catch {}
+    try { standby1.remove(); } catch {}
+  }
+  if (standby2) {
+    try { standby2.pause(); } catch {}
+    try { standby2.removeAttribute('src'); } catch {}
+    try { standby2.load(); } catch {}
+    try { standby2.remove(); } catch {}
+  }
+  separatedSwapPreload.standby1 = null;
+  separatedSwapPreload.standby2 = null;
+  separatedSwapPreload.stack = null;
+}
+
+function setActiveVideoElement(next) {
+  if (!next) return;
+  if (typeof window !== 'undefined' && window.MM_setActiveVideoElement && typeof window.MM_setActiveVideoElement === 'function') {
+    try { window.MM_setActiveVideoElement(next); } catch {}
+  } else {
+    try { video = next; } catch {}
+  }
+  attachActiveVideoListeners(video);
 }
 
 function resetSeparatedNextPartPrefetch() {
@@ -153,6 +289,7 @@ function resetSeparatedNextPartPrefetch() {
     try { separatedNextPartPrefetchVideo.removeAttribute('src'); } catch {}
     try { separatedNextPartPrefetchVideo.load(); } catch {}
   }
+  resetSeparatedSwapPreload();
 }
 
 function recordSeparatedNextPartPrefetch(src, ok) {
@@ -230,6 +367,7 @@ function ensureSeparatedNextPartPrefetchVideo() {
     el.preload = 'auto';
     el.playsInline = true;
     el.setAttribute('aria-hidden', 'true');
+    el.setAttribute('data-mm-video-role', 'prefetch');
     el.style.position = 'fixed';
     el.style.left = '-9999px';
     el.style.top = '0';
@@ -285,9 +423,130 @@ function prefetchNextPartViaVideoElement(url, targetSeconds, signal) {
   });
 }
 
+function maybePrimeSeparatedNextPartSwap(item) {
+  if (!item || !video) return;
+  if (!hasSeparatedParts(item)) return;
+  const meta = getSeparatedMeta(item);
+  if (!meta || !Array.isArray(meta.parts) || meta.parts.length < 2) return;
+
+  const currentPartIndex = (item && Number.isFinite(Number(item.__activePartIndex))) ? Number(item.__activePartIndex) : 0;
+  const nextIndex = currentPartIndex + 1;
+  if (nextIndex < 0 || nextIndex >= meta.parts.length) return;
+  const nextPart = meta.parts[nextIndex];
+  const nextSrc = nextPart && typeof nextPart.src === 'string' ? nextPart.src : '';
+  if (!nextSrc) return;
+
+  const currentTime = Number(video.currentTime) || 0;
+  const currentDuration = (Number.isFinite(video.duration) && video.duration > 0)
+    ? Number(video.duration)
+    : getPartDuration(meta, item, currentPartIndex);
+  const ratio = currentDuration > 0 ? (currentTime / currentDuration) : 0;
+  const remaining = currentDuration > 0 ? (currentDuration - currentTime) : Infinity;
+
+  const bufferedEnd = safeBufferedEnd(video);
+  const bufferAhead = bufferedEnd > currentTime ? (bufferedEnd - currentTime) : 0;
+
+  const remainingPartsAhead = meta.parts.length - (currentPartIndex + 1);
+  const earlyTriggerRatio = remainingPartsAhead >= 2 ? 0.20 : 0.50;
+  const shouldStart = (ratio >= earlyTriggerRatio)
+    || (Number.isFinite(remaining) && remaining <= SEPARATED_NEXT_PART_PREFETCH_TRIGGER_REMAINING_SECONDS);
+  if (!shouldStart) return;
+  const allowAggressive = Number.isFinite(remaining) && remaining <= 30;
+  if (!allowAggressive && bufferAhead < SEPARATED_NEXT_PART_PREFETCH_MIN_BUFFER_AHEAD_SECONDS) return;
+
+  const nextFraction = remainingPartsAhead >= 2 ? 1.0 : 0.5;
+  const next2Fraction = remainingPartsAhead >= 2 ? 0.2 : 0;
+
+  const standby1 = ensureSeparatedSwapStandby();
+  if (!standby1) return;
+  if (separatedSwapPreload.standby1Src !== nextSrc || normalizeVideoSrc(standby1.src) !== nextSrc) {
+    separatedSwapPreload.standby1Src = nextSrc;
+    try { standby1.controls = !!(video && video.controls); } catch {}
+    try { standby1.muted = true; } catch {}
+    try { standby1.preload = 'auto'; } catch {}
+    try { standby1.setAttribute('data-mm-video-role', 'standby-1'); } catch {}
+    try {
+      standby1.src = nextSrc;
+      standby1.load();
+    } catch {}
+  }
+
+  // Prefetch bytes for the next part (best-effort, may be blocked by CORS/range).
+  const nextSize = Number(nextPart && nextPart.fileSizeBytes);
+  const nextBytes = (Number.isFinite(nextSize) && nextSize > 0)
+    ? Math.max(1, Math.ceil(nextSize * nextFraction))
+    : Math.max(1, Math.ceil(SEPARATED_NEXT_PART_PREFETCH_FALLBACK_BYTES * nextFraction));
+  if (separatedSwapPreload.slot1.src !== nextSrc || separatedSwapPreload.slot1.bytesTarget !== nextBytes) {
+    abortSwapFetchSlot(1);
+    separatedSwapPreload.slot1.src = nextSrc;
+    separatedSwapPreload.slot1.bytesTarget = nextBytes;
+    const controller = new AbortController();
+    separatedSwapPreload.slot1.controller = controller;
+    prefetchFirstBytes(nextSrc, nextBytes, controller.signal)
+      .catch(() => {})
+      .finally(() => {
+        clearSwapFetchController(controller);
+      });
+  }
+
+  // Optionally preload the part after next: 20% (total policy: "120%").
+  const next2Index = nextIndex + 1;
+  if (next2Fraction > 0 && next2Index < meta.parts.length) {
+    const next2Part = meta.parts[next2Index];
+    const next2Src = next2Part && typeof next2Part.src === 'string' ? next2Part.src : '';
+    if (next2Src) {
+      const standby2 = ensureSeparatedSwapStandby2();
+      if (standby2) {
+        if (separatedSwapPreload.standby2Src !== next2Src || normalizeVideoSrc(standby2.src) !== next2Src) {
+          separatedSwapPreload.standby2Src = next2Src;
+          try { standby2.controls = !!(video && video.controls); } catch {}
+          try { standby2.muted = true; } catch {}
+          try { standby2.preload = 'auto'; } catch {}
+          try { standby2.setAttribute('data-mm-video-role', 'standby-2'); } catch {}
+          try {
+            standby2.src = next2Src;
+            standby2.load();
+          } catch {}
+        }
+        const next2Size = Number(next2Part && next2Part.fileSizeBytes);
+        const next2Bytes = (Number.isFinite(next2Size) && next2Size > 0)
+          ? Math.max(1, Math.ceil(next2Size * next2Fraction))
+          : Math.max(1, Math.ceil(SEPARATED_NEXT_PART_PREFETCH_FALLBACK_BYTES * next2Fraction));
+        if (separatedSwapPreload.slot2.src !== next2Src || separatedSwapPreload.slot2.bytesTarget !== next2Bytes) {
+          abortSwapFetchSlot(2);
+          separatedSwapPreload.slot2.src = next2Src;
+          separatedSwapPreload.slot2.bytesTarget = next2Bytes;
+          const controller = new AbortController();
+          separatedSwapPreload.slot2.controller = controller;
+          prefetchFirstBytes(next2Src, next2Bytes, controller.signal)
+            .catch(() => {})
+            .finally(() => {
+              clearSwapFetchController(controller);
+            });
+        }
+      }
+    }
+  } else {
+    abortSwapFetchSlot(2);
+    if (separatedSwapPreload.standby2) {
+      try { separatedSwapPreload.standby2.pause(); } catch {}
+      try { separatedSwapPreload.standby2.removeAttribute('src'); } catch {}
+      try { separatedSwapPreload.standby2.load(); } catch {}
+      try { separatedSwapPreload.standby2.remove(); } catch {}
+    }
+    separatedSwapPreload.standby2 = null;
+    separatedSwapPreload.standby2Src = '';
+  }
+}
+
 function maybePrefetchSeparatedNextPart(item) {
   if (!item || !video) return;
   if (!hasSeparatedParts(item)) return;
+  const method = getSeparatedNextPartPrefetchMethod();
+  if (method === 'swap') {
+    maybePrimeSeparatedNextPartSwap(item);
+    return;
+  }
   const meta = getSeparatedMeta(item);
   if (!meta || !Array.isArray(meta.parts) || meta.parts.length < 2) return;
 
@@ -332,7 +591,6 @@ function maybePrefetchSeparatedNextPart(item) {
     ? Math.max(1, Math.floor(nextDuration * SEPARATED_NEXT_PART_PREFETCH_FRACTION))
     : 0;
 
-  const method = getSeparatedNextPartPrefetchMethod();
   const task = (method === 'video')
     ? prefetchNextPartViaVideoElement(nextSrc, targetSeconds, controller.signal)
     : prefetchFirstBytes(nextSrc, computeSeparatedNextPartPrefetchBytes(nextPart), controller.signal)
@@ -353,6 +611,110 @@ function maybePrefetchSeparatedNextPart(item) {
         separatedNextPartPrefetchState.targetPartIndex = -1;
       }
     });
+}
+
+function normalizeVideoSrc(value) {
+  return (typeof value === 'string') ? value.trim() : '';
+}
+
+function tryPromoteSeparatedSwapStandby(item, nextIndex, nextStart, baseKey) {
+  if (!item || !hasSeparatedParts(item)) return false;
+  const meta = getSeparatedMeta(item);
+  if (!meta || !Array.isArray(meta.parts) || meta.parts.length === 0) return false;
+  if (nextIndex < 0 || nextIndex >= meta.parts.length) return false;
+
+  const standby1 = ensureSeparatedSwapStandby();
+  if (!standby1) return false;
+  const nextPart = meta.parts[nextIndex];
+  const desiredSrc = normalizeVideoSrc(nextPart && nextPart.src);
+  if (!desiredSrc) return false;
+
+  const standbySrc = normalizeVideoSrc(standby1 && standby1.src);
+  const standbyCurrent = normalizeVideoSrc(standby1 && standby1.currentSrc);
+  if ((!standbySrc || standbySrc !== desiredSrc) && (!standbyCurrent || standbyCurrent !== desiredSrc)) return false;
+
+  const outgoing = video;
+  const incoming = standby1;
+  const priorStandby2 = (separatedSwapPreload.standby2 && separatedSwapPreload.standby2.isConnected) ? separatedSwapPreload.standby2 : null;
+
+  // Prepare incoming as active
+  try { incoming.classList.remove('mm-video-hidden'); } catch {}
+  try { incoming.removeAttribute('aria-hidden'); } catch {}
+  try { incoming.setAttribute('data-mm-video-role', 'active'); } catch {}
+  try { incoming.controls = !!(outgoing && outgoing.controls); } catch {}
+  try { incoming.muted = !!(outgoing && outgoing.muted); } catch {}
+  try { incoming.volume = (outgoing && Number.isFinite(outgoing.volume)) ? outgoing.volume : incoming.volume; } catch {}
+  try { incoming.playbackRate = (outgoing && Number.isFinite(outgoing.playbackRate)) ? outgoing.playbackRate : incoming.playbackRate; } catch {}
+  try { incoming.currentTime = 0; } catch {}
+
+  // Demote outgoing to standby
+  if (outgoing && outgoing !== incoming) {
+    detachActiveVideoListeners(outgoing);
+    try { outgoing.pause(); } catch {}
+    try { outgoing.classList.add('mm-video-hidden'); } catch {}
+    try { outgoing.setAttribute('aria-hidden', 'true'); } catch {}
+    try { outgoing.setAttribute('data-mm-video-role', 'standby-2'); } catch {}
+    try { outgoing.muted = true; } catch {}
+    try { outgoing.removeAttribute('src'); } catch {}
+    try { outgoing.load(); } catch {}
+  }
+
+  // Point the app's active video reference to incoming.
+  setActiveVideoElement(incoming);
+
+  // Rotate standby elements: prior standby-2 becomes standby-1, outgoing becomes standby-2.
+  separatedSwapPreload.standby1 = priorStandby2;
+  separatedSwapPreload.standby1Src = priorStandby2 ? normalizeVideoSrc(priorStandby2.src || priorStandby2.currentSrc || '') : '';
+  if (priorStandby2) {
+    try { priorStandby2.classList.add('mm-video-hidden'); } catch {}
+    try { priorStandby2.setAttribute('aria-hidden', 'true'); } catch {}
+    try { priorStandby2.setAttribute('data-mm-video-role', 'standby-1'); } catch {}
+    try { priorStandby2.muted = true; } catch {}
+  }
+  separatedSwapPreload.standby2 = (outgoing && outgoing !== incoming) ? outgoing : null;
+  separatedSwapPreload.standby2Src = '';
+
+  // Rotate fetch slot bookkeeping: slot2 becomes slot1; abort old slot1 (incoming is now playing).
+  abortSwapFetchSlot(1);
+  separatedSwapPreload.slot1.src = separatedSwapPreload.slot2.src;
+  separatedSwapPreload.slot1.bytesTarget = separatedSwapPreload.slot2.bytesTarget;
+  separatedSwapPreload.slot1.controller = separatedSwapPreload.slot2.controller;
+  separatedSwapPreload.slot2.src = '';
+  separatedSwapPreload.slot2.bytesTarget = 0;
+  separatedSwapPreload.slot2.controller = null;
+
+  // Update separated bookkeeping + UI
+  item.__activePartIndex = nextIndex;
+  if (!Array.isArray(item.__separatedOffsets) || item.__separatedOffsets.length !== meta.offsets.length) {
+    item.__separatedOffsets = meta.offsets.slice();
+  }
+  if (!Number.isFinite(item.__separatedTotalDuration) || item.__separatedTotalDuration <= 0) {
+    item.__separatedTotalDuration = meta.totalDuration;
+  }
+  updateChaptersSelection(item);
+
+  if (video && video.dataset) {
+    video.dataset.separatedItem = '1';
+    video.dataset.separatedPartIndex = String(nextIndex);
+    video.dataset.separatedPartCount = String(meta.parts.length);
+    video.dataset.separatedBaseKey = baseKey || '';
+  }
+
+  if (baseKey) {
+    try {
+      localStorage.setItem(baseKey, String(Math.max(0, Number(nextStart) || 0)));
+      localStorage.setItem(`${baseKey}:part`, String(nextIndex));
+      localStorage.setItem(`${baseKey}:partTime`, '0');
+    } catch {}
+  }
+
+  try {
+    const playPromise = video.play();
+    if (playPromise && typeof playPromise.catch === 'function') playPromise.catch(() => {});
+  } catch {}
+
+  updateEpisodeTimeOverlay(item, Math.max(0, Number(nextStart) || 0));
+  return true;
 }
 
 function computeSeparatedProgress(item, currentPartTime) {
@@ -1017,6 +1379,25 @@ if (cbzImageWrap) {
 }
 
 function handleCbzKeyboardNavigation(e) {
+  if (e.defaultPrevented) return;
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  if (!isShortcutContextAllowed(e.target)) return;
+  if (e.key === 'Escape' || e.key === 'Esc') {
+    try {
+      const doc = document;
+      const fullscreenElement =
+        doc.fullscreenElement || doc.webkitFullscreenElement || doc.mozFullScreenElement || doc.msFullscreenElement;
+      if (fullscreenElement) return;
+    } catch {}
+    e.preventDefault();
+    try {
+      if (typeof backBtn !== 'undefined' && backBtn && typeof backBtn.click === 'function') {
+        const visible = typeof backBtn.getClientRects === 'function' ? backBtn.getClientRects().length > 0 : true;
+        if (visible) backBtn.click();
+      }
+    } catch {}
+    return;
+  }
   if (e.key === 'ArrowLeft') {
     e.preventDefault();
     if (cbzState.index > 0) {
@@ -1117,6 +1498,7 @@ function toggleFullscreen() {
 function handleVideoKeyboardShortcuts(e) {
   if (!video) return;
   if (cbzState.active) return;
+  if (e.defaultPrevented) return;
   if (e.ctrlKey || e.metaKey || e.altKey) return;
   if (!isShortcutContextAllowed(e.target)) return;
 
@@ -1124,10 +1506,12 @@ function handleVideoKeyboardShortcuts(e) {
   const lowerKey = key.toLowerCase();
   const handled = [];
 
+  if (key === 'Escape' || key === 'Esc') handled.push('menu');
   if (key === ' ' || e.code === 'Space') handled.push('space');
   if (lowerKey === 'k') handled.push('play');
   if (lowerKey === 'm') handled.push('mute');
   if (lowerKey === 'f') handled.push('fullscreen');
+  if (lowerKey === 't') handled.push('popout');
   if (key === 'ArrowRight') handled.push('seek-forward');
   if (lowerKey === 'l') handled.push('seek-forward');
   if (key === 'ArrowLeft') handled.push('seek-back');
@@ -1136,10 +1520,34 @@ function handleVideoKeyboardShortcuts(e) {
   if (key === 'ArrowDown') handled.push('volume-down');
 
   if (!handled.length) return;
+  if (handled.includes('menu')) {
+    try {
+      const doc = document;
+      const fullscreenElement =
+        doc.fullscreenElement || doc.webkitFullscreenElement || doc.mozFullScreenElement || doc.msFullscreenElement;
+      if (fullscreenElement) return;
+    } catch {}
+    e.preventDefault();
+    try {
+      if (typeof backBtn !== 'undefined' && backBtn && typeof backBtn.click === 'function') {
+        const visible = typeof backBtn.getClientRects === 'function' ? backBtn.getClientRects().length > 0 : true;
+        if (visible) backBtn.click();
+      }
+    } catch {}
+    return;
+  }
   e.preventDefault();
   if (handled.includes('space') || handled.includes('play')) togglePlayPause();
   if (handled.includes('mute')) toggleMute();
   if (handled.includes('fullscreen')) toggleFullscreen();
+  if (handled.includes('popout')) {
+    try {
+      if (typeof theaterBtn !== 'undefined' && theaterBtn && typeof theaterBtn.click === 'function') {
+        const visible = typeof theaterBtn.getClientRects === 'function' ? theaterBtn.getClientRects().length > 0 : true;
+        if (visible) theaterBtn.click();
+      }
+    } catch {}
+  }
   if (handled.includes('seek-forward')) seekBy(SEEK_DELTA);
   if (handled.includes('seek-back')) seekBy(-SEEK_DELTA);
   if (handled.includes('volume-up')) changeVolume(0.05);
@@ -1345,15 +1753,7 @@ function loadVideo(index) {
     video.load();
   }
 
-  if (video) {
-    function onVideoError() {
-      try { video.pause(); } catch {}
-      video.style.display = 'none';
-      showPlayerAlert("Unfortunatly, this file in unavalible at this moment, please try again later.\n If this is a local source, please download the remaining files to continue");
-      video.removeEventListener('error', onVideoError);
-    }
-    video.addEventListener('error', onVideoError);
-  }
+  if (video) attachActiveVideoListeners(video);
 
   if (theaterBtn) theaterBtn.style.display = 'inline-block';
   title.textContent = item.title;
@@ -1417,97 +1817,132 @@ function showPlayerAlert(message) {
   if (msgEl) msgEl.textContent = text;
 }
 
-if (video) {
-  video.addEventListener("timeupdate", () => {
-    let handledSeparated = false;
-    let curItem = null;
-    let aggregatedTime = Number(video.currentTime) || 0;
-    try {
-      curItem = (typeof currentIndex === 'number' && flatList && flatList[currentIndex]) ? flatList[currentIndex] : null;
-      const groupInfo = curItem && curItem.__separatedGroup ? curItem.__separatedGroup : null;
-      if (hasSeparatedParts(curItem)) {
-        handledSeparated = true;
-        const progress = computeSeparatedProgress(curItem, video.currentTime);
-        aggregatedTime = progress.time;
-        const baseKey = curItem.__separatedBaseKey || resolveResumeKeyForItem(curItem);
-        const ratio = (progress.duration > 0) ? (progress.time / progress.duration) : 0;
-        if (nextBtn) {
-          if (ratio > 0.9 && currentIndex < flatList.length - 1 && (curItem.__activePartIndex || 0) >= curItem.__separatedParts.length - 1) {
-            nextBtn.style.display = 'inline-block';
-          } else {
-            nextBtn.style.display = 'none';
-          }
-        }
-        if (baseKey) {
-          try {
-            localStorage.setItem(baseKey, progress.time);
-            if (progress.duration > 0) localStorage.setItem(`${baseKey}:duration`, progress.duration);
-            localStorage.setItem(`${baseKey}:part`, String(curItem.__activePartIndex || 0));
-            localStorage.setItem(`${baseKey}:partTime`, String(video.currentTime));
-            writeSourceScopedValue && writeSourceScopedValue('SavedItemTime', String(progress.time));
-          } catch {}
-        }
-        const part = curItem.__separatedParts[curItem.__activePartIndex || 0];
-        if (part && part.src) {
-          try { localStorage.setItem(part.src, video.currentTime); } catch {}
-        }
-        maybePrefetchSeparatedNextPart(curItem);
-      } else {
-        const safeDuration = (Number.isFinite(video.duration) && video.duration > 0) ? video.duration : null;
-        if (nextBtn) {
-          if (!safeDuration || groupInfo) {
-            nextBtn.style.display = 'none';
-          } else if ((video.currentTime / safeDuration) > 0.9 && currentIndex < flatList.length - 1) {
-            nextBtn.style.display = 'inline-block';
-          } else {
-            nextBtn.style.display = 'none';
-          }
-        }
-        const pk = curItem && curItem.progressKey ? String(curItem.progressKey) : '';
-        if (pk) localStorage.setItem(pk, video.currentTime);
-        try {
-          writeSourceScopedValue && writeSourceScopedValue('SavedItemTime', String(video.currentTime));
-        } catch {}
-      }
-    } catch {}
-    updateEpisodeTimeOverlay(curItem, aggregatedTime);
-    if (!handledSeparated) {
-      try { localStorage.setItem(video.src, video.currentTime); } catch {}
-    }
-  });
-  video.addEventListener("ended", () => {
-    try { localStorage.removeItem(video.src); } catch {}
-    const curItem = (typeof currentIndex === 'number' && flatList && flatList[currentIndex]) ? flatList[currentIndex] : null;
+function handleActiveVideoError(event) {
+  const el = event && event.currentTarget ? event.currentTarget : video;
+  if (!el) return;
+  try { el.pause(); } catch {}
+  try { el.style.display = 'none'; } catch {}
+  showPlayerAlert("Unfortunatly, this file in unavalible at this moment, please try again later.\n If this is a local source, please download the remaining files to continue");
+}
+
+function handleActiveVideoTimeUpdate(event) {
+  const el = event && event.currentTarget ? event.currentTarget : video;
+  if (!el) return;
+  let handledSeparated = false;
+  let curItem = null;
+  let aggregatedTime = Number(el.currentTime) || 0;
+  try {
+    curItem = (typeof currentIndex === 'number' && flatList && flatList[currentIndex]) ? flatList[currentIndex] : null;
+    const groupInfo = curItem && curItem.__separatedGroup ? curItem.__separatedGroup : null;
     if (hasSeparatedParts(curItem)) {
-      const meta = getSeparatedMeta(curItem);
+      handledSeparated = true;
+      const progress = computeSeparatedProgress(curItem, el.currentTime);
+      aggregatedTime = progress.time;
       const baseKey = curItem.__separatedBaseKey || resolveResumeKeyForItem(curItem);
-      const partIndex = curItem && Number.isFinite(Number(curItem.__activePartIndex)) ? Number(curItem.__activePartIndex) : 0;
-      if (partIndex < meta.parts.length - 1) {
-        if (baseKey) {
-          try {
-            localStorage.setItem(`${baseKey}:part`, String(partIndex + 1));
-            localStorage.setItem(`${baseKey}:partTime`, '0');
-          } catch {}
+      const ratio = (progress.duration > 0) ? (progress.time / progress.duration) : 0;
+      if (nextBtn) {
+        if (ratio > 0.9 && currentIndex < flatList.length - 1 && (curItem.__activePartIndex || 0) >= curItem.__separatedParts.length - 1) {
+          nextBtn.style.display = 'inline-block';
+        } else {
+          nextBtn.style.display = 'none';
         }
-        const nextStart = meta.offsets[partIndex + 1] || ((meta.offsets[partIndex] || 0) + getPartDuration(meta, curItem, partIndex));
-        setSeparatedPartSource(curItem, partIndex + 1, { resumeTime: 0, combinedTime: nextStart });
-        try {
-          video.load();
-          const playPromise = video.play();
-          if (playPromise && typeof playPromise.catch === 'function') {
-            playPromise.catch(() => {});
-          }
-        } catch {}
-        return;
       }
       if (baseKey) {
-        try { localStorage.setItem(`${baseKey}:partTime`, '0'); } catch {}
+        try {
+          localStorage.setItem(baseKey, progress.time);
+          if (progress.duration > 0) localStorage.setItem(`${baseKey}:duration`, progress.duration);
+          localStorage.setItem(`${baseKey}:part`, String(curItem.__activePartIndex || 0));
+          localStorage.setItem(`${baseKey}:partTime`, String(el.currentTime));
+          writeSourceScopedValue && writeSourceScopedValue('SavedItemTime', String(progress.time));
+        } catch {}
       }
+      const part = curItem.__separatedParts[curItem.__activePartIndex || 0];
+      if (part && part.src) {
+        try { localStorage.setItem(part.src, el.currentTime); } catch {}
+      }
+      maybePrefetchSeparatedNextPart(curItem);
+    } else {
+      const safeDuration = (Number.isFinite(el.duration) && el.duration > 0) ? el.duration : null;
+      if (nextBtn) {
+        if (!safeDuration || groupInfo) {
+          nextBtn.style.display = 'none';
+        } else if ((el.currentTime / safeDuration) > 0.9 && currentIndex < flatList.length - 1) {
+          nextBtn.style.display = 'inline-block';
+        } else {
+          nextBtn.style.display = 'none';
+        }
+      }
+      const pk = curItem && curItem.progressKey ? String(curItem.progressKey) : '';
+      if (pk) localStorage.setItem(pk, el.currentTime);
+      try {
+        writeSourceScopedValue && writeSourceScopedValue('SavedItemTime', String(el.currentTime));
+      } catch {}
     }
-    if (currentIndex < flatList.length - 1) { nextBtn.click(); }
-  });
+  } catch {}
+  updateEpisodeTimeOverlay(curItem, aggregatedTime);
+  if (!handledSeparated) {
+    try { localStorage.setItem(el.src, el.currentTime); } catch {}
+  }
+}
+
+function handleActiveVideoEnded(event) {
+  const el = event && event.currentTarget ? event.currentTarget : video;
+  if (!el) return;
+  try { localStorage.removeItem(el.src); } catch {}
+  const curItem = (typeof currentIndex === 'number' && flatList && flatList[currentIndex]) ? flatList[currentIndex] : null;
+  if (hasSeparatedParts(curItem)) {
+    const meta = getSeparatedMeta(curItem);
+    const baseKey = curItem.__separatedBaseKey || resolveResumeKeyForItem(curItem);
+    const partIndex = curItem && Number.isFinite(Number(curItem.__activePartIndex)) ? Number(curItem.__activePartIndex) : 0;
+    if (partIndex < meta.parts.length - 1) {
+      if (baseKey) {
+        try {
+          localStorage.setItem(`${baseKey}:part`, String(partIndex + 1));
+          localStorage.setItem(`${baseKey}:partTime`, '0');
+        } catch {}
+      }
+      const nextStart = meta.offsets[partIndex + 1] || ((meta.offsets[partIndex] || 0) + getPartDuration(meta, curItem, partIndex));
+      const method = getSeparatedNextPartPrefetchMethod();
+      if (method === 'swap' && tryPromoteSeparatedSwapStandby(curItem, partIndex + 1, nextStart, baseKey)) {
+        return;
+      }
+      setSeparatedPartSource(curItem, partIndex + 1, { resumeTime: 0, combinedTime: nextStart });
+      try {
+        video.load();
+        const playPromise = video.play();
+        if (playPromise && typeof playPromise.catch === 'function') {
+          playPromise.catch(() => {});
+        }
+      } catch {}
+      return;
+    }
+    if (baseKey) {
+      try { localStorage.setItem(`${baseKey}:partTime`, '0'); } catch {}
+    }
+  }
+  if (currentIndex < flatList.length - 1) { nextBtn.click(); }
+}
+
+function detachActiveVideoListeners(target) {
+  if (!target) return;
+  try { target.removeEventListener("timeupdate", handleActiveVideoTimeUpdate); } catch {}
+  try { target.removeEventListener("ended", handleActiveVideoEnded); } catch {}
+  try { target.removeEventListener("error", handleActiveVideoError); } catch {}
+}
+
+function attachActiveVideoListeners(target) {
+  if (!target) return;
+  if (activeVideoListenersAttachedTo && activeVideoListenersAttachedTo !== target) {
+    detachActiveVideoListeners(activeVideoListenersAttachedTo);
+  }
+  activeVideoListenersAttachedTo = target;
+  target.addEventListener("timeupdate", handleActiveVideoTimeUpdate);
+  target.addEventListener("ended", handleActiveVideoEnded);
+  target.addEventListener("error", handleActiveVideoError);
   // Native controls handle play/pause/seek UI.
 }
+
+if (video) attachActiveVideoListeners(video);
 
 if (nextBtn) {
   nextBtn.addEventListener("click", () => {

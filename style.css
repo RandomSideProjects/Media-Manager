@@ -270,6 +270,18 @@ video {
   border-radius: 12px;
   margin-bottom: 1em;
 }
+.mm-video-stack {
+  display: grid;
+  margin-bottom: 1em;
+}
+.mm-video-stack > video {
+  grid-area: 1 / 1;
+  margin-bottom: 0;
+}
+.mm-video-hidden {
+  opacity: 0;
+  pointer-events: none;
+}
 button, input[type="text"] {
   padding: 0.6em 1.2em;
   font-size: 1rem;

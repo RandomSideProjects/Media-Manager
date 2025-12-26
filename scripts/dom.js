@@ -1,7 +1,7 @@
 "use strict";
 
 // Element refs
-const video = document.getElementById("videoPlayer");
+let video = document.getElementById("videoPlayer");
 const spinner = document.getElementById("loadingSpinner");
 const title = document.getElementById("videoTitle");
 const nextBtn = document.getElementById("nextBtn");
@@ -50,12 +50,41 @@ let clipProgressBar = document.getElementById('clipProgressBar');
 // Settings button - handled by settings.js, other settings elements created dynamically
 
 // Spinner wiring
-if (video && spinner) {
-  video.addEventListener("loadstart", () => { spinner.style.display = "block"; });
-  video.addEventListener("waiting", () => { spinner.style.display = "block"; });
-  video.addEventListener("canplay", () => { spinner.style.display = "none"; });
-  video.addEventListener("playing", () => { spinner.style.display = "none"; });
+let spinnerVideo = null;
+const spinnerHandlers = spinner
+  ? {
+      loadstart: () => { spinner.style.display = "block"; },
+      waiting: () => { spinner.style.display = "block"; },
+      canplay: () => { spinner.style.display = "none"; },
+      playing: () => { spinner.style.display = "none"; }
+    }
+  : null;
+
+function wireSpinnerToVideo(target) {
+  if (!spinner || !spinnerHandlers) return;
+  if (spinnerVideo && spinnerVideo !== target) {
+    try { spinnerVideo.removeEventListener("loadstart", spinnerHandlers.loadstart); } catch {}
+    try { spinnerVideo.removeEventListener("waiting", spinnerHandlers.waiting); } catch {}
+    try { spinnerVideo.removeEventListener("canplay", spinnerHandlers.canplay); } catch {}
+    try { spinnerVideo.removeEventListener("playing", spinnerHandlers.playing); } catch {}
+  }
+  spinnerVideo = target;
+  if (!spinnerVideo) return;
+  spinnerVideo.addEventListener("loadstart", spinnerHandlers.loadstart);
+  spinnerVideo.addEventListener("waiting", spinnerHandlers.waiting);
+  spinnerVideo.addEventListener("canplay", spinnerHandlers.canplay);
+  spinnerVideo.addEventListener("playing", spinnerHandlers.playing);
 }
+
+if (video && spinner) wireSpinnerToVideo(video);
+
+window.MM_getActiveVideoElement = () => video;
+window.MM_setActiveVideoElement = (next) => {
+  if (!next || next === video) return video;
+  video = next;
+  wireSpinnerToVideo(video);
+  return video;
+};
 
 // Pop-out time sync
 window.addEventListener('message', (e) => {
