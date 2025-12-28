@@ -536,6 +536,23 @@ header {
   padding: 0;
 }
 
+.site-title-link,
+.site-title-link:visited,
+.site-title-link:hover,
+.site-title-link:active {
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  display: block;
+  width: 100%;
+}
+
+.site-title-link:focus-visible {
+  outline: 2px solid var(--button-bg);
+  outline-offset: 4px;
+  border-radius: 10px;
+}
+
 .toolbar {
   position: sticky;
   top: 0;
