@@ -218,7 +218,7 @@ if (theaterBtn && video) {
         <video id="popVideo" src="${src}" autoplay></video>
         <div id="popToolbar" class="pop-toolbar" aria-hidden="true">
           <button id="popBackBtn" type="button">↩ Back 5s</button>
-          <button id="popNextItemBtn" type="button">Next Item</button>
+          <button id="popNextItemBtn" type="button">Next</button>
           <button id="popForwardBtn" type="button">Forward 5s ↪</button>
           <button id="popExitBtn" type="button">Exit Pop-out</button>
         </div>

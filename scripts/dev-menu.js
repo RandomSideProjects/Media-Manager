@@ -16,9 +16,10 @@
   let concurrencyStateLabel = null;
   let catboxStateLabel = null;
   let clipBackendStateLabel = null;
+  let accountSyncStateLabel = null;
+  let backendRootUrlInput = null;
   let catboxUrlInput = null;
   let catboxModeSelect = null;
-  let clipBackendUrlInput = null;
   let partPreloadMethodSelect = null;
   let sourceKeyLabel = null;
   let menuRow = null;
@@ -40,7 +41,8 @@
     catboxUrlInput = document.getElementById("devCatboxUploadUrl");
     catboxModeSelect = document.getElementById("devCatboxMode");
     clipBackendStateLabel = document.getElementById("devClipEndpointLabel");
-    clipBackendUrlInput = document.getElementById("devClipBackendUrl");
+    accountSyncStateLabel = document.getElementById("devAccountSyncEndpointLabel");
+    backendRootUrlInput = document.getElementById("devBackendRootUrl");
     partPreloadMethodSelect = document.getElementById("devPartPreloadMethod");
     sourceKeyLabel = document.getElementById("devSourceKeyLabel");
     menuRow = document.getElementById("devMenuRow");
@@ -51,7 +53,9 @@
   const OVERLAY_OPEN_CLASS = "is-open";
   const STORAGE_MENU_DELAY_MS = 90;
   const CLIP_BACKEND_STORAGE_KEY = "clipBackendUrl";
-  const DEFAULT_CLIP_BACKEND = "https://mm.littlehacker303.workers.dev/clip";
+  const BACKEND_ROOT_STORAGE_KEY = "dev:mmBackendRoot";
+  const LEGACY_ACCOUNT_SYNC_URL_KEY = "dev:accountSyncUrl";
+  const DEFAULT_BACKEND_ROOT = "https://mm.littlehacker303.workers.dev";
   const PART_PRELOAD_METHOD_KEY = "dev:partPreloadMethod";
   const DEFAULT_PART_PRELOAD_METHOD = "swap";
 
@@ -100,29 +104,72 @@
     return effective !== stored ? `${stored} (clamped to ${effective})` : String(stored);
   }
 
-  function getClipBackendFromStorage() {
+  function normalizeBackendRoot(value) {
+    const raw = (typeof value === "string") ? value.trim() : "";
+    if (!raw) return DEFAULT_BACKEND_ROOT;
+    const withScheme = raw.includes("://") ? raw : `http://${raw}`;
+    let normalized = withScheme.replace(/\/+$/, "");
     try {
-      const stored = localStorage.getItem(CLIP_BACKEND_STORAGE_KEY);
-      const trimmed = (typeof stored === "string") ? stored.trim() : "";
-      return trimmed || DEFAULT_CLIP_BACKEND;
-    } catch {
-      return DEFAULT_CLIP_BACKEND;
-    }
+      const url = new URL(normalized);
+      normalized = `${url.protocol}//${url.host}${url.pathname.replace(/\/+$/, "")}`;
+    } catch {}
+    return normalized;
   }
 
-  function setClipBackendStorage(value) {
-    const normalized = value && value.trim() ? value.trim() : DEFAULT_CLIP_BACKEND;
+  function getBackendRootFromStorage() {
     try {
-      localStorage.setItem(CLIP_BACKEND_STORAGE_KEY, normalized);
+      const stored = localStorage.getItem(BACKEND_ROOT_STORAGE_KEY);
+      const trimmed = (typeof stored === "string") ? stored.trim() : "";
+      if (trimmed) return normalizeBackendRoot(trimmed);
     } catch {}
+
     try {
-      window.dispatchEvent(new CustomEvent("mm:clip-backend-changed", { detail: { url: normalized } }));
+      const clipStored = (localStorage.getItem(CLIP_BACKEND_STORAGE_KEY) || "").trim();
+      if (clipStored) {
+        try {
+          const url = new URL(clipStored.includes("://") ? clipStored : `http://${clipStored}`);
+          return normalizeBackendRoot(`${url.protocol}//${url.host}`);
+        } catch {
+          return normalizeBackendRoot(clipStored.replace(/\/clip\/?$/, ""));
+        }
+      }
     } catch {}
+
+    try {
+      const legacy = (localStorage.getItem(LEGACY_ACCOUNT_SYNC_URL_KEY) || "").trim();
+      if (legacy) {
+        const url = new URL(legacy.includes("://") ? legacy : `http://${legacy}`);
+        return normalizeBackendRoot(`${url.protocol}//${url.host}`);
+      }
+    } catch {}
+
+    return DEFAULT_BACKEND_ROOT;
+  }
+
+  function setBackendRootStorage(value) {
+    const root = normalizeBackendRoot(value);
+    try { localStorage.setItem(BACKEND_ROOT_STORAGE_KEY, root); } catch {}
+    try { localStorage.setItem(CLIP_BACKEND_STORAGE_KEY, root); } catch {}
+    try { localStorage.setItem(LEGACY_ACCOUNT_SYNC_URL_KEY, `${root}/account/storage`); } catch {}
+    try { window.dispatchEvent(new CustomEvent("mm:backend-root-changed", { detail: { root } })); } catch {}
+    try { window.dispatchEvent(new CustomEvent("mm:clip-backend-changed", { detail: { url: root } })); } catch {}
+    try { window.dispatchEvent(new CustomEvent("mm:account-sync-url-changed", { detail: { url: `${root}/account/storage` } })); } catch {}
+    return root;
   }
 
   function getClipBackendSummary() {
     try {
-      return getClipBackendFromStorage();
+      const root = getBackendRootFromStorage();
+      return `${root}/clip`;
+    } catch {
+      return "Unavailable";
+    }
+  }
+
+  function getAccountSyncSummary() {
+    try {
+      const root = getBackendRootFromStorage();
+      return `${root}/account/storage`;
     } catch {
       return "Unavailable";
     }
@@ -207,13 +254,14 @@
     if (concurrencyStateLabel) concurrencyStateLabel.textContent = describeConcurrency(getStoredConcurrency());
     if (catboxStateLabel) catboxStateLabel.textContent = getCatboxSummary();
     if (clipBackendStateLabel) clipBackendStateLabel.textContent = getClipBackendSummary();
+    if (accountSyncStateLabel) accountSyncStateLabel.textContent = getAccountSyncSummary();
     if (sourceKeyLabel) {
       const key = (typeof sourceKey === "string" && sourceKey) ? sourceKey
         : (Array.isArray(sourceKeyHistory) && sourceKeyHistory.length ? sourceKeyHistory[0] : "");
       sourceKeyLabel.textContent = key || "Not set";
     }
     refreshCatboxControls();
-    refreshClipBackendInput();
+    refreshBackendRootInput();
     refreshPartPreloadControls();
   }
 
@@ -230,9 +278,9 @@
     if (catboxModeSelect) catboxModeSelect.value = settings.mode || 'default';
   }
 
-  function refreshClipBackendInput() {
-    if (!clipBackendUrlInput) return;
-    clipBackendUrlInput.value = getClipBackendFromStorage() || DEFAULT_CLIP_BACKEND;
+  function refreshBackendRootInput() {
+    if (!backendRootUrlInput) return;
+    backendRootUrlInput.value = getBackendRootFromStorage() || DEFAULT_BACKEND_ROOT;
   }
 
   function refreshPartPreloadControls() {
@@ -550,15 +598,15 @@
       });
     }
 
-    if (clipBackendUrlInput) {
-      const commitClipBackend = () => {
-        const value = (clipBackendUrlInput.value || '').trim() || DEFAULT_CLIP_BACKEND;
-        setClipBackendStorage(value);
+    if (backendRootUrlInput) {
+      const commitBackendRoot = () => {
+        const value = (backendRootUrlInput.value || '').trim() || DEFAULT_BACKEND_ROOT;
+        const root = setBackendRootStorage(value);
         refreshDiagnostics();
-        showDevNotice("info", `Clip backend set to ${value}`);
+        showDevNotice("info", `Backend root set to ${root}`);
       };
-      clipBackendUrlInput.addEventListener("change", commitClipBackend);
-      clipBackendUrlInput.addEventListener("blur", commitClipBackend);
+      backendRootUrlInput.addEventListener("change", commitBackendRoot);
+      backendRootUrlInput.addEventListener("blur", commitBackendRoot);
     }
 
     if (partPreloadMethodSelect) {

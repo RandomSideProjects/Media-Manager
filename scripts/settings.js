@@ -271,3 +271,17 @@ function updateRecentSourcesControls() {
 window.addEventListener('rsp:recent-sources-updated', () => {
   updateRecentSourcesControls();
 });
+
+window.addEventListener('mm:storage-synced', (event) => {
+  const detail = event && event.detail ? event.detail : null;
+  const applied = detail && detail.applied ? detail.applied : null;
+  const hasAppliedChanges = applied && (
+    applied.cleared === true
+    || (Array.isArray(applied.changedKeys) && applied.changedKeys.length)
+    || (Array.isArray(applied.removedKeys) && applied.removedKeys.length)
+  );
+  if (!hasAppliedChanges) return;
+  try { initializeSettingsValues(); } catch {}
+  try { updateRecentSourcesControls(); } catch {}
+  try { applyDownloadConcurrencyUI(); } catch {}
+});

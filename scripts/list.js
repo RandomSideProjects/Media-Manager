@@ -121,6 +121,48 @@ function normalizeSeparatedEpisode(entry, context) {
   return normalizedEntry;
 }
 
+function getEpisodeMetaText(entry) {
+  if (!entry || typeof entry !== 'object') return '';
+  const isManga = isEpisodeManga(entry);
+  if (isManga) {
+    let totalPages = Number.isFinite(Number(entry.VolumePageCount)) ? Number(entry.VolumePageCount) : NaN;
+    if (!Number.isFinite(totalPages)) {
+      let lsPages = NaN;
+      if (entry && entry.progressKey) lsPages = parseInt(localStorage.getItem(String(entry.progressKey) + ':cbzPages'), 10);
+      if (!Number.isFinite(lsPages)) lsPages = parseInt(localStorage.getItem((entry.src || '') + ':cbzPages'), 10);
+      if (Number.isFinite(lsPages)) totalPages = lsPages;
+    }
+    let savedPage = NaN;
+    if (entry && entry.progressKey) savedPage = parseInt(localStorage.getItem(String(entry.progressKey) + ':cbzPage'), 10);
+    if (!Number.isFinite(savedPage)) savedPage = parseInt(localStorage.getItem((entry.src || '') + ':cbzPage'), 10);
+    const hasSaved = Number.isFinite(savedPage) && savedPage > 0;
+    if (Number.isFinite(totalPages) && totalPages > 0) {
+      return hasSaved ? `${savedPage} / ${totalPages}` : `${totalPages}`;
+    }
+    return hasSaved ? `${savedPage}` : '';
+  }
+
+  let durationSec = Number.isFinite(Number(entry.durationSeconds)) ? Number(entry.durationSeconds) : NaN;
+  if (!Number.isFinite(durationSec)) {
+    let lsDur = NaN;
+    if (entry && entry.progressKey) {
+      lsDur = parseFloat(localStorage.getItem(String(entry.progressKey) + ':duration'));
+    }
+    if (!Number.isFinite(lsDur)) {
+      lsDur = parseFloat(localStorage.getItem((entry.src || '') + ':duration'));
+    }
+    if (Number.isFinite(lsDur)) durationSec = Math.round(lsDur);
+  }
+  let watched = NaN;
+  if (entry && entry.progressKey) watched = parseFloat(localStorage.getItem(String(entry.progressKey)));
+  if (!Number.isFinite(watched)) watched = parseFloat(localStorage.getItem(entry.src || ''));
+  const hasWatched = Number.isFinite(watched) && watched > 0;
+  if (Number.isFinite(durationSec) && durationSec > 0) {
+    return hasWatched ? `${formatTime(watched)} / ${formatTime(durationSec)}` : `${formatTime(durationSec)}`;
+  }
+  return hasWatched ? `${formatTime(watched)}` : '';
+}
+
 function isEpisodeManga(item) {
   if (!item) return false;
   try {
@@ -393,6 +435,7 @@ function renderEpisodeList() {
       const button = document.createElement('button');
       button.className = 'episode-button';
       if (singleCenter) button.classList.add('single-center');
+      button.dataset.flatIndex = String(index);
 
       const left = document.createElement('span');
       left.className = 'episode-title';
@@ -405,50 +448,7 @@ function renderEpisodeList() {
       const isShortTitle = !episodeNumber && titleText.length > 0 && titleText.length <= 5;
       const isLongTitle = !episodeNumber && titleText.length > 5;
 
-      const isManga = isEpisodeManga(entry);
-      if (isManga) {
-        let totalPages = Number.isFinite(Number(entry.VolumePageCount)) ? Number(entry.VolumePageCount) : NaN;
-        if (!Number.isFinite(totalPages)) {
-          let lsPages = NaN;
-          if (entry && entry.progressKey) lsPages = parseInt(localStorage.getItem(String(entry.progressKey) + ':cbzPages'), 10);
-          if (!Number.isFinite(lsPages)) lsPages = parseInt(localStorage.getItem((entry.src || '') + ':cbzPages'), 10);
-          if (Number.isFinite(lsPages)) totalPages = lsPages;
-        }
-        let savedPage = NaN;
-        if (entry && entry.progressKey) savedPage = parseInt(localStorage.getItem(String(entry.progressKey) + ':cbzPage'), 10);
-        if (!Number.isFinite(savedPage)) savedPage = parseInt(localStorage.getItem((entry.src || '') + ':cbzPage'), 10);
-        const hasSaved = Number.isFinite(savedPage) && savedPage > 0;
-        if (Number.isFinite(totalPages) && totalPages > 0) {
-          right.textContent = hasSaved ? `${savedPage} / ${totalPages}` : `${totalPages}`;
-        } else if (hasSaved) {
-          right.textContent = `${savedPage}`;
-        } else {
-          right.textContent = '';
-        }
-      } else {
-        let durationSec = Number.isFinite(Number(entry.durationSeconds)) ? Number(entry.durationSeconds) : NaN;
-        if (!Number.isFinite(durationSec)) {
-          let lsDur = NaN;
-          if (entry && entry.progressKey) {
-            lsDur = parseFloat(localStorage.getItem(String(entry.progressKey) + ':duration'));
-          }
-          if (!Number.isFinite(lsDur)) {
-            lsDur = parseFloat(localStorage.getItem((entry.src || '') + ':duration'));
-          }
-          if (Number.isFinite(lsDur)) durationSec = Math.round(lsDur);
-        }
-        let watched = NaN;
-        if (entry && entry.progressKey) watched = parseFloat(localStorage.getItem(String(entry.progressKey)));
-        if (!Number.isFinite(watched)) watched = parseFloat(localStorage.getItem(entry.src || ''));
-        const hasWatched = Number.isFinite(watched) && watched > 0;
-        if (Number.isFinite(durationSec) && durationSec > 0) {
-          right.textContent = hasWatched ? `${formatTime(watched)} / ${formatTime(durationSec)}` : `${formatTime(durationSec)}`;
-        } else if (hasWatched) {
-          right.textContent = `${formatTime(watched)}`;
-        } else {
-          right.textContent = '';
-        }
-      }
+      right.textContent = getEpisodeMetaText(entry);
 
       if (episodeNumber) {
         const numEl = document.createElement('span');
@@ -560,3 +560,39 @@ function showResumeMessage() {
     });
   }
 }
+
+function mmIsVisible(el) {
+  if (!el || typeof window === 'undefined' || typeof window.getComputedStyle !== 'function') return false;
+  const style = window.getComputedStyle(el);
+  return style && style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0';
+}
+
+function refreshEpisodeMetaFromStorage() {
+  if (typeof episodeList === 'undefined' || !episodeList) return;
+  if (typeof flatList === 'undefined' || !Array.isArray(flatList) || flatList.length === 0) return;
+  const buttons = episodeList.querySelectorAll('button.episode-button[data-flat-index]');
+  buttons.forEach((button) => {
+    const idx = parseInt(button.dataset.flatIndex, 10);
+    if (!Number.isFinite(idx) || idx < 0 || idx >= flatList.length) return;
+    const entry = flatList[idx];
+    const meta = button.querySelector('.episode-meta');
+    if (!meta) return;
+    meta.textContent = getEpisodeMetaText(entry);
+  });
+  try { showResumeMessage(); } catch {}
+}
+
+window.addEventListener('mm:storage-synced', (event) => {
+  const detail = event && event.detail ? event.detail : null;
+  const applied = detail && detail.applied ? detail.applied : null;
+  const hasAppliedChanges = applied && (
+    applied.cleared === true
+    || (Array.isArray(applied.changedKeys) && applied.changedKeys.length)
+    || (Array.isArray(applied.removedKeys) && applied.removedKeys.length)
+  );
+  if (!hasAppliedChanges) return;
+
+  if (typeof selectorScreen !== 'undefined' && selectorScreen && !mmIsVisible(selectorScreen)) return;
+  if (typeof playerScreen !== 'undefined' && playerScreen && mmIsVisible(playerScreen)) return;
+  refreshEpisodeMetaFromStorage();
+});

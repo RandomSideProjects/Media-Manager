@@ -26,6 +26,7 @@ let clipDisplayLength = null;
 
 const DEFAULT_CLIP_BACKEND = 'https://mm.littlehacker303.workers.dev';
 const CLIP_BACKEND_STORAGE_KEY = 'clipBackendUrl';
+const BACKEND_ROOT_STORAGE_KEY = 'dev:mmBackendRoot';
 const REMOTE_CLIP_API_CHECK_TIMEOUT = 5000;
 const REMOTE_CLIP_API_SUCCESS_TTL = 2 * 60 * 1000;
 const REMOTE_CLIP_API_FAILURE_TTL = 30 * 1000;
@@ -39,8 +40,12 @@ let clipBackendCached = getClipBackendBase();
 function getClipBackendBase() {
   if (typeof localStorage === 'undefined') return DEFAULT_CLIP_BACKEND;
   try {
+    const rootStored = (localStorage.getItem(BACKEND_ROOT_STORAGE_KEY) || '').trim();
     const stored = (localStorage.getItem(CLIP_BACKEND_STORAGE_KEY) || '').trim();
-    return stored || DEFAULT_CLIP_BACKEND;
+    const raw = stored || rootStored;
+    if (!raw) return DEFAULT_CLIP_BACKEND;
+    const normalized = raw.replace(/\/+$/, '').replace(/\/clip\/?$/, '');
+    return normalized || DEFAULT_CLIP_BACKEND;
   } catch {
     return DEFAULT_CLIP_BACKEND;
   }

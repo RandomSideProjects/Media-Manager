@@ -404,6 +404,7 @@
     const storageDeleteBtn = document.getElementById('storageDeleteBtn');
     const storageExportBtn = document.getElementById('storageExportBtn');
     const storageImportBtn = document.getElementById('storageImportBtn');
+    const storageAccountSyncBtn = document.getElementById('storageAccountSyncBtn');
 
     let clearOverlay = null;
     let clearConfirmBtn = null;
@@ -1185,6 +1186,21 @@
       storageImportBtn.addEventListener('click', () => {
         closeMenu();
         openImportOverlay();
+      });
+    }
+
+    if (storageAccountSyncBtn) {
+      storageAccountSyncBtn.addEventListener('click', () => {
+        closeMenu();
+        if (window.MMAccountSync && typeof window.MMAccountSync.openOverlay === 'function') {
+          window.MMAccountSync.openOverlay();
+          return;
+        }
+        showStorageNotice({
+          title: 'Account',
+          message: 'Account sync is not available (script not loaded).',
+          tone: 'error'
+        });
       });
     }
 

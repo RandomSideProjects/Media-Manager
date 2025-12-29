@@ -59,7 +59,10 @@
       <button id="clipBtn">Clip</button>
       <h2 id="videoTitle">Loading...</h2>
       <div id="separatedPartsBar" class="separated-parts-bar" role="group" aria-label="Part selection"></div>
-      <video id="videoPlayer" controls autoplay playsinline></video>
+      <div class="mm-video-frame">
+        <video id="videoPlayer" controls autoplay playsinline></video>
+        <button id="nextBtn" type="button" aria-label="Next">Next</button>
+      </div>
       <!-- CBZ Viewer -->
       <div id="cbzViewer" style="display:none">
         <div id="cbzControls" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75em;gap:0.5em;">
@@ -74,7 +77,6 @@
       <div id="placeholderNotice">
         To view this file, please download the respective category from the source and merge with the folders.
       </div>
-      <button id="nextBtn">Next Item</button>
     </div>
   </div>
   </div>
@@ -100,6 +102,7 @@
   <script defer src="scripts/zxing-lib.min.js"></script>
   <script defer src="scripts/jsqr.min.js"></script>
   <script defer src="scripts/qrcode.min.js"></script>
+  <script defer src="scripts/account-sync.js"></script>
   <script defer src="scripts/storage.js"></script>
   <script defer src="scripts/version.js"></script>
   <a href="https://github.com/RandomSideProjects" target="_blank" id="githubLink">

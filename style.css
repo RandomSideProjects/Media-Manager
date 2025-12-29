@@ -270,6 +270,15 @@ video {
   border-radius: 12px;
   margin-bottom: 1em;
 }
+.mm-video-frame {
+  position: relative;
+  width: 100%;
+  margin-bottom: 1em;
+}
+.mm-video-frame > video {
+  display: block;
+  margin-bottom: 0;
+}
 .mm-video-stack {
   display: grid;
   margin-bottom: 1em;
@@ -300,7 +309,26 @@ button:hover {
 }
 #nextBtn {
   display: none;
-  margin-top: 1em;
+  position: absolute;
+  left: 50%;
+  bottom: 1rem;
+  transform: translateX(-50%);
+  z-index: 5;
+  margin: 0;
+  padding: 0.6em 1.4em;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: var(--button-text);
+  font-weight: 650;
+  backdrop-filter: blur(8px);
+}
+#nextBtn:hover {
+  background: rgba(0, 0, 0, 0.72);
+}
+#nextBtn:focus-visible {
+  outline: 3px solid rgba(99, 179, 237, 0.7);
+  outline-offset: 3px;
 }
 #selectorScreen {
   display: flex;
@@ -1384,6 +1412,158 @@ body.light-mode #clipPresetContent .overlay-close:focus {
   font-size: 0.75rem;
 }
 .import-actions { justify-content: flex-end; gap: 0.75rem; }
+
+#accountSyncOverlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  align-items: center;
+  justify-content: center;
+  z-index: 10065;
+}
+#accountSyncPanel {
+  background: var(--container-bg);
+  color: var(--text);
+  border: 1px solid #444;
+  padding: 1.5rem 1.25rem 1.25rem;
+  border-radius: 12px;
+  width: min(420px, 90%);
+  max-width: 90%;
+  box-shadow: 0 20px 40px -10px rgba(0,0,0,0.65);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+#accountSyncPanel p { margin: 0; }
+#accountSyncPanel .account-sync-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#accountSyncPanel .account-sync-header h3 {
+  margin: 0;
+}
+#accountSyncCloseBtn.overlay-close {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.55rem;
+  transform: none;
+  background: #2a2a2a;
+  color: #fff;
+  z-index: 3;
+}
+#accountSyncCloseBtn.overlay-close:hover,
+#accountSyncCloseBtn.overlay-close:focus {
+  background: #3a3a3a;
+  color: #fff;
+}
+body.light-mode #accountSyncCloseBtn.overlay-close {
+  background: #e7e7e7;
+  color: #111;
+}
+body.light-mode #accountSyncCloseBtn.overlay-close:hover,
+body.light-mode #accountSyncCloseBtn.overlay-close:focus {
+  background: #d7d7d7;
+  color: #000;
+}
+
+#accountSyncPanel .account-sync-warning-wrap {
+  position: absolute;
+  top: 0.55rem;
+  left: 0.55rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+}
+
+#accountSyncPanel button.account-sync-warning {
+  border: 1px solid #ff4a4a;
+  background: #b00000;
+  color: #fff;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  font-weight: 800;
+  line-height: 1;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.05rem;
+  cursor: pointer;
+}
+#accountSyncPanel button.account-sync-warning:hover,
+#accountSyncPanel button.account-sync-warning:focus {
+  background: #d00000;
+}
+
+#accountSyncPanel .account-sync-warning-tooltip {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 10px);
+  width: min(320px, 78vw);
+  padding: 0.75rem 0.85rem;
+  border-radius: 12px;
+  background: rgba(20, 20, 20, 0.98);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 18px 34px -12px rgba(0,0,0,0.8);
+  color: var(--text);
+  font-size: 0.85rem;
+  white-space: normal;
+  z-index: 2;
+  display: none;
+}
+
+#accountSyncPanel .account-sync-warning-tooltip strong {
+  font-weight: 800;
+}
+
+#accountSyncPanel .account-sync-warning-wrap:hover .account-sync-warning-tooltip,
+#accountSyncPanel .account-sync-warning-wrap:focus-within .account-sync-warning-tooltip {
+  display: block;
+}
+#accountSyncPanel .account-sync-status {
+  margin-top: 0.5rem;
+  opacity: 0.85;
+  font-size: 0.95em;
+  white-space: pre-line;
+}
+#accountSyncPanel .account-sync-footer {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: flex-end;
+}
+#accountSyncPanel .account-sync-syncrow {
+  width: min(260px, 100%);
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+#accountSyncPanel .account-sync-syncrow button {
+  flex: 1;
+  width: auto;
+}
+#accountSyncPanel input.account-sync-interval {
+  width: 74px;
+  padding: 0.35rem 0.5rem;
+}
+#accountSyncPanel .account-sync-footer > button {
+  width: min(260px, 100%);
+}
+#accountSyncPanel input[type="text"],
+#accountSyncPanel input[type="password"] {
+  margin: 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
 #storageImportScanOverlay {
   display: none;
   position: fixed;

@@ -125,7 +125,8 @@ window.OverlayFactory = (function() {
             createElement('div', { id: 'storageMenuPanel', className: 'storage-menu-panel', role: 'menu', 'aria-hidden': 'true' }, [
               createElement('button', { id: 'storageDeleteBtn', type: 'button', className: 'danger-button storage-menu-item' }, ['Delete storage']),
               createElement('button', { id: 'storageExportBtn', type: 'button', className: 'storage-menu-item' }, ['Export']),
-              createElement('button', { id: 'storageImportBtn', type: 'button', className: 'storage-menu-item' }, ['Import'])
+              createElement('button', { id: 'storageImportBtn', type: 'button', className: 'storage-menu-item' }, ['Import']),
+              createElement('button', { id: 'storageAccountSyncBtn', type: 'button', className: 'storage-menu-item' }, ['Account'])
             ])
           ])
         ]),
@@ -227,6 +228,66 @@ window.OverlayFactory = (function() {
           createElement('select', { id: 'storageImportCameraSelect' }, [])
         ]),
         createElement('div', { id: 'storageImportScanMessage' }, ['Looking for a QR code...'])
+      ])
+    ]);
+
+    document.body.appendChild(overlay);
+    return overlay;
+  }
+
+  function createAccountSyncOverlay() {
+    removeOverlay('accountSyncOverlay');
+
+    const overlay = createElement('div', { id: 'accountSyncOverlay' }, [
+      createElement('div', { id: 'accountSyncPanel' }, [
+        createElement('div', { className: 'account-sync-header' }, [
+          createElement('div', { className: 'account-sync-warning-wrap' }, [
+            createElement('button', {
+              id: 'accountSyncWarningBtn',
+              type: 'button',
+              className: 'account-sync-warning',
+              'aria-label': 'Security warning'
+            }, ['!']),
+            createElement('div', {
+              className: 'account-sync-warning-tooltip',
+              role: 'note',
+              innerHTML: 'LET ME BE VERY CLEAR<br><br>THIS IS <strong>NOT</strong> SECURE<br><br>THERE IS NO PASSWORD<br><br>THIS IS NOT ENCRYPTED<br><br>DO WITH THAT WHAT YOU MUST'
+            }, [])
+          ]),
+          createElement('h3', {}, ['Account']),
+          createElement('button', {
+            id: 'accountSyncCloseBtn',
+            type: 'button',
+            className: 'overlay-close',
+            'aria-label': 'Close account'
+          }, ['✕'])
+        ]),
+        createElement('label', { for: 'accountSyncAccountId', className: 'import-label' }, ['Account ID']),
+        createElement('input', {
+          id: 'accountSyncAccountId',
+          type: 'text',
+          placeholder: 'Your account ID',
+          autocomplete: 'off',
+          autocapitalize: 'off',
+          spellcheck: 'false'
+        }),
+        createElement('div', { id: 'accountSyncStatus', className: 'account-sync-status' }, ['']),
+        createElement('div', { id: 'accountSyncFooter', className: 'account-sync-footer' }, [
+          createElement('div', { className: 'account-sync-syncrow' }, [
+            createElement('button', { id: 'accountSyncNowBtn', type: 'button' }, ['Sync']),
+            createElement('input', {
+              id: 'accountSyncIntervalSec',
+              type: 'number',
+              min: '5',
+              step: '1',
+              value: '10',
+              title: 'Auto sync interval (seconds)',
+              'aria-label': 'Auto sync interval in seconds',
+              className: 'account-sync-interval'
+            })
+          ]),
+          createElement('button', { id: 'accountSyncDisconnectBtn', type: 'button' }, ['Login'])
+        ])
       ])
     ]);
 
@@ -382,6 +443,20 @@ window.OverlayFactory = (function() {
           createElement('div', { className: 'settings-radio', id: 'modeOptions' }, [
             createElement('label', {}, [createElement('input', { type: 'radio', name: 'mode', value: 'anime' }), ' Anime']),
             createElement('label', {}, [createElement('input', { type: 'radio', name: 'mode', value: 'manga' }), ' Manga'])
+          ])
+        ]),
+        createElement('div', { className: 'section' }, [
+          createElement('div', { className: 'settings-row' }, [createElement('strong', {}, ['Storage'])]),
+          createElement('div', { className: 'settings-row' }, [
+            createElement('div', { className: 'storage-menu' }, [
+              createElement('button', { id: 'storageMenuBtn', type: 'button' }, ['Storage']),
+              createElement('div', { id: 'storageMenuPanel', className: 'storage-menu-panel', role: 'menu', 'aria-hidden': 'true' }, [
+                createElement('button', { id: 'storageDeleteBtn', type: 'button', className: 'danger-button storage-menu-item' }, ['Delete storage']),
+                createElement('button', { id: 'storageExportBtn', type: 'button', className: 'storage-menu-item' }, ['Export']),
+                createElement('button', { id: 'storageImportBtn', type: 'button', className: 'storage-menu-item' }, ['Import']),
+                createElement('button', { id: 'storageAccountSyncBtn', type: 'button', className: 'storage-menu-item' }, ['Account'])
+              ])
+            ])
           ])
         ]),
         createElement('div', { className: 'settings-actions' }, [
@@ -653,6 +728,18 @@ window.OverlayFactory = (function() {
           createElement('button', { id: 'devMenuBtn', type: 'button', className: 'dev-menu-trigger' }, ['Dev Menu']),
           createElement('span', { className: 'dev-menu-status', id: 'devMenuStatus' }, ['Developer tools'])
         ]),
+        createElement('div', { className: 'mm-settings-row', style: { justifyContent: 'space-between', alignItems: 'center', gap: '.6em' } }, [
+          createElement('span', { style: { fontWeight: '600' } }, ['Storage']),
+          createElement('div', { className: 'storage-menu' }, [
+            createElement('button', { id: 'storageMenuBtn', type: 'button' }, ['Storage']),
+            createElement('div', { id: 'storageMenuPanel', className: 'storage-menu-panel', role: 'menu', 'aria-hidden': 'true' }, [
+              createElement('button', { id: 'storageDeleteBtn', type: 'button', className: 'danger-button storage-menu-item' }, ['Delete storage']),
+              createElement('button', { id: 'storageExportBtn', type: 'button', className: 'storage-menu-item' }, ['Export']),
+              createElement('button', { id: 'storageImportBtn', type: 'button', className: 'storage-menu-item' }, ['Import']),
+              createElement('button', { id: 'storageAccountSyncBtn', type: 'button', className: 'storage-menu-item' }, ['Account'])
+            ])
+          ])
+        ]),
         createElement('div', { className: 'mm-actions' }, [
           createElement('button', { id: 'mmSaveUploadSettings', className: 'mm-btn primary' }, ['Save']),
           createElement('button', { id: 'mmCloseUploadSettings', className: 'mm-btn ghost' }, ['Close'])
@@ -703,8 +790,8 @@ window.OverlayFactory = (function() {
             ])
           ]),
           
-          createElement('div', { className: 'dev-menu-section' }, [
-            createElement('h4', {}, ['Catbox Settings']),
+	          createElement('div', { className: 'dev-menu-section' }, [
+	            createElement('h4', {}, ['Catbox Settings']),
             createElement('div', { className: 'dev-field' }, [
               createElement('label', { for: 'devCatboxUploadUrl' }, ['Upload URL']),
               createElement('input', { 
@@ -723,19 +810,19 @@ window.OverlayFactory = (function() {
               ]),
               createElement('p', { className: 'dev-menu-hint select' }, ['Choose Default (worker) or Proxy (custom URL).'])
             ])
-          ]),
+	          ]),
 
 	          createElement('div', { className: 'dev-menu-section' }, [
-	            createElement('h4', {}, ['Clip Backend']),
+	            createElement('h4', {}, ['Backend']),
 	            createElement('div', { className: 'dev-field' }, [
-	              createElement('label', { for: 'devClipBackendUrl' }, ['Clip backend URL']),
+	              createElement('label', { for: 'devBackendRootUrl' }, ['Backend root URL']),
 	              createElement('input', {
 	                type: 'text',
-	                id: 'devClipBackendUrl',
+	                id: 'devBackendRootUrl',
 	                className: 'dev-field-input',
-	                placeholder: 'https://mm.littlehacker303.workers.dev/clip'
+	                placeholder: 'https://mm.littlehacker303.workers.dev'
 	              }),
-	              createElement('p', { className: 'dev-menu-hint' }, ['Override the clip/set segment endpoint.'])
+	              createElement('p', { className: 'dev-menu-hint' }, ['Example: localhost:8787 (used for /clip and /account/*).'])
 	            ])
 	          ]),
 
@@ -784,14 +871,18 @@ window.OverlayFactory = (function() {
                 createElement('dt', {}, ['Catbox Endpoint']),
               createElement('dd', { id: 'devCatboxEndpointLabel' }, ['Pending'])
             ]),
-            createElement('div', { className: 'dev-stat' }, [
-              createElement('dt', {}, ['Clip Backend']),
-              createElement('dd', { id: 'devClipEndpointLabel' }, ['Pending'])
-            ]),
-            createElement('div', { className: 'dev-stat' }, [
-              createElement('dt', {}, ['Source Key']),
-              createElement('dd', { id: 'devSourceKeyLabel' }, ['Not set'])
-            ])
+	            createElement('div', { className: 'dev-stat' }, [
+	              createElement('dt', {}, ['Clip Backend']),
+	              createElement('dd', { id: 'devClipEndpointLabel' }, ['Pending'])
+	            ]),
+	            createElement('div', { className: 'dev-stat' }, [
+	              createElement('dt', {}, ['Account Sync']),
+	              createElement('dd', { id: 'devAccountSyncEndpointLabel' }, ['Pending'])
+	            ]),
+	            createElement('div', { className: 'dev-stat' }, [
+	              createElement('dt', {}, ['Source Key']),
+	              createElement('dd', { id: 'devSourceKeyLabel' }, ['Not set'])
+	            ])
           ])
         ])
         ])
@@ -935,6 +1026,7 @@ window.OverlayFactory = (function() {
     createClearStorageOverlay,
     createStorageImportOverlay,
     createStorageImportScanOverlay,
+    createAccountSyncOverlay,
     createClipPresetOverlay,
     createClipOverlay,
     createClipProgressOverlay,

@@ -70,6 +70,131 @@ html {
 .btn-ghost { background: #2a2a2a; color:#f1f1f1; }
 .settings-radio { display: flex; gap: 10px; flex-wrap: wrap; }
 .settings-radio label { display: flex; align-items: center; gap: 6px; }
+
+/* Storage menu (shared with main app) */
+.storage-menu { position: relative; display: inline-flex; align-items: center; }
+#storageMenuBtn { margin: 0; }
+.storage-menu-panel {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  flex-direction: column;
+  align-items: stretch;
+  padding: 0.5rem;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 8px;
+  min-width: 11rem;
+  box-shadow: 0 16px 40px rgba(0,0,0,0.6);
+  z-index: 10100;
+}
+.storage-menu-panel.open { display: flex; }
+.storage-menu-item {
+  margin: 0;
+  width: 100%;
+  text-align: left;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid #333;
+  background: #222;
+  color: #f1f1f1;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.storage-menu-item + .storage-menu-item { margin-top: 0.35rem; }
+.storage-menu-item:hover { background: #2a2a2a; }
+.danger-button { background: #3a1010; border-color: #6a2222; }
+.danger-button:hover { background: #4a1414; }
+
+/* Account overlay (shared with main app) */
+#accountSyncOverlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  align-items: center;
+  justify-content: center;
+  z-index: 10065;
+}
+#accountSyncPanel {
+  background: #1a1a1a;
+  color: #f1f1f1;
+  border: 1px solid #333;
+  padding: 1.5rem 1.25rem 1.25rem;
+  border-radius: 12px;
+  width: min(420px, 90%);
+  max-width: 90%;
+  box-shadow: 0 20px 40px -10px rgba(0,0,0,0.65);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+#accountSyncPanel .account-sync-header { display: flex; align-items: center; justify-content: center; }
+#accountSyncPanel .account-sync-header h3 { margin: 0; }
+#accountSyncCloseBtn.overlay-close {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.55rem;
+  background: #2a2a2a;
+  color: #fff;
+  width: 2.3rem;
+  height: 2.3rem;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#accountSyncPanel .account-sync-warning-wrap {
+  position: absolute;
+  top: 0.55rem;
+  left: 0.55rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+}
+#accountSyncPanel button.account-sync-warning {
+  border: 1px solid #ff4a4a;
+  background: #b00000;
+  color: #fff;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  font-weight: 800;
+  line-height: 1;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.05rem;
+  cursor: pointer;
+}
+#accountSyncPanel .account-sync-warning-tooltip {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 10px);
+  width: min(320px, 78vw);
+  padding: 0.75rem 0.85rem;
+  border-radius: 12px;
+  background: rgba(20, 20, 20, 0.98);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 18px 34px -12px rgba(0,0,0,0.8);
+  color: #f1f1f1;
+  font-size: 0.85rem;
+  z-index: 2;
+  display: none;
+}
+#accountSyncPanel .account-sync-warning-wrap:hover .account-sync-warning-tooltip,
+#accountSyncPanel .account-sync-warning-wrap:focus-within .account-sync-warning-tooltip { display: block; }
+#accountSyncPanel .account-sync-status { margin-top: 0.5rem; opacity: 0.85; font-size: 0.95em; white-space: pre-line; }
+#accountSyncPanel .account-sync-footer { margin-top: auto; display: flex; flex-direction: column; gap: 0.5rem; align-items: center; }
+#accountSyncPanel .account-sync-syncrow { width: min(260px, 100%); display: flex; gap: 0.5rem; align-items: center; }
+#accountSyncPanel .account-sync-syncrow button { flex: 1; }
+#accountSyncPanel input.account-sync-interval { width: 74px; padding: 0.35rem 0.5rem; }
 .setting-tag {
   display: inline-flex;
   align-items: center;

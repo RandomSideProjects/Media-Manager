@@ -29,7 +29,7 @@ Browser-only player for video libraries and CBZ manga archives. Point it at a JS
 
 ## Player basics
 - Resume banner highlights where you left off or skips ahead if the last item was nearly finished.
-- `≡` returns to the list, `⤴` opens a pop-out window, and `Next Item` advances manually.
+- `≡` returns to the list, `⤴` opens a pop-out window, and `Next` advances manually.
 - Manga/CBZ volumes show a page counter and overlay while archives unpack.
 - Settings pane toggles clipping, selective downloads, download concurrency, and a `CLEAR STORAGE` action to wipe local data.
 - Version badge in the corner reads `Assets/LastUpdated.txt` (update alongside releases).

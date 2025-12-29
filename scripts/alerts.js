@@ -135,6 +135,7 @@
   function showNotice({
     title,
     message,
+    messageHtml = null,
     tone = 'info',
     copyText = null,
     copyLabel = 'Copy',
@@ -148,7 +149,7 @@
     const resolvedAutoCloseMs = (typeof autoCloseMs === 'undefined')
       ? (persistent ? null : DEFAULT_NOTICE_TIMEOUT_MS)
       : autoCloseMs;
-    if (!message) return null;
+    if (!message && !messageHtml) return null;
     const { overlay, stack } = ensureOverlay();
     const normalizedTone = NOTICE_TONES.has(tone) ? tone : 'info';
 
@@ -167,7 +168,11 @@
 
     const messageEl = document.createElement('p');
     messageEl.className = 'storage-notice__message';
-    messageEl.textContent = message;
+    if (typeof messageHtml === 'string') {
+      messageEl.innerHTML = messageHtml;
+    } else {
+      messageEl.textContent = message;
+    }
     notice.appendChild(messageEl);
 
     if (qrValue) {
