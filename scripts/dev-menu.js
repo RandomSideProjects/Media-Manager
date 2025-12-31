@@ -107,7 +107,11 @@
   function normalizeBackendRoot(value) {
     const raw = (typeof value === "string") ? value.trim() : "";
     if (!raw) return DEFAULT_BACKEND_ROOT;
-    const withScheme = raw.includes("://") ? raw : `http://${raw}`;
+    const lowered = raw.toLowerCase();
+    const scheme = (lowered.startsWith("localhost") || lowered.startsWith("127.0.0.1") || lowered.startsWith("0.0.0.0") || lowered.startsWith("[::1]"))
+      ? "http"
+      : "https";
+    const withScheme = raw.includes("://") ? raw : `${scheme}://${raw}`;
     let normalized = withScheme.replace(/\/+$/, "");
     try {
       const url = new URL(normalized);
@@ -352,20 +356,10 @@
   }
 
   function triggerStorageAction(type) {
-    const menuBtn = document.getElementById("storageMenuBtn");
-    const menuPanel = document.getElementById("storageMenuPanel");
-    const ensureMenuOpen = () => {
-      if (menuBtn && menuPanel && !menuPanel.classList.contains("open")) {
-        menuBtn.click();
-      }
-    };
     requestAnimationFrame(() => {
-      ensureMenuOpen();
       const clickLater = (id) => {
-        setTimeout(() => {
-          const btn = document.getElementById(id);
-          if (btn) btn.click();
-        }, STORAGE_MENU_DELAY_MS);
+        const btn = document.getElementById(id);
+        if (btn) btn.click();
       };
       switch (type) {
         case "menu":

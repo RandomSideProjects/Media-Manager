@@ -4,6 +4,7 @@
   if (typeof window === "undefined") return;
 
   const ACCOUNT_ID_KEY = "rsp_account_id";
+  const ACCOUNT_PASSWORD_KEY = "rsp_account_password";
   const BACKEND_ROOT_KEY = "dev:mmBackendRoot";
   const LEGACY_SYNC_URL_KEY = "dev:accountSyncUrl";
   const SINCE_KEY = "dev:accountSyncSince";
@@ -19,7 +20,7 @@
   const MAX_OPS_PER_SYNC = 2500;
   const PULL_INTERVAL_MS = 30 * 60 * 1000;
 
-  const internalKeys = new Set([ACCOUNT_ID_KEY, BACKEND_ROOT_KEY, LEGACY_SYNC_URL_KEY, SINCE_KEY, LAST_SYNC_AT_KEY, QUEUE_KEY, LOCK_KEY]);
+  const internalKeys = new Set([ACCOUNT_ID_KEY, ACCOUNT_PASSWORD_KEY, BACKEND_ROOT_KEY, LEGACY_SYNC_URL_KEY, SINCE_KEY, LAST_SYNC_AT_KEY, QUEUE_KEY, LOCK_KEY]);
 
   let suspendRecording = false;
   let queue = null;
@@ -38,6 +39,65 @@
     }
     try { window.alert(options && options.message ? String(options.message) : ""); } catch {}
     return null;
+  }
+
+  function promptForPassword({ title, initialValue, confirmLabel } = {}) {
+    return new Promise((resolve) => {
+      let noticeRef = null;
+      const inputId = `mmAccountPasswordPrompt_${Math.random().toString(16).slice(2)}`;
+      let finished = false;
+
+      const resolveOnce = (value) => {
+        if (finished) return;
+        finished = true;
+        resolve(value);
+      };
+
+      const closeNotice = () => {
+        if (noticeRef && typeof noticeRef.close === "function") {
+          try { noticeRef.close(); } catch {}
+        }
+      };
+
+      noticeRef = showNotice({
+        title: title || "Password",
+        messageHtml: `Enter a password for this account:<br><br><input id="${inputId}" type="password" autocomplete="new-password" style="width:100%;padding:0.55rem 0.65rem;border-radius:10px;border:1px solid rgba(255,255,255,0.18);background:rgba(15,15,15,0.65);color:inherit;box-sizing:border-box;" />`,
+        tone: "warning",
+        autoCloseMs: null,
+        dismissLabel: null,
+        onClose: () => resolveOnce(null),
+        actions: [
+          {
+            label: confirmLabel || "Continue",
+            className: "storage-notice__btn--primary",
+            closeOnClick: false,
+            onClick: () => {
+              const input = noticeRef && noticeRef.notice ? noticeRef.notice.querySelector(`#${CSS.escape(inputId)}`) : null;
+              const value = input ? String(input.value ?? "") : "";
+              resolveOnce(value);
+              closeNotice();
+            }
+          },
+          {
+            label: "Cancel",
+            className: "storage-notice__btn--secondary",
+            closeOnClick: false,
+            onClick: () => {
+              resolveOnce(null);
+              closeNotice();
+            }
+          }
+        ]
+      });
+
+      try {
+        const input = noticeRef && noticeRef.notice ? noticeRef.notice.querySelector(`#${CSS.escape(inputId)}`) : null;
+        if (input) {
+          input.value = typeof initialValue === "string" ? initialValue : "";
+          setTimeout(() => { try { input.focus(); } catch {} }, 30);
+        }
+      } catch {}
+    });
   }
 
   function parseTimeValue(raw) {
@@ -123,7 +183,11 @@
   function normalizeBackendRoot(value) {
     const raw = typeof value === "string" ? value.trim() : "";
     if (!raw) return DEFAULT_BACKEND_ROOT;
-    const withScheme = raw.includes("://") ? raw : `http://${raw}`;
+    const lowered = raw.toLowerCase();
+    const scheme = (lowered.startsWith("localhost") || lowered.startsWith("127.0.0.1") || lowered.startsWith("0.0.0.0") || lowered.startsWith("[::1]"))
+      ? "http"
+      : "https";
+    const withScheme = raw.includes("://") ? raw : `${scheme}://${raw}`;
     let normalized = withScheme.replace(/\/+$/, "");
     try {
       const url = new URL(normalized);
@@ -173,10 +237,33 @@
     return next;
   }
 
+  function isLoggedIn() {
+    const accountId = (safeGet(ACCOUNT_ID_KEY) || "").trim();
+    if (!accountId) return false;
+    const password = safeGet(ACCOUNT_PASSWORD_KEY);
+    return typeof password === "string" && password.trim().length > 0;
+  }
+
   function getAccountConfig() {
     const accountId = (safeGet(ACCOUNT_ID_KEY) || "").trim();
     if (!accountId) return null;
-    return { accountId };
+    const password = safeGet(ACCOUNT_PASSWORD_KEY);
+    if (typeof password !== "string") return null;
+    if (!password.trim()) return null;
+    return { accountId, password };
+  }
+
+  function refreshAccountHeaderLine() {
+    const el = document.getElementById("accountHeaderLine");
+    if (!el) return;
+    const accountId = (safeGet(ACCOUNT_ID_KEY) || "").trim();
+    if (!accountId || !isLoggedIn()) {
+      el.textContent = "";
+      el.hidden = true;
+      return;
+    }
+    el.textContent = `Logged in as: ${accountId}`;
+    el.hidden = false;
   }
 
   function loadQueue() {
@@ -256,7 +343,7 @@
   }
 
   function scheduleQuickSync() {
-    const loggedIn = Boolean((safeGet(ACCOUNT_ID_KEY) || "").trim());
+    const loggedIn = isLoggedIn();
     if (!loggedIn) return;
     if (quickSyncTimerId) return;
     quickSyncTimerId = setTimeout(() => {
@@ -500,7 +587,7 @@
   }
 
   function ensureAutoSyncTimer() {
-    const loggedIn = Boolean((safeGet(ACCOUNT_ID_KEY) || "").trim());
+    const loggedIn = isLoggedIn();
     if (!loggedIn) {
       stopAutoSyncTimer();
       return;
@@ -519,15 +606,19 @@
     const url = getSyncUrl();
     const accountIdInput = document.getElementById("accountSyncAccountId");
     const requestedId = accountIdInput ? String(accountIdInput.value || "").trim() : "";
+    const password = String(safeGet(ACCOUNT_PASSWORD_KEY) ?? "");
+    if (!requestedId) throw new Error("Enter an Account ID first.");
+    if (!password.trim()) throw new Error("Enter a password first.");
     const json = await fetchJsonWithTimeout(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "register", accountId: requestedId })
+      body: JSON.stringify({ action: "register", accountId: requestedId, password })
     }, REQUEST_TIMEOUT_MS);
     if (!json || json.ok !== true || !json.accountId) {
       throw new Error("Registration failed.");
     }
     safeSet(ACCOUNT_ID_KEY, String(json.accountId));
+    safeSet(ACCOUNT_PASSWORD_KEY, password);
     setSince(0);
     setLastSyncAt(0);
     return { accountId: String(json.accountId) };
@@ -536,19 +627,50 @@
   async function checkAccountExists() {
     const cfg = getAccountConfig();
     if (!cfg) return { ok: false, skipped: true };
-    const url = `${getCheckUrl()}?accountId=${encodeURIComponent(cfg.accountId)}`;
+    const url = getCheckUrl();
     try {
-      const json = await fetchJsonWithTimeout(url, { method: "GET" }, REQUEST_TIMEOUT_MS);
-      return json && json.ok === true ? { ok: true, exists: json.exists !== false } : { ok: false, exists: false };
+      const json = await fetchJsonWithTimeout(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ accountId: cfg.accountId, password: cfg.password })
+      }, REQUEST_TIMEOUT_MS);
+      return json && json.ok === true
+        ? { ok: true, exists: json.exists !== false, hasPassword: json.hasPassword === true }
+        : { ok: false, exists: false };
     } catch (err) {
       const message = err && err.message ? String(err.message) : String(err);
       if (message.toLowerCase().includes("account not found")) return { ok: false, exists: false };
+      const lowered = message.toLowerCase();
+      if (lowered.includes("invalid password") || lowered.includes("missing password") || lowered.includes("missing authorization")) {
+        safeRemove(ACCOUNT_PASSWORD_KEY);
+        setSince(0);
+        setLastSyncAt(0);
+        queue = [];
+        safeRemove(QUEUE_KEY);
+        try { refreshOverlay(); } catch {}
+        try { refreshAccountHeaderLine(); } catch {}
+        ensureAutoSyncTimer();
+      }
       return { ok: false, error: message };
     }
   }
 
+  async function checkAccountExistsById(accountId) {
+    const normalized = String(accountId || "").trim();
+    if (!normalized) return { ok: false, exists: false, error: "Missing accountId" };
+    const url = getCheckUrl();
+    const json = await fetchJsonWithTimeout(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "exists", accountId: normalized })
+    }, REQUEST_TIMEOUT_MS);
+    if (!json || json.ok !== true) return { ok: false, exists: false, error: "Check failed" };
+    return { ok: true, exists: json.exists === true };
+  }
+
   function clearSession() {
     safeRemove(ACCOUNT_ID_KEY);
+    safeRemove(ACCOUNT_PASSWORD_KEY);
     setSince(0);
     setLastSyncAt(0);
     queue = [];
@@ -597,14 +719,32 @@
 
       lastPullAttemptAt = Date.now();
 
-      const json = await postSync({
-        action: "sync",
-        accountId: cfg.accountId,
-        deviceId,
-        since,
-        ops,
-        full: since === 0
-      });
+      let json;
+      try {
+        json = await postSync({
+          action: "sync",
+          accountId: cfg.accountId,
+          password: cfg.password,
+          deviceId,
+          since,
+          ops,
+          full: since === 0
+        });
+      } catch (err) {
+        const message = err && err.message ? String(err.message) : String(err);
+        const lowered = message.toLowerCase();
+        if (lowered.includes("invalid password") || lowered.includes("missing password") || lowered.includes("missing authorization")) {
+          safeRemove(ACCOUNT_PASSWORD_KEY);
+          setSince(0);
+          setLastSyncAt(0);
+          queue = [];
+          safeRemove(QUEUE_KEY);
+          try { refreshOverlay(); } catch {}
+          try { refreshAccountHeaderLine(); } catch {}
+          ensureAutoSyncTimer();
+        }
+        throw err;
+      }
 
       if (!json || json.ok !== true) throw new Error("Sync failed.");
       if (json.full === true && json.snapshot) {
@@ -629,14 +769,32 @@
 
       if (options.twoPhase === true) {
         const secondSince = getSince();
-        const second = await postSync({
-          action: "sync",
-          accountId: cfg.accountId,
-          deviceId,
-          since: secondSince,
-          ops: [],
-          full: false
-        });
+        let second;
+        try {
+          second = await postSync({
+            action: "sync",
+            accountId: cfg.accountId,
+            password: cfg.password,
+            deviceId,
+            since: secondSince,
+            ops: [],
+            full: false
+          });
+        } catch (err) {
+          const message = err && err.message ? String(err.message) : String(err);
+          const lowered = message.toLowerCase();
+          if (lowered.includes("invalid password") || lowered.includes("missing password") || lowered.includes("missing authorization")) {
+            safeRemove(ACCOUNT_PASSWORD_KEY);
+            setSince(0);
+            setLastSyncAt(0);
+            queue = [];
+            safeRemove(QUEUE_KEY);
+            try { refreshOverlay(); } catch {}
+            try { refreshAccountHeaderLine(); } catch {}
+            ensureAutoSyncTimer();
+          }
+          throw err;
+        }
         if (second && second.ok === true) {
           if (second.full === true && second.snapshot) {
             recordApplied(applySnapshot(second.snapshot));
@@ -674,37 +832,39 @@
     const accountIdInput = document.getElementById("accountSyncAccountId");
     const statusEl = document.getElementById("accountSyncStatus");
     if (accountIdInput) accountIdInput.value = (safeGet(ACCOUNT_ID_KEY) || "").trim();
+    if (accountIdInput) accountIdInput.disabled = isLoggedIn();
 
     if (statusEl) {
       const accountId = (safeGet(ACCOUNT_ID_KEY) || "").trim();
       const since = getSince();
       const lastSyncAt = getLastSyncAt();
-      statusEl.textContent = accountId
+      statusEl.textContent = (accountId && isLoggedIn())
         ? `Logged in as ${accountId} since ${formatTimestamp(since)}\nSync: ${formatTimestamp(lastSyncAt)}`
         : "";
     }
 
     const loginBtn = document.getElementById("accountSyncDisconnectBtn");
     if (loginBtn) {
-      const loggedIn = Boolean((safeGet(ACCOUNT_ID_KEY) || "").trim());
+      const loggedIn = isLoggedIn();
       loginBtn.textContent = loggedIn ? "Logout" : "Login";
       loginBtn.classList.toggle("danger-button", loggedIn);
     }
 
     const syncBtn = document.getElementById("accountSyncNowBtn");
     if (syncBtn) {
-      const loggedIn = Boolean((safeGet(ACCOUNT_ID_KEY) || "").trim());
+      const loggedIn = isLoggedIn();
       syncBtn.style.display = loggedIn ? "" : "none";
     }
 
     const intervalInput = document.getElementById("accountSyncIntervalSec");
     if (intervalInput) {
-      const loggedIn = Boolean((safeGet(ACCOUNT_ID_KEY) || "").trim());
+      const loggedIn = isLoggedIn();
       intervalInput.style.display = loggedIn ? "" : "none";
       intervalInput.value = String(getAutoSyncIntervalSeconds());
       intervalInput.disabled = false;
     }
 
+    refreshAccountHeaderLine();
     ensureAutoSyncTimer();
   }
 
@@ -758,7 +918,7 @@
       warningBtn.addEventListener("click", () => {
         showNotice({
           title: "LET ME BE VERY CLEAR",
-          messageHtml: "THIS IS <strong>NOT</strong> SECURE<br><br>THERE IS NO PASSWORD<br><br>THIS IS NOT ENCRYPTED<br><br>DO WITH THAT WHAT YOU MUST",
+          messageHtml: "THIS IS <strong>NOT</strong> SECURE<br><br>PASSWORDS ARE HASHED (NOT ENCRYPTED)<br><br>THIS IS NOT END-TO-END ENCRYPTED<br><br>DO WITH THAT WHAT YOU MUST",
           tone: "error",
           autoCloseMs: null
         });
@@ -768,7 +928,7 @@
 
     if (disconnectBtn) {
       disconnectBtn.addEventListener("click", () => {
-        const loggedIn = Boolean((safeGet(ACCOUNT_ID_KEY) || "").trim());
+        const loggedIn = isLoggedIn();
         if (loggedIn) {
           clearSession();
           refreshOverlay();
@@ -789,45 +949,60 @@
           });
           return;
         }
-
-        safeSet(ACCOUNT_ID_KEY, accountId);
-        setSince(0);
-        setLastSyncAt(0);
-        refreshOverlay();
-
         setBusy(true);
-        setStatusLine("Logging in…");
-        syncNow({ forcePull: true }).then(() => {
-          setBusy(false);
-          refreshOverlay();
-          showNotice({
-            title: "Account",
-            message: `Logged in as ${accountId}.`,
-            tone: "success",
-            autoCloseMs: 2500
-          });
-        }).catch((err) => {
-          setBusy(false);
-          const message = err && err.message ? String(err.message) : String(err);
-          if (message.toLowerCase().includes("account not found")) {
+        setStatusLine("Checking account…");
+
+        checkAccountExistsById(accountId).then((existsRes) => {
+          if (!existsRes || existsRes.ok !== true) {
+            throw new Error(existsRes && existsRes.error ? existsRes.error : "Failed to check account.");
+          }
+          if (existsRes.exists !== true) {
             showNotice({
-              title: "Account not found",
+              title: "Create account?",
               message: `No account exists for "${accountId}". Create it now?`,
               tone: "warning",
               autoCloseMs: null,
               dismissLabel: null,
               actions: [
                 {
-                  label: "Create account",
+                  label: "Create",
                   className: "storage-notice__btn--primary",
                   closeOnClick: true,
                   onClick: async () => {
-                    setBusy(true);
+                    const password = await promptForPassword({
+                      title: `Create account: ${accountId}`,
+                      initialValue: "",
+                      confirmLabel: "Create"
+                    });
+                    if (password === null) {
+                      setBusy(false);
+                      setStatusLine("");
+                      return;
+                    }
+                    if (!String(password).trim()) {
+                      setBusy(false);
+                      setStatusLine("");
+                      showNotice({
+                        title: "Account",
+                        message: "Password cannot be blank.",
+                        tone: "warning",
+                        autoCloseMs: 2500
+                      });
+                      return;
+                    }
+
+                    safeSet(ACCOUNT_ID_KEY, accountId);
+                    safeSet(ACCOUNT_PASSWORD_KEY, String(password));
+                    setSince(0);
+                    setLastSyncAt(0);
+                    refreshOverlay();
+
                     setStatusLine("Creating account…");
                     await registerAccount();
                     setStatusLine("Syncing…");
                     await syncNow({ forcePull: true });
                     setBusy(false);
+                    setStatusLine("");
                     refreshOverlay();
                     showNotice({
                       title: "Account",
@@ -842,22 +1017,86 @@
                   className: "storage-notice__btn--secondary",
                   closeOnClick: true,
                   onClick: () => {
-                    clearSession();
+                    setBusy(false);
+                    setStatusLine("");
                     refreshOverlay();
                   }
                 }
               ]
             });
+            setBusy(false);
+            setStatusLine("");
             return;
           }
 
+          promptForPassword({
+            title: `Login: ${accountId}`,
+            initialValue: "",
+            confirmLabel: "Login"
+          }).then((password) => {
+            if (password === null) {
+              setBusy(false);
+              setStatusLine("");
+              return;
+            }
+            if (!String(password).trim()) {
+              setBusy(false);
+              setStatusLine("");
+              showNotice({
+                title: "Account",
+                message: "Password cannot be blank.",
+                tone: "warning",
+                autoCloseMs: 2500
+              });
+              return;
+            }
+
+            safeSet(ACCOUNT_ID_KEY, accountId);
+            safeSet(ACCOUNT_PASSWORD_KEY, String(password));
+            setSince(0);
+            setLastSyncAt(0);
+            refreshOverlay();
+
+            setStatusLine("Logging in…");
+            return syncNow({ forcePull: true });
+          }).then(() => {
+            if (!isLoggedIn()) return;
+            setBusy(false);
+            setStatusLine("");
+            refreshOverlay();
+            showNotice({
+              title: "Account",
+              message: `Logged in as ${accountId}.`,
+              tone: "success",
+              autoCloseMs: 2500
+            });
+          }).catch((err) => {
+            setBusy(false);
+            setStatusLine("");
+            const message = err && err.message ? String(err.message) : String(err);
+            showNotice({
+              title: "Login failed",
+              message,
+              tone: "error"
+            });
+            if (message.toLowerCase().includes("invalid password") || message.toLowerCase().includes("missing password")) {
+              safeSet(ACCOUNT_ID_KEY, accountId);
+              safeRemove(ACCOUNT_PASSWORD_KEY);
+              setSince(0);
+              setLastSyncAt(0);
+            } else {
+              clearSession();
+            }
+            refreshOverlay();
+          });
+        }).catch((err) => {
+          setBusy(false);
+          setStatusLine("");
           showNotice({
-            title: "Login failed",
-            message,
+            title: "Account",
+            message: err && err.message ? String(err.message) : String(err),
             tone: "error"
           });
-          clearSession();
-          refreshOverlay();
         });
       });
     }
@@ -873,6 +1112,15 @@
               title: "Account",
               message: "Enter an Account ID first.",
               tone: "warning"
+            });
+            return;
+          }
+          if (!isLoggedIn()) {
+            showNotice({
+              title: "Account",
+              message: "Log in first.",
+              tone: "warning",
+              autoCloseMs: 2500
             });
             return;
           }
@@ -923,7 +1171,7 @@
     if (accountIdInput && !accountIdInput.dataset.boundEnter) {
       accountIdInput.addEventListener("keydown", (event) => {
         if (event.key !== "Enter") return;
-        const loggedIn = Boolean((safeGet(ACCOUNT_ID_KEY) || "").trim());
+        const loggedIn = isLoggedIn();
         if (!loggedIn) {
           if (disconnectBtn) disconnectBtn.click();
         } else {
@@ -937,18 +1185,19 @@
   function start() {
     installLocalStorageHook();
     wireOverlay();
-    const loggedIn = Boolean((safeGet(ACCOUNT_ID_KEY) || "").trim());
-    if (loggedIn) {
+    refreshAccountHeaderLine();
+    if (isLoggedIn()) {
       checkAccountExists().then((res) => {
-        if (res && res.ok === false && res.exists === false) {
-          clearSession();
-          refreshOverlay();
+        if (res && res.ok === true) {
+          syncNow({ forcePull: true }).catch(() => {});
           return;
         }
-        syncNow({ forcePull: true }).catch(() => {});
-      }).catch(() => {
-        syncNow({ forcePull: true }).catch(() => {});
-      });
+        if (res && res.exists === false) {
+          clearSession();
+          refreshOverlay();
+          refreshAccountHeaderLine();
+        }
+      }).catch(() => {});
     }
     ensureAutoSyncTimer();
   }

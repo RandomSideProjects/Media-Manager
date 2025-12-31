@@ -56,20 +56,46 @@ html {
   color: #f1f1f1;
   border: 1px solid #333;
   border-radius: 12px;
-  width: 420px;
+  width: 380px;
   max-width: calc(100vw - 40px);
-  padding: 16px 18px;
+  padding: 12px 14px;
   box-shadow: 0 16px 40px rgba(0,0,0,0.6);
 }
-#sourcesSettingsPanel h3 { margin: 0 0 8px 0; font-size: 1.05rem; }
+#sourcesSettingsPanel h3 { margin: 0 0 8px 0; font-size: 0.98rem; }
 #sourcesSettingsPanel .section { margin-top: 12px; padding-top: 10px; border-top: 1px solid #2a2a2a; }
 .settings-row { display: flex; align-items: center; gap: 10px; margin: 6px 0; flex-wrap: wrap; }
 .settings-actions { margin-top: 14px; display: flex; gap: 8px; justify-content: flex-end; }
-.settings-actions button { padding: 8px 12px; border: none; border-radius: 8px; cursor: pointer; }
+.settings-actions button { padding: 7px 10px; border: none; border-radius: 8px; cursor: pointer; font-size: 0.92rem; }
 .btn-primary { background: #007bff; color:#fff; }
 .btn-ghost { background: #2a2a2a; color:#f1f1f1; }
 .settings-radio { display: flex; gap: 10px; flex-wrap: wrap; }
 .settings-radio label { display: flex; align-items: center; gap: 6px; }
+
+.storage-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  width: 100%;
+  align-items: stretch;
+  justify-items: stretch;
+}
+.storage-actions-grid button {
+  margin: 0;
+  width: 100%;
+  padding: 7px 10px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 8px;
+}
+.storage-actions-grid button .icon {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  flex: 0 0 auto;
+}
 
 /* Storage menu (shared with main app) */
 .storage-menu { position: relative; display: inline-flex; align-items: center; }
@@ -82,11 +108,11 @@ html {
   transform: translate(-50%, -50%);
   flex-direction: column;
   align-items: stretch;
-  padding: 0.5rem;
+  padding: 0.4rem;
   background: #1a1a1a;
   border: 1px solid #333;
   border-radius: 8px;
-  min-width: 11rem;
+  min-width: 10rem;
   box-shadow: 0 16px 40px rgba(0,0,0,0.6);
   z-index: 10100;
 }
@@ -95,14 +121,15 @@ html {
   margin: 0;
   width: 100%;
   text-align: left;
-  padding: 0.55rem 0.7rem;
+  padding: 0.45rem 0.6rem;
+  font-size: 0.92rem;
   border: 1px solid #333;
   background: #222;
   color: #f1f1f1;
-  border-radius: 10px;
+  border-radius: 8px;
   cursor: pointer;
 }
-.storage-menu-item + .storage-menu-item { margin-top: 0.35rem; }
+.storage-menu-item + .storage-menu-item { margin-top: 0.25rem; }
 .storage-menu-item:hover { background: #2a2a2a; }
 .danger-button { background: #3a1010; border-color: #6a2222; }
 .danger-button:hover { background: #4a1414; }
@@ -121,15 +148,20 @@ html {
   background: #1a1a1a;
   color: #f1f1f1;
   border: 1px solid #333;
-  padding: 1.5rem 1.25rem 1.25rem;
+  padding: 1.15rem 1.05rem 1.05rem;
   border-radius: 12px;
-  width: min(420px, 90%);
+  width: min(380px, 90%);
   max-width: 90%;
   box-shadow: 0 20px 40px -10px rgba(0,0,0,0.65);
   position: relative;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+}
+#accountSyncPanel button:not(.account-sync-warning):not(.overlay-close) {
+  font-size: 0.95rem;
+  padding: 0.55em 1.05em;
+  margin: 0.35em;
 }
 #accountSyncPanel .account-sync-header { display: flex; align-items: center; justify-content: center; }
 #accountSyncPanel .account-sync-header h3 { margin: 0; }
@@ -195,6 +227,13 @@ html {
 #accountSyncPanel .account-sync-syncrow { width: min(260px, 100%); display: flex; gap: 0.5rem; align-items: center; }
 #accountSyncPanel .account-sync-syncrow button { flex: 1; }
 #accountSyncPanel input.account-sync-interval { width: 74px; padding: 0.35rem 0.5rem; }
+#accountSyncPanel input[type="text"],
+#accountSyncPanel input[type="password"] {
+  margin: 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
 .setting-tag {
   display: inline-flex;
   align-items: center;

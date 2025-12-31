@@ -54,11 +54,11 @@ body {
   transform: translate(-50%, -50%);
   flex-direction: column;
   align-items: stretch;
-  padding: 0.5rem;
+  padding: 0.4rem;
   background: #1a1a1a;
   border: 1px solid #333;
   border-radius: 8px;
-  min-width: 11rem;
+  min-width: 10rem;
   box-shadow: 0 16px 40px rgba(0,0,0,0.6);
   z-index: 10100;
 }
@@ -67,14 +67,15 @@ body {
   margin: 0;
   width: 100%;
   text-align: left;
-  padding: 0.55rem 0.7rem;
+  padding: 0.45rem 0.6rem;
+  font-size: 0.92rem;
   border: 1px solid #333;
   background: #222;
   color: #f1f1f1;
-  border-radius: 10px;
+  border-radius: 8px;
   cursor: pointer;
 }
-.storage-menu-item + .storage-menu-item { margin-top: 0.35rem; }
+.storage-menu-item + .storage-menu-item { margin-top: 0.25rem; }
 .storage-menu-item:hover { background: #2a2a2a; }
 .danger-button { background: #3a1010; border-color: #6a2222; }
 .danger-button:hover { background: #4a1414; }
@@ -93,15 +94,20 @@ body {
   background: #1a1a1a;
   color: #f1f1f1;
   border: 1px solid #333;
-  padding: 1.5rem 1.25rem 1.25rem;
+  padding: 1.15rem 1.05rem 1.05rem;
   border-radius: 12px;
-  width: min(420px, 90%);
+  width: min(380px, 90%);
   max-width: 90%;
   box-shadow: 0 20px 40px -10px rgba(0,0,0,0.65);
   position: relative;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+}
+#accountSyncPanel button:not(.account-sync-warning):not(.overlay-close) {
+  font-size: 0.95rem;
+  padding: 0.55em 1.05em;
+  margin: 0.35em;
 }
 #accountSyncPanel .account-sync-header { display: flex; align-items: center; justify-content: center; }
 #accountSyncPanel .account-sync-header h3 { margin: 0; }
@@ -167,6 +173,13 @@ body {
 #accountSyncPanel .account-sync-syncrow { width: min(260px, 100%); display: flex; gap: 0.5rem; align-items: center; }
 #accountSyncPanel .account-sync-syncrow button { flex: 1; }
 #accountSyncPanel input.account-sync-interval { width: 74px; padding: 0.35rem 0.5rem; }
+#accountSyncPanel input[type="text"],
+#accountSyncPanel input[type="password"] {
+  margin: 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
 .container {
   width: 90%;
   max-width: 650px;
@@ -192,7 +205,8 @@ h1 {
   gap: 0.25em;
   width: 100%;
 }
-input[type="text"] {
+input[type="text"],
+input[type="password"] {
   width: calc(100% - 0.8em);
   padding: 0.6em;
   margin-top: 0.2em;
@@ -202,7 +216,8 @@ input[type="text"] {
   color: #f1f1f1;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
-input[type="text"]:focus {
+input[type="text"]:focus,
+input[type="password"]:focus {
   outline: none;
   border-color: #007bff;
   box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.3);

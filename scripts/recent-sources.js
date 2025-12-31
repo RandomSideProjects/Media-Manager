@@ -601,6 +601,32 @@
     }
   }
 
+  function removeEntryByUniqueKey(uniqueKey) {
+    if (!uniqueKey) return false;
+    const filtered = state.items.filter((item) => {
+      const itemKey = item && item.openKind === "inline" ? item.inlineKey : item && item.path;
+      return itemKey !== uniqueKey;
+    });
+    if (filtered.length === state.items.length) return false;
+    cleanupInlinePayloads(filtered);
+    state.items = filtered.slice(0, STORAGE_LIMIT);
+    persistItems(state.items);
+    render();
+    notifyChange();
+    return true;
+  }
+
+  function removeInlineKey(inlineKey) {
+    if (!inlineKey) return false;
+    try { localStorage.removeItem(INLINE_PREFIX + inlineKey); } catch {}
+    return removeEntryByUniqueKey(inlineKey);
+  }
+
+  function removePath(path) {
+    if (!path) return false;
+    return removeEntryByUniqueKey(path);
+  }
+
   window.RSPRecentSources = {
     isEnabled: () => state.enabled,
     setEnabled,
@@ -610,6 +636,8 @@
     setSourceActive: setActiveSource,
     getItems: () => state.items.slice(),
     record: recordSource,
+    removeInlineKey,
+    removePath,
     refresh: render
   };
 

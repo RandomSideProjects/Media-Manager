@@ -1,14 +1,18 @@
 "use strict";
 
 (function () {
-  const DEV_ONLY_KEYS = new Set(['rsp_dev_mode']);
+  const DEV_ONLY_KEYS = new Set(['rsp_dev_mode', 'rsp_account_id', 'rsp_account_password', 'rsp_device_id']);
   const EXPORT_SCHEMA = 'rsp-media-manager-settings';
   const ESCAPE_KEY = 'Escape';
+  const RECENT_SOURCES_STORAGE_KEY = 'rsp_recent_sources_list_v1';
+  const RECENT_INLINE_PREFIX = 'rsp_recent_inline_payload:';
 
   let clearOverlayVisible = false;
   let importOverlayVisible = false;
+  let selectiveDeleteOverlayVisible = false;
   let clearOverlayElement = null;
   let importOverlayElement = null;
+  let selectiveDeleteOverlayElement = null;
   let pendingImportData = null;
   let pendingImportNotice = null;
 
@@ -72,6 +76,15 @@
       }
     }
     return importOverlayElement;
+  }
+
+  function ensureStorageSelectiveDeleteOverlay() {
+    if (!selectiveDeleteOverlayElement) {
+      if (window.OverlayFactory && typeof window.OverlayFactory.createStorageSelectiveDeleteOverlay === 'function') {
+        selectiveDeleteOverlayElement = window.OverlayFactory.createStorageSelectiveDeleteOverlay();
+      }
+    }
+    return selectiveDeleteOverlayElement;
   }
 
   function showStorageNotice(options = {}) {
@@ -566,6 +579,525 @@
       if (!clearOverlay) return;
       clearOverlay.style.display = 'none';
       clearOverlayVisible = false;
+    };
+
+    function formatLocalDate(value) {
+      if (!value) return '';
+      try {
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return '';
+        return date.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+      } catch {
+        return '';
+      }
+    }
+
+    function readRecentSourcesItems() {
+      let items = [];
+      if (window.RSPRecentSources && typeof window.RSPRecentSources.getItems === 'function') {
+        try { items = window.RSPRecentSources.getItems(); } catch { items = []; }
+      } else {
+        try {
+          const raw = localStorage.getItem(RECENT_SOURCES_STORAGE_KEY);
+          const parsed = raw ? JSON.parse(raw) : null;
+          if (parsed && Array.isArray(parsed.sources)) items = parsed.sources;
+        } catch {
+          items = [];
+        }
+      }
+      return (Array.isArray(items) ? items : []).filter((item) => item && typeof item === 'object' && typeof item.title === 'string' && typeof item.path === 'string');
+    }
+
+    function removeStorageKey(key) {
+      if (!key) return 0;
+      try {
+        const existed = localStorage.getItem(key) !== null;
+        localStorage.removeItem(key);
+        return existed ? 1 : 0;
+      } catch {
+        try { localStorage.removeItem(key); } catch {}
+        return 0;
+      }
+    }
+
+    function clearProgressForBaseKey(baseKey) {
+      const key = typeof baseKey === 'string' ? baseKey.trim() : String(baseKey || '').trim();
+      if (!key) return 0;
+      let removed = 0;
+      removed += removeStorageKey(key);
+      removed += removeStorageKey(`${key}:duration`);
+      removed += removeStorageKey(`${key}:part`);
+      removed += removeStorageKey(`${key}:partTime`);
+      removed += removeStorageKey(`${key}:cbzPage`);
+      removed += removeStorageKey(`${key}:cbzPages`);
+      return removed;
+    }
+
+    function coerceSeparatedFlag(value) {
+      if (value === true) return true;
+      if (value === false) return false;
+      if (typeof value === 'number') return value !== 0;
+      if (typeof value === 'string') {
+        const trimmed = value.trim().toLowerCase();
+        if (trimmed === 'true' || trimmed === '1' || trimmed === 'yes') return true;
+        if (trimmed === 'false' || trimmed === '0' || trimmed === 'no') return false;
+      }
+      return false;
+    }
+
+    function isEpisodeManga(item) {
+      if (!item) return false;
+      try {
+        const lowerSrc = String(item.src || '').toLowerCase();
+        const lowerName = String(item.fileName || '').toLowerCase();
+        if (/\.(cbz|json)(?:$|[?#])/i.test(lowerSrc)) return true;
+        if (lowerName.endsWith('.cbz') || lowerName.endsWith('.json')) return true;
+        return typeof item.VolumePageCount === 'number';
+      } catch {
+        return false;
+      }
+    }
+
+    function shouldTreatCategoryAsSeparated(category) {
+      if (!category || Number(category.separated) !== 1) return false;
+      const episodes = Array.isArray(category.episodes) ? category.episodes : [];
+      if (!episodes.length) return false;
+      return episodes.every(ep => !isEpisodeManga(ep));
+    }
+
+    function normalizeSingleTitle(title, singleTileSeparatedOnly) {
+      if (singleTileSeparatedOnly && typeof title === 'string' && /^season\s*1$/i.test(title.trim())) {
+        return 'Movie';
+      }
+      return title;
+    }
+
+    function extractEpisodeParts(entry) {
+      if (!entry || typeof entry !== 'object') return [];
+      if (Array.isArray(entry.sources)) return entry.sources;
+      if (Array.isArray(entry.parts)) return entry.parts;
+      if (Array.isArray(entry.items)) return entry.items;
+      if (Array.isArray(entry.__separatedParts)) return entry.__separatedParts;
+      return [];
+    }
+
+    function computeSepItemResumeKey(entry, context) {
+      if (!entry || typeof entry !== 'object') return '';
+      let separatedFlag = coerceSeparatedFlag(entry.separated ?? entry.seperated);
+      let rawParts = extractEpisodeParts(entry);
+      if (!separatedFlag && rawParts.length >= 2) {
+        separatedFlag = true;
+      }
+      if (!separatedFlag || rawParts.length === 0) return '';
+      const normalizedParts = rawParts.map((part, idx) => {
+        if (!part || typeof part !== 'object') return null;
+        const src = typeof part.src === 'string' ? part.src.trim() : '';
+        if (!src) return null;
+        return { title: typeof part.title === 'string' ? part.title : `Part ${idx + 1}`, src };
+      }).filter(Boolean);
+      if (!normalizedParts.length) return '';
+
+      const categoryTitle = context && typeof context.categoryTitle === 'string' ? context.categoryTitle : '';
+      const episodeTitle = typeof entry.title === 'string' ? entry.title : '';
+      const episodeIndex = Number.isFinite(Number(context && context.episodeIndex)) ? Number(context.episodeIndex) : 0;
+      const resumeSeed = `${categoryTitle}::${episodeTitle}::${episodeIndex}`;
+      if (typeof hashStringToKey !== 'function') return '';
+      return `sepitem:${hashStringToKey(resumeSeed || `${Date.now()}`)}`;
+    }
+
+    function clearSourceScopedKeys(sourceKeyValue) {
+      const prefix = typeof sourceKeyValue === 'string' ? sourceKeyValue.trim() : '';
+      if (!prefix) return 0;
+      const toRemove = [];
+      try {
+        for (let i = 0; i < localStorage.length; i += 1) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith(prefix + ':')) toRemove.push(key);
+        }
+      } catch {}
+      let removed = 0;
+      toRemove.forEach((key) => { removed += removeStorageKey(key); });
+      return removed;
+    }
+
+    function clearSeparatedGroupKeysForSourceKey(sourceKeyValue) {
+      const prefix = typeof sourceKeyValue === 'string' ? sourceKeyValue.trim() : '';
+      if (!prefix) return 0;
+      const toRemove = [];
+      const keyPrefix = `separated:${prefix}:`;
+      try {
+        for (let i = 0; i < localStorage.length; i += 1) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith(keyPrefix)) toRemove.push(key);
+        }
+      } catch {}
+      let removed = 0;
+      toRemove.forEach((key) => { removed += removeStorageKey(key); });
+      try {
+        const last = localStorage.getItem('lastEpSrc');
+        if (typeof last === 'string' && last.startsWith(keyPrefix)) removed += removeStorageKey('lastEpSrc');
+      } catch {}
+      return removed;
+    }
+
+    function clearProgressForShowJson(json, sourceKeyForGroups) {
+      const baseKeys = new Set();
+      const categories = Array.isArray(json && json.categories) ? json.categories : [];
+
+      let tileCount = 0;
+      let separatedTiles = 0;
+      categories.forEach((category) => {
+        const episodes = Array.isArray(category && category.episodes) ? category.episodes : [];
+        const useSeparated = shouldTreatCategoryAsSeparated(category);
+        if (useSeparated) {
+          if (episodes.length) { tileCount += 1; separatedTiles += 1; }
+        } else {
+          tileCount += episodes.length;
+        }
+      });
+      const singleTileSeparatedOnly = tileCount === 1 && separatedTiles === 1;
+
+      let flatIndex = 0;
+      categories.forEach((category, categoryIdx) => {
+        const categoryTitleRaw = (category && category.category) ? category.category : `Category ${categoryIdx + 1}`;
+        const categoryTitle = normalizeSingleTitle(categoryTitleRaw, singleTileSeparatedOnly);
+        const episodes = Array.isArray(category && category.episodes) ? category.episodes : [];
+        const useSeparated = shouldTreatCategoryAsSeparated(category);
+
+        if (useSeparated && episodes.length && sourceKeyForGroups) {
+          baseKeys.add(`separated:${sourceKeyForGroups}:${flatIndex}`);
+        }
+
+        episodes.forEach((episode, episodeIndex) => {
+          if (!episode || typeof episode !== 'object') { flatIndex += 1; return; }
+          const pk = episode.progressKey ? String(episode.progressKey).trim() : '';
+          const src = episode.src ? String(episode.src).trim() : '';
+          if (pk) baseKeys.add(pk);
+          if (src) baseKeys.add(src);
+
+          const sepKey = computeSepItemResumeKey(episode, { categoryTitle, episodeIndex });
+          if (sepKey) baseKeys.add(sepKey);
+
+          const parts = extractEpisodeParts(episode);
+          parts.forEach((part) => {
+            if (!part || typeof part !== 'object') return;
+            const partSrc = part.src ? String(part.src).trim() : '';
+            if (partSrc) baseKeys.add(partSrc);
+          });
+
+          flatIndex += 1;
+        });
+      });
+
+      let removed = 0;
+      baseKeys.forEach((key) => { removed += clearProgressForBaseKey(key); });
+      try {
+        const last = localStorage.getItem('lastEpSrc');
+        if (last && baseKeys.has(String(last))) removed += removeStorageKey('lastEpSrc');
+      } catch {}
+      return removed;
+    }
+
+    async function tryLoadShowJsonForEntry(entry) {
+      if (!entry || typeof entry !== 'object') return null;
+      const openKind = typeof entry.openKind === 'string' ? entry.openKind : '';
+      const inlineKeyRaw = typeof entry.inlineKey === 'string' ? entry.inlineKey.trim() : '';
+      const pathRaw = typeof entry.path === 'string' ? entry.path.trim() : '';
+
+      if ((openKind === 'inline' || pathRaw.startsWith('inline::')) && (inlineKeyRaw || pathRaw.startsWith('inline::'))) {
+        const inlineKey = inlineKeyRaw || pathRaw.slice('inline::'.length);
+        const payloadKey = RECENT_INLINE_PREFIX + inlineKey;
+        try {
+          const raw = localStorage.getItem(payloadKey);
+          if (!raw) return null;
+          return JSON.parse(raw);
+        } catch {
+          return null;
+        }
+      }
+
+      if (!pathRaw || pathRaw.startsWith('local::')) return null;
+
+      if (!/^https?:\/\//i.test(pathRaw) && !pathRaw.startsWith('./') && !pathRaw.startsWith('/') && !/\.json(?:$|[?#])/i.test(pathRaw)) {
+        return null;
+      }
+
+      try {
+        const response = await fetch(pathRaw, { cache: 'no-store' });
+        if (!response) return null;
+        const allowStatus0 = response.status === 0;
+        if (!response.ok && !allowStatus0) return null;
+        return await response.json();
+      } catch {
+        return null;
+      }
+    }
+
+    function clearSettingsKeys() {
+      const keys = [
+        'theme',
+        'clippingEnabled',
+        'clipPreviewEnabled',
+        'clipLocalMode',
+        'selectiveDownloadsEnabled',
+        'downloadConcurrency',
+        'storageShowCameraOptions',
+        'popoutToolbarPlacement',
+        'rsp_recent_sources_enabled',
+        'rsp_recent_sources_placement'
+      ];
+      return keys.reduce((total, key) => total + removeStorageKey(key), 0);
+    }
+
+    function clearOtherAppData() {
+      const keys = [
+        'clipPresets',
+        'clipPreferredLength',
+        'clipHistory',
+        'clipBackendUrl',
+        'mm_upload_settings',
+        'rsp_account_id',
+        'rsp_device_id',
+        'rsp_account_auto_sync_sec',
+        'currentSourceKey',
+        'lastEpSrc',
+        'dev:mmBackendRoot',
+        'dev:accountSyncUrl',
+        'dev:accountSyncSince',
+        'dev:accountSyncLastSyncAt',
+        'dev:accountSyncQueue',
+        'dev:accountSyncLock'
+      ];
+      return keys.reduce((total, key) => total + removeStorageKey(key), 0);
+    }
+
+    const openSelectiveDeleteOverlay = () => {
+      selectiveDeleteOverlayElement = ensureStorageSelectiveDeleteOverlay();
+      if (!selectiveDeleteOverlayElement) return;
+      selectiveDeleteOverlayElement.style.display = 'flex';
+      selectiveDeleteOverlayVisible = true;
+
+      const listEl = document.getElementById('storageSelectiveDeleteList');
+      const confirmBtn = document.getElementById('storageSelectiveDeleteConfirmBtn');
+      const cancelBtn = document.getElementById('storageSelectiveDeleteCancelBtn');
+      const closeBtn = document.getElementById('storageSelectiveDeleteCloseBtn');
+      const selectAllBtn = document.getElementById('storageSelectiveDeleteSelectAllBtn');
+      const selectNoneBtn = document.getElementById('storageSelectiveDeleteSelectNoneBtn');
+      const clearAllBtn = document.getElementById('storageSelectiveDeleteClearAllBtn');
+      const removeRecentToggle = document.getElementById('storageSelectiveDeleteRemoveRecentToggle');
+      const removeProgressToggle = document.getElementById('storageSelectiveDeleteRemoveProgressToggle');
+      const removeSettingsToggle = document.getElementById('storageSelectiveDeleteRemoveSettingsToggle');
+      const removeOtherToggle = document.getElementById('storageSelectiveDeleteRemoveOtherToggle');
+
+      const hasAnyCheckedShows = () => {
+        if (!listEl) return false;
+        return !!listEl.querySelector('input[type="checkbox"][data-mm-delete-item="1"]:checked');
+      };
+
+      const updateConfirmState = () => {
+        if (!confirmBtn) return;
+        const wantsSettings = !!(removeSettingsToggle && removeSettingsToggle.checked);
+        const wantsOther = !!(removeOtherToggle && removeOtherToggle.checked);
+        confirmBtn.disabled = !hasAnyCheckedShows() && !wantsSettings && !wantsOther;
+      };
+
+      const renderList = () => {
+        const items = readRecentSourcesItems();
+        if (listEl) listEl.innerHTML = '';
+        if (!listEl) return;
+        if (!items.length) {
+          const empty = document.createElement('div');
+          empty.className = 'storage-delete-empty';
+          empty.textContent = 'No recent shows found in local storage.';
+          listEl.appendChild(empty);
+          updateConfirmState();
+          return;
+        }
+        items.forEach((item) => {
+          const openKind = typeof item.openKind === 'string' ? item.openKind : '';
+          const inlineKey = typeof item.inlineKey === 'string' ? item.inlineKey.trim() : '';
+          const path = typeof item.path === 'string' ? item.path.trim() : '';
+          const title = (typeof item.title === 'string' && item.title.trim()) ? item.title.trim() : 'Untitled';
+          const file = (typeof item.file === 'string' && item.file.trim()) ? item.file.trim() : '';
+          const when = formatLocalDate(item.recordedAt || item.LatestTime);
+          const count = Number.isFinite(Number(item.itemCount)) ? Number(item.itemCount) : NaN;
+
+          const row = document.createElement('div');
+          row.className = 'storage-delete-item';
+
+          const checkbox = document.createElement('input');
+          checkbox.type = 'checkbox';
+          checkbox.dataset.mmDeleteItem = '1';
+          checkbox.dataset.openKind = openKind;
+          if (inlineKey) checkbox.dataset.inlineKey = inlineKey;
+          if (path) checkbox.dataset.path = path;
+          if (file) checkbox.dataset.sourceKey = file;
+          checkbox.dataset.title = title;
+          const unique = openKind === 'inline' && inlineKey ? `inline:${inlineKey}` : `path:${path || title}`;
+          const safeId = (typeof hashStringToKey === 'function')
+            ? hashStringToKey(unique)
+            : unique.replace(/[^A-Za-z0-9_-]+/g, '_').slice(0, 64);
+          checkbox.id = `storageDeleteItem-${safeId}`;
+          checkbox.addEventListener('change', updateConfirmState);
+
+          const body = document.createElement('div');
+          body.className = 'storage-delete-item__body';
+
+          const label = document.createElement('label');
+          label.className = 'storage-delete-item__title';
+          label.setAttribute('for', checkbox.id);
+          label.textContent = title;
+
+          const meta = document.createElement('div');
+          meta.className = 'storage-delete-item__meta';
+          const bits = [];
+          if (Number.isFinite(count) && count >= 0) bits.push(`${count} item${count === 1 ? '' : 's'}`);
+          if (when) bits.push(when);
+          if (openKind) bits.push(openKind);
+          if (file) bits.push(file);
+          meta.textContent = bits.join(' · ');
+
+          body.append(label, meta);
+          row.append(checkbox, body);
+          listEl.appendChild(row);
+        });
+        updateConfirmState();
+      };
+
+      const setAllChecked = (checked) => {
+        if (!listEl) return;
+        const inputs = listEl.querySelectorAll('input[type="checkbox"][data-mm-delete-item="1"]');
+        inputs.forEach((input) => { input.checked = checked; });
+        updateConfirmState();
+      };
+
+      if (!selectiveDeleteOverlayElement.dataset.bound) {
+        if (selectAllBtn) selectAllBtn.addEventListener('click', () => setAllChecked(true));
+        if (selectNoneBtn) selectNoneBtn.addEventListener('click', () => setAllChecked(false));
+        if (closeBtn) closeBtn.addEventListener('click', () => closeSelectiveDeleteOverlay());
+        if (cancelBtn) cancelBtn.addEventListener('click', () => closeSelectiveDeleteOverlay());
+        if (removeSettingsToggle) removeSettingsToggle.addEventListener('change', updateConfirmState);
+        if (removeOtherToggle) removeOtherToggle.addEventListener('change', updateConfirmState);
+        if (clearAllBtn) {
+          clearAllBtn.addEventListener('click', () => {
+            closeSelectiveDeleteOverlay();
+            openClearOverlay();
+          });
+        }
+        if (confirmBtn) {
+          confirmBtn.addEventListener('click', async () => {
+            if (!listEl) return;
+            const selectedInputs = Array.from(listEl.querySelectorAll('input[type="checkbox"][data-mm-delete-item="1"]:checked'));
+            const wantsSettings = !!(removeSettingsToggle && removeSettingsToggle.checked);
+            const wantsOther = !!(removeOtherToggle && removeOtherToggle.checked);
+            const removeRecent = !!(removeRecentToggle && removeRecentToggle.checked);
+            const removeProgress = !!(removeProgressToggle && removeProgressToggle.checked);
+
+            if (!selectedInputs.length && !wantsSettings && !wantsOther) {
+              showStorageNotice({
+                title: 'Delete',
+                message: 'Select at least one show, or pick a data category to clear.',
+                tone: 'warning'
+              });
+              return;
+            }
+
+            confirmBtn.disabled = true;
+            try {
+              let progressKeysRemoved = 0;
+              let settingsRemoved = 0;
+              let otherRemoved = 0;
+              const selectedCount = selectedInputs.length;
+
+              for (let i = 0; i < selectedInputs.length; i += 1) {
+                const input = selectedInputs[i];
+                const openKind = String(input.dataset.openKind || '');
+                const inlineKey = String(input.dataset.inlineKey || '').trim();
+                const path = String(input.dataset.path || '').trim();
+                const sourceKeyForGroups = String(input.dataset.sourceKey || '').trim();
+
+                if (removeProgress) {
+                  progressKeysRemoved += clearSourceScopedKeys(sourceKeyForGroups);
+                  progressKeysRemoved += clearSeparatedGroupKeysForSourceKey(sourceKeyForGroups);
+                  const entry = { openKind, inlineKey, path };
+                  const json = await tryLoadShowJsonForEntry(entry);
+                  if (json) {
+                    progressKeysRemoved += clearProgressForShowJson(json, sourceKeyForGroups);
+                  }
+                }
+
+                if (removeRecent) {
+                  if (openKind === 'inline' && inlineKey && window.RSPRecentSources && typeof window.RSPRecentSources.removeInlineKey === 'function') {
+                    try { window.RSPRecentSources.removeInlineKey(inlineKey); } catch {}
+                  } else if (path && window.RSPRecentSources && typeof window.RSPRecentSources.removePath === 'function') {
+                    try { window.RSPRecentSources.removePath(path); } catch {}
+                  } else {
+                    try {
+                      const raw = localStorage.getItem(RECENT_SOURCES_STORAGE_KEY);
+                      const parsed = raw ? JSON.parse(raw) : null;
+                      if (parsed && Array.isArray(parsed.sources)) {
+                        const next = parsed.sources.filter((entry) => {
+                          if (!entry || typeof entry !== 'object') return true;
+                          if (openKind === 'inline' && inlineKey && entry.openKind === 'inline') return String(entry.inlineKey || '') !== inlineKey;
+                          if (path) return String(entry.path || '') !== path;
+                          return true;
+                        });
+                        localStorage.setItem(RECENT_SOURCES_STORAGE_KEY, JSON.stringify({ sources: next }));
+                      }
+                    } catch {}
+                    if (openKind === 'inline' && inlineKey) {
+                      try { localStorage.removeItem(RECENT_INLINE_PREFIX + inlineKey); } catch {}
+                    }
+                  }
+                }
+
+              }
+
+              if (wantsSettings) settingsRemoved += clearSettingsKeys();
+              if (wantsOther) otherRemoved += clearOtherAppData();
+
+              renderList();
+              const messages = [];
+              if (selectedCount > 0) {
+                if (removeRecent) {
+                  messages.push(`Removed ${selectedCount} show${selectedCount === 1 ? '' : 's'} from Recent sources`);
+                }
+                if (removeProgress) {
+                  messages.push(`Cleared ${progressKeysRemoved} progress entr${progressKeysRemoved === 1 ? 'y' : 'ies'}`);
+                }
+              }
+              if (wantsSettings) {
+                messages.push(`Removed ${settingsRemoved} setting entr${settingsRemoved === 1 ? 'y' : 'ies'}`);
+              }
+              if (wantsOther) {
+                messages.push(`Removed ${otherRemoved} other entr${otherRemoved === 1 ? 'y' : 'ies'}`);
+              }
+              if (!messages.length) messages.push('No changes made.');
+              showStorageNotice({
+                title: 'Storage updated',
+                message: messages.join('. ') + '.',
+                tone: 'success',
+                autoCloseMs: 4500
+              });
+            } finally {
+              confirmBtn.disabled = false;
+              updateConfirmState();
+            }
+          });
+        }
+        selectiveDeleteOverlayElement.addEventListener('click', (event) => {
+          if (event.target === selectiveDeleteOverlayElement) closeSelectiveDeleteOverlay();
+        });
+        selectiveDeleteOverlayElement.dataset.bound = '1';
+      }
+
+      renderList();
+    };
+
+    const closeSelectiveDeleteOverlay = () => {
+      if (!selectiveDeleteOverlayElement) return;
+      selectiveDeleteOverlayElement.style.display = 'none';
+      selectiveDeleteOverlayVisible = false;
     };
 
     const resetImportInputs = () => {
@@ -1113,7 +1645,7 @@
     if (storageDeleteBtn) {
       storageDeleteBtn.addEventListener('click', () => {
         closeMenu();
-        openClearOverlay();
+        openSelectiveDeleteOverlay();
       });
     }
 
@@ -1219,6 +1751,10 @@
       }
       if (clearOverlayVisible) {
         closeClearOverlay();
+        handled = true;
+      }
+      if (selectiveDeleteOverlayVisible) {
+        closeSelectiveDeleteOverlay();
         handled = true;
       }
       if (handled) {

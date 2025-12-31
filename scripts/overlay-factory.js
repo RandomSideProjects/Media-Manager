@@ -28,6 +28,27 @@ window.OverlayFactory = (function() {
     return el;
   }
 
+  function assetPath(fileName) {
+    const raw = typeof fileName === 'string' ? fileName.trim() : '';
+    if (!raw) return '';
+    const path = (typeof window !== 'undefined' && window.location && window.location.pathname)
+      ? String(window.location.pathname)
+      : '';
+    const needsParent = /\/(Sources|Creator)\//.test(path);
+    return `${needsParent ? '../' : ''}Assets/${raw}`;
+  }
+
+  function iconButton(id, label, iconFileName, extraClassName) {
+    return createElement('button', {
+      id,
+      type: 'button',
+      className: extraClassName || ''
+    }, [
+      createElement('img', { className: 'icon', src: assetPath(iconFileName), alt: '', 'aria-hidden': 'true' }),
+      label
+    ]);
+  }
+
   // Remove overlay by ID
   function removeOverlay(id) {
     const el = document.getElementById(id);
@@ -44,16 +65,15 @@ window.OverlayFactory = (function() {
         createElement('input', { type: 'checkbox', id: 'clipToggle' }),
         createElement('label', { for: 'clipToggle' }, ['Enable clipping'])
       ]),
-      createElement('div', { className: 'setting-row' }, [
+      createElement('div', { className: 'setting-row', id: 'clipPreviewRow' }, [
         createElement('input', { type: 'checkbox', id: 'clipPreviewToggle' }),
-        createElement('label', { for: 'clipPreviewToggle', 'data-setting-tag': 'beta' }, ['Clip preview'])
+        createElement('label', { for: 'clipPreviewToggle' }, ['Clip preview'])
       ]),
-      createElement('div', { className: 'setting-row' }, [
+      createElement('div', { className: 'setting-row', id: 'clipLocalModeRow' }, [
         createElement('div', { style: { display: 'flex', alignItems: 'center', gap: '8px' } }, [
           createElement('input', { type: 'checkbox', id: 'clipLocalModeToggle' }),
           createElement('label', { for: 'clipLocalModeToggle' }, ['Local clipping only'])
-        ]),
-        createElement('small', {}, ['Skip the clip API and keep the capture process on-device.'])
+        ])
       ])
     ]);
 
@@ -61,13 +81,74 @@ window.OverlayFactory = (function() {
       createElement('div', { className: 'setting-category-header' }, ['Downloads']),
       createElement('div', { className: 'setting-row' }, [
         createElement('input', { type: 'checkbox', id: 'selectiveDownloadToggle' }),
-        createElement('label', { for: 'selectiveDownloadToggle', 'data-setting-tag': 'beta' }, ['Selective downloads'])
+        createElement('label', { for: 'selectiveDownloadToggle' }, ['Selective downloads'])
       ]),
-      createElement('div', { className: 'setting-row' }, [
+      createElement('div', { className: 'download-concurrency-row' }, [
         createElement('label', { for: 'downloadConcurrencyRange' }, ['Download concurrency']),
-        createElement('input', { type: 'range', id: 'downloadConcurrencyRange', min: '1', max: '8', step: '1', value: '2' }),
-        createElement('span', { id: 'downloadConcurrencyValue' }, ['2'])
+        createElement('div', { className: 'download-concurrency-controls' }, [
+          createElement('input', { type: 'range', id: 'downloadConcurrencyRange', min: '1', max: '8', step: '1', value: '2' }),
+          createElement('span', { id: 'downloadConcurrencyValue' }, ['2'])
+        ])
       ])
+    ]);
+
+    const generalSection = createElement('div', { className: 'setting-category' }, [
+      createElement('div', { className: 'setting-category-header' }, ['General']),
+      createElement('div', { className: 'setting-row recent-sources-setting' }, [
+        createElement('div', { className: 'recent-sources-label' }, [
+          createElement('span', {}, ['Recent sources'])
+        ]),
+        createElement('div', { className: 'recent-sources-controls' }, [
+          createElement('input', { type: 'checkbox', id: 'recentSourcesToggle', 'aria-label': 'Enable recent sources' }),
+          createElement('select', { id: 'recentSourcesPlacement', 'aria-label': 'Recent sources placement' }, [
+            createElement('option', { value: 'bottom' }, ['Bottom']),
+            createElement('option', { value: 'left' }, ['Left']),
+            createElement('option', { value: 'right' }, ['Right'])
+          ])
+        ])
+      ])
+    ]);
+
+    const storageSection = createElement('div', { className: 'setting-category' }, [
+      createElement('div', { className: 'setting-category-header' }, ['Storage']),
+      createElement('div', { className: 'setting-row' }, [
+        createElement('input', { type: 'checkbox', id: 'storageShowCameraOptionsToggle' }),
+        createElement('label', { for: 'storageShowCameraOptionsToggle' }, ['Show QR camera options'])
+      ]),
+      createElement('div', { className: 'storage-actions-grid' }, [
+        iconButton('storageImportBtn', 'Import', 'Import.svg'),
+        iconButton('storageExportBtn', 'Export', 'Export.svg'),
+        iconButton('storageAccountSyncBtn', 'Account', 'Account.svg'),
+        iconButton('storageDeleteBtn', 'Delete', 'Delete.svg', 'danger-button')
+      ])
+    ]);
+
+    const theaterSection = createElement('div', { className: 'setting-category' }, [
+      createElement('div', { className: 'setting-category-header' }, ['Theater']),
+      createElement('div', { className: 'setting-row' }, [
+        createElement('label', { for: 'popoutToolbarPlacement' }, ['Pop-out toolbar placement']),
+        createElement('select', { id: 'popoutToolbarPlacement', 'aria-label': 'Pop-out toolbar placement' }, [
+          createElement('option', { value: 'bottom' }, ['Bottom']),
+          createElement('option', { value: 'left' }, ['Left']),
+          createElement('option', { value: 'right' }, ['Right'])
+        ])
+      ])
+    ]);
+
+    const leftColumn = createElement('div', { className: 'settings-category-col' }, [
+      clippingSection,
+      generalSection,
+      theaterSection
+    ]);
+
+    const rightColumn = createElement('div', { className: 'settings-category-col' }, [
+      downloadsSection,
+      storageSection
+    ]);
+
+    const categoriesColumns = createElement('div', { className: 'settings-categories-columns' }, [
+      leftColumn,
+      rightColumn
     ]);
     
     const overlay = createElement('div', { id: 'settingsOverlay' }, [
@@ -76,63 +157,9 @@ window.OverlayFactory = (function() {
           createElement('h3', {}, ['Settings']),
           createElement('button', { id: 'settingsCloseBtn' }, ['Close'])
         ]),
-        clippingSection,
-        downloadsSection,
-        createElement('div', { className: 'setting-category' }, [
-          createElement('div', { className: 'setting-category-header' }, ['General']),
-          createElement('div', { className: 'setting-row recent-sources-setting' }, [
-            createElement('div', { className: 'recent-sources-label' }, [
-              createElement('span', { 'data-setting-tag': 'beta' }, ['Recent sources']),
-              createElement('small', {}, ['Show your last loaded sources on the home screen.'])
-            ]),
-            createElement('div', { className: 'recent-sources-controls' }, [
-              createElement('input', { type: 'checkbox', id: 'recentSourcesToggle', 'aria-label': 'Enable recent sources' }),
-              createElement('select', { id: 'recentSourcesPlacement', 'aria-label': 'Recent sources placement' }, [
-                createElement('option', { value: 'bottom' }, ['Bottom']),
-                createElement('option', { value: 'left' }, ['Left']),
-                createElement('option', { value: 'right' }, ['Right'])
-              ])
-            ])
-          ])
-        ]),
-        createElement('div', { className: 'setting-category' }, [
-          createElement('div', { className: 'setting-category-header' }, ['Storage']),
-          createElement('div', { className: 'setting-row' }, [
-            createElement('input', { type: 'checkbox', id: 'storageShowCameraOptionsToggle' }),
-            createElement('label', { for: 'storageShowCameraOptionsToggle' }, ['Show camera options (QR import)'])
-          ]),
-          createElement('small', { style: { opacity: '.7', marginTop: '4px', display: 'block' } }, [
-            'If enabled, the QR scanner will list available cameras so you can pick one.'
-          ])
-        ]),
-        createElement('div', { className: 'setting-category' }, [
-          createElement('div', { className: 'setting-category-header' }, ['Theater']),
-          createElement('div', { className: 'setting-row' }, [
-            createElement('label', { for: 'popoutToolbarPlacement' }, ['Pop-out toolbar placement']),
-            createElement('select', { id: 'popoutToolbarPlacement', 'aria-label': 'Pop-out toolbar placement' }, [
-              createElement('option', { value: 'bottom' }, ['Bottom']),
-              createElement('option', { value: 'left' }, ['Left']),
-              createElement('option', { value: 'right' }, ['Right'])
-            ])
-          ]),
-          createElement('small', { style: { opacity: '.7', marginTop: '4px', display: 'block' } }, [
-            'Choose where the pop-out toolbar should appear when you move your mouse near the screen edge.'
-          ])
-        ]),
-        createElement('div', { className: 'setting-row' }, [
-          createElement('div', { className: 'storage-menu' }, [
-            createElement('button', { id: 'storageMenuBtn', type: 'button' }, ['Storage']),
-            createElement('div', { id: 'storageMenuPanel', className: 'storage-menu-panel', role: 'menu', 'aria-hidden': 'true' }, [
-              createElement('button', { id: 'storageDeleteBtn', type: 'button', className: 'danger-button storage-menu-item' }, ['Delete storage']),
-              createElement('button', { id: 'storageExportBtn', type: 'button', className: 'storage-menu-item' }, ['Export']),
-              createElement('button', { id: 'storageImportBtn', type: 'button', className: 'storage-menu-item' }, ['Import']),
-              createElement('button', { id: 'storageAccountSyncBtn', type: 'button', className: 'storage-menu-item' }, ['Account'])
-            ])
-          ])
-        ]),
-        createElement('div', { className: 'setting-row', id: 'devMenuRow', style: { display: 'none' }, 'data-setting-tag': 'dev' }, [
-          createElement('button', { id: 'devMenuBtn', type: 'button' }, ['Dev Menu']),
-          createElement('span', { className: 'dev-menu-status', id: 'devMenuStatus' }, ['Developer tools'])
+        categoriesColumns,
+        createElement('div', { className: 'setting-row settings-dev-menu-row', id: 'devMenuRow', style: { display: 'none' } }, [
+          createElement('button', { id: 'devMenuBtn', type: 'button' }, ['Dev Menu'])
         ])
       ])
     ]);
@@ -162,6 +189,52 @@ window.OverlayFactory = (function() {
     return overlay;
   }
 
+  // Create selective storage delete overlay (per-show)
+  function createStorageSelectiveDeleteOverlay() {
+    removeOverlay('storageSelectiveDeleteOverlay');
+
+    const overlay = createElement('div', { id: 'storageSelectiveDeleteOverlay' }, [
+      createElement('div', { id: 'storageSelectiveDeletePanel' }, [
+        createElement('div', { className: 'setting-row storage-delete-header' }, [
+          createElement('h3', {}, ['Delete from local storage']),
+          createElement('button', { id: 'storageSelectiveDeleteCloseBtn', type: 'button' }, ['Close'])
+        ]),
+        createElement('p', {}, ['Select what to delete from local storage.']),
+        createElement('div', { className: 'setting-row storage-delete-options' }, [
+          createElement('label', { className: 'storage-delete-option' }, [
+            createElement('input', { id: 'storageSelectiveDeleteRemoveRecentToggle', type: 'checkbox', checked: '' }),
+            createElement('span', {}, ['Remove selected shows from Recent sources'])
+          ]),
+          createElement('label', { className: 'storage-delete-option' }, [
+            createElement('input', { id: 'storageSelectiveDeleteRemoveProgressToggle', type: 'checkbox', checked: '' }),
+            createElement('span', {}, ['Clear watch times / progress for selected shows'])
+          ]),
+          createElement('label', { className: 'storage-delete-option' }, [
+            createElement('input', { id: 'storageSelectiveDeleteRemoveSettingsToggle', type: 'checkbox' }),
+            createElement('span', {}, ['Also clear app settings (theme/toggles)'])
+          ]),
+          createElement('label', { className: 'storage-delete-option' }, [
+            createElement('input', { id: 'storageSelectiveDeleteRemoveOtherToggle', type: 'checkbox' }),
+            createElement('span', {}, ['Also clear other app data (clip presets/history, account info)'])
+          ])
+        ]),
+        createElement('div', { className: 'setting-row storage-delete-tools' }, [
+          createElement('button', { id: 'storageSelectiveDeleteSelectAllBtn', type: 'button' }, ['Select all']),
+          createElement('button', { id: 'storageSelectiveDeleteSelectNoneBtn', type: 'button' }, ['Select none'])
+        ]),
+        createElement('div', { id: 'storageSelectiveDeleteList', className: 'storage-delete-list' }),
+        createElement('div', { className: 'setting-row storage-delete-actions' }, [
+          createElement('button', { id: 'storageSelectiveDeleteConfirmBtn', type: 'button', className: 'danger-button' }, ['Apply']),
+          createElement('button', { id: 'storageSelectiveDeleteCancelBtn', type: 'button' }, ['Cancel']),
+          createElement('button', { id: 'storageSelectiveDeleteClearAllBtn', type: 'button', className: 'danger-button' }, ['Clear ALL storage…'])
+        ])
+      ])
+    ]);
+
+    document.body.appendChild(overlay);
+    return overlay;
+  }
+
   // Create storage import overlay
   function createStorageImportOverlay() {
     removeOverlay('storageImportOverlay');
@@ -179,8 +252,8 @@ window.OverlayFactory = (function() {
             id: 'storageImportScanBtn',
             type: 'button',
             className: 'scanner-launcher',
-            title: 'Scan Catbox QR code',
-            'aria-label': 'Scan Catbox QR code using camera'
+            title: 'Scan QR code',
+            'aria-label': 'Scan QR code using camera'
           }, ['Scan QR'])
         ]),
         createElement('div', { className: 'import-divider' }, ['or']),
@@ -251,7 +324,7 @@ window.OverlayFactory = (function() {
             createElement('div', {
               className: 'account-sync-warning-tooltip',
               role: 'note',
-              innerHTML: 'LET ME BE VERY CLEAR<br><br>THIS IS <strong>NOT</strong> SECURE<br><br>THERE IS NO PASSWORD<br><br>THIS IS NOT ENCRYPTED<br><br>DO WITH THAT WHAT YOU MUST'
+              innerHTML: 'LET ME BE VERY CLEAR<br><br>THIS IS <strong>NOT</strong> SECURE<br><br>PASSWORDS ARE HASHED (NOT ENCRYPTED)<br><br>THIS IS NOT END-TO-END ENCRYPTED<br><br>DO WITH THAT WHAT YOU MUST'
             }, [])
           ]),
           createElement('h3', {}, ['Account']),
@@ -447,16 +520,11 @@ window.OverlayFactory = (function() {
         ]),
         createElement('div', { className: 'section' }, [
           createElement('div', { className: 'settings-row' }, [createElement('strong', {}, ['Storage'])]),
-          createElement('div', { className: 'settings-row' }, [
-            createElement('div', { className: 'storage-menu' }, [
-              createElement('button', { id: 'storageMenuBtn', type: 'button' }, ['Storage']),
-              createElement('div', { id: 'storageMenuPanel', className: 'storage-menu-panel', role: 'menu', 'aria-hidden': 'true' }, [
-                createElement('button', { id: 'storageDeleteBtn', type: 'button', className: 'danger-button storage-menu-item' }, ['Delete storage']),
-                createElement('button', { id: 'storageExportBtn', type: 'button', className: 'storage-menu-item' }, ['Export']),
-                createElement('button', { id: 'storageImportBtn', type: 'button', className: 'storage-menu-item' }, ['Import']),
-                createElement('button', { id: 'storageAccountSyncBtn', type: 'button', className: 'storage-menu-item' }, ['Account'])
-              ])
-            ])
+          createElement('div', { className: 'settings-row storage-actions-grid' }, [
+            iconButton('storageImportBtn', 'Import', 'Import.svg'),
+            iconButton('storageExportBtn', 'Export', 'Export.svg'),
+            iconButton('storageAccountSyncBtn', 'Account', 'Account.svg'),
+            iconButton('storageDeleteBtn', 'Delete', 'Delete.svg', 'danger-button')
           ])
         ]),
         createElement('div', { className: 'settings-actions' }, [
@@ -1024,6 +1092,7 @@ window.OverlayFactory = (function() {
   return {
     createSettingsOverlay,
     createClearStorageOverlay,
+    createStorageSelectiveDeleteOverlay,
     createStorageImportOverlay,
     createStorageImportScanOverlay,
     createAccountSyncOverlay,

@@ -6,6 +6,8 @@ console.log('[Settings] Script loaded');
 let settingsOverlay = null;
 let settingsCloseBtn = null;
 let popoutToolbarPlacementSelect = null;
+let clipPreviewRow = null;
+let clipLocalModeRow = null;
 
 const DEFAULT_POPOUT_TOOLBAR_PLACEMENT = 'bottom';
 const VALID_POPOUT_TOOLBAR_PLACEMENTS = ['bottom', 'left', 'right'];
@@ -45,6 +47,8 @@ function ensureSettingsOverlay() {
       window.clipToggle = document.getElementById('clipToggle');
       window.clipPreviewToggle = document.getElementById('clipPreviewToggle');
       window.clipLocalModeToggle = document.getElementById('clipLocalModeToggle');
+      clipPreviewRow = document.getElementById('clipPreviewRow');
+      clipLocalModeRow = document.getElementById('clipLocalModeRow');
       window.selectiveDownloadToggle = document.getElementById('selectiveDownloadToggle');
       window.downloadConcurrencyRange = document.getElementById('downloadConcurrencyRange');
       window.downloadConcurrencyValue = document.getElementById('downloadConcurrencyValue');
@@ -61,6 +65,14 @@ function ensureSettingsOverlay() {
     }
   }
   return settingsOverlay;
+}
+
+function updateClippingDependentControls() {
+  const clippingEnabled = !!(window.clipToggle && window.clipToggle.checked);
+  if (clipPreviewRow) clipPreviewRow.style.display = clippingEnabled ? '' : 'none';
+  if (clipLocalModeRow) clipLocalModeRow.style.display = clippingEnabled ? '' : 'none';
+  if (window.clipPreviewToggle) window.clipPreviewToggle.disabled = !clippingEnabled;
+  if (window.clipLocalModeToggle) window.clipLocalModeToggle.disabled = !clippingEnabled;
 }
 
 // Create overlay immediately so storage.js and dev-menu.js can access its elements
@@ -103,6 +115,7 @@ function initializeSettingsValues() {
       const enabled = clipToggle.checked;
       localStorage.setItem('clippingEnabled', enabled);
       if (window.clipBtn) window.clipBtn.style.display = enabled ? 'inline-block' : 'none';
+      updateClippingDependentControls();
     });
     clipToggle.dataset.bound = '1';
   }
@@ -177,6 +190,8 @@ function initializeSettingsValues() {
     });
     popoutToolbarPlacementSelect.dataset.bound = '1';
   }
+
+  updateClippingDependentControls();
 }
 
 const clippingEnabled = localStorage.getItem('clippingEnabled') === 'true';
