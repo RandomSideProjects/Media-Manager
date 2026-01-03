@@ -70,7 +70,8 @@ function loadUploadSettings(){
         catboxUploadUrl: defaultCatboxUploadUrl(),
         webhookUrl: '',
         separationTag: false,
-        folderUploadYellWhenHidden: true
+        folderUploadYellWhenHidden: true,
+        autoArchiveOversize: false
       };
       return initial;
     }
@@ -89,6 +90,7 @@ function loadUploadSettings(){
       compressPosters: compress,
       separationTag: !!p.separationTag,
       folderUploadYellWhenHidden: (typeof p.folderUploadYellWhenHidden === 'boolean') ? p.folderUploadYellWhenHidden : true,
+      autoArchiveOversize: (typeof p.autoArchiveOversize === 'boolean') ? p.autoArchiveOversize : false,
       githubWorkerUrl: normalizedGithubUrl,
       githubToken: (typeof p.githubToken === 'string') ? p.githubToken : '',
       catboxUploadUrl: (typeof p.catboxUploadUrl === 'string' && p.catboxUploadUrl.trim()) ? p.catboxUploadUrl.trim() : defaultCatboxUploadUrl(),
@@ -110,7 +112,8 @@ function loadUploadSettings(){
     catboxOverrideMode: 'default',
     webhookUrl: '',
     separationTag: false,
-    folderUploadYellWhenHidden: true
+    folderUploadYellWhenHidden: true,
+    autoArchiveOversize: false
   };
   return fallback;
 }
@@ -127,6 +130,7 @@ function saveUploadSettings(s){
     compressPosters: (typeof s.compressPosters === 'boolean') ? s.compressPosters : true,
     separationTag: !!s.separationTag,
     folderUploadYellWhenHidden: (typeof s.folderUploadYellWhenHidden === 'boolean') ? s.folderUploadYellWhenHidden : true,
+    autoArchiveOversize: (typeof s.autoArchiveOversize === 'boolean') ? s.autoArchiveOversize : false,
     githubWorkerUrl: normalizeGithubWorkerUrlValue((typeof s.githubWorkerUrl === 'string') ? s.githubWorkerUrl.trim() : ''),
     githubToken: (typeof s.githubToken === 'string') ? s.githubToken.trim() : '',
     catboxUploadUrl: (typeof s.catboxUploadUrl === 'string') ? s.catboxUploadUrl.trim() : '',
@@ -176,6 +180,7 @@ let mmCbzExpandManual = null;
 let mmPosterCompressToggle = null;
 let mmSeparationToggle = null;
 let mmFolderUploadYellToggle = null;
+let mmAutoArchiveOversizeToggle = null;
 let mmCatboxUrlInput = null;
 let devMenuRow = null;
 let devMenuStatus = null;
@@ -204,6 +209,7 @@ function ensureUploadSettingsPanel() {
       mmPosterCompressToggle = document.getElementById('mmPosterCompressToggle');
       mmSeparationToggle = document.getElementById('mmSeparationToggle');
       mmFolderUploadYellToggle = document.getElementById('mmFolderUploadYellToggle');
+      mmAutoArchiveOversizeToggle = document.getElementById('mmAutoArchiveOversizeToggle');
       devMenuRow = document.getElementById('devMenuRow');
       devMenuStatus = document.getElementById('devMenuStatus');
       
@@ -302,6 +308,7 @@ function initializeUploadSettingsPanel() {
   if (mmPosterCompressToggle) mmPosterCompressToggle.checked = (typeof st.compressPosters === 'boolean') ? st.compressPosters : true;
   if (mmSeparationToggle) mmSeparationToggle.checked = !!st.separationTag;
   if (mmFolderUploadYellToggle) mmFolderUploadYellToggle.checked = (typeof st.folderUploadYellWhenHidden === 'boolean') ? st.folderUploadYellWhenHidden : true;
+  if (mmAutoArchiveOversizeToggle) mmAutoArchiveOversizeToggle.checked = (typeof st.autoArchiveOversize === 'boolean') ? st.autoArchiveOversize : false;
   if (mmUploadConcRange) {
     mmUploadConcRange.value = String(st.uploadConcurrency || 2);
     if (mmUploadConcValue) mmUploadConcValue.textContent = String(st.uploadConcurrency || 2);
@@ -364,7 +371,8 @@ function initializeUploadSettingsPanel() {
       cbzExpandManual: mmCbzExpandManual ? !!mmCbzExpandManual.checked : true,
       compressPosters: mmPosterCompressToggle ? !!mmPosterCompressToggle.checked : true,
       separationTag: mmSeparationToggle ? !!mmSeparationToggle.checked : false,
-      folderUploadYellWhenHidden: mmFolderUploadYellToggle ? !!mmFolderUploadYellToggle.checked : true
+      folderUploadYellWhenHidden: mmFolderUploadYellToggle ? !!mmFolderUploadYellToggle.checked : true,
+      autoArchiveOversize: mmAutoArchiveOversizeToggle ? !!mmAutoArchiveOversizeToggle.checked : false
     };
     saveUploadSettings(saved);
     try { window.dispatchEvent(new CustomEvent('mm_settings_saved', { detail: saved })); } catch {}

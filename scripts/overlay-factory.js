@@ -787,6 +787,12 @@ window.OverlayFactory = (function() {
             createElement('span', {}, ['Folder upload: yell when tab is hidden'])
           ])
         ]),
+        createElement('div', { className: 'mm-settings-row' }, [
+          createElement('label', { className: 'mm-toggle', style: { gap: '.4em', alignItems: 'center' } }, [
+            createElement('input', { type: 'checkbox', id: 'mmAutoArchiveOversizeToggle' }),
+            createElement('span', {}, ['Auto-accept Archive.org uploads for files over 200MB'])
+          ])
+        ]),
         createElement('div', { 
           className: 'mm-settings-row dev-menu-row', 
           id: 'devMenuRow', 

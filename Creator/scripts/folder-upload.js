@@ -52,6 +52,25 @@
     const files = Array.from((e && e.target && e.target.files) || []);
     if (!files.length) return;
 
+    const MAX_UPLOAD_BYTES = 200 * 1024 * 1024;
+    let archiveLarge = false;
+    try {
+      if (!isManga()) {
+        const hasLarge = files.some((file) => file && typeof file.size === 'number' && file.size > MAX_UPLOAD_BYTES);
+        if (hasLarge) {
+          const msg = 'This folder contains files over 200MB, would you like to upload them to Archive.org instead?';
+          const subtitle = 'Please note that their upload speeds are very slow and may take "forever" to upload.';
+          if (typeof window !== 'undefined' && typeof window.mmConfirmArchiveInstead === 'function') {
+            archiveLarge = await window.mmConfirmArchiveInstead(msg, { title: 'Folder Upload', subtitle });
+          } else {
+            try { archiveLarge = !!window.confirm(`${msg}\n\n${subtitle}`); } catch { archiveLarge = false; }
+          }
+        }
+      }
+    } catch {
+      archiveLarge = false;
+    }
+
     try { window.isFolderUploading = true; } catch {}
     try { folderInput.value = ''; } catch {}
 
@@ -615,6 +634,15 @@
             markCancelled();
             return;
           }
+          const isOversize = (!isManga() && file && typeof file.size === 'number' && file.size > MAX_UPLOAD_BYTES);
+          if (isOversize && !archiveLarge) {
+            rowCtx.setStatus('File over 200 MB (skipped)', { color: '#ffb347' });
+            rowCtx.setProgress(0, { state: 'failed' });
+            if (epError) epError.innerHTML = '<span style="color:#f1f1f1">File over 200 MB (skipped).</span>';
+            completedCount++;
+            folderUploadSummary.textContent = `${completedCount} / ${plannedTotal} completed`;
+            return;
+          }
           // Compute metadata per file inside the task so queue builds instantly
           try {
             if (isCancelled()) {
@@ -714,18 +742,36 @@
               markCancelled();
               return;
             }
-            rowCtx.setStatus((attempt === 1) ? 'Uploading' : `Retry ${attempt} of ${maxAttempts}`, { color: null });
+            const useArchive = (!isManga() && file && typeof file.size === 'number' && file.size > MAX_UPLOAD_BYTES && archiveLarge);
+            rowCtx.setStatus((attempt === 1)
+              ? (useArchive ? 'Uploading (Archive.org)' : 'Uploading')
+              : `Retry ${attempt} of ${maxAttempts}`, { color: null });
             rowCtx.setProgress(0, { state: 'active', totalBytes });
             try {
               const fileSizeBytes = (file && typeof file.size === 'number' && file.size >= 0) ? file.size : null;
-              const url = await uploadToCatboxWithProgress(
-                file,
-                pct => {
-                  const loaded = Number.isFinite(fileSizeBytes) ? (pct / 100) * fileSizeBytes : undefined;
-                  rowCtx.setProgress(pct, { loadedBytes: loaded });
-                },
-                { context: 'batch', signal: uploadAbortController.signal, allowProxy: false }
-              );
+              const url = await (useArchive
+                ? (async () => {
+                    if (typeof window !== 'undefined' && typeof window.uploadToArchiveOrgWithProgress === 'function') {
+                      const result = await window.uploadToArchiveOrgWithProgress(
+                        file,
+                        pct => {
+                          const loaded = Number.isFinite(fileSizeBytes) ? (pct / 100) * fileSizeBytes : undefined;
+                          rowCtx.setProgress(pct, { loadedBytes: loaded });
+                        },
+                        { signal: uploadAbortController.signal }
+                      );
+                      return (result && result.downloadUrl) ? result.downloadUrl : '';
+                    }
+                    throw new Error('Archive.org uploader not available');
+                  })()
+                : uploadToCatboxWithProgress(
+                    file,
+                    pct => {
+                      const loaded = Number.isFinite(fileSizeBytes) ? (pct / 100) * fileSizeBytes : undefined;
+                      rowCtx.setProgress(pct, { loadedBytes: loaded });
+                    },
+                    { context: 'batch', signal: uploadAbortController.signal, allowProxy: false }
+                  ));
               if (epSrcInput) epSrcInput.value = url;
               if (epError) epError.textContent = '';
               rowCtx.setStatus('Done', { color: '#6ec1e4' });
@@ -873,6 +919,7 @@
 	                  try {
 	                    if (typeof epDiv._handlePartFileUpload === 'function') {
 	                      await epDiv._handlePartFileUpload(current.row, current.file, {
+	                        archiveLarge,
 	                        onProgress: (pct) => {
 	                          const normalized = Math.max(0, Math.min(100, Number(pct) || 0)) / 100;
 	                          const overallProgress = ((uploadedParts + normalized) / partRows.length) * 100;
@@ -931,12 +978,24 @@
             rowCtx.setStatus('Cancelled', { color: '#cccccc' });
             rowCtx.setProgress(0, { state: 'cancelled' });
           };
+          const isOversize = (!isManga() && fileForUpload && typeof fileForUpload.size === 'number' && fileForUpload.size > MAX_UPLOAD_BYTES);
+          if (isOversize && !archiveLarge) {
+            rowCtx.setStatus('File over 200 MB (skipped)', { color: '#ffb347' });
+            rowCtx.setProgress(0, { state: 'failed' });
+            if (epError) epError.innerHTML = '<span style="color:#f1f1f1">File over 200 MB (skipped).</span>';
+            completedCount++;
+            folderUploadSummary.textContent = `${completedCount} / ${plannedTotal} completed`;
+            return;
+          }
           for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
             if (isCancelled()) {
               markCancelled();
               return;
             }
-            rowCtx.setStatus((attempt === 1) ? 'Uploading' : `Retry ${attempt} of ${maxAttempts}`, { color: null });
+            const useArchive = (!isManga() && fileForUpload && typeof fileForUpload.size === 'number' && fileForUpload.size > MAX_UPLOAD_BYTES && archiveLarge);
+            rowCtx.setStatus((attempt === 1)
+              ? (useArchive ? 'Uploading (Archive.org)' : 'Uploading')
+              : `Retry ${attempt} of ${maxAttempts}`, { color: null });
             rowCtx.setProgress(0, { state: 'active', totalBytes: fileSizeBytes });
             try {
               if (isManga() && fileForUpload && /\.cbz$/i.test(fileForUpload.name || '')) {
@@ -948,14 +1007,29 @@
                   epDiv.dataset.volumePageCount = String(names.length);
                 } catch {}
               }
-              const url = await uploadToCatboxWithProgress(
-                fileForUpload,
-                (pct) => {
-                  const loaded = Number.isFinite(fileSizeBytes) ? (pct / 100) * fileSizeBytes : undefined;
-                  rowCtx.setProgress(pct, { loadedBytes: loaded });
-                },
-                { context: 'batch', signal: uploadAbortController.signal, allowProxy: false }
-              );
+              const url = await (useArchive
+                ? (async () => {
+                    if (typeof window !== 'undefined' && typeof window.uploadToArchiveOrgWithProgress === 'function') {
+                      const result = await window.uploadToArchiveOrgWithProgress(
+                        fileForUpload,
+                        (pct) => {
+                          const loaded = Number.isFinite(fileSizeBytes) ? (pct / 100) * fileSizeBytes : undefined;
+                          rowCtx.setProgress(pct, { loadedBytes: loaded });
+                        },
+                        { signal: uploadAbortController.signal }
+                      );
+                      return (result && result.downloadUrl) ? result.downloadUrl : '';
+                    }
+                    throw new Error('Archive.org uploader not available');
+                  })()
+                : uploadToCatboxWithProgress(
+                    fileForUpload,
+                    (pct) => {
+                      const loaded = Number.isFinite(fileSizeBytes) ? (pct / 100) * fileSizeBytes : undefined;
+                      rowCtx.setProgress(pct, { loadedBytes: loaded });
+                    },
+                    { context: 'batch', signal: uploadAbortController.signal, allowProxy: false }
+                  ));
               if (epSrcInput) epSrcInput.value = url;
               if (epError) epError.textContent = '';
               rowCtx.setStatus('Done', { color: '#6ec1e4' });
