@@ -1,7 +1,7 @@
 {
   "title": "Domestic Girlfriend",
-  "Image": "./Sources/Posters/Anime/Domestic_Girlfriend.webp",
-  "LatestTime": "2025-12-11T05:29:11.472Z",
+  "Image": "https://randomsideprojects.github.io/Media-Manager/Sources/Posters/Domestic_Girlfriend.webp",
+  "LatestTime": "2026-01-12T22:57:18.834Z",
   "categories": [
     {
       "category": "Season 1",
@@ -82,5 +82,6 @@
     }
   ],
   "totalFileSizeBytes": 1143272176,
-  "totalDurationSeconds": 18255
+  "totalDurationSeconds": 18255,
+  "hidden": true
 }
