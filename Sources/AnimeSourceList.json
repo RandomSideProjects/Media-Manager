@@ -621,6 +621,18 @@
       "LatestTime": "2025-09-28T04:27:33.010Z"
     },
     {
+      "file": "You_And_I_Are_Polar_Opposites.json",
+      "path": "./Files/Anime/You_And_I_Are_Polar_Opposites.json",
+      "title": "You And I Are Polar Opposites",
+      "poster": "./Posters/Anime/You_And_I_Are_Polar_Opposites.webp",
+      "categoryCount": 1,
+      "episodeCount": 1,
+      "itemCount": 1,
+      "totalFileSizeBytes": 0,
+      "totalDurationSeconds": 1447,
+      "LatestTime": "2026-01-13T16:24:37.246Z"
+    },
+    {
       "file": "MeidoSama.json",
       "path": "./Files/Anime/MeidoSama.json",
       "title": "You are Ms. Servent (Kimi-wa Meido sama)",
