@@ -1,57 +1,57 @@
 {
   "title": "Campfire Cooking in Another World with My Absurd Skill",
   "Image": "./Sources/Posters/Anime/Campfire_Cooking_in_Another_World_with_My_Absurd_Skill.webp",
-  "LatestTime": "2026-01-15T22:41:14.658Z",
+  "LatestTime": "2026-01-15T22:56:10.304Z",
   "categories": [
     {
       "category": "Season 1",
       "episodes": [
         {
           "title": "Episode 1",
-          "src": "https://files.catbox.moe/iuym9y.mp4",
-          "fileSizeBytes": 164254453,
-          "durationSeconds": 1436
-        },
-        {
-          "title": "Episode 2",
           "src": "https://files.catbox.moe/lxzf6m.mp4",
           "fileSizeBytes": 162266305,
           "durationSeconds": 1436
         },
         {
-          "title": "Episode 3",
-          "src": "https://files.catbox.moe/92dntq.mp4",
-          "fileSizeBytes": 168932090,
-          "durationSeconds": 1436
-        },
-        {
-          "title": "Episode 4",
+          "title": "Episode 2",
           "src": "https://files.catbox.moe/a6ezya.mp4",
           "fileSizeBytes": 140625567,
           "durationSeconds": 1436
         },
         {
-          "title": "Episode 5",
-          "src": "https://files.catbox.moe/77x7lm.mp4",
-          "fileSizeBytes": 199211916,
+          "title": "Episode 3",
+          "src": "https://files.catbox.moe/07gwpt.mp4",
+          "fileSizeBytes": 183029867,
           "durationSeconds": 1436
         },
         {
-          "title": "Episode 6",
+          "title": "Episode 4",
           "src": "https://files.catbox.moe/ddyxud.mp4",
           "fileSizeBytes": 189466749,
           "durationSeconds": 1436
         },
         {
+          "title": "Episode 5",
+          "src": "https://files.catbox.moe/06945j.mp4",
+          "fileSizeBytes": 175045158,
+          "durationSeconds": 1436
+        },
+        {
+          "title": "Episode 6",
+          "src": "https://files.catbox.moe/8ms8xm.mp4",
+          "fileSizeBytes": 173056413,
+          "durationSeconds": 1436
+        },
+        {
           "title": "Episode 7",
-          "src": "https://files.catbox.moe/znz0uu.mp4",
-          "fileSizeBytes": 147718036,
+          "src": "https://files.catbox.moe/77x7lm.mp4",
+          "fileSizeBytes": 199211916,
           "durationSeconds": 1436
         },
         {
           "title": "Episode 8",
-          "src": "https://files.catbox.moe/07gwpt.mp4",
-          "fileSizeBytes": 183029867,
+          "src": "https://files.catbox.moe/znz0uu.mp4",
+          "fileSizeBytes": 147718036,
           "durationSeconds": 1436
         },
         {
@@ -62,20 +62,20 @@
         },
         {
           "title": "Episode 10",
-          "src": "https://files.catbox.moe/06945j.mp4",
-          "fileSizeBytes": 175045158,
-          "durationSeconds": 1436
-        },
-        {
-          "title": "Episode 11",
           "src": "https://files.catbox.moe/lr93zv.mp4",
           "fileSizeBytes": 159210885,
           "durationSeconds": 1436
         },
         {
+          "title": "Episode 11",
+          "src": "https://files.catbox.moe/92dntq.mp4",
+          "fileSizeBytes": 168932090,
+          "durationSeconds": 1436
+        },
+        {
           "title": "Episode 12",
-          "src": "https://files.catbox.moe/8ms8xm.mp4",
-          "fileSizeBytes": 173056413,
+          "src": "https://files.catbox.moe/iuym9y.mp4",
+          "fileSizeBytes": 164254453,
           "durationSeconds": 1436
         }
       ]
