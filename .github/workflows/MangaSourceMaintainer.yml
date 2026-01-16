@@ -169,51 +169,54 @@ jobs:
 
             console.log(`Processing ${filesToProcess.length} file(s) out of ${entries.length} total`);
 
-            for (const file of filesToProcess) {
-              try {
-                const full = path.join(FILE_DIR, file);
-                const raw = fs.readFileSync(full, 'utf8');
-                const json = JSON.parse(raw);
-                if (isMaintainerHidden(json)) {
-                  console.log('Skipping hidden directory:', file);
-                  existingMap.delete(file); // Remove if was previously indexed
-                  continue;
-                }
+	            for (const file of filesToProcess) {
+	              try {
+	                const full = path.join(FILE_DIR, file);
+	                const raw = fs.readFileSync(full, 'utf8');
+	                const json = JSON.parse(raw);
+	                const isHidden = isMaintainerHidden(json);
+	                if (isHidden) {
+	                  console.log('Hidden directory detected (will skip indexing, but still process poster):', file);
+	                }
 
-                const title = json.title || path.parse(file).name;
+	                const title = json.title || path.parse(file).name;
 
-                // Determine volumes list (manga has no categories)
-                let volumes = [];
-                if (Array.isArray(json.volumes)) volumes = json.volumes;
-                else if (Array.isArray(json.episodes)) volumes = json.episodes; // fallback if named 'episodes'
-                else if (Array.isArray(json.categories)) {
-                  // fallback: flatten categories[].episodes[] just in case
-                  for (const c of json.categories) {
-                    if (Array.isArray(c.episodes)) volumes.push(...c.episodes);
-                  }
-                }
+	                // Determine volumes list (manga has no categories)
+	                let volumes = [];
+	                let volumeCount = 0;
+	                let totalPagecount = 0;
+	                let pageCount = 0;
+	                let totalFileSizeBytes = 0;
+	                if (!isHidden) {
+	                  if (Array.isArray(json.volumes)) volumes = json.volumes;
+	                  else if (Array.isArray(json.episodes)) volumes = json.episodes; // fallback if named 'episodes'
+	                  else if (Array.isArray(json.categories)) {
+	                    // fallback: flatten categories[].episodes[] just in case
+	                    for (const c of json.categories) {
+	                      if (Array.isArray(c.episodes)) volumes.push(...c.episodes);
+	                    }
+	                  }
 
-                // Volume count should exclude entries that are standalone chapters
-                const volumesForCount = Array.isArray(volumes)
-                  ? volumes.filter(v => {
-                      try {
-                        const t = String(v && v.title || '').toLowerCase();
-                        return !/\bchapter\b/i.test(t);
-                      } catch { return true; }
-                    })
-                  : [];
-                const volumeCount = volumesForCount.length;
-                let pageCount = 0;
-                let totalFileSizeBytes = 0;
-                for (const v of volumes) {
-                  const n = Number((v && (v.VolumePageCount ?? v.volumePageCount)) || 0);
-                  if (Number.isFinite(n)) pageCount += n;
-                  const sz = Number(v && v.fileSizeBytes);
-                  if (Number.isFinite(sz) && sz >= 0) totalFileSizeBytes += Math.round(sz);
-                }
-                // Prefer top-level totalPagecount if provided; otherwise use sum
-                const totalPagecount = Number.isFinite(Number(json.totalPagecount)) ? Number(json.totalPagecount) : pageCount;
-                if (!totalFileSizeBytes && Number.isFinite(Number(json.totalFileSizeBytes))) totalFileSizeBytes = Number(json.totalFileSizeBytes);
+	                  // Volume count should exclude entries that are standalone chapters
+	                  const volumesForCount = Array.isArray(volumes)
+	                    ? volumes.filter(v => {
+	                        try {
+	                          const t = String(v && v.title || '').toLowerCase();
+	                          return !/\bchapter\b/i.test(t);
+	                        } catch { return true; }
+	                      })
+	                    : [];
+	                  volumeCount = volumesForCount.length;
+	                  for (const v of volumes) {
+	                    const n = Number((v && (v.VolumePageCount ?? v.volumePageCount)) || 0);
+	                    if (Number.isFinite(n)) pageCount += n;
+	                    const sz = Number(v && v.fileSizeBytes);
+	                    if (Number.isFinite(sz) && sz >= 0) totalFileSizeBytes += Math.round(sz);
+	                  }
+	                  // Prefer top-level totalPagecount if provided; otherwise use sum
+	                  totalPagecount = Number.isFinite(Number(json.totalPagecount)) ? Number(json.totalPagecount) : pageCount;
+	                  if (!totalFileSizeBytes && Number.isFinite(Number(json.totalFileSizeBytes))) totalFileSizeBytes = Number(json.totalFileSizeBytes);
+	                }
 
                 // Build poster file in repo (WebP, height=512) and reference by path
                 let poster = null;
@@ -222,10 +225,10 @@ jobs:
                   : (json.Image && json.Image !== 'N/A')
                     ? json.Image
                     : (json.image && json.image !== 'N/A' ? json.image : null);
-                if (imgUrl) {
-                  try {
-                    const posterName = safePosterName(title, path.parse(file).name) + '.webp';
-                    const posterAbs = path.join(POSTERS_DIR, posterName);
+	                if (imgUrl) {
+	                  try {
+	                    const posterName = safePosterName(title, path.parse(file).name) + '.webp';
+	                    const posterAbs = path.join(POSTERS_DIR, posterName);
 
                     if (fs.existsSync(posterAbs)) {
                       console.log('Poster already exists, skipping:', posterAbs);
@@ -265,15 +268,20 @@ jobs:
                         console.warn('Failed to update poster path in source file:', file, '-', e.message);
                       }
                     }
-                  } catch (e) {
-                    console.warn('Poster build failed for', file, '-', e.message);
-                  }
-                }
+	                  } catch (e) {
+	                    console.warn('Poster build failed for', file, '-', e.message);
+	                  }
+	                }
 
-                // Update or add the source entry
-                existingMap.set(file, {
-                  file,
-                  path: `./Files/Manga/${file}`,
+	                if (isHidden) {
+	                  existingMap.delete(file); // Ensure hidden directories are not indexed.
+	                  continue;
+	                }
+
+	                // Update or add the source entry
+	                existingMap.set(file, {
+	                  file,
+	                  path: `./Files/Manga/${file}`,
                   title,
                   poster,
                   volumeCount,
