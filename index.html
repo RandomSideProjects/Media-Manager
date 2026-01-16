@@ -53,10 +53,10 @@
       <div id="episodeList"></div>
       <button id="downloadBtn">⤓ Download Source</button>
     </div>
-    <div id="playerScreen" style="display: none;">
+      <div id="playerScreen" style="display: none;">
       <div id="loadingSpinner" class="spinner"></div>
       <button id="backBtn" title="Menu (Esc)" aria-label="Menu">≡</button>
-      <button id="theaterBtn" title="Pop-out Player (T)">⤴</button>
+      <button id="theaterBtn" title="Theater Mode (T)" aria-pressed="false">⤴</button>
       <button id="clipBtn">Clip</button>
       <h2 id="videoTitle">Loading...</h2>
       <div id="separatedPartsBar" class="separated-parts-bar" role="group" aria-label="Part selection"></div>
@@ -87,6 +87,7 @@
   <script defer src="scripts/dev-core.js"></script>
   <script defer src="scripts/overlay-factory.js"></script>
   <script defer src="scripts/dom.js"></script>
+  <script defer src="scripts/theater.js"></script>
   <script defer src="scripts/tags.js"></script>
   <script defer src="scripts/recent-sources.js"></script>
   <script defer src="scripts/player.js"></script>

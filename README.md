@@ -10,7 +10,7 @@ Browser-only player for video libraries and CBZ manga archives. Point it at a JS
 - Built-in download manager with size estimates, selective season/episode downloads, concurrency control, and StreamSaver for large archives.
 - Optional clip recorder that uploads to Catbox (or lets you download the WebM) with preview and a quick on/off toggle.
 - Integrated CBZ reader with progress overlay and page tracking.
-- Theme toggle, pop-out/theater mode, and a persistent settings panel with a storage reset.
+- Theme toggle, theater mode, and a persistent settings panel with a storage reset.
 
 ## Quick start
 1) Clone: `git clone https://github.com/RandomSideProjects/Media-Manager.git && cd Media-Manager`  
@@ -29,7 +29,7 @@ Browser-only player for video libraries and CBZ manga archives. Point it at a JS
 
 ## Player basics
 - Resume banner highlights where you left off or skips ahead if the last item was nearly finished.
-- `≡` returns to the list, `⤴` opens a pop-out window, and `Next` advances manually.
+- `≡` returns to the list, `⤴` toggles theater mode, `H` opens a pop-out window, and `Next` advances manually.
 - Manga/CBZ volumes show a page counter and overlay while archives unpack.
 - Settings pane toggles clipping, selective downloads, download concurrency, and a `CLEAR STORAGE` action to wipe local data.
 - Version badge in the corner reads `Assets/LastUpdated.txt` (update alongside releases).

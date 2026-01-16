@@ -324,7 +324,6 @@
     "selectiveDownloadsEnabled",
     "downloadConcurrency",
     "storageShowCameraOptions",
-    "popoutToolbarPlacement",
     "mm_upload_settings",
     "currentSourceKey",
     "rsp_recent_sources_enabled",

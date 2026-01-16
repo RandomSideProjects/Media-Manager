@@ -123,22 +123,9 @@ window.OverlayFactory = (function() {
       ])
     ]);
 
-    const theaterSection = createElement('div', { className: 'setting-category' }, [
-      createElement('div', { className: 'setting-category-header' }, ['Theater']),
-      createElement('div', { className: 'setting-row' }, [
-        createElement('label', { for: 'popoutToolbarPlacement' }, ['Pop-out toolbar placement']),
-        createElement('select', { id: 'popoutToolbarPlacement', 'aria-label': 'Pop-out toolbar placement' }, [
-          createElement('option', { value: 'bottom' }, ['Bottom']),
-          createElement('option', { value: 'left' }, ['Left']),
-          createElement('option', { value: 'right' }, ['Right'])
-        ])
-      ])
-    ]);
-
     const leftColumn = createElement('div', { className: 'settings-category-col' }, [
       clippingSection,
-      generalSection,
-      theaterSection
+      generalSection
     ]);
 
     const rightColumn = createElement('div', { className: 'settings-category-col' }, [

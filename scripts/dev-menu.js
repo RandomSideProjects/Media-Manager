@@ -409,7 +409,7 @@
     }
   }
 
-  function triggerPopout() {
+  function triggerTheater() {
     if (typeof theaterBtn !== "undefined" && theaterBtn) {
       theaterBtn.click();
     } else {
@@ -448,9 +448,9 @@
         closeOverlay(false);
         runClipOverlaySample();
         break;
-      case "player:popout":
+      case "player:theater":
         closeOverlay(false);
-        triggerPopout();
+        triggerTheater();
         break;
       case "sources:reload": {
         closeOverlay(false);

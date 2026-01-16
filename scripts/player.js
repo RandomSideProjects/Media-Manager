@@ -971,6 +971,10 @@ function hideVideoShowCbz() {
   if (cbzViewer) cbzViewer.style.display = 'block';
   if (clipBtn) clipBtn.style.display = 'none';
   if (theaterBtn) theaterBtn.style.display = 'none';
+  try {
+    if (typeof window !== 'undefined' && typeof window.MM_setTheaterMode === 'function') window.MM_setTheaterMode(false);
+    else document.body.classList.remove('theater-mode');
+  } catch {}
 }
 
 function hideCbzShowVideo() {
@@ -1511,7 +1515,8 @@ function handleVideoKeyboardShortcuts(e) {
   if (lowerKey === 'k') handled.push('play');
   if (lowerKey === 'm') handled.push('mute');
   if (lowerKey === 'f') handled.push('fullscreen');
-  if (lowerKey === 't') handled.push('popout');
+  if (lowerKey === 't') handled.push('theater');
+  if (lowerKey === 'h') handled.push('popout');
   if (key === 'ArrowRight') handled.push('seek-forward');
   if (lowerKey === 'l') handled.push('seek-forward');
   if (key === 'ArrowLeft') handled.push('seek-back');
@@ -1540,12 +1545,17 @@ function handleVideoKeyboardShortcuts(e) {
   if (handled.includes('space') || handled.includes('play')) togglePlayPause();
   if (handled.includes('mute')) toggleMute();
   if (handled.includes('fullscreen')) toggleFullscreen();
-  if (handled.includes('popout')) {
+  if (handled.includes('theater')) {
     try {
       if (typeof theaterBtn !== 'undefined' && theaterBtn && typeof theaterBtn.click === 'function') {
         const visible = typeof theaterBtn.getClientRects === 'function' ? theaterBtn.getClientRects().length > 0 : true;
         if (visible) theaterBtn.click();
       }
+    } catch {}
+  }
+  if (handled.includes('popout')) {
+    try {
+      if (typeof window !== 'undefined' && typeof window.MM_openPopout === 'function') window.MM_openPopout();
     } catch {}
   }
   if (handled.includes('seek-forward')) seekBy(SEEK_DELTA);
@@ -1963,7 +1973,16 @@ if (backBtn) {
     selectorScreen.style.display = "flex";
     backBtn.style.display = "none";
     theaterBtn.style.display = "none";
-    document.body.classList.remove("theater-mode");
+    try {
+      if (typeof window !== 'undefined' && typeof window.MM_setTheaterMode === 'function') window.MM_setTheaterMode(false);
+      else {
+        document.body.classList.remove("theater-mode");
+        if (theaterBtn) {
+          theaterBtn.setAttribute('aria-pressed', 'false');
+          theaterBtn.classList.remove('is-active');
+        }
+      }
+    } catch {}
     try {
       const st = (directoryTitle && directoryTitle.textContent ? directoryTitle.textContent.trim() : '') || 'Source';
       document.title = `${st} on RSP Media Manager`;

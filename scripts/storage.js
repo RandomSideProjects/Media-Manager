@@ -842,7 +842,6 @@
         'selectiveDownloadsEnabled',
         'downloadConcurrency',
         'storageShowCameraOptions',
-        'popoutToolbarPlacement',
         'rsp_recent_sources_enabled',
         'rsp_recent_sources_placement'
       ];
