@@ -367,52 +367,54 @@ jobs:
 
             console.log(`Processing ${filesToProcess.length} file(s) out of ${files.length} total`);
 
-	            for (const file of filesToProcess) {
-	              try {
-	                const full = path.join(FILE_DIR, file);
-	                const raw = fs.readFileSync(full, 'utf8');
-	                const json = JSON.parse(raw);
-	                const isHidden = isMaintainerHidden(json);
-	                if (isHidden) {
-	                  console.log('Hidden directory detected (will skip indexing, but still process poster):', file);
-	                }
+            for (const file of filesToProcess) {
+              try {
+                const full = path.join(FILE_DIR, file);
+                const raw = fs.readFileSync(full, 'utf8');
+                const json = JSON.parse(raw);
 
-	                const title = json.title || path.parse(file).name;
-	                const cats = Array.isArray(json.categories) ? json.categories : [];
-	                let categoryCount = 0;
-	                let episodeCount = 0;
+                const isHidden = isMaintainerHidden(json);
+                if (isHidden) {
+                  console.log('Hidden directory detected (will skip indexing, but still process poster):', file);
+                }
+
+                const title = json.title || path.parse(file).name;
+                const cats = Array.isArray(json.categories) ? json.categories : [];
+                let categoryCount = 0;
+                let episodeCount = 0;
                 let separatedCategoryCount = 0;
-	                let separatedItemCount = 0;
-	                let totalFileSizeBytes = 0;
-	                let totalDurationSeconds = 0;
-	                let totalItemCount = 0;
-	                if (!isHidden) {
-	                  for (const c of cats) {
-	                    const entries = getCategoryEntries(c);
-	                    const isSeparated = coerceSeparatedFlag(c && (c.separated ?? c.seperated));
-	                    if (isSeparated) {
-	                      separatedCategoryCount += 1;
-	                      separatedItemCount += entries.length;
-	                    } else {
-	                      categoryCount += 1;
-	                      episodeCount += entries.length;
-	                    }
-	                    for (const entry of entries) {
-	                      const stats = deriveEpisodeStats(entry);
-	                      if (stats.size > 0) totalFileSizeBytes += stats.size;
-	                      if (stats.duration > 0) totalDurationSeconds += stats.duration;
-	                    }
-	                  }
-	                  if ((totalFileSizeBytes <= 0 || !Number.isFinite(totalFileSizeBytes)) && Number.isFinite(Number(json.totalFileSizeBytes))) {
-	                    totalFileSizeBytes = Number(json.totalFileSizeBytes);
-	                  }
-	                  if ((totalDurationSeconds <= 0 || !Number.isFinite(totalDurationSeconds)) && Number.isFinite(Number(json.totalDurationSeconds))) {
-	                    totalDurationSeconds = Number(json.totalDurationSeconds);
-	                  }
-	                  totalFileSizeBytes = Number.isFinite(totalFileSizeBytes) && totalFileSizeBytes > 0 ? Math.round(totalFileSizeBytes) : 0;
-	                  totalDurationSeconds = Number.isFinite(totalDurationSeconds) && totalDurationSeconds > 0 ? Math.round(totalDurationSeconds) : 0;
-	                  totalItemCount = episodeCount + separatedItemCount;
-	                }
+                let separatedItemCount = 0;
+                let totalFileSizeBytes = 0;
+                let totalDurationSeconds = 0;
+                let totalItemCount = 0;
+
+                if (!isHidden) {
+                  for (const c of cats) {
+                    const entries = getCategoryEntries(c);
+                    const isSeparated = coerceSeparatedFlag(c && (c.separated ?? c.seperated));
+                    if (isSeparated) {
+                      separatedCategoryCount += 1;
+                      separatedItemCount += entries.length;
+                    } else {
+                      categoryCount += 1;
+                      episodeCount += entries.length;
+                    }
+                    for (const entry of entries) {
+                      const stats = deriveEpisodeStats(entry);
+                      if (stats.size > 0) totalFileSizeBytes += stats.size;
+                      if (stats.duration > 0) totalDurationSeconds += stats.duration;
+                    }
+                  }
+                  if ((totalFileSizeBytes <= 0 || !Number.isFinite(totalFileSizeBytes)) && Number.isFinite(Number(json.totalFileSizeBytes))) {
+                    totalFileSizeBytes = Number(json.totalFileSizeBytes);
+                  }
+                  if ((totalDurationSeconds <= 0 || !Number.isFinite(totalDurationSeconds)) && Number.isFinite(Number(json.totalDurationSeconds))) {
+                    totalDurationSeconds = Number(json.totalDurationSeconds);
+                  }
+                  totalFileSizeBytes = Number.isFinite(totalFileSizeBytes) && totalFileSizeBytes > 0 ? Math.round(totalFileSizeBytes) : 0;
+                  totalDurationSeconds = Number.isFinite(totalDurationSeconds) && totalDurationSeconds > 0 ? Math.round(totalDurationSeconds) : 0;
+                  totalItemCount = episodeCount + separatedItemCount;
+                }
 
                 // Build poster file in repo (WebP, height=512) and reference by path
                 let poster = null;
@@ -437,7 +439,7 @@ jobs:
                     const posterName = safePosterName(title, path.parse(file).name) + '.webp';
                     const posterAbs = path.join(POSTERS_DIR, posterName);
                     const desiredSourcePosterPath = `./Sources/Posters/Anime/${posterName}`;
-                    
+
                     if (fs.existsSync(posterAbs)) {
                       console.log('Poster already exists, skipping:', posterAbs);
                       poster = `./Posters/Anime/${posterName}`;
@@ -482,33 +484,30 @@ jobs:
                   }
                 }
 
-	                if (sourceFileNeedsWrite) {
-	                  try {
-	                    fs.writeFileSync(path.join(FILE_DIR, file), JSON.stringify(json, null, 2));
-	                    console.log('Updated poster path in source file:', file);
-	                  } catch (e) {
-	                    console.warn('Failed to update poster path in source file:', file, '-', e.message);
-	                  }
-	                }
+                if (sourceFileNeedsWrite) {
+                  try {
+                    fs.writeFileSync(path.join(FILE_DIR, file), JSON.stringify(json, null, 2));
+                    console.log('Updated poster path in source file:', file);
+                  } catch (e) {
+                    console.warn('Failed to update poster path in source file:', file, '-', e.message);
+                  }
+                }
 
-	                if (isHidden) {
-	                  existingMap.delete(file); // Ensure hidden directories are not indexed.
-	                  continue;
-	                }
+                if (isHidden) {
+                  existingMap.delete(file); // Ensure hidden directories are not indexed.
+                  continue;
+                }
 
-	                // Update or add the source entry
-	                existingMap.set(file, {
-	                  file,
-	                  path: `./Files/Anime/${file}`,
-	                  title,
+                // Update or add the source entry
+                existingMap.set(file, {
+                  file,
+                  path: `./Files/Anime/${file}`,
+                  title,
                   poster,
                   categoryCount,
                   episodeCount,
                   ...(totalItemCount > 0 ? { itemCount: totalItemCount } : {}),
-                  ...(separatedCategoryCount > 0 ? {
-                    separatedCategoryCount,
-                    separatedItemCount
-                  } : {}),
+                  ...(separatedCategoryCount > 0 ? { separatedCategoryCount, separatedItemCount } : {}),
                   totalFileSizeBytes,
                   ...(totalDurationSeconds > 0 ? { totalDurationSeconds } : {}),
                   LatestTime: json.LatestTime || null
