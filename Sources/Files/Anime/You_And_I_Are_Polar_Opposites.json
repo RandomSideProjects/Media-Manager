@@ -1,7 +1,7 @@
 {
   "title": "You And I Are Polar Opposites",
   "Image": "./Sources/Posters/Anime/You_And_I_Are_Polar_Opposites.webp",
-  "LatestTime": "2026-01-13T16:24:37.246Z",
+  "LatestTime": "2026-01-20T03:42:21.220Z",
   "categories": [
     {
       "category": "Season 1",
@@ -10,10 +10,16 @@
           "title": "Episode 1",
           "src": "https://files.catbox.moe/bkqwfv.mp4",
           "durationSeconds": 1447
+        },
+        {
+          "title": "Episode 2",
+          "src": "https://files.catbox.moe/8jk4kh.mp4",
+          "fileSizeBytes": 154769363,
+          "durationSeconds": 1447
         }
       ]
     }
   ],
-  "totalFileSizeBytes": 0,
-  "totalDurationSeconds": 1447
+  "totalFileSizeBytes": 154769363,
+  "totalDurationSeconds": 2894
 }
