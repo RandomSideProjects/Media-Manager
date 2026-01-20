@@ -125,9 +125,52 @@
     shortcutSequence.length = 0;
   }
 
+  function isEditableElement(element) {
+    if (!element || typeof element !== "object") return false;
+    const tag = (element.tagName || "").toUpperCase();
+    if (tag === "TEXTAREA" || tag === "SELECT") return true;
+    if (tag === "INPUT") {
+      const type = (typeof element.type === "string" ? element.type : "").toLowerCase();
+      const nonTextTypes = new Set([
+        "button",
+        "checkbox",
+        "color",
+        "file",
+        "hidden",
+        "image",
+        "radio",
+        "range",
+        "reset",
+        "submit"
+      ]);
+      return !nonTextTypes.has(type);
+    }
+    if (element.isContentEditable) return true;
+    if (typeof element.getAttribute === "function") {
+      const role = (element.getAttribute("role") || "").toLowerCase();
+      if (role === "textbox" || role === "searchbox" || role === "combobox") return true;
+    }
+    return false;
+  }
+
+  function isTypingContext(event) {
+    try {
+      if (!window.document) return false;
+      const target = event && event.target;
+      if (isEditableElement(target)) return true;
+      const active = document.activeElement;
+      if (active && active !== document.body && isEditableElement(active)) return true;
+    } catch {}
+    return false;
+  }
+
   function wireShortcut() {
     window.addEventListener("keydown", (event) => {
       if (!event || event.repeat) return;
+      if (isTypingContext(event)) {
+        resetShortcutSequence();
+        return;
+      }
       const key = (event.key || "").toLowerCase();
       if (!SHORTCUT_KEYS.has(key)) {
         resetShortcutSequence();

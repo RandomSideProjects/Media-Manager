@@ -726,6 +726,15 @@ window.OverlayFactory = (function() {
             createElement('span', {}, ['Separation tag (beta)'])
           ])
         ]),
+        createElement('div', { className: 'mm-settings-row' }, [
+          createElement('label', { className: 'mm-toggle' }, [
+            createElement('input', { type: 'checkbox', id: 'mmPaheImportToggle' }),
+            createElement('span', {}, [
+              'Animepahe import ',
+              createElement('span', { className: 'setting-tag setting-tag--beta' }, ['beta'])
+            ])
+          ])
+        ]),
         createElement('div', { 
           id: 'mmUserhashRow', 
           className: 'mm-settings-row', 
@@ -1039,6 +1048,39 @@ window.OverlayFactory = (function() {
                 createElement('option', { value: 'proxy' }, ['Proxy'])
               ]),
               createElement('p', { className: 'dev-menu-hint select' }, ['Choose Default (worker) or Proxy (custom URL).'])
+            ])
+          ]),
+
+          createElement('div', { className: 'dev-menu-section' }, [
+            createElement('h4', {}, ['Animepahe Import']),
+            createElement('div', { className: 'dev-field' }, [
+              createElement('label', { for: 'devPaheAnimeApiBase' }, ['Anime API base URL']),
+              createElement('input', {
+                type: 'text',
+                id: 'devPaheAnimeApiBase',
+                className: 'dev-field-input',
+                placeholder: 'http://127.0.0.1:8787 or https://anime.apex-cloud.workers.dev'
+              }),
+              createElement('p', { className: 'dev-menu-hint' }, ['Worker base URL for ?method=search/series/episode and /proxy.'])
+            ]),
+            createElement('div', { className: 'dev-field' }, [
+              createElement('label', { for: 'devPaheKwikApiBase' }, ['KwiK API base URL']),
+              createElement('input', {
+                type: 'text',
+                id: 'devPaheKwikApiBase',
+                className: 'dev-field-input',
+                placeholder: 'https://access-kwik.apex-cloud.workers.dev'
+              }),
+              createElement('p', { className: 'dev-menu-hint' }, ['API used to convert kwik.cx links into direct URLs.'])
+            ]),
+            createElement('div', { className: 'dev-field' }, [
+              createElement('label', { for: 'devPaheKwikAuthToken' }, ['KwiK auth token']),
+              createElement('input', {
+                type: 'password',
+                id: 'devPaheKwikAuthToken',
+                className: 'dev-field-input',
+                placeholder: 'Leave blank to use default'
+              })
             ])
           ]),
           

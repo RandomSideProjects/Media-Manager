@@ -8,61 +8,124 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div class="container">
-    <div class="tabs">
-      <button id="homeTabBtn" class="tab-button">Home</button>
-      <button id="createTabBtn" class="tab-button active">Create</button>
-      <button id="editTabBtn" class="tab-button">Edit</button>
-    </div>
-    <button id="mmUploadSettingsBtn" class="settings-button">⚙️</button>
-    <h1>Directory Creator</h1>
-    <div class="field-group" id="loadUrlContainer">
-      <label for="loadUrl">Load Directory:</label><br/>
-      <div class="load-input-row">
-        <input type="text" id="loadUrl" placeholder="Enter JSON URL"/>
-        <span class="load-separator">or</span>
-        <button id="loadFileBtn" type="button">Select File</button>
-        <input type="file" id="loadFileInput" accept="application/json" style="display:none;"/>
-      </div>
-      <div id="loadFileName" class="load-filename"></div>
-      <button id="loadBtn" type="button">Load</button>
-    </div>
-    <div class="field-group">
-      <label for="dirTitle">Directory Title:</label><br/>
-      <input type="text" id="dirTitle" placeholder="Series Title"/>
-      
-      <div class="input-group" id="posterGroup">
-        <div class="poster-label-stack">
-          <label for="posterInput">Poster image:</label>
-          <button id="posterChangeBtn" type="button" class="poster-change-btn" style="display:none;">Change Poster?</button>
+  <div class="creator-layout">
+    <div class="side-panel" style="display:none;">
+      <div class="field-group" id="paheImportGroup">
+        <label style="font-weight:700;">Animepahe Import (to Catbox)</label>
+        <div class="pahe-row">
+          <input type="text" id="paheQuery" placeholder="Search Animepahe (e.g. Naruto)" />
+          <button id="paheSearchBtn" type="button">Search</button>
         </div>
-        <input type="file" id="posterInput" accept="image/*">
-        <div id="posterWrapper" class="poster-wrapper">
-          <img id="posterPreview" alt="Poster preview" />
+        <div id="paheResults" class="pahe-results"></div>
+
+        <div id="paheSelection" class="pahe-selection" style="display:none;">
+          <div class="pahe-selected-header">
+            <img id="paheSelectedPoster" class="pahe-selected-poster" alt="" />
+            <div class="pahe-selected-text">
+              <div id="paheSelectedTitle" class="pahe-selected-title"></div>
+              <div id="paheSelectedMeta" class="pahe-selected-meta"></div>
+            </div>
+          </div>
+
+          <div class="pahe-row pahe-mode-row">
+            <label class="mm-toggle" style="gap:.4em; align-items:center;">
+              <input type="radio" name="paheMode" id="paheModeSingle" checked>
+              <span>Single episode</span>
+            </label>
+            <label class="mm-toggle" style="gap:.4em; align-items:center;">
+              <input type="radio" name="paheMode" id="paheModeAll">
+              <span>Whole show</span>
+            </label>
+          </div>
+
+          <div class="pahe-row" id="paheEpisodePickerRow">
+            <label for="paheEpisodeSelect" style="min-width:66px;">Episode</label>
+            <select id="paheEpisodeSelect" class="pahe-select"></select>
+          </div>
+
+          <div class="pahe-row">
+            <label for="paheQualitySelect" style="min-width:66px;">Quality</label>
+            <select id="paheQualitySelect" class="pahe-select"></select>
+          </div>
+
+          <div class="pahe-row" style="justify-content:flex-end;">
+            <button id="paheStartBtn" type="button">Upload</button>
+            <button id="paheCancelBtn" type="button" style="display:none; background:#3a3a3a;">Cancel</button>
+          </div>
+
+          <label class="mm-toggle" style="gap:.4em; align-items:center; margin-top:0.35em;">
+            <input type="checkbox" id="paheApplyPosterToggle" checked>
+            <span>Set title/poster from selection</span>
+          </label>
+
+          <div id="paheProgress" class="pahe-progress" style="display:none;">
+            <div id="paheProgressText" class="pahe-progress-text"></div>
+            <progress id="paheProgressBar" max="1" value="0"></progress>
+          </div>
+
+          <div id="paheLog" class="pahe-log"></div>
         </div>
       </div>
-      <div id="posterStatus">
-        Uploading image…
-        <progress id="posterProgress" max="100" value="0" style="vertical-align:middle; width:160px; margin-left:0.5em;"></progress>
-      </div>
-      <div id="maintainerHiddenRow" style="display:none; margin-top:0.6em;">
-        <label class="mm-toggle" style="gap:.4em; align-items:center;">
-          <input type="checkbox" id="maintainerHiddenToggle">
-          <span>Hide this directory from Source Lists</span>
-        </label>
-        <small style="display:block; margin-left:2.1em; margin-top:0.2em; color:#9ecbff;">
-          When enabled, Source Maintainer workflows skip generating entries for this JSON.
-        </small>
-      </div>
     </div>
-    <div id="categories"></div>
-    <button id="addCategory">Add Category</button>
-    <div class="field-group" id="folderRow">
-      <label id="folderSelectBtn" for="folderInput" class="tab-button" style="margin:0;">Select Folder</label>
-      <input type="file" id="folderInput" webkitdirectory multiple style="display:none;">
-    </div>
-    <div id="outputContainer" style="display:flex; align-items:center; gap:0.5em;">
-      <pre id="output"><a id="outputLink" href="#" target="_blank"></a></pre>
+
+    <div class="container">
+      <div class="tabs">
+        <button id="homeTabBtn" class="tab-button">Home</button>
+        <button id="createTabBtn" class="tab-button active">Create</button>
+        <button id="editTabBtn" class="tab-button">Edit</button>
+      </div>
+      <button id="mmUploadSettingsBtn" class="settings-button">⚙️</button>
+      <h1>Directory Creator</h1>
+      <div class="field-group" id="loadUrlContainer">
+        <label for="loadUrl">Load Directory:</label><br/>
+        <div class="load-input-row">
+          <input type="text" id="loadUrl" placeholder="Enter JSON URL"/>
+          <span class="load-separator">or</span>
+          <button id="loadFileBtn" type="button">Select File</button>
+          <input type="file" id="loadFileInput" accept="application/json" style="display:none;"/>
+        </div>
+        <div id="loadFileName" class="load-filename"></div>
+        <button id="loadBtn" type="button">Load</button>
+      </div>
+      <div class="field-group">
+        <label for="dirTitle">Directory Title:</label><br/>
+        <input type="text" id="dirTitle" placeholder="Series Title"/>
+        
+        <div class="input-group" id="posterGroup">
+          <div class="poster-label-stack">
+            <label for="posterInput">Poster image:</label>
+            <button id="posterChangeBtn" type="button" class="poster-change-btn" style="display:none;">Change Poster?</button>
+          </div>
+          <input type="file" id="posterInput" accept="image/*">
+          <div id="posterWrapper" class="poster-wrapper">
+            <img id="posterPreview" alt="Poster preview" />
+          </div>
+        </div>
+        <div id="posterStatus">
+          Uploading image…
+          <progress id="posterProgress" max="100" value="0" style="vertical-align:middle; width:160px; margin-left:0.5em;"></progress>
+        </div>
+        <div id="maintainerHiddenRow" style="display:none; margin-top:0.6em;">
+          <label class="mm-toggle" style="gap:.4em; align-items:center;">
+            <input type="checkbox" id="maintainerHiddenToggle">
+            <span>Hide this directory from Source Lists</span>
+          </label>
+          <small style="display:block; margin-left:2.1em; margin-top:0.2em; color:#9ecbff;">
+            When enabled, Source Maintainer workflows skip generating entries for this JSON.
+          </small>
+        </div>
+      </div>
+
+      <div id="categories"></div>
+      <button id="addCategory">Add Category</button>
+
+      <div class="field-group" id="folderRow">
+        <label id="folderSelectBtn" for="folderInput" class="tab-button" style="margin:0;">Select Folder</label>
+        <input type="file" id="folderInput" webkitdirectory multiple style="display:none;">
+      </div>
+      <div id="outputContainer" style="display:flex; align-items:center; gap:0.5em;">
+        <pre id="output"><a id="outputLink" href="#" target="_blank"></a></pre>
+      </div>
     </div>
   </div>
 
@@ -80,6 +143,7 @@
   <script src="scripts/server.js"></script>
   <script src="scripts/settings.js"></script>
   <script src="scripts/folder-upload.js"></script>
+  <script src="scripts/animepahe-import.js"></script>
   <script src="scripts/dev-menu.js"></script>
 </body>
 </html>

@@ -21,6 +21,9 @@
   let githubTokenInput = null;
   let webhookUrlInput = null;
   let catboxUrlInput = null;
+  let paheAnimeApiBaseInput = null;
+  let paheKwikApiBaseInput = null;
+  let paheKwikAuthTokenInput = null;
 
   function queryElements() {
     overlay = document.getElementById("devMenuOverlay");
@@ -41,6 +44,9 @@
     githubTokenInput = document.getElementById("devGithubToken");
     webhookUrlInput = document.getElementById("devWebhookUrl");
     catboxUrlInput = document.getElementById("devCatboxUploadUrl");
+    paheAnimeApiBaseInput = document.getElementById("devPaheAnimeApiBase");
+    paheKwikApiBaseInput = document.getElementById("devPaheKwikApiBase");
+    paheKwikAuthTokenInput = document.getElementById("devPaheKwikAuthToken");
   }
 
   const OVERLAY_OPEN_CLASS = "is-open";
@@ -314,6 +320,15 @@
         if (catboxUrlInput && settings.catboxUploadUrl !== undefined) {
           catboxUrlInput.value = settings.catboxUploadUrl || '';
         }
+        if (paheAnimeApiBaseInput && settings.paheAnimeApiBase !== undefined) {
+          paheAnimeApiBaseInput.value = settings.paheAnimeApiBase || '';
+        }
+        if (paheKwikApiBaseInput && settings.paheKwikApiBase !== undefined) {
+          paheKwikApiBaseInput.value = settings.paheKwikApiBase || '';
+        }
+        if (paheKwikAuthTokenInput && settings.paheKwikAuthToken !== undefined) {
+          paheKwikAuthTokenInput.value = settings.paheKwikAuthToken || '';
+        }
       } catch (err) {
         console.warn('[CreatorDevMenu] Failed to load settings', err);
       }
@@ -444,6 +459,45 @@
       };
       catboxUrlInput.addEventListener('change', commitCatboxUrl);
       catboxUrlInput.addEventListener('blur', commitCatboxUrl);
+    }
+
+    if (paheAnimeApiBaseInput) {
+      const commit = () => {
+        if (typeof saveSettingsPartial !== 'function') return;
+        try {
+          saveSettingsPartial({ paheAnimeApiBase: paheAnimeApiBaseInput.value.trim() });
+        } catch (err) {
+          console.warn('[CreatorDevMenu] Failed to save Animepahe API base', err);
+        }
+      };
+      paheAnimeApiBaseInput.addEventListener('change', commit);
+      paheAnimeApiBaseInput.addEventListener('blur', commit);
+    }
+
+    if (paheKwikApiBaseInput) {
+      const commit = () => {
+        if (typeof saveSettingsPartial !== 'function') return;
+        try {
+          saveSettingsPartial({ paheKwikApiBase: paheKwikApiBaseInput.value.trim() });
+        } catch (err) {
+          console.warn('[CreatorDevMenu] Failed to save KwiK API base', err);
+        }
+      };
+      paheKwikApiBaseInput.addEventListener('change', commit);
+      paheKwikApiBaseInput.addEventListener('blur', commit);
+    }
+
+    if (paheKwikAuthTokenInput) {
+      const commit = () => {
+        if (typeof saveSettingsPartial !== 'function') return;
+        try {
+          saveSettingsPartial({ paheKwikAuthToken: paheKwikAuthTokenInput.value.trim() });
+        } catch (err) {
+          console.warn('[CreatorDevMenu] Failed to save KwiK auth token', err);
+        }
+      };
+      paheKwikAuthTokenInput.addEventListener('change', commit);
+      paheKwikAuthTokenInput.addEventListener('blur', commit);
     }
     
   }

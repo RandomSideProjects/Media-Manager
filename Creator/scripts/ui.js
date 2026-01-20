@@ -572,6 +572,29 @@ function clearPosterPreviewUI() {
   if (posterInput) posterInput.style.display = 'inline-block';
 }
 
+function setCreatorPosterUrl(url) {
+  posterImageUrl = (typeof url === 'string') ? url.trim() : '';
+  const previewPosterUrl = resolvePosterPreviewUrl(posterImageUrl);
+  if (posterImageUrl) {
+    setPosterPreviewSource(previewPosterUrl, { isBlob: false });
+    if (posterWrapper) posterWrapper.style.display = 'inline-block';
+    if (posterInput) posterInput.style.display = 'none';
+  } else {
+    clearPosterPreviewUI();
+  }
+  if (posterChangeBtn) posterChangeBtn.style.display = posterImageUrl ? 'inline-block' : 'none';
+  if (posterStatus) {
+    posterStatus.style.display = 'none';
+    posterStatus.style.color = '#9ecbff';
+    posterStatus.textContent = 'Uploading image…';
+  }
+  try { updateOutput(); } catch {}
+}
+
+if (typeof window !== 'undefined') {
+  window.mm_setCreatorPosterUrl = setCreatorPosterUrl;
+}
+
 function getUploadSettingsSafe() {
   try {
     const raw = localStorage.getItem('mm_upload_settings') || '{}';
@@ -2416,16 +2439,23 @@ function addEpisode(container, data) {
         }
       } catch {}
       epError.textContent = '';
-    } else {
-      if (epDiv.dataset && (epDiv.dataset.fileSizeBytes || epDiv.dataset.durationSeconds)) return;
-      try { epError.style.color = '#9ecbff'; epError.textContent = 'Fetching metadata…'; } catch {}
-      try {
-        const [size, dur] = await Promise.all([ fetchRemoteContentLength(url), computeRemoteDurationSeconds(url) ]);
-        if (Number.isFinite(size) && size >= 0) epDiv.dataset.fileSizeBytes = String(Math.round(size));
-        if (Number.isFinite(dur) && dur > 0) epDiv.dataset.durationSeconds = String(Math.round(dur));
-        epError.textContent = '';
-      } catch { epError.textContent = ''; }
-    }
+	    } else {
+	      const sizeCandidate = epDiv.dataset ? Number(epDiv.dataset.fileSizeBytes) : NaN;
+	      const durCandidate = epDiv.dataset ? Number(epDiv.dataset.durationSeconds) : NaN;
+	      const hasSize = Number.isFinite(sizeCandidate) && sizeCandidate > 0;
+	      const hasDuration = Number.isFinite(durCandidate) && durCandidate > 0;
+	      if (hasSize && hasDuration) return;
+	      try { epError.style.color = '#9ecbff'; epError.textContent = 'Fetching metadata…'; } catch {}
+	      try {
+	        const [size, dur] = await Promise.all([
+	          hasSize ? Promise.resolve(NaN) : fetchRemoteContentLength(url),
+	          hasDuration ? Promise.resolve(NaN) : computeRemoteDurationSeconds(url)
+	        ]);
+	        if (Number.isFinite(size) && size >= 0) epDiv.dataset.fileSizeBytes = String(Math.round(size));
+	        if (Number.isFinite(dur) && dur > 0) epDiv.dataset.durationSeconds = String(Math.round(dur));
+	        epError.textContent = '';
+	      } catch { epError.textContent = ''; }
+	    }
     if (separatedToggle.checked) {
       recalcEpisodeSeparatedTotals();
       syncEpisodeMainSrc();
