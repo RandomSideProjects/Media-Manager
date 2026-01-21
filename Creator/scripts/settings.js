@@ -303,15 +303,30 @@ function updateCbzRelated() {
 }
 
 mmBtn = document.getElementById('mmUploadSettingsBtn');
+function openUploadSettingsPanel(event) {
+  try {
+    if (event && typeof event.stopPropagation === 'function') event.stopPropagation();
+  } catch {}
+  mmPanel = ensureUploadSettingsPanel();
+  if (mmPanel) {
+    mmPanel.style.display = 'flex';
+    updateCbzRelated();
+  }
+}
+if (typeof window !== 'undefined') {
+  window.mm_openUploadSettingsPanel = openUploadSettingsPanel;
+}
 if (mmBtn) {
-  mmBtn.addEventListener('click', (event) => {
-    event.stopPropagation();
-    mmPanel = ensureUploadSettingsPanel();
-    if (mmPanel) {
-      mmPanel.style.display = 'flex';
-      updateCbzRelated();
+  mmBtn.addEventListener('click', openUploadSettingsPanel);
+} else {
+  // Fallback: if the button exists later (or DOM was altered), still open settings on click.
+  document.addEventListener('click', (event) => {
+    const target = event && event.target;
+    if (!target) return;
+    if (target.id === 'mmUploadSettingsBtn') {
+      openUploadSettingsPanel(event);
     }
-  });
+  }, { capture: true });
 }
 
 function initializeUploadSettingsPanel() {

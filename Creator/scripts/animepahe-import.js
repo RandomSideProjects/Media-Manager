@@ -48,10 +48,45 @@
     }
   }
 
+  let paheReachabilityPromise = null;
+  let paheReachabilityOk = (typeof window !== "undefined" && window.MM_PAHE_API_OK === true) ? true : null;
+  let paheUnreachableNotified = false;
+
+  async function probePaheReachable() {
+    const { animeApiBase } = getConfig();
+    const controller = new AbortController();
+    const timeout = setTimeout(() => {
+      try { controller.abort(); } catch {}
+    }, 6000);
+    try {
+      const res = await fetch(`${animeApiBase}/?method=search&query=naruto`, { cache: "no-store", signal: controller.signal });
+      return !!(res && res.ok);
+    } catch {
+      return false;
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  async function ensurePaheReachableIfEnabled() {
+    if (!isImportEnabled()) return false;
+    if (paheReachabilityOk === true) return true;
+    if (paheReachabilityPromise) return await paheReachabilityPromise;
+    paheReachabilityPromise = (async () => {
+      const ok = await probePaheReachable();
+      paheReachabilityOk = ok;
+      paheReachabilityPromise = null;
+      return ok;
+    })();
+    return await paheReachabilityPromise;
+  }
+
   function updateVisibility() {
     const isManga = isMangaModeSafe();
     const enabled = isImportEnabled();
-    const show = enabled && !isManga;
+    const paheOk = paheReachabilityOk === true
+      || ((typeof window !== "undefined" && window.MM_PAHE_API_OK === true) ? true : false);
+    const show = enabled && !isManga && paheOk;
     if (sidePanel) sidePanel.style.display = show ? "" : "none";
     group.style.display = show ? "" : "none";
     if (!show) {
@@ -62,6 +97,27 @@
       } catch {}
     }
     syncSidePanelToCreator();
+
+    if (enabled && !isManga && !paheOk) {
+      void (async () => {
+        const ok = await ensurePaheReachableIfEnabled();
+        if (!ok && !paheUnreachableNotified) {
+          paheUnreachableNotified = true;
+          try {
+            if (typeof window.showStorageNotice === "function") {
+              window.showStorageNotice({
+                title: "Animepahe Import",
+                message: "Animepahe API is unreachable. The import panel will stay hidden until it becomes available.",
+                tone: "warning",
+                autoCloseMs: 5000
+              });
+            }
+          } catch {}
+        }
+        try { window.MM_PAHE_API_OK = ok; } catch {}
+        updateVisibility();
+      })();
+    }
   }
 
   function syncSidePanelToCreator() {
@@ -82,6 +138,14 @@
 
   updateVisibility();
   window.addEventListener("mm_settings_saved", updateVisibility);
+  window.addEventListener("mm:pahe-api-status", (event) => {
+    try {
+      const ok = !!(event && event.detail && event.detail.ok === true);
+      paheReachabilityOk = ok;
+      try { window.MM_PAHE_API_OK = ok; } catch {}
+    } catch {}
+    updateVisibility();
+  });
 
   try {
     if (typeof ResizeObserver === "function" && mainContainer) {

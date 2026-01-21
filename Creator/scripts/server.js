@@ -68,6 +68,7 @@ function showHostFailure(container, codeText) {
 
 const CATBOX_DIRECT_UPLOAD_URL = 'https://catbox.moe/user/api.php';
 const CATBOX_PROXY_UPLOAD_URL = 'https://mm.littlehacker303.workers.dev/catbox/user/api.php';
+const SERVER_DEFAULT_PAHE_ANIME_API_BASE = 'https://anime.apex-cloud.workers.dev';
 
 if (typeof window !== 'undefined') {
   window.MM_PROXY_CATBOX_UPLOAD_URL = CATBOX_PROXY_UPLOAD_URL;
@@ -216,9 +217,28 @@ async function checkHostAndLoadCreator() {
     const sec = s % 60;
     return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
   };
-  const tick = () => {
-    if (checkText) checkText.textContent = `Checking if server is responsive\nTime Elapsed : ${fmt(Date.now() - started)}`;
+  const readPaheEnabled = () => {
+    try {
+      const raw = localStorage.getItem('mm_upload_settings') || '{}';
+      const parsed = JSON.parse(raw);
+      return parsed && parsed.paheImportEnabled === true;
+    } catch {
+      return false;
+    }
   };
+
+  const paheEnabled = readPaheEnabled();
+  const tick = () => {
+    if (checkText) {
+      const mainLine = mainStatusLine ? `Main: ${mainStatusLine}` : 'Main: pending';
+      const paheLine = paheEnabled
+        ? (paheStatusLine ? `Pahe API: ${paheStatusLine}` : 'Pahe API: pending')
+        : 'Pahe API: disabled';
+      checkText.textContent = `Checking if server is responsive\n${mainLine}\n${paheLine}\nTime Elapsed : ${fmt(Date.now() - started)}`;
+    }
+  };
+  let mainStatusLine = '';
+  let paheStatusLine = '';
   tick();
   const timer = setInterval(tick, 250);
 
@@ -241,6 +261,55 @@ async function checkHostAndLoadCreator() {
     stop();
     showHostFailure(container, codeText);
     return;
+  }
+  mainStatusLine = `${resp.status} ${resp.statusText || 'OK'}`.trim();
+  tick();
+
+  const readPaheApiBase = () => {
+    try {
+      const raw = localStorage.getItem('mm_upload_settings') || '{}';
+      const parsed = JSON.parse(raw);
+      const candidate = parsed && typeof parsed.paheAnimeApiBase === 'string' ? parsed.paheAnimeApiBase.trim() : '';
+      return (candidate || SERVER_DEFAULT_PAHE_ANIME_API_BASE).replace(/\/+$/, '');
+    } catch {
+      return SERVER_DEFAULT_PAHE_ANIME_API_BASE;
+    }
+  };
+
+  const probePaheSearchApi = async () => {
+    const base = readPaheApiBase();
+    const url = `${base}/?method=search&query=naruto`;
+    try {
+      const res = await fetch(url, { cache: 'no-store' });
+      if (res && res.ok) {
+        return { ok: true, status: res.status, statusText: res.statusText || 'OK' };
+      }
+      return { ok: false, status: res ? res.status : 0, statusText: res ? (res.statusText || 'Error') : 'Network error' };
+    } catch (err) {
+      return { ok: false, status: 0, statusText: (err && err.message) ? err.message : 'Network error' };
+    }
+  };
+
+  if (paheEnabled) {
+    const paheProbe = await probePaheSearchApi();
+    const ok = !!(paheProbe && paheProbe.ok);
+    if (paheProbe && paheProbe.ok) {
+      paheStatusLine = `${paheProbe.status} ${paheProbe.statusText}`.trim();
+    } else if (paheProbe) {
+      paheStatusLine = `${paheProbe.status || 'ERR'} ${paheProbe.statusText || 'Error'}`.trim();
+    } else {
+      paheStatusLine = 'ERR';
+    }
+    try {
+      window.MM_PAHE_API_OK = ok;
+      window.dispatchEvent(new CustomEvent('mm:pahe-api-status', { detail: { ok, line: paheStatusLine } }));
+    } catch {}
+    tick();
+  } else {
+    try {
+      window.MM_PAHE_API_OK = false;
+      window.dispatchEvent(new CustomEvent('mm:pahe-api-status', { detail: { ok: false, line: 'disabled' } }));
+    } catch {}
   }
 
   let endpointInfo = { endpoint: 'direct' };
@@ -311,7 +380,8 @@ async function checkHostAndLoadCreator() {
   }
 
   stop();
-  statusBox.textContent = `Server status code\n${resp.status}\nCatbox uploads via: ${endpointLabel}`;
+  const paheLineFinal = paheEnabled ? (paheStatusLine || 'pending') : 'disabled';
+  statusBox.textContent = `Main: ${mainStatusLine || `${resp.status} ${resp.statusText || 'OK'}`.trim()}\nPahe API: ${paheLineFinal}\nCatbox uploads via: ${endpointLabel}`;
   statusBox.style.display = 'block';
 
   try {
