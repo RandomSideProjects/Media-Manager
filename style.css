@@ -342,18 +342,26 @@ button:hover {
   width: 100%;
   max-width: 1100px;
   --tile-scale: 1;
+  --movie-span: 2;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(calc(120px * var(--tile-scale)), 1fr));
+  /* Use auto-fill so the grid keeps "full-row" sizing even when there are few items */
+  grid-template-columns: repeat(auto-fill, minmax(calc(120px * var(--tile-scale)), 1fr));
   gap: calc(0.75rem * var(--tile-scale));
   align-items: stretch;
 }
 #episodeList.single-tile {
   --tile-scale: 1.5;
-  width: fit-content;
   max-width: 100%;
-  margin-inline: auto;
-  justify-content: center;
-  grid-template-columns: repeat(auto-fit, minmax(calc(140px * var(--tile-scale)), calc(180px * var(--tile-scale))));
+  grid-template-columns: repeat(auto-fill, minmax(calc(140px * var(--tile-scale)), 1fr));
+}
+.episode-button.movie-tile {
+  aspect-ratio: 2 / 3;
+  grid-column: span var(--movie-span);
+}
+@media (max-width: 520px) {
+  #episodeList {
+    --movie-span: 1;
+  }
 }
 .category-title {
   font-size: 1.2em;

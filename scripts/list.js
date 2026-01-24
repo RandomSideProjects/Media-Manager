@@ -273,7 +273,22 @@ function renderEpisodeList() {
       nonSeparatedTiles += episodes.length;
     }
   });
-  const singleTileSeparatedOnly = tileCount === 1 && separatedTiles === 1;
+  const titleContainsEpisode = (text) => {
+    try { return String(text || '').toLowerCase().includes('episode'); } catch { return false; }
+  };
+
+  let singleTileSeparatedOnly = tileCount === 1 && separatedTiles === 1;
+  if (singleTileSeparatedOnly) {
+    for (let i = 0; i < videoList.length; i++) {
+      const category = videoList[i];
+      const episodes = Array.isArray(category && category.episodes) ? category.episodes : [];
+      const useSeparated = shouldTreatCategoryAsSeparated(category);
+      if (!useSeparated || !episodes.length) continue;
+      const categoryTitleRaw = (category && category.category) ? category.category : `Category ${i + 1}`;
+      if (titleContainsEpisode(categoryTitleRaw)) singleTileSeparatedOnly = false;
+      break;
+    }
+  }
   episodeList.classList.toggle('single-tile', singleTileSeparatedOnly);
 
   const normalizeSingleTitle = (text) => {
@@ -343,6 +358,7 @@ function renderEpisodeList() {
       const right = document.createElement('span');
       right.className = 'episode-meta';
       const titleText = normalizeSingleTitle(categoryTitle.trim());
+      if (!titleContainsEpisode(titleText)) button.classList.add('movie-tile');
       const episodeNumber = extractEpisodeNumber(titleText);
       const isShortTitle = !episodeNumber && titleText.length > 0 && titleText.length <= 5;
       const isLongTitle = !episodeNumber && titleText.length > 5;
@@ -444,6 +460,7 @@ function renderEpisodeList() {
       right.className = 'episode-meta';
       const rawTitle = (entry.title || `Item ${index + 1}`).trim();
       const titleText = normalizeSingleTitle(rawTitle);
+      if (!titleContainsEpisode(titleText)) button.classList.add('movie-tile');
       const episodeNumber = extractEpisodeNumber(titleText);
       const isShortTitle = !episodeNumber && titleText.length > 0 && titleText.length <= 5;
       const isLongTitle = !episodeNumber && titleText.length > 5;
