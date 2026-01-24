@@ -16,7 +16,8 @@
   const modeAll = document.getElementById("paheModeAll");
   const episodePickerRow = document.getElementById("paheEpisodePickerRow");
   const episodeSelect = document.getElementById("paheEpisodeSelect");
-  const qualitySelect = document.getElementById("paheQualitySelect");
+  const qualityBtn = document.getElementById("paheQualityBtn");
+  const qualityMenu = document.getElementById("paheQualityMenu");
   const startBtn = document.getElementById("paheStartBtn");
   const cancelBtn = document.getElementById("paheCancelBtn");
   const applyPosterToggle = document.getElementById("paheApplyPosterToggle");
@@ -209,7 +210,7 @@
       if (modeSingle) modeSingle.disabled = isBusy;
       if (modeAll) modeAll.disabled = isBusy;
       if (episodeSelect) episodeSelect.disabled = isBusy;
-      if (qualitySelect) qualitySelect.disabled = isBusy;
+      if (qualityBtn) qualityBtn.disabled = isBusy;
       if (cancelBtn) cancelBtn.style.display = isBusy ? "" : "none";
     } catch {}
   }
@@ -250,6 +251,55 @@
     const match = String(label || "").match(/(\d{3,4})p/i);
     if (!match) return NaN;
     return asNumber(match[1]);
+  }
+
+  function parseSizeMb(label) {
+    const match = String(label || "").match(/\((\d+(?:\.\d+)?)\s*mb\)/i);
+    if (!match) return NaN;
+    return asNumber(match[1]);
+  }
+
+  function tagForResolution(res) {
+    if (!Number.isFinite(res)) return "";
+    if (res >= 1080) return "HD";
+    if (res >= 720) return "SD";
+    return "";
+  }
+
+  let selectedQuality = null; // { key, base, variant, res, sizeMb }
+
+  function updateQualityUiSelection() {
+    if (qualityMenu) {
+      const buttons = Array.from(qualityMenu.querySelectorAll(".pahe-quality-item"));
+      buttons.forEach((btn) => {
+        const isSelected = !!(selectedQuality && btn.dataset.key === selectedQuality.key);
+        if (isSelected) btn.classList.add("is-selected");
+        else btn.classList.remove("is-selected");
+      });
+    }
+
+    if (!qualityBtn) return;
+    if (!selectedQuality) {
+      qualityBtn.textContent = "Select…";
+      return;
+    }
+    const tag = tagForResolution(selectedQuality.res);
+    const baseLabel = selectedQuality.variant && selectedQuality.variant > 1
+      ? `${selectedQuality.base} ${selectedQuality.variant}`
+      : selectedQuality.base;
+    const sizeText = Number.isFinite(selectedQuality.sizeMb) ? `(${selectedQuality.sizeMb}MB)` : "";
+    qualityBtn.textContent = [baseLabel, tag, sizeText].filter(Boolean).join(" ");
+  }
+
+  function showQualityMenu() {
+    if (!qualityMenu) return;
+    qualityMenu.style.display = "";
+    updateQualityUiSelection();
+  }
+
+  function hideQualityMenu() {
+    if (!qualityMenu) return;
+    qualityMenu.style.display = "none";
   }
 
   function sanitizeFilename(value) {
@@ -479,7 +529,9 @@
     if (!selectedShow || !selectedShow.session) return;
     clearLog();
     episodeSelect.innerHTML = "";
-    qualitySelect.innerHTML = "";
+    if (qualityMenu) qualityMenu.innerHTML = "";
+    selectedQuality = null;
+    updateQualityUiSelection();
     episodeList = [];
     setBusy(true);
     try {
@@ -532,22 +584,25 @@
     if (!selectedShow || !selectedShow.session) return;
     const epSession = String(episodeSession || "").trim();
     if (!epSession) return;
-    qualitySelect.innerHTML = "";
+    if (qualityMenu) qualityMenu.innerHTML = "";
 
     const { animeApiBase } = getConfig();
     const links = await fetchJson(
       `${animeApiBase}/?method=episode&session=${encodeURIComponent(selectedShow.session)}&ep=${encodeURIComponent(epSession)}`
     );
+
     const candidates = Array.isArray(links) ? links : [];
     const items = candidates
       .map((l, idx) => {
-        const label = l && l.name ? String(l.name).trim() : "";
-        const key = normalizeQualityName(label);
-        if (!label || !key || !l || !l.link) return null;
-        const base = parseSourceLabel(label);
-        const res = parseResolution(label);
-        const resKey = Number.isFinite(res) ? String(res) : "__unknown__";
-        return { key, name: label, base, res, resKey, order: idx };
+        const rawName = l && l.name ? String(l.name).trim() : "";
+        const key = normalizeQualityName(rawName);
+        if (!rawName || !key || !l || !l.link) return null;
+        const base = parseSourceLabel(rawName);
+        const res = parseResolution(rawName);
+        if (!Number.isFinite(res) || res < 720) return null; // only list 720p+
+        const sizeMb = parseSizeMb(rawName);
+        const resKey = String(Math.round(res));
+        return { key, base, res, sizeMb, resKey, order: idx };
       })
       .filter(Boolean);
 
@@ -567,62 +622,117 @@
     }
 
     const baseNames = Array.from(baseMap.keys()).sort((a, b) => a.localeCompare(b));
+    const menuButtons = [];
+
     baseNames.forEach((base) => {
       const resMap = baseMap.get(base);
-      const resKeys = Array.from(resMap.keys());
-      const numericRes = resKeys
-        .filter((k) => k !== "__unknown__")
+      const resKeys = Array.from(resMap.keys())
         .map((k) => parseInt(k, 10))
         .filter((n) => Number.isFinite(n))
-        .sort((a, b) => b - a);
-      const orderedResKeys = numericRes.map(String);
-      if (resKeys.includes("__unknown__")) orderedResKeys.push("__unknown__");
+        .sort((a, b) => b - a)
+        .map(String);
 
       let variantCount = 1;
-      orderedResKeys.forEach((rk) => {
+      resKeys.forEach((rk) => {
         const list = resMap.get(rk) || [];
         variantCount = Math.max(variantCount, list.length);
       });
 
       for (let variantIdx = 0; variantIdx < variantCount; variantIdx += 1) {
         const groupLabel = variantIdx === 0 ? base : `${base} ${variantIdx + 1}`;
-        const optgroup = document.createElement("optgroup");
-        optgroup.label = groupLabel;
+        const groupEl = document.createElement("div");
+        groupEl.className = "pahe-quality-group";
+
+        const groupTitle = document.createElement("div");
+        groupTitle.className = "pahe-quality-group-title";
+        groupTitle.textContent = groupLabel;
+        groupEl.appendChild(groupTitle);
 
         const variantItems = [];
-        orderedResKeys.forEach((rk) => {
+        resKeys.forEach((rk) => {
           const list = resMap.get(rk) || [];
           const picked = list[variantIdx];
           if (picked) variantItems.push(picked);
         });
-
-        // If a base has only one variant, don't emit empty "Alex 2" groups.
         if (!variantItems.length) continue;
 
-        variantItems.sort((a, b) => {
-          const na = Number.isFinite(a.res);
-          const nb = Number.isFinite(b.res);
-          if (na && nb) return b.res - a.res;
-          if (na && !nb) return -1;
-          if (!na && nb) return 1;
-          return a.name.localeCompare(b.name);
-        });
-
         variantItems.forEach((item) => {
-          const opt = document.createElement("option");
-          opt.value = item.key;
-          opt.textContent = item.name;
-          opt.dataset.resolution = String(Number.isFinite(item.res) ? item.res : "");
-          opt.dataset.sourceBase = item.base;
-          opt.dataset.sourceVariant = String(variantIdx + 1);
-          optgroup.appendChild(opt);
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "pahe-quality-item";
+          btn.dataset.key = item.key;
+          btn.dataset.resolution = String(item.res);
+          btn.dataset.sourceBase = item.base;
+          btn.dataset.sourceVariant = String(variantIdx + 1);
+          btn.dataset.sizeMb = String(Number.isFinite(item.sizeMb) ? item.sizeMb : "");
+
+          const left = document.createElement("div");
+          left.className = "pahe-quality-left";
+
+          const tagText = tagForResolution(item.res);
+          const tag = document.createElement("span");
+          tag.className = `setting-tag ${tagText === "HD" ? "setting-tag--hd" : "setting-tag--sd"}`;
+          tag.textContent = tagText || "SD";
+          left.appendChild(tag);
+
+          const right = document.createElement("div");
+          const sizeSpan = document.createElement("span");
+          const sizeMb = Number.isFinite(item.sizeMb) ? item.sizeMb : NaN;
+          const sizeClass = Number.isFinite(sizeMb) && sizeMb > 200 ? "over" : "ok";
+          sizeSpan.className = `pahe-quality-size ${sizeClass}`;
+          sizeSpan.textContent = Number.isFinite(sizeMb) ? `(${sizeMb}MB)` : "";
+          right.appendChild(sizeSpan);
+
+          btn.append(left, right);
+          btn.addEventListener("click", () => {
+            selectedQuality = {
+              key: item.key,
+              base: item.base,
+              variant: variantIdx + 1,
+              res: item.res,
+              sizeMb: item.sizeMb
+            };
+            updateQualityUiSelection();
+            hideQualityMenu();
+          });
+
+          groupEl.appendChild(btn);
+          menuButtons.push(btn);
         });
 
-        qualitySelect.appendChild(optgroup);
+        if (qualityMenu) qualityMenu.appendChild(groupEl);
       }
     });
 
-    if (qualitySelect.options.length) qualitySelect.selectedIndex = 0;
+    // Keep selection by (base + variant + res) if possible.
+    if (selectedQuality) {
+      const candidate = menuButtons.find((btn) => {
+        const base = btn.dataset.sourceBase || "";
+        const variant = parseInt(btn.dataset.sourceVariant || "1", 10) || 1;
+        const res = asNumber(btn.dataset.resolution || "");
+        return base === selectedQuality.base && variant === selectedQuality.variant && res === selectedQuality.res;
+      });
+      if (candidate) {
+        selectedQuality.key = candidate.dataset.key || selectedQuality.key;
+        selectedQuality.sizeMb = asNumber(candidate.dataset.sizeMb || selectedQuality.sizeMb);
+      } else {
+        selectedQuality = null;
+      }
+    }
+
+    if (!selectedQuality && menuButtons.length) {
+      // Default to first button (highest res, first variant).
+      const first = menuButtons[0];
+      selectedQuality = {
+        key: first.dataset.key || "",
+        base: first.dataset.sourceBase || "",
+        variant: Math.max(1, parseInt(first.dataset.sourceVariant || "1", 10) || 1),
+        res: asNumber(first.dataset.resolution || ""),
+        sizeMb: asNumber(first.dataset.sizeMb || "")
+      };
+    }
+
+    updateQualityUiSelection();
   }
 
   function updateEpisodePickerVisibility() {
@@ -673,18 +783,10 @@
         }
       }
 
-      const desiredKey = String(qualitySelect.value || "").trim();
-      let desiredResolution = NaN;
-      let desiredSourceBase = "";
-      let desiredSourceVariant = 1;
-      try {
-        const sel = qualitySelect.selectedOptions && qualitySelect.selectedOptions[0];
-        if (sel && sel.dataset) {
-          if (sel.dataset.resolution) desiredResolution = asNumber(sel.dataset.resolution);
-          if (sel.dataset.sourceBase) desiredSourceBase = String(sel.dataset.sourceBase || "").trim();
-          if (sel.dataset.sourceVariant) desiredSourceVariant = Math.max(1, parseInt(sel.dataset.sourceVariant, 10) || 1);
-        }
-      } catch {}
+      const desiredKey = selectedQuality && selectedQuality.key ? selectedQuality.key : "";
+      const desiredResolution = selectedQuality && Number.isFinite(selectedQuality.res) ? selectedQuality.res : NaN;
+      const desiredSourceBase = selectedQuality && selectedQuality.base ? selectedQuality.base : "";
+      const desiredSourceVariant = selectedQuality && Number.isFinite(selectedQuality.variant) ? selectedQuality.variant : 1;
 
       const toUpload = modeAll.checked
         ? episodeList.slice()
@@ -850,4 +952,23 @@
     if (e.key === "Enter") search();
   });
   if (startBtn) startBtn.addEventListener("click", uploadSelection);
+
+  if (qualityBtn) {
+    qualityBtn.addEventListener("click", (event) => {
+      try { event.preventDefault(); event.stopPropagation(); } catch {}
+      if (!qualityMenu) return;
+      const open = qualityMenu.style.display !== "none";
+      if (open) hideQualityMenu();
+      else showQualityMenu();
+    });
+  }
+
+  if (qualityMenu) {
+    qualityMenu.addEventListener("click", (event) => {
+      // Keep menu open while clicking inside it (actual selection handlers close it).
+      try { event.stopPropagation(); } catch {}
+    });
+  }
+
+  document.addEventListener("click", () => hideQualityMenu(), { capture: true });
 })();
