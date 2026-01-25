@@ -1,7 +1,7 @@
 {
   "title": "You And I Are Polar Opposites",
   "Image": "https://i.animepahe.si/posters/2c1068e3f59d77254be3c75ff4131567ea1e05c02d27e81154e9c2db4445e53a.jpg",
-  "LatestTime": "2026-01-20T06:09:14.109Z",
+  "LatestTime": "2026-01-25T18:55:47.442Z",
   "categories": [
     {
       "category": "Season 1",
@@ -16,10 +16,16 @@
           "src": "https://files.catbox.moe/8jk4kh.mp4",
           "fileSizeBytes": 154769363,
           "durationSeconds": 1447
+        },
+        {
+          "title": "Episode 3",
+          "src": "https://files.catbox.moe/kbkx1b.mp4",
+          "fileSizeBytes": 130896008,
+          "durationSeconds": 1447
         }
       ]
     }
   ],
-  "totalFileSizeBytes": 154769363,
-  "totalDurationSeconds": 2894
+  "totalFileSizeBytes": 285665371,
+  "totalDurationSeconds": 4341
 }
