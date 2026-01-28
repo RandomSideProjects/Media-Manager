@@ -52,6 +52,8 @@
   let paheReachabilityPromise = null;
   let paheReachabilityOk = (typeof window !== "undefined" && window.MM_PAHE_API_OK === true) ? true : null;
   let paheUnreachableNotified = false;
+  let paheProbeAttempted = false;
+  let lastImportEnabled = false;
 
   async function probePaheReachable() {
     const { animeApiBase } = getConfig();
@@ -60,7 +62,11 @@
       try { controller.abort(); } catch {}
     }, 6000);
     try {
-      const res = await fetch(`${animeApiBase}/?method=search&query=naruto`, { cache: "no-store", signal: controller.signal });
+      const target = `${animeApiBase}/?method=search&query=naruto`;
+      const url = isCatboxProxyActive()
+        ? `${animeApiBase}/proxy?modify&proxyUrl=${encodeURIComponent(target)}`
+        : target;
+      const res = await fetch(url, { cache: "no-store", signal: controller.signal });
       return !!(res && res.ok);
     } catch {
       return false;
@@ -72,8 +78,10 @@
   async function ensurePaheReachableIfEnabled() {
     if (!isImportEnabled()) return false;
     if (paheReachabilityOk === true) return true;
+    if (paheProbeAttempted) return false;
     if (paheReachabilityPromise) return await paheReachabilityPromise;
     paheReachabilityPromise = (async () => {
+      paheProbeAttempted = true;
       const ok = await probePaheReachable();
       paheReachabilityOk = ok;
       paheReachabilityPromise = null;
@@ -99,7 +107,7 @@
     }
     syncSidePanelToCreator();
 
-    if (enabled && !isManga && !paheOk) {
+    if (enabled && !isManga && !paheOk && !paheProbeAttempted) {
       void (async () => {
         const ok = await ensurePaheReachableIfEnabled();
         if (!ok && !paheUnreachableNotified) {
@@ -138,7 +146,19 @@
   }
 
   updateVisibility();
-  window.addEventListener("mm_settings_saved", updateVisibility);
+  try { lastImportEnabled = isImportEnabled(); } catch { lastImportEnabled = false; }
+  window.addEventListener("mm_settings_saved", () => {
+    let nowEnabled = false;
+    try { nowEnabled = isImportEnabled(); } catch { nowEnabled = false; }
+    if (nowEnabled && !lastImportEnabled) {
+      paheReachabilityOk = (typeof window !== "undefined" && window.MM_PAHE_API_OK === true) ? true : null;
+      paheReachabilityPromise = null;
+      paheUnreachableNotified = false;
+      paheProbeAttempted = false;
+    }
+    lastImportEnabled = nowEnabled;
+    updateVisibility();
+  });
   window.addEventListener("mm:pahe-api-status", (event) => {
     try {
       const ok = !!(event && event.detail && event.detail.ok === true);
@@ -222,6 +242,29 @@
       throw new Error(statusText);
     }
     return await res.json();
+  }
+
+  async function fetchPaheJson(url, { signal } = {}) {
+    const { animeApiBase } = getConfig();
+    const target = String(url || "").trim();
+    const finalUrl = isCatboxProxyActive()
+      ? `${animeApiBase}/proxy?modify&proxyUrl=${encodeURIComponent(target)}`
+      : target;
+    const res = await fetch(finalUrl, { cache: "no-store", signal });
+    if (!res || !res.ok) {
+      const statusText = res ? `${res.status} ${res.statusText || ""}`.trim() : "Network error";
+      throw new Error(statusText);
+    }
+    return await res.json();
+  }
+
+  function paheProxyUrl(resourceUrl) {
+    const raw = String(resourceUrl || "").trim();
+    if (!raw) return "";
+    const { animeApiBase } = getConfig();
+    const base = (animeApiBase || "").replace(/\/+$/, "");
+    if (base && raw.startsWith(`${base}/proxy?`)) return raw;
+    return `${base}/proxy?modify&proxyUrl=${encodeURIComponent(raw)}`;
   }
 
   function asNumber(value) {
@@ -338,8 +381,9 @@
 
     const scored = list
       .map((item) => ({ item, res: parseResolution(item.name) }))
+      .filter((entry) => Number.isFinite(entry.res) && entry.res >= 720)
       .sort((a, b) => (Number.isFinite(b.res) ? b.res : -1) - (Number.isFinite(a.res) ? a.res : -1));
-    return (scored[0] && scored[0].item) || list[0] || null;
+    return (scored[0] && scored[0].item) || null;
   }
 
   async function fetchDirectUrl(kwikUrl, { signal } = {}) {
@@ -361,6 +405,122 @@
       throw new Error("KWIK direct link missing");
     }
     return String(payload.content.url);
+  }
+
+  function getCatboxUploadEndpoint() {
+    try {
+      const active = (typeof window !== "undefined" && typeof window.MM_ACTIVE_CATBOX_UPLOAD_URL === "string")
+        ? window.MM_ACTIVE_CATBOX_UPLOAD_URL.trim()
+        : "";
+      if (active) return active;
+    } catch {}
+    try {
+      if (typeof window !== "undefined" && typeof window.mm_getCatboxUploadUrl === "function") {
+        const candidate = String(window.mm_getCatboxUploadUrl() || "").trim();
+        if (candidate) return candidate;
+      }
+    } catch {}
+    const st = readUploadSettings();
+    const fromSettings = st && typeof st.catboxUploadUrl === "string" ? st.catboxUploadUrl.trim() : "";
+    return fromSettings || "https://mm.littlehacker303.workers.dev/catbox/user/api.php";
+  }
+
+  function isCatboxProxyActive() {
+    const endpoint = String(getCatboxUploadEndpoint() || "").trim();
+    if (!endpoint) return false;
+    try {
+      const parsed = new URL(endpoint);
+      const host = (parsed.hostname || "").toLowerCase();
+      return host !== "catbox.moe";
+    } catch {
+      return true;
+    }
+  }
+
+  async function uploadUrlToCatbox(remoteUrl, { signal } = {}) {
+    const url = String(remoteUrl || "").trim();
+    if (!/^https?:\/\//i.test(url)) throw new Error("Invalid URL");
+
+    const form = new FormData();
+    form.append("reqtype", "urlupload");
+    form.append("url", url);
+
+    const st = readUploadSettings();
+    const settings = st && typeof st === "object" ? st : {};
+    let isAnon = (typeof settings.anonymous === "boolean") ? settings.anonymous : true;
+    const effectiveUserhash = ((settings.userhash || "").trim()) || "2cdcc7754c86c2871ed2bde9d";
+    if (!isAnon) {
+      form.append("userhash", effectiveUserhash);
+    }
+
+    const endpoint = getCatboxUploadEndpoint();
+    const res = await fetch(endpoint, { method: "POST", body: form, signal });
+    if (!res.ok) throw new Error(`Catbox HTTP ${res.status}`);
+    const text = String(await res.text()).trim();
+    try {
+      if (typeof window !== "undefined" && typeof window.mm_normalizeCatboxUrl === "function") {
+        const normalized = window.mm_normalizeCatboxUrl(text);
+        if (normalized && normalized.url) return normalized.url;
+      }
+    } catch {}
+    return text;
+  }
+
+  async function fetchRemoteContentLength(url) {
+    try {
+      const head = await fetch(url, { method: "HEAD", cache: "no-store" });
+      if (head.ok) {
+        const cl = head.headers.get("content-length") || head.headers.get("Content-Length");
+        const n = cl ? parseInt(cl, 10) : NaN;
+        if (Number.isFinite(n) && n >= 0) return n;
+      }
+    } catch {}
+    try {
+      const resp = await fetch(url, { method: "GET", headers: { Range: "bytes=0-0" }, cache: "no-store" });
+      if (resp.ok || resp.status === 206) {
+        const cr = resp.headers.get("content-range") || resp.headers.get("Content-Range");
+        if (cr) {
+          const m = cr.match(/\/(\d+)\s*$/);
+          if (m) {
+            const n = parseInt(m[1], 10);
+            if (Number.isFinite(n) && n >= 0) return n;
+          }
+        }
+        const cl = resp.headers.get("content-length") || resp.headers.get("Content-Length");
+        const n = cl ? parseInt(cl, 10) : NaN;
+        if (Number.isFinite(n) && n > 1) return n;
+      }
+    } catch {}
+    return NaN;
+  }
+
+  async function computeRemoteDurationSeconds(url) {
+    return new Promise((resolve) => {
+      try {
+        const v = document.createElement("video");
+        v.preload = "metadata";
+        v.crossOrigin = "anonymous";
+        let settled = false;
+        const cleanup = (result) => {
+          if (settled) return;
+          settled = true;
+          try { v.pause(); } catch {}
+          try { v.removeAttribute("src"); v.load(); } catch {}
+          try { v.remove(); } catch {}
+          resolve(result);
+        };
+        const done = () => {
+          const d = Number.isFinite(v.duration) ? v.duration : NaN;
+          cleanup(d);
+        };
+        const timer = setTimeout(() => cleanup(NaN), 10000);
+        v.onloadedmetadata = () => { clearTimeout(timer); done(); };
+        v.onerror = () => { clearTimeout(timer); cleanup(NaN); };
+        v.src = url;
+      } catch {
+        resolve(NaN);
+      }
+    });
   }
 
   async function downloadAsBlobViaAnimeProxy(directUrl, { signal, onProgress } = {}) {
@@ -484,7 +644,7 @@
         selectedShow = { title, type, year, episodes, score, session, poster };
         selectionEl.style.display = "";
         if (selectedPoster) {
-          selectedPoster.src = poster || "";
+          selectedPoster.src = poster ? paheProxyUrl(poster) : "";
           selectedPoster.style.display = poster ? "" : "none";
         }
         if (selectedTitle) selectedTitle.textContent = title;
@@ -515,7 +675,7 @@
     try {
       const { animeApiBase } = getConfig();
       log(`Searching: ${query}`);
-      const payload = await fetchJson(`${animeApiBase}/?method=search&query=${encodeURIComponent(query)}`);
+      const payload = await fetchPaheJson(`${animeApiBase}/?method=search&query=${encodeURIComponent(query)}`);
       renderResults(payload && payload.data ? payload.data : []);
     } catch (err) {
       log(`Search failed: ${err && err.message ? err.message : String(err)}`);
@@ -538,12 +698,12 @@
       const { animeApiBase } = getConfig();
       log("Loading episodes…");
 
-      const first = await fetchJson(`${animeApiBase}/?method=series&session=${encodeURIComponent(selectedShow.session)}&page=1`);
+      const first = await fetchPaheJson(`${animeApiBase}/?method=series&session=${encodeURIComponent(selectedShow.session)}&page=1`);
       const totalPages = first && first.total_pages ? Number(first.total_pages) : 1;
       const all = [];
       if (first && Array.isArray(first.episodes)) all.push(...first.episodes);
       for (let page = 2; page <= totalPages; page += 1) {
-        const next = await fetchJson(`${animeApiBase}/?method=series&session=${encodeURIComponent(selectedShow.session)}&page=${page}`);
+        const next = await fetchPaheJson(`${animeApiBase}/?method=series&session=${encodeURIComponent(selectedShow.session)}&page=${page}`);
         if (next && Array.isArray(next.episodes)) all.push(...next.episodes);
       }
 
@@ -587,7 +747,7 @@
     if (qualityMenu) qualityMenu.innerHTML = "";
 
     const { animeApiBase } = getConfig();
-    const links = await fetchJson(
+    const links = await fetchPaheJson(
       `${animeApiBase}/?method=episode&session=${encodeURIComponent(selectedShow.session)}&ep=${encodeURIComponent(epSession)}`
     );
 
@@ -762,6 +922,10 @@
       log("No episodes loaded yet.");
       return;
     }
+    if (!selectedQuality || !selectedQuality.key) {
+      log("Select a quality (SD/HD) first.");
+      return;
+    }
 
     abortController = new AbortController();
     setBusy(true);
@@ -845,7 +1009,7 @@
         try {
           setEpStatus("Fetching links…", "#9ecbff", { value: 0, max: 100 });
           const { animeApiBase } = getConfig();
-          const links = await fetchJson(
+          const links = await fetchPaheJson(
             `${animeApiBase}/?method=episode&session=${encodeURIComponent(selectedShow.session)}&ep=${encodeURIComponent(ep.session)}`,
             { signal: abortController.signal }
           );
@@ -856,64 +1020,45 @@
             desiredSourceVariant
           });
           if (!picked || !picked.link) throw new Error("No download links found");
+          const pickedSizeMb = parseSizeMb(picked && picked.name ? picked.name : "");
 
           setEpStatus("Resolving direct link…", "#9ecbff", { value: 0, max: 100 });
           const directUrl = await fetchDirectUrl(String(picked.link), { signal: abortController.signal });
 
-          setEpStatus("Downloading…", "#9ecbff", { indeterminate: true });
-          const blob = await downloadAsBlobViaAnimeProxy(directUrl, {
-            signal: abortController.signal,
-            onProgress: ({ loaded, total }) => {
-              if (abortController.signal.aborted) return;
-              if (Number.isFinite(total) && total > 0) {
-                setEpStatus("Downloading…", "#9ecbff", { value: loaded, max: total });
-              } else {
-                setEpStatus("Downloading…", "#9ecbff", { indeterminate: true });
-              }
-            }
-          });
-
-          const fallbackName = `${sanitizeFilename(selectedShow.title || "series")} - ${ep.episode}.mp4`;
-          const directName = guessFilenameFromDirectUrl(directUrl);
-          const fileName = sanitizeFilename(directName || fallbackName);
-          const fileType = blob && blob.type ? blob.type : "video/mp4";
-          const file = new File([blob], fileName, { type: fileType });
-
+          // Use the reported size (when present) to skip obvious >200MB uploads early.
+          let effectiveSizeBytes = NaN;
+          if (Number.isFinite(pickedSizeMb) && pickedSizeMb > 0) {
+            effectiveSizeBytes = pickedSizeMb * 1024 * 1024;
+          }
           const MAX_CATBOX_BYTES = 200 * 1024 * 1024;
-          if (file.size > MAX_CATBOX_BYTES) {
-            setEpStatus("File over 200MB; choose a lower quality.", "#ff6b6b");
+          if (Number.isFinite(effectiveSizeBytes) && effectiveSizeBytes > MAX_CATBOX_BYTES) {
+            setEpStatus("Over 200MB; choose a lower quality.", "#ff6b6b", { value: 0, max: 100 });
             log(`${label}: SKIPPED (over 200MB)`);
             if (progressBar) progressBar.value = idx + 1;
             continue;
           }
 
-          // Metadata (size/duration) before upload so the exported JSON includes it.
-          try {
-            if (epDiv && epDiv.dataset) {
-              epDiv.dataset.fileSizeBytes = String(file.size);
-            }
-            if (epDiv && typeof epDiv._computeLocalFileDurationSeconds === "function") {
-              setEpStatus("Reading metadata…", "#9ecbff", { indeterminate: true });
-              const duration = await epDiv._computeLocalFileDurationSeconds(file);
-              if (Number.isFinite(duration) && duration > 0 && epDiv.dataset) {
-                epDiv.dataset.durationSeconds = String(Math.round(duration));
-              }
-            }
-          } catch {}
-
-          setEpStatus("Uploading…", "#9ecbff", { value: 0, max: 100 });
-          const catboxUrl = await window.uploadToCatboxWithProgress(
-            file,
-            (pct) => {
-              setEpStatus(`Uploading ${Math.round(pct)}%`, "#9ecbff", { value: pct, max: 100 });
-            },
-            { context: "batch" }
-          );
+          // Start Catbox URL upload immediately (no browser download).
+          setEpStatus("Uploading (URL)…", "#9ecbff", { indeterminate: true });
+          const catboxUrl = await uploadUrlToCatbox(directUrl, { signal: abortController.signal });
 
           if (epDiv && epDiv._srcInput) {
             epDiv._srcInput.value = catboxUrl;
             epDiv._srcInput.dataset.manualEntry = "0";
           }
+
+          // Fetch metadata from the final Catbox URL using the same logic as a normal remote URL source.
+          try {
+            if (epDiv && epDiv.dataset) {
+              try { delete epDiv.dataset.fileSizeBytes; } catch { epDiv.dataset.fileSizeBytes = ""; }
+              try { delete epDiv.dataset.durationSeconds; } catch { epDiv.dataset.durationSeconds = ""; }
+            }
+            if (epDiv && typeof epDiv._fetchMeta === "function") {
+              setEpStatus("Fetching metadata…", "#9ecbff", { indeterminate: true });
+              await epDiv._fetchMeta();
+            }
+          } catch {}
+
           setEpStatus("Done", "#9ecbff", { value: 100, max: 100 });
 
           if (progressBar) progressBar.value = idx + 1;

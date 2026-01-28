@@ -240,7 +240,7 @@ async function checkHostAndLoadCreator() {
   let mainStatusLine = '';
   let paheStatusLine = '';
   tick();
-  const timer = setInterval(tick, 250);
+  const timer = setInterval(tick, 1000);
 
   const stop = () => {
     clearInterval(timer);
@@ -278,7 +278,20 @@ async function checkHostAndLoadCreator() {
 
   const probePaheSearchApi = async () => {
     const base = readPaheApiBase();
-    const url = `${base}/?method=search&query=naruto`;
+    const target = `${base}/?method=search&query=naruto`;
+    const useProxy = (() => {
+      try {
+        const active = (typeof window !== 'undefined' && typeof window.MM_ACTIVE_CATBOX_UPLOAD_URL === 'string')
+          ? window.MM_ACTIVE_CATBOX_UPLOAD_URL.trim()
+          : '';
+        if (active) {
+          const u = new URL(active);
+          return (u.hostname || '').toLowerCase() !== 'catbox.moe';
+        }
+      } catch {}
+      return getCatboxOverrideMode() === 'proxy';
+    })();
+    const url = useProxy ? `${base}/proxy?modify&proxyUrl=${encodeURIComponent(target)}` : target;
     try {
       const res = await fetch(url, { cache: 'no-store' });
       if (res && res.ok) {
