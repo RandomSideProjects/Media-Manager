@@ -1,7 +1,7 @@
 {
   "title": "You Can't Be In a Rom-Com with Your Childhood Friends!",
   "Image": "./Sources/Posters/Anime/You_Can't_Be_In_a_Rom-Com_with_Your_Childhood_Friends!.webp",
-  "LatestTime": "2026-01-22T06:50:35.229Z",
+  "LatestTime": "2026-01-28T06:04:31.009Z",
   "categories": [
     {
       "category": "Season 1",
@@ -11,10 +11,15 @@
           "src": "https://files.catbox.moe/ed35cl.mp4",
           "fileSizeBytes": 194053518,
           "durationSeconds": 1430
+        },
+        {
+          "title": "Episode 2",
+          "src": "https://files.catbox.moe/9ap537.mp4",
+          "durationSeconds": 1430
         }
       ]
     }
   ],
   "totalFileSizeBytes": 194053518,
-  "totalDurationSeconds": 1430
+  "totalDurationSeconds": 2860
 }
