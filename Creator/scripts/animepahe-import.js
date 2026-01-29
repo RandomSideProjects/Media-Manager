@@ -52,6 +52,8 @@
   let paheReachabilityPromise = null;
   let paheReachabilityOk = (typeof window !== "undefined" && window.MM_PAHE_API_OK === true) ? true : null;
   let paheUnreachableNotified = false;
+  let paheProbeAttempted = false;
+  let lastImportEnabled = false;
 
   async function probePaheReachable() {
     const { animeApiBase } = getConfig();
@@ -72,8 +74,10 @@
   async function ensurePaheReachableIfEnabled() {
     if (!isImportEnabled()) return false;
     if (paheReachabilityOk === true) return true;
+    if (paheProbeAttempted) return false;
     if (paheReachabilityPromise) return await paheReachabilityPromise;
     paheReachabilityPromise = (async () => {
+      paheProbeAttempted = true;
       const ok = await probePaheReachable();
       paheReachabilityOk = ok;
       paheReachabilityPromise = null;
@@ -99,7 +103,7 @@
     }
     syncSidePanelToCreator();
 
-    if (enabled && !isManga && !paheOk) {
+    if (enabled && !isManga && !paheOk && !paheProbeAttempted) {
       void (async () => {
         const ok = await ensurePaheReachableIfEnabled();
         if (!ok && !paheUnreachableNotified) {
@@ -138,6 +142,19 @@
   }
 
   updateVisibility();
+  try { lastImportEnabled = isImportEnabled(); } catch { lastImportEnabled = false; }
+  window.addEventListener("mm_settings_saved", () => {
+    let nowEnabled = false;
+    try { nowEnabled = isImportEnabled(); } catch { nowEnabled = false; }
+    if (nowEnabled && !lastImportEnabled) {
+      paheReachabilityOk = (typeof window !== "undefined" && window.MM_PAHE_API_OK === true) ? true : null;
+      paheReachabilityPromise = null;
+      paheUnreachableNotified = false;
+      paheProbeAttempted = false;
+    }
+    lastImportEnabled = nowEnabled;
+    updateVisibility();
+  });
   window.addEventListener("mm_settings_saved", updateVisibility);
   window.addEventListener("mm:pahe-api-status", (event) => {
     try {
@@ -222,6 +239,15 @@
       throw new Error(statusText);
     }
     return await res.json();
+  }
+
+  function paheProxyUrl(resourceUrl) {
+    const raw = String(resourceUrl || "").trim();
+    if (!raw) return "";
+    const { animeApiBase } = getConfig();
+    const base = String(animeApiBase || "").replace(/\/+$/, "");
+    if (base && raw.startsWith(`${base}/proxy?`)) return raw;
+    return `${base}/proxy?modify&proxyUrl=${encodeURIComponent(raw)}`;
   }
 
   function asNumber(value) {
@@ -363,6 +389,123 @@
     return String(payload.content.url);
   }
 
+  function getCatboxUploadEndpoint() {
+    try {
+      const active = (typeof window !== "undefined" && typeof window.MM_ACTIVE_CATBOX_UPLOAD_URL === "string")
+        ? window.MM_ACTIVE_CATBOX_UPLOAD_URL.trim()
+        : "";
+      if (active) return active;
+    } catch {}
+    try {
+      if (typeof window !== "undefined" && typeof window.mm_getCatboxUploadUrl === "function") {
+        const candidate = String(window.mm_getCatboxUploadUrl() || "").trim();
+        if (candidate) return candidate;
+      }
+    } catch {}
+    const st = readUploadSettings();
+    const fromSettings = st && typeof st.catboxUploadUrl === "string" ? st.catboxUploadUrl.trim() : "";
+    return fromSettings || "https://mm.littlehacker303.workers.dev/catbox/user/api.php";
+  }
+
+  function isCatboxProxyActive() {
+    const endpoint = String(getCatboxUploadEndpoint() || "").trim();
+    if (!endpoint) return false;
+    try {
+      const parsed = new URL(endpoint);
+      const host = (parsed.hostname || "").toLowerCase();
+      return host !== "catbox.moe";
+    } catch {
+      return true;
+    }
+  }
+
+  async function fetchRemoteContentLength(url) {
+    try {
+      const head = await fetch(url, { method: "HEAD", cache: "no-store" });
+      if (head.ok) {
+        const cl = head.headers.get("content-length") || head.headers.get("Content-Length");
+        const n = cl ? parseInt(cl, 10) : NaN;
+        if (Number.isFinite(n) && n >= 0) return n;
+      }
+    } catch {}
+    try {
+      const resp = await fetch(url, { method: "GET", headers: { Range: "bytes=0-0" }, cache: "no-store" });
+      if (resp.ok || resp.status === 206) {
+        const cr = resp.headers.get("content-range") || resp.headers.get("Content-Range");
+        if (cr) {
+          const m = cr.match(/\/(\d+)\s*$/);
+          if (m) {
+            const n = parseInt(m[1], 10);
+            if (Number.isFinite(n) && n >= 0) return n;
+          }
+        }
+        const cl = resp.headers.get("content-length") || resp.headers.get("Content-Length");
+        const n = cl ? parseInt(cl, 10) : NaN;
+        if (Number.isFinite(n) && n > 1) return n;
+      }
+    } catch {}
+    return NaN;
+  }
+
+  async function computeLocalBlobDurationSeconds(blob) {
+    return new Promise((resolve) => {
+      try {
+        const v = document.createElement("video");
+        v.preload = "metadata";
+        let settled = false;
+        const objUrl = URL.createObjectURL(blob);
+        const cleanup = (result) => {
+          if (settled) return;
+          settled = true;
+          try { URL.revokeObjectURL(objUrl); } catch {}
+          try { v.pause(); } catch {}
+          try { v.removeAttribute("src"); v.load(); } catch {}
+          try { v.remove(); } catch {}
+          resolve(result);
+        };
+        const timer = setTimeout(() => cleanup(NaN), 10000);
+        v.onloadedmetadata = () => {
+          clearTimeout(timer);
+          const d = Number.isFinite(v.duration) ? v.duration : NaN;
+          cleanup(d);
+        };
+        v.onerror = () => { clearTimeout(timer); cleanup(NaN); };
+        v.src = objUrl;
+      } catch {
+        resolve(NaN);
+      }
+    });
+  }
+
+  async function computeRemoteDurationSeconds(url) {
+    return new Promise((resolve) => {
+      try {
+        const v = document.createElement("video");
+        v.preload = "metadata";
+        v.crossOrigin = "anonymous";
+        let settled = false;
+        const cleanup = (result) => {
+          if (settled) return;
+          settled = true;
+          try { v.pause(); } catch {}
+          try { v.removeAttribute("src"); v.load(); } catch {}
+          try { v.remove(); } catch {}
+          resolve(result);
+        };
+        const done = () => {
+          const d = Number.isFinite(v.duration) ? v.duration : NaN;
+          cleanup(d);
+        };
+        const timer = setTimeout(() => cleanup(NaN), 10000);
+        v.onloadedmetadata = () => { clearTimeout(timer); done(); };
+        v.onerror = () => { clearTimeout(timer); cleanup(NaN); };
+        v.src = url;
+      } catch {
+        resolve(NaN);
+      }
+    });
+  }
+
   async function downloadAsBlobViaAnimeProxy(directUrl, { signal, onProgress } = {}) {
     const { animeApiBase } = getConfig();
     const proxied = `${animeApiBase}/proxy?modify&proxyUrl=${encodeURIComponent(directUrl)}`;
@@ -407,6 +550,18 @@
       if (path && /\.[a-z0-9]{2,5}$/i.test(path)) return sanitizeFilename(path);
     } catch {}
     return "";
+  }
+
+  async function uploadFileToCatbox(file, { signal, onProgress } = {}) {
+    const uploader = (typeof window !== "undefined" && typeof window.uploadToCatboxWithProgress === "function")
+      ? window.uploadToCatboxWithProgress
+      : (typeof uploadToCatboxWithProgress === "function" ? uploadToCatboxWithProgress : null);
+    if (typeof uploader !== "function") throw new Error("Catbox uploader missing");
+    return await uploader(file, (pct) => {
+      if (typeof onProgress === "function") {
+        try { onProgress(Number(pct)); } catch {}
+      }
+    }, { context: "batch", signal });
   }
 
   function ensureTargetCategory({ createNew } = {}) {
@@ -484,7 +639,7 @@
         selectedShow = { title, type, year, episodes, score, session, poster };
         selectionEl.style.display = "";
         if (selectedPoster) {
-          selectedPoster.src = poster || "";
+          selectedPoster.src = poster ? paheProxyUrl(poster) : "";
           selectedPoster.style.display = poster ? "" : "none";
         }
         if (selectedTitle) selectedTitle.textContent = title;
@@ -892,23 +1047,21 @@
             if (epDiv && epDiv.dataset) {
               epDiv.dataset.fileSizeBytes = String(file.size);
             }
-            if (epDiv && typeof epDiv._computeLocalFileDurationSeconds === "function") {
-              setEpStatus("Reading metadata…", "#9ecbff", { indeterminate: true });
-              const duration = await epDiv._computeLocalFileDurationSeconds(file);
-              if (Number.isFinite(duration) && duration > 0 && epDiv.dataset) {
-                epDiv.dataset.durationSeconds = String(Math.round(duration));
-              }
+            setEpStatus("Reading metadata…", "#9ecbff", { indeterminate: true });
+            const duration = await computeLocalBlobDurationSeconds(blob);
+            if (Number.isFinite(duration) && duration > 0 && epDiv && epDiv.dataset) {
+              epDiv.dataset.durationSeconds = String(Math.round(duration));
             }
           } catch {}
 
           setEpStatus("Uploading…", "#9ecbff", { value: 0, max: 100 });
-          const catboxUrl = await window.uploadToCatboxWithProgress(
-            file,
-            (pct) => {
-              setEpStatus(`Uploading ${Math.round(pct)}%`, "#9ecbff", { value: pct, max: 100 });
-            },
-            { context: "batch" }
-          );
+          const catboxUrl = await uploadFileToCatbox(file, {
+            signal: abortController.signal,
+            onProgress: (pct) => {
+              const safe = Number.isFinite(pct) ? Math.max(0, Math.min(100, pct)) : 0;
+              setEpStatus(`Uploading ${Math.round(safe)}%`, "#9ecbff", { value: safe, max: 100 });
+            }
+          });
 
           if (epDiv && epDiv._srcInput) {
             epDiv._srcInput.value = catboxUrl;
