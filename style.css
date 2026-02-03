@@ -244,38 +244,42 @@ body {
   outline-offset: 3px;
 }
 
-/* Continue rail cards: background thumbnail with text overlay (streaming-service style) */
+/* Continue rail cards: poster with top/bottom overhang labels */
 .recent-sources .source-card.continue-card {
   position: relative;
-  overflow: hidden;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+  overflow: visible; /* allow overhang */
+  background: transparent;
+  border: none;
 }
-.recent-sources .source-card.continue-card.no-thumb {
-  background-image: none !important;
-}
-.recent-sources .source-card.continue-card::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: rgba(0,0,0,0.12);
-}
+
 .recent-sources .source-card.continue-card .continue-overlay {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 0.35rem;
-  padding: 0.75rem 0.8rem 0.96rem;
-  background: linear-gradient(to top, rgba(0,0,0,0.28), rgba(0,0,0,0.08) 60%, rgba(0,0,0,0.18) 100%);
-}
-.recent-sources .source-card.continue-card .continue-overlay--centered {
+  position: relative;
+  inset: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
+  gap: 0;
+  padding: 0;
+  background: none;
+}
+
+.recent-sources .source-card.continue-card .continue-poster {
+  width: 100%;
+  height: var(--recent-card-height);
+  border-radius: 12px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.10);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  box-shadow: 0 12px 26px rgba(0,0,0,0.45);
+}
+.recent-sources .source-card.continue-card .continue-poster.no-thumb {
+  background-image: none !important;
+}
+
+.recent-sources .source-card.continue-card .continue-overlay--centered {
   text-align: center;
 }
 
@@ -284,14 +288,16 @@ body {
   font-weight: 900;
   font-size: 0.98rem;
   line-height: 1.15;
-  margin-top: 0.1rem;
   padding: 0.35rem 0.55rem;
   border-radius: 10px;
-  background: rgba(0,0,0,0.78);
-  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(0,0,0,0.82);
+  border: 1px solid rgba(255,255,255,0.14);
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+  z-index: 3;
+  margin: 0 auto -0.55rem;
+  /* overhang into the poster */
 }
 
 .recent-sources .source-card.continue-card .continue-bottom {
@@ -299,11 +305,13 @@ body {
   font-weight: 850;
   font-size: 0.9rem;
   opacity: 0.98;
-  margin-bottom: 0.05rem;
   padding: 0.3rem 0.55rem;
   border-radius: 10px;
-  background: rgba(0,0,0,0.78);
-  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(0,0,0,0.82);
+  border: 1px solid rgba(255,255,255,0.14);
+  z-index: 3;
+  margin: -0.55rem auto 0;
+  /* overhang into the poster */
 }
 
 video {

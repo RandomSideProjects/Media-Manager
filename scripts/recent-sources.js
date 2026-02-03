@@ -604,12 +604,14 @@
       ? (getItemTitleForEntry(entry, continueIndex) || `Item ${continueIndex + 1}`)
       : "Start watching";
 
-    // Use the poster art as the card image.
+    // Use the poster art as the card image (middle section).
     const poster = extractPoster(entry);
+    const posterEl = document.createElement("div");
+    posterEl.className = "continue-poster";
     if (poster) {
-      wrapper.style.backgroundImage = `url('${String(poster).replace(/'/g, "\\'")}')`;
+      posterEl.style.backgroundImage = `url('${String(poster).replace(/'/g, "\\'")}')`;
     } else {
-      wrapper.classList.add("no-thumb");
+      posterEl.classList.add("no-thumb");
     }
 
     // Video-only metadata (for bottom line).
@@ -655,7 +657,7 @@
       bottom.textContent = "";
     }
 
-    content.append(top, bottom);
+    content.append(top, posterEl, bottom);
     wrapper.appendChild(content);
 
     wrapper.tabIndex = 0;
