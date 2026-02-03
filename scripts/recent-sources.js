@@ -604,17 +604,18 @@
       ? (getItemTitleForEntry(entry, continueIndex) || `Item ${continueIndex + 1}`)
       : "Start watching";
 
-    // Video-only: thumbnails should come from a captured/generated video frame.
-    const itemSrc = getItemSrcForEntry(entry, continueIndex);
-    const hintedDuration = getItemDurationForEntry(entry, continueIndex);
-    const isVideoSource = !!(itemSrc && hintedDuration);
-
-    const thumb = isVideoSource ? getThumbForEntry(entry, continueIndex) : "";
-    if (thumb) {
-      wrapper.style.backgroundImage = `url('${String(thumb).replace(/'/g, "\\'")}')`;
+    // Use the poster art as the card image.
+    const poster = extractPoster(entry);
+    if (poster) {
+      wrapper.style.backgroundImage = `url('${String(poster).replace(/'/g, "\\'")}')`;
     } else {
       wrapper.classList.add("no-thumb");
     }
+
+    // Video-only metadata (for bottom line).
+    const itemSrc = getItemSrcForEntry(entry, continueIndex);
+    const hintedDuration = getItemDurationForEntry(entry, continueIndex);
+    const isVideoSource = !!(itemSrc && hintedDuration);
 
     const content = document.createElement("div");
     content.className = "continue-overlay continue-overlay--centered";
@@ -672,8 +673,7 @@
       }
     });
 
-    // If we don't have a thumb yet, try to generate one from the actual item video.
-    if (isVideoSource) queueThumbGeneration(entry, continueIndex);
+    // No frame extraction here — posters only.
 
     return wrapper;
   }

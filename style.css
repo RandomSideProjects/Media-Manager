@@ -68,14 +68,15 @@ body {
 }
 
 .recent-sources {
-  /* Home rail (streaming-service style) */
+  /* Home rail */
   position: relative;
   z-index: 5;
   background: rgba(18, 18, 18, 0.72);
   border: 1px solid rgba(255,255,255,0.09);
   border-radius: 14px;
-  --recent-card-width: 260px;
-  --recent-card-height: 146px; /* ~16:9 */
+  /* Poster-style cards */
+  --recent-card-width: 180px;
+  --recent-card-height: 270px; /* ~2:3 poster */
   --recent-card-gap: 0.9rem;
   padding: 0.9rem;
   box-shadow: 0 10px 26px rgba(0,0,0,0.35);
@@ -258,17 +259,17 @@ body {
   content: "";
   position: absolute;
   inset: 0;
-  background: rgba(0,0,0,0.15);
+  background: rgba(0,0,0,0.12);
 }
 .recent-sources .source-card.continue-card .continue-overlay {
   position: absolute;
   inset: 0;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
+  justify-content: space-between;
   gap: 0.35rem;
-  padding: 0.8rem 0.9rem;
-  background: linear-gradient(to top, rgba(0,0,0,0.86), rgba(0,0,0,0.2) 60%, rgba(0,0,0,0) 100%);
+  padding: 0.75rem 0.8rem;
+  background: linear-gradient(to top, rgba(0,0,0,0.28), rgba(0,0,0,0.08) 60%, rgba(0,0,0,0.18) 100%);
 }
 .recent-sources .source-card.continue-card .continue-overlay--centered {
   display: flex;
@@ -279,24 +280,30 @@ body {
 }
 
 .recent-sources .source-card.continue-card .continue-top {
-  width: 100%;
+  width: calc(100% - 1.2rem);
   font-weight: 900;
-  font-size: 1.02rem;
+  font-size: 0.98rem;
   line-height: 1.15;
-  padding-top: 0.1rem;
+  margin-top: 0.1rem;
+  padding: 0.35rem 0.55rem;
+  border-radius: 10px;
+  background: rgba(0,0,0,0.78);
+  border: 1px solid rgba(255,255,255,0.12);
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-  text-shadow: 0 2px 14px rgba(0,0,0,0.65);
 }
 
 .recent-sources .source-card.continue-card .continue-bottom {
-  width: 100%;
-  font-weight: 800;
-  font-size: 0.92rem;
-  opacity: 0.96;
-  padding-bottom: 0.05rem;
-  text-shadow: 0 2px 14px rgba(0,0,0,0.65);
+  width: calc(100% - 1.2rem);
+  font-weight: 850;
+  font-size: 0.9rem;
+  opacity: 0.98;
+  margin-bottom: 0.05rem;
+  padding: 0.3rem 0.55rem;
+  border-radius: 10px;
+  background: rgba(0,0,0,0.78);
+  border: 1px solid rgba(255,255,255,0.12);
 }
 
 video {
