@@ -252,7 +252,7 @@ body {
   border: none;
   display: block; /* ensure width follows the card (poster), not text */
   /* Make room for the top/bottom overhang labels */
-  height: calc(var(--recent-card-height) + 4rem);
+  height: calc(var(--recent-card-height) + 2.6rem);
 }
 
 .recent-sources .source-card.continue-card .continue-overlay {
