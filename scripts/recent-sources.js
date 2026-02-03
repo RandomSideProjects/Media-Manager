@@ -780,6 +780,8 @@
     const count = document.createElement("span");
     count.className = "recent-sources-count";
     count.textContent = `${items.length} / ${displayLimit}`;
+    count.hidden = true;
+    count.setAttribute("aria-hidden", "true");
     header.append(title, count);
 
     const grid = document.createElement("div");
