@@ -71,19 +71,21 @@ body {
   /* Home rail */
   position: relative;
   z-index: 5;
-  background: rgba(18, 18, 18, 0.72);
-  border: 1px solid rgba(255,255,255,0.09);
-  border-radius: 14px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+
   /* Poster-style cards */
   --recent-card-width: 180px;
   --recent-card-height: 270px; /* ~2:3 poster */
   --recent-card-gap: 0.9rem;
-  padding: 0.9rem;
-  box-shadow: 0 10px 26px rgba(0,0,0,0.35);
+
+  padding: 0;
   width: min(980px, 94vw);
   max-width: calc(100vw - 2rem);
-  overflow: hidden;
-  backdrop-filter: blur(8px);
+  overflow: visible;
+  backdrop-filter: none;
   font-size: clamp(0.7rem, 0.55rem + 0.35vw, 0.85rem);
   margin: 0 0 1rem 0;
 }
