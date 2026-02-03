@@ -301,6 +301,8 @@
     const summary = summarizeSource(json);
     const recordedAt = new Date().toISOString();
     const poster = extractPoster({ ...json, Image: (json && json.Image) || context.poster });
+    // Only show items in Continue Watching if they have a poster image.
+    if (!poster) return null;
 
     const openKind = context.kind === "local"
       ? "local"
