@@ -125,12 +125,18 @@ body {
   display: flex;
   flex-direction: row;
   align-items: stretch;
+  justify-content: flex-start;
   gap: var(--recent-card-gap);
   overflow-x: auto;
   overflow-y: hidden;
   padding-bottom: 0.35rem;
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
+}
+
+/* Center items only when they don't overflow (toggled by JS). */
+.recent-sources-grid.is-centered {
+  justify-content: center;
 }
 
 .recent-sources-grid::-webkit-scrollbar {

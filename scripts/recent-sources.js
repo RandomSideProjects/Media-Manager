@@ -794,6 +794,17 @@
     });
 
     recentRail.append(header, grid);
+
+    // Center cards when there are only a few (i.e., no horizontal overflow).
+    // If content overflows, keep it left-aligned so the scroll starts at the beginning.
+    const updateCentering = () => {
+      try {
+        const centered = grid.scrollWidth <= (grid.clientWidth + 2);
+        grid.classList.toggle('is-centered', centered);
+      } catch {}
+    };
+    requestAnimationFrame(updateCentering);
+    setTimeout(updateCentering, 0);
   }
 
   function setEnabled(value) {
