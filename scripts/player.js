@@ -1665,6 +1665,15 @@ function loadVideo(index) {
     if (typeof sourceKey === 'string' && sourceKey) {
       localStorage.setItem(`${sourceKey}:LastIndex`, String(index));
       if (item && item.title) localStorage.setItem(`${sourceKey}:itemTitle:${index}`, String(item.title));
+      // Best-effort: store the playable src so the Home rail can generate a preview frame.
+      if (item && typeof item.src === 'string' && item.src) {
+        localStorage.setItem(`${sourceKey}:itemSrc:${index}`, String(item.src));
+      }
+      // If the source JSON exposes duration, stash it too (may be overwritten with real video.duration later).
+      const hintedDuration = Number(item && item.durationSeconds);
+      if (Number.isFinite(hintedDuration) && hintedDuration > 0) {
+        localStorage.setItem(`${sourceKey}:itemDuration:${index}`, String(hintedDuration));
+      }
     }
   } catch {}
   if (resumeKey) {
@@ -1920,6 +1929,12 @@ function handleActiveVideoTimeUpdate(event) {
       } catch {}
 
       try { tryCaptureThumbFromVideo(el, currentIndex); } catch {}
+      // Persist current time for Home rail progress/preview context.
+      try {
+        if (typeof sourceKey === 'string' && sourceKey && Number.isFinite(Number(currentIndex))) {
+          localStorage.setItem(`${sourceKey}:itemTime:${currentIndex}`, String(aggregatedTime));
+        }
+      } catch {}
       const part = curItem.__separatedParts[curItem.__activePartIndex || 0];
       if (part && part.src) {
         try { localStorage.setItem(part.src, el.currentTime); } catch {}
@@ -1927,6 +1942,14 @@ function handleActiveVideoTimeUpdate(event) {
       maybePrefetchSeparatedNextPart(curItem);
     } else {
       const safeDuration = (Number.isFinite(el.duration) && el.duration > 0) ? el.duration : null;
+
+      // Persist duration for Home rail progress/preview generation.
+      try {
+        if (safeDuration && typeof sourceKey === 'string' && sourceKey && Number.isFinite(Number(currentIndex))) {
+          localStorage.setItem(`${sourceKey}:itemDuration:${currentIndex}`, String(safeDuration));
+        }
+      } catch {}
+
       if (nextBtn) {
         if (!safeDuration || groupInfo) {
           nextBtn.style.display = 'none';
@@ -1953,6 +1976,12 @@ function handleActiveVideoTimeUpdate(event) {
       } catch {}
 
       try { tryCaptureThumbFromVideo(el, currentIndex); } catch {}
+      // Persist current time for Home rail progress/preview context.
+      try {
+        if (typeof sourceKey === 'string' && sourceKey && Number.isFinite(Number(currentIndex))) {
+          localStorage.setItem(`${sourceKey}:itemTime:${currentIndex}`, String(el.currentTime));
+        }
+      } catch {}
     }
   } catch {}
   updateEpisodeTimeOverlay(curItem, aggregatedTime);

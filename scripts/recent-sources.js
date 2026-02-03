@@ -440,42 +440,237 @@
     return readString(`${sk}:itemTitle:${idx}`);
   }
 
+  // --- Preview frame generation (best-effort) ---
+  // Uses the playable item src captured during playback (player.js) to generate a thumbnail
+  // when the Home rail is shown. This may fail for CORS-tainted sources; that's OK.
+  const thumbGenQueue = [];
+  let thumbGenActive = false;
+
+  function getItemSrcForEntry(entry, idx) {
+    const sk = entry && entry.file ? String(entry.file) : "";
+    if (!sk || idx === null || idx === undefined) return "";
+    return readString(`${sk}:itemSrc:${idx}`);
+  }
+
+  function getItemDurationForEntry(entry, idx) {
+    const sk = entry && entry.file ? String(entry.file) : "";
+    if (!sk || idx === null || idx === undefined) return 0;
+    const raw = readString(`${sk}:itemDuration:${idx}`);
+    const num = Number(raw);
+    return (Number.isFinite(num) && num > 0) ? num : 0;
+  }
+
+  function queueThumbGeneration(entry, idx) {
+    if (!entry) return;
+    if (idx === null || idx === undefined) return;
+    const existing = getThumbForEntry(entry, idx);
+    if (existing) return;
+
+    const itemSrc = getItemSrcForEntry(entry, idx);
+    const duration = getItemDurationForEntry(entry, idx);
+    if (!itemSrc || !duration) return;
+
+    const sk = entry && entry.file ? String(entry.file) : "";
+    if (!sk) return;
+    const queueKey = `${sk}::${idx}`;
+    if (thumbGenQueue.some((job) => job && job.queueKey === queueKey)) return;
+
+    thumbGenQueue.push({ queueKey, entry, idx, itemSrc, duration });
+    pumpThumbQueue();
+  }
+
+  function pumpThumbQueue() {
+    if (thumbGenActive) return;
+    const job = thumbGenQueue.shift();
+    if (!job) return;
+    thumbGenActive = true;
+    generateThumbFromVideo(job.itemSrc, job.duration)
+      .then((dataUrl) => {
+        if (!dataUrl) return;
+        const sk = job.entry && job.entry.file ? String(job.entry.file) : "";
+        if (!sk) return;
+        localStorage.setItem(`${sk}:thumb:${job.idx}`, dataUrl);
+      })
+      .catch(() => {})
+      .finally(() => {
+        thumbGenActive = false;
+        // Re-render so the newly generated image shows up.
+        try { render(); } catch {}
+        pumpThumbQueue();
+      });
+  }
+
+  function generateThumbFromVideo(src, durationSeconds) {
+    return new Promise((resolve) => {
+      if (!src) return resolve("");
+      const dur = Number(durationSeconds);
+      if (!Number.isFinite(dur) || dur <= 0) return resolve("");
+
+      const el = document.createElement("video");
+      el.muted = true;
+      el.playsInline = true;
+      el.preload = "auto";
+      // Best effort to allow canvas capture when the server supports it.
+      try { el.crossOrigin = "anonymous"; } catch {}
+      el.style.position = "fixed";
+      el.style.left = "-99999px";
+      el.style.top = "0";
+      el.style.width = "1px";
+      el.style.height = "1px";
+      el.style.opacity = "0";
+      document.body.appendChild(el);
+
+      let settled = false;
+      const cleanup = () => {
+        try {
+          el.removeEventListener("error", onError);
+          el.removeEventListener("loadedmetadata", onMeta);
+          el.removeEventListener("seeked", onSeeked);
+        } catch {}
+        try { el.pause(); } catch {}
+        try { el.removeAttribute("src"); } catch {}
+        try { el.load(); } catch {}
+        try { el.remove(); } catch {}
+      };
+      const finish = (value) => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        resolve(value || "");
+      };
+
+      const onError = () => finish("");
+      const onMeta = () => {
+        const realDur = (Number.isFinite(el.duration) && el.duration > 0) ? el.duration : dur;
+        const maxSeek = Math.max(1, realDur - 2);
+        const seed = Math.random();
+        const target = Math.max(1, Math.min(maxSeek, seed * maxSeek));
+        try { el.currentTime = target; }
+        catch { finish(""); }
+      };
+      const onSeeked = () => {
+        try {
+          if (!(el.videoWidth > 0 && el.videoHeight > 0)) return finish("");
+          const canvas = document.createElement("canvas");
+          const maxW = 720;
+          const scale = Math.min(1, maxW / el.videoWidth);
+          canvas.width = Math.max(1, Math.floor(el.videoWidth * scale));
+          canvas.height = Math.max(1, Math.floor(el.videoHeight * scale));
+          const ctx = canvas.getContext("2d");
+          if (!ctx) return finish("");
+          ctx.drawImage(el, 0, 0, canvas.width, canvas.height);
+          const dataUrl = canvas.toDataURL("image/jpeg", 0.72);
+          if (dataUrl && dataUrl.startsWith("data:image/")) return finish(dataUrl);
+        } catch {
+          // Likely a CORS-tainted canvas.
+        }
+        finish("");
+      };
+
+      el.addEventListener("error", onError);
+      el.addEventListener("loadedmetadata", onMeta);
+      el.addEventListener("seeked", onSeeked);
+
+      try {
+        el.src = src;
+        el.load();
+      } catch {
+        finish("");
+        return;
+      }
+
+      // Safety timeout.
+      setTimeout(() => finish(""), 8000);
+    });
+  }
+
+  function formatTime(seconds) {
+    const s = Number(seconds);
+    if (!Number.isFinite(s) || s < 0) return "0:00";
+    const total = Math.floor(s);
+    const h = Math.floor(total / 3600);
+    const m = Math.floor((total % 3600) / 60);
+    const sec = total % 60;
+    if (h > 0) return `${h}:${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
+    return `${m}:${String(sec).padStart(2, "0")}`;
+  }
+
   function buildCard(entry) {
     const wrapper = document.createElement("div");
     wrapper.className = "source-card recent-source-card continue-card";
 
     const continueIndex = getContinueIndexForEntry(entry);
-    const poster = getThumbForEntry(entry, continueIndex) || extractPoster(entry);
-    if (!poster) wrapper.classList.add("no-thumb");
+    const itemTitle = (continueIndex !== null && continueIndex !== undefined)
+      ? (getItemTitleForEntry(entry, continueIndex) || `Item ${continueIndex + 1}`)
+      : "Start watching";
 
-    if (poster) {
-      const img = document.createElement("img");
-      img.className = "source-thumb";
-      img.alt = `${entry.title} preview`;
-      img.loading = "lazy";
-      img.referrerPolicy = "no-referrer";
-      img.onerror = () => wrapper.classList.add("no-thumb");
-      img.src = poster;
-      wrapper.appendChild(img);
+    // Video-only: thumbnails should come from a captured/generated video frame.
+    const itemSrc = getItemSrcForEntry(entry, continueIndex);
+    const hintedDuration = getItemDurationForEntry(entry, continueIndex);
+    const isVideoSource = !!(itemSrc && hintedDuration);
+
+    const thumb = isVideoSource ? getThumbForEntry(entry, continueIndex) : "";
+    if (thumb) {
+      wrapper.style.backgroundImage = `url('${String(thumb).replace(/'/g, "\\'")}')`;
+    } else {
+      wrapper.classList.add("no-thumb");
     }
 
     const content = document.createElement("div");
-    content.className = "source-right continue-overlay";
+    content.className = "continue-overlay continue-overlay--row";
 
-    const h3 = document.createElement("h3");
-    h3.textContent = entry.title || entry.file;
+    const left = document.createElement("div");
+    left.className = "continue-left";
 
-    const subtitle = document.createElement("p");
-    subtitle.className = "continue-subtitle";
-    const itemTitle = (continueIndex !== null) ? (getItemTitleForEntry(entry, continueIndex) || `Item ${continueIndex + 1}`) : "Start watching";
-    subtitle.textContent = itemTitle;
+    const leftTitle = document.createElement("div");
+    leftTitle.className = "continue-item-title";
+    leftTitle.textContent = itemTitle;
 
-    content.append(h3, subtitle);
+    const leftMeta = document.createElement("div");
+    leftMeta.className = "continue-item-meta";
+
+    const right = document.createElement("div");
+    right.className = "continue-right";
+
+    // Best-effort progress estimate from stored time/duration.
+    let ratio = 0;
+    let watched = 0;
+    let duration = hintedDuration;
+    try {
+      const sk = entry && entry.file ? String(entry.file) : "";
+      if (continueIndex !== null && continueIndex !== undefined) {
+        const durRaw = readString(`${sk}:itemDuration:${continueIndex}`);
+        const durNum = Number(durRaw);
+        if (Number.isFinite(durNum) && durNum > 0) duration = durNum;
+        const timeRaw = readString(`${sk}:itemTime:${continueIndex}`);
+        const t = Number(timeRaw);
+        if (Number.isFinite(t) && t >= 0) watched = t;
+        ratio = (Number.isFinite(duration) && duration > 0) ? Math.max(0, Math.min(1, watched / duration)) : 0;
+      }
+    } catch {}
+
+    const isNextUp = isVideoSource && ratio >= 0.90;
+
+    // Left side: item title (+ time/duration when not "Next Up")
+    if (!isNextUp && isVideoSource) {
+      leftMeta.textContent = `${formatTime(watched)} / ${formatTime(duration)}`;
+    } else {
+      leftMeta.textContent = "";
+    }
+
+    // Right side: Continue Watching / Next Up
+    const status = document.createElement("div");
+    status.className = "continue-status";
+    status.textContent = isNextUp ? "Next Up" : "Continue Watching";
+
+    left.append(leftTitle, leftMeta);
+    right.appendChild(status);
+    content.append(left, right);
     wrapper.appendChild(content);
 
     wrapper.tabIndex = 0;
     wrapper.setAttribute("role", "button");
-    wrapper.setAttribute("aria-label", `Continue ${entry.title || entry.file}`);
+    wrapper.setAttribute("aria-label", `${isNextUp ? "Next up" : "Continue"}: ${itemTitle}`);
 
     const activate = (event) => {
       event.preventDefault();
@@ -487,6 +682,10 @@
         activate(event);
       }
     });
+
+    // If we don't have a thumb yet, try to generate one from the actual item video.
+    if (isVideoSource) queueThumbGeneration(entry, continueIndex);
+
     return wrapper;
   }
 
