@@ -503,7 +503,32 @@ async function downloadSourceFolder(options = {}) {
   const showCompleteCb = document.createElement('input'); showCompleteCb.type = 'checkbox'; showCompleteCb.checked = true;
   const showCompleteText = document.createElement('span'); showCompleteText.textContent = 'Show completed downloads';
   showCompleteLabel.append(showCompleteCb, showCompleteText);
-  controlsRow.appendChild(showCompleteLabel);
+
+  const clearCompletedBtn = document.createElement('button');
+  clearCompletedBtn.type = 'button';
+  clearCompletedBtn.textContent = 'Clear completed';
+  clearCompletedBtn.className = 'pill-button';
+  Object.assign(clearCompletedBtn.style, {
+    padding: '0.35em 0.75em',
+    fontSize: '0.9em',
+    background: '#111',
+    border: '1px solid #333',
+    color: '#f1f1f1'
+  });
+
+  const retryFailedBtn = document.createElement('button');
+  retryFailedBtn.type = 'button';
+  retryFailedBtn.textContent = 'Retry failed';
+  retryFailedBtn.className = 'pill-button';
+  Object.assign(retryFailedBtn.style, {
+    padding: '0.35em 0.75em',
+    fontSize: '0.9em',
+    background: '#111',
+    border: '1px solid #333',
+    color: '#f1f1f1'
+  });
+
+  controlsRow.append(showCompleteLabel, retryFailedBtn, clearCompletedBtn);
   showCompleteCb.addEventListener('change', () => { showCompleted = !!showCompleteCb.checked; applyVisibilityAll(); });
   const rowsContainer = document.createElement('div');
   Object.assign(rowsContainer.style, { display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '50vh', overflow: 'auto' });
@@ -754,9 +779,49 @@ async function downloadSourceFolder(options = {}) {
   const totalBytes = Array(tasks.length).fill(0);
   const dataLeftLabels = [];
   const tooltipEls = [];
+  const retryBtnEls = [];
   const rowProgressValues = Array(tasks.length).fill(0);
   const rowStates = Array(tasks.length).fill('queued');
   const fallbackTotalBytes = Array(tasks.length).fill(null);
+
+  // QoL controls
+  try {
+    clearCompletedBtn.addEventListener('click', () => {
+      for (let i = 0; i < rowEls.length; i++) {
+        if (!rowCompleted[i]) continue;
+        const el = rowEls[i];
+        if (el && el.parentNode) {
+          try { el.parentNode.removeChild(el); } catch {}
+        }
+        rowEls[i] = null;
+      }
+    });
+  } catch {}
+
+  try {
+    retryFailedBtn.addEventListener('click', () => {
+      for (let i = 0; i < rowStates.length; i++) {
+        if (rowStates[i] !== 'failed') continue;
+        // Reset row visuals and queue for retry.
+        try {
+          rowCompleted[i] = false;
+          setRowProgress(i, 0, { state: 'queued' });
+          setStatus(i, 'Queued for retry', { color: '#9aa7ff' });
+          if (rowEls[i]) rowEls[i].style.outline = 'none';
+
+          const task = tasks[i];
+          if (task && task.ci != null && task.ei != null) {
+            const epObj = (catObjs[task.ci] && catObjs[task.ci].episodes) ? catObjs[task.ci].episodes[task.ei] : null;
+            if (epObj && typeof epObj === 'object') {
+              delete epObj.downloadFailed;
+              delete epObj.downloadError;
+            }
+          }
+        } catch {}
+        enqueueRetry(i);
+      }
+    });
+  } catch {}
   function getVisibilityAwareTimeout(baseMs) {
     try {
       if (typeof document !== 'undefined' && document.hidden) {
@@ -793,6 +858,12 @@ async function downloadSourceFolder(options = {}) {
     }
     applyRowBackground(idx);
     updateHoverDetails(idx);
+
+    // Show per-row retry button only when failed.
+    try {
+      const btn = retryBtnEls[idx];
+      if (btn) btn.style.display = (rowStates[idx] === 'failed') ? 'inline-flex' : 'none';
+    } catch {}
   }
 
   function setStatus(idx, text, { color, title } = {}) {
@@ -1014,6 +1085,19 @@ async function downloadSourceFolder(options = {}) {
     statusEl.style.marginLeft = 'auto';
     statusEl.style.textAlign = 'right';
 
+    const retryBtn = document.createElement('button');
+    retryBtn.type = 'button';
+    retryBtn.textContent = 'Retry';
+    retryBtn.className = 'pill-button';
+    Object.assign(retryBtn.style, {
+      padding: '0.25em 0.6em',
+      fontSize: '0.85em',
+      background: '#111',
+      border: '1px solid #333',
+      color: '#f1f1f1',
+      display: 'none'
+    });
+
     const tooltip = document.createElement('div');
     tooltip.textContent = 'Total Data: Unknown\nData Left: Unknown\n0% complete';
     tooltip.style.position = 'absolute';
@@ -1034,6 +1118,7 @@ async function downloadSourceFolder(options = {}) {
 
     row.appendChild(labelEl);
     row.appendChild(statusEl);
+    row.appendChild(retryBtn);
     row.appendChild(tooltip);
 
     const showTooltip = () => { tooltip.style.display = 'block'; };
@@ -1043,10 +1128,32 @@ async function downloadSourceFolder(options = {}) {
     row.addEventListener('focus', showTooltip);
     row.addEventListener('blur', hideTooltip);
 
+    retryBtn.addEventListener('click', (e) => {
+      try { e.preventDefault(); e.stopPropagation(); } catch {}
+      try {
+        rowCompleted[idx] = false;
+        setRowProgress(idx, 0, { state: 'queued' });
+        setStatus(idx, 'Queued for retry', { color: '#9aa7ff' });
+        if (rowEls[idx]) rowEls[idx].style.outline = 'none';
+        retryBtn.style.display = 'none';
+
+        const task = tasks[idx];
+        if (task && task.ci != null && task.ei != null) {
+          const epObj = (catObjs[task.ci] && catObjs[task.ci].episodes) ? catObjs[task.ci].episodes[task.ei] : null;
+          if (epObj && typeof epObj === 'object') {
+            delete epObj.downloadFailed;
+            delete epObj.downloadError;
+          }
+        }
+      } catch {}
+      enqueueRetry(idx);
+    });
+
     dataLeftLabels[idx] = statusEl;
     rowsContainer.appendChild(row);
     rowEls[idx] = row;
     tooltipEls[idx] = tooltip;
+    retryBtnEls[idx] = retryBtn;
     const placeholderSize = Number(placeholder && placeholder.fileSizeBytes);
     if (Number.isFinite(placeholderSize) && placeholderSize > 0) {
       fallbackTotalBytes[idx] = placeholderSize;
@@ -1153,6 +1260,35 @@ async function downloadSourceFolder(options = {}) {
   try { speedLabel.title = `Concurrency: ${concurrency}${devModeEnabled ? ' (dev)' : ''}`; }
   catch {}
   let pointer = 0;
+  const retryQueue = [];
+  const pendingRetrySet = new Set();
+  const activeSet = new Set();
+  function enqueueRetry(idx) {
+    if (!Number.isFinite(idx)) return;
+    const i = Math.floor(idx);
+    if (i < 0 || i >= tasks.length) return;
+    if (activeSet.has(i)) return;
+    if (pendingRetrySet.has(i)) return;
+    pendingRetrySet.add(i);
+    retryQueue.push(i);
+  }
+  function dequeueWorkIndex() {
+    // Prefer retries
+    while (retryQueue.length) {
+      const idx = retryQueue.shift();
+      pendingRetrySet.delete(idx);
+      if (!Number.isFinite(idx)) continue;
+      const i = Math.floor(idx);
+      if (i < 0 || i >= tasks.length) continue;
+      if (activeSet.has(i)) continue;
+      return i;
+    }
+    while (pointer < tasks.length) {
+      const idx = pointer++;
+      if (!activeSet.has(idx)) return idx;
+    }
+    return null;
+  }
   const downloadStartTime = Date.now();
   const SPEED_SAMPLE_WINDOW_MS = 5000;
   const speedSamples = [];
@@ -1224,10 +1360,12 @@ async function downloadSourceFolder(options = {}) {
   }
 
   const workers = Array.from({ length: concurrency }, async () => {
-    while (!stopRequested && pointer < tasks.length) {
-      const idx = pointer++;
+    while (!stopRequested) {
+      const idx = dequeueWorkIndex();
+      if (idx === null || idx === undefined) break;
       const task = tasks[idx];
       const { ci, ei, episode, placeholder, type } = task;
+      activeSet.add(idx);
       try {
         setStatus(idx, 'Starting…', { color: '#6ec1e4' });
         logDl('Start', { idx, type, category: ci, episode: ei, src: episode && episode.src });
@@ -1616,6 +1754,8 @@ async function downloadSourceFolder(options = {}) {
         logDl('Error', { idx, type, category: ci, episode: ei, error: String(err && err.message || err) });
         const failureContext = placeholder && placeholder.src ? placeholder : episode;
         markDownloadFailed(idx, err, ci, ei, failureContext || {}, { cancelled: stopRequested });
+      } finally {
+        activeSet.delete(idx);
       }
     }
   });

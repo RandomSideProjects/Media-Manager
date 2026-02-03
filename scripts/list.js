@@ -163,6 +163,38 @@ function getEpisodeMetaText(entry) {
   return hasWatched ? `${formatTime(watched)}` : '';
 }
 
+function getEpisodeWatchProgressRatio(entry) {
+  // Returns null when no fill should be shown.
+  if (!entry || typeof entry !== 'object') return null;
+  if (isEpisodeManga(entry)) return null;
+
+  let durationSec = Number.isFinite(Number(entry.durationSeconds)) ? Number(entry.durationSeconds) : NaN;
+  if (!Number.isFinite(durationSec) || durationSec <= 0) {
+    let lsDur = NaN;
+    if (entry && entry.progressKey) lsDur = parseFloat(localStorage.getItem(String(entry.progressKey) + ':duration'));
+    if (!Number.isFinite(lsDur)) lsDur = parseFloat(localStorage.getItem((entry.src || '') + ':duration'));
+    if (Number.isFinite(lsDur) && lsDur > 0) durationSec = Number(lsDur);
+  }
+
+  let watched = NaN;
+  if (entry && entry.progressKey) watched = parseFloat(localStorage.getItem(String(entry.progressKey)));
+  if (!Number.isFinite(watched)) watched = parseFloat(localStorage.getItem(entry.src || ''));
+
+  if (!Number.isFinite(durationSec) || durationSec <= 0) return null;
+  if (!Number.isFinite(watched) || watched <= 0) return null;
+
+  const ratio = watched / durationSec;
+  if (!Number.isFinite(ratio) || ratio <= 0) return null;
+
+  // Per request:
+  // - Do not apply if less than 5% watched
+  // - ...or if the item is over 2000s long, require at least 1% watched
+  const minRatio = durationSec > 2000 ? 0.01 : 0.05;
+  if (ratio < minRatio) return null;
+
+  return Math.max(0, Math.min(1, ratio));
+}
+
 function isEpisodeManga(item) {
   if (!item) return false;
   try {
@@ -452,6 +484,17 @@ function renderEpisodeList() {
       button.className = 'episode-button';
       if (singleCenter) button.classList.add('single-center');
       button.dataset.flatIndex = String(index);
+
+      // Watch-progress fill behind tile contents
+      try {
+        const ratio = getEpisodeWatchProgressRatio(entry);
+        if (ratio !== null) {
+          const fill = document.createElement('div');
+          fill.className = 'episode-progress-fill';
+          fill.style.width = `${Math.round(ratio * 1000) / 10}%`;
+          button.appendChild(fill);
+        }
+      } catch {}
 
       const left = document.createElement('span');
       left.className = 'episode-title';
