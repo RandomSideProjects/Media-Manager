@@ -305,7 +305,7 @@ body {
   white-space: nowrap;
   text-overflow: ellipsis;
   z-index: 3;
-  margin: 0 auto -0.55rem;
+  margin: 0 auto -0.35rem;
   box-sizing: border-box;
   /* overhang into the poster */
   color: #ffffff;
@@ -323,7 +323,7 @@ body {
   background: transparent;
   border: none;
   z-index: 3;
-  margin: -0.55rem auto 0;
+  margin: -0.35rem auto 0;
   box-sizing: border-box;
   /* overhang into the poster */
   color: #ffffff;
