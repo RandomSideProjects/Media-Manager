@@ -45,7 +45,6 @@ function ensureSettingsOverlay() {
       window.storageShowCameraOptionsToggle = document.getElementById('storageShowCameraOptionsToggle');
       window.recentSourcesToggle = document.getElementById('recentSourcesToggle');
       window.recentSourcesPlacement = document.getElementById('recentSourcesPlacement');
-      window.recentSourcesCenterToggle = document.getElementById('recentSourcesCenterToggle');
       
       // Setup initial states
       initializeSettingsValues();
@@ -158,14 +157,6 @@ function initializeSettingsValues() {
     recentSourcesPlacement.dataset.bound = '1';
   }
 
-  if (recentSourcesCenterToggle && !recentSourcesCenterToggle.dataset.bound) {
-    recentSourcesCenterToggle.addEventListener('change', () => {
-      if (!window.RSPRecentSources || typeof window.RSPRecentSources.setCenterCards !== 'function') return;
-      window.RSPRecentSources.setCenterCards(recentSourcesCenterToggle.checked === true);
-    });
-    recentSourcesCenterToggle.dataset.bound = '1';
-  }
-  
   if (downloadConcurrencyRange && !downloadConcurrencyRange.dataset.bound) {
     downloadConcurrencyRange.addEventListener('input', handleDownloadConcurrencyInput);
     downloadConcurrencyRange.addEventListener('change', handleDownloadConcurrencyInput);
@@ -252,7 +243,6 @@ if (typeof window !== 'undefined') {
 function updateRecentSourcesControls() {
   const recentSourcesToggle = document.getElementById('recentSourcesToggle');
   const recentSourcesPlacement = document.getElementById('recentSourcesPlacement');
-  const recentSourcesCenterToggle = document.getElementById('recentSourcesCenterToggle');
   if (!recentSourcesToggle) return;
   const api = window.RSPRecentSources;
   const apiAvailable = api && typeof api.isEnabled === 'function';
@@ -263,11 +253,8 @@ function updateRecentSourcesControls() {
     recentSourcesPlacement.value = placement;
     recentSourcesPlacement.disabled = !enabled || !apiAvailable;
   }
-  if (recentSourcesCenterToggle) {
-    const centered = api && typeof api.isCenterCardsEnabled === 'function' ? api.isCenterCardsEnabled() === true : true;
-    recentSourcesCenterToggle.checked = centered;
-    recentSourcesCenterToggle.disabled = !enabled || !apiAvailable;
-  }
+  // Centering cards is always enabled now (no setting).
+
 }
 
 window.addEventListener('rsp:recent-sources-updated', () => {

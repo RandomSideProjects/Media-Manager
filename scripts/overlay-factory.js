@@ -96,20 +96,16 @@ window.OverlayFactory = (function() {
       createElement('div', { className: 'setting-category-header' }, ['General']),
       createElement('div', { className: 'setting-row recent-sources-setting' }, [
         createElement('div', { className: 'recent-sources-label' }, [
-          createElement('span', {}, ['Recent sources'])
+          createElement('span', {}, ['Show Recently Watched'])
         ]),
         createElement('div', { className: 'recent-sources-controls' }, [
-          createElement('input', { type: 'checkbox', id: 'recentSourcesToggle', 'aria-label': 'Enable recent sources' }),
-          createElement('select', { id: 'recentSourcesPlacement', 'aria-label': 'Recent sources placement' }, [
+          createElement('input', { type: 'checkbox', id: 'recentSourcesToggle', 'aria-label': 'Show recently watched' }),
+          createElement('select', { id: 'recentSourcesPlacement', 'aria-label': 'Recently watched placement' }, [
             createElement('option', { value: 'bottom' }, ['Bottom']),
             createElement('option', { value: 'left' }, ['Left']),
             createElement('option', { value: 'right' }, ['Right'])
           ])
         ])
-      ]),
-      createElement('div', { className: 'setting-row' }, [
-        createElement('input', { type: 'checkbox', id: 'recentSourcesCenterToggle', 'aria-label': 'Center continue watching cards when few' }),
-        createElement('label', { for: 'recentSourcesCenterToggle' }, ['Center Continue Watching cards'])
       ])
     ]);
 

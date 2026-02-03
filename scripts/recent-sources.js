@@ -6,7 +6,6 @@
   const STORAGE_KEY = "rsp_recent_sources_list_v1";
   const TOGGLE_KEY = "rsp_recent_sources_enabled";
   const PLACEMENT_KEY = "rsp_recent_sources_placement";
-  const CENTER_CARDS_KEY = "rsp_recent_sources_center_cards";
   const INLINE_PREFIX = "rsp_recent_inline_payload:";
   const STORAGE_LIMIT = 6;
   const VERTICAL_DISPLAY_LIMIT = 5;
@@ -61,7 +60,6 @@
   const state = {
     enabled: readEnabledSetting(),
     placement: readPlacementSetting(),
-    centerCards: readCenterCardsSetting(),
     items: readStoredItems(),
     active: false,
     viewportDesktop: isDesktopViewport()
@@ -121,16 +119,7 @@
     return DEFAULT_PLACEMENT;
   }
 
-  function readCenterCardsSetting() {
-    // Default ON.
-    try {
-      const raw = localStorage.getItem(CENTER_CARDS_KEY);
-      if (raw === null || raw === undefined) return true;
-      return raw === "true";
-    } catch {
-      return true;
-    }
-  }
+  // Centering is always enabled (no toggle).
 
   function writeEnabledSetting(value) {
     try {
@@ -145,12 +134,7 @@
     } catch {}
   }
 
-  function writeCenterCardsSetting(value) {
-    try {
-      if (value) localStorage.setItem(CENTER_CARDS_KEY, "true");
-      else localStorage.setItem(CENTER_CARDS_KEY, "false");
-    } catch {}
-  }
+  // (removed) center-cards setting persistence
 
   function isDesktopUserAgent() {
     if (typeof navigator === "undefined" || !navigator.userAgent) return true;
@@ -819,8 +803,7 @@
     // If content overflows, keep it left-aligned so the scroll starts at the beginning.
     const updateCentering = () => {
       try {
-        const shouldCenter = state.centerCards === true;
-        const centered = shouldCenter && grid.scrollWidth <= (grid.clientWidth + 2);
+        const centered = grid.scrollWidth <= (grid.clientWidth + 2);
         grid.classList.toggle('is-centered', centered);
       } catch {}
     };
@@ -844,13 +827,7 @@
     notifyChange();
   }
 
-  function setCenterCards(value) {
-    const desired = value === true;
-    state.centerCards = desired;
-    writeCenterCardsSetting(desired);
-    render();
-    notifyChange();
-  }
+  // (removed) setCenterCards: centering is always enabled.
 
   function recordSource(json, context = {}) {
     try {
@@ -923,8 +900,7 @@
     setEnabled,
     getPlacement: () => state.placement,
     setPlacement,
-    isCenterCardsEnabled: () => state.centerCards,
-    setCenterCards,
+    // Centering is always enabled (no toggle).
     isSourceActive: () => state.active,
     setSourceActive: setActiveSource,
     getItems: () => state.items.slice(),
