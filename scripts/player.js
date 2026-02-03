@@ -1871,6 +1871,12 @@ function mmThumbStorageKeyForIndex(idx) {
   return `${sk}:thumb:${idx}`;
 }
 
+function mmThumbAtStorageKeyForIndex(idx) {
+  const sk = (typeof sourceKey === 'string' && sourceKey) ? sourceKey : '';
+  if (!sk || !Number.isFinite(Number(idx))) return '';
+  return `${sk}:thumbAt:${idx}`;
+}
+
 function hasStoredThumbForIndex(idx) {
   const key = mmThumbStorageKeyForIndex(idx);
   if (!key) return true;
@@ -1906,11 +1912,48 @@ function storeThumbForIndexFromVideoElement(el, idx) {
     ctx.drawImage(el, 0, 0, canvas.width, canvas.height);
     const dataUrl = canvas.toDataURL('image/jpeg', 0.70);
     if (dataUrl && dataUrl.startsWith('data:image/')) {
-      try { localStorage.setItem(key, dataUrl); } catch {}
+      try {
+        localStorage.setItem(key, dataUrl);
+        const atKey = mmThumbAtStorageKeyForIndex(idx);
+        if (atKey) localStorage.setItem(atKey, String(Number(el.currentTime) || 0));
+      } catch {}
     }
   } catch {
     // Likely a CORS-tainted canvas; ignore.
   }
+}
+
+function stableHash32(text) {
+  const str = String(text || '');
+  let hash = 2166136261;
+  for (let i = 0; i < str.length; i += 1) {
+    hash ^= str.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+function chooseStableThumbTime(idx, durationSeconds) {
+  const dur = Number(durationSeconds);
+  if (!Number.isFinite(dur) || dur <= 1) return 1;
+
+  // Try to reuse a previously chosen thumb time ("index the frame")
+  try {
+    const atKey = mmThumbAtStorageKeyForIndex(idx);
+    if (atKey) {
+      const stored = Number(localStorage.getItem(atKey));
+      if (Number.isFinite(stored) && stored > 0.25) return stored;
+    }
+  } catch {}
+
+  // Deterministic "random": seed by source + index.
+  const sk = (typeof sourceKey === 'string' && sourceKey) ? sourceKey : '';
+  const seed = stableHash32(`${sk}::${idx}`);
+  const unit = (seed % 10000) / 10000; // 0..1
+
+  // Avoid intro/credits: 12%..72%
+  const target = dur * (0.12 + unit * 0.60);
+  return Math.max(0.5, Math.min(Math.max(0.5, dur - 1.5), target));
 }
 
 function generateThumbFromSrcOnce(idx, src, durationHintSeconds) {
@@ -1960,9 +2003,11 @@ function generateThumbFromSrcOnce(idx, src, durationHintSeconds) {
     const onError = () => finish();
     const onMeta = () => {
       const realDur = (Number.isFinite(el.duration) && el.duration > 0) ? el.duration : durHint;
-      const maxSeek = Math.max(0.5, realDur - 1.5);
-      // Keep it away from intro/black frames: 10%..75%
-      const target = Math.max(0.5, Math.min(maxSeek, realDur * (0.10 + Math.random() * 0.65)));
+      const target = chooseStableThumbTime(idx, realDur);
+      try {
+        const atKey = mmThumbAtStorageKeyForIndex(idx);
+        if (atKey) localStorage.setItem(atKey, String(target));
+      } catch {}
       try { el.currentTime = target; } catch { finish(); }
     };
     const onSeeked = () => {

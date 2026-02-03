@@ -617,20 +617,14 @@
     }
 
     const content = document.createElement("div");
-    content.className = "continue-overlay continue-overlay--row";
+    content.className = "continue-overlay continue-overlay--centered";
 
-    const left = document.createElement("div");
-    left.className = "continue-left";
+    const top = document.createElement("div");
+    top.className = "continue-top";
+    top.textContent = itemTitle;
 
-    const leftTitle = document.createElement("div");
-    leftTitle.className = "continue-item-title";
-    leftTitle.textContent = itemTitle;
-
-    const leftMeta = document.createElement("div");
-    leftMeta.className = "continue-item-meta";
-
-    const right = document.createElement("div");
-    right.className = "continue-right";
+    const bottom = document.createElement("div");
+    bottom.className = "continue-bottom";
 
     // Best-effort progress estimate from stored time/duration.
     let ratio = 0;
@@ -651,21 +645,16 @@
 
     const isNextUp = isVideoSource && ratio >= 0.90;
 
-    // Left side: item title (+ time/duration when not "Next Up")
+    // Bottom centered: watched/duration if <90%, else "Next Episode"
     if (!isNextUp && isVideoSource) {
-      leftMeta.textContent = `${formatTime(watched)} / ${formatTime(duration)}`;
+      bottom.textContent = `${formatTime(watched)} / ${formatTime(duration)}`;
+    } else if (isVideoSource) {
+      bottom.textContent = "Next Episode";
     } else {
-      leftMeta.textContent = "";
+      bottom.textContent = "";
     }
 
-    // Right side: Continue Watching / Next Up
-    const status = document.createElement("div");
-    status.className = "continue-status";
-    status.textContent = isNextUp ? "Next Up" : "Continue Watching";
-
-    left.append(leftTitle, leftMeta);
-    right.appendChild(status);
-    content.append(left, right);
+    content.append(top, bottom);
     wrapper.appendChild(content);
 
     wrapper.tabIndex = 0;
