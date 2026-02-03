@@ -5,13 +5,12 @@
 
   const STORAGE_KEY = "rsp_recent_sources_list_v1";
   const TOGGLE_KEY = "rsp_recent_sources_enabled";
-  const PLACEMENT_KEY = "rsp_recent_sources_placement";
   const INLINE_PREFIX = "rsp_recent_inline_payload:";
   const STORAGE_LIMIT = 6;
   const VERTICAL_DISPLAY_LIMIT = 5;
   const HORIZONTAL_DISPLAY_LIMIT = 5;
-  const VALID_PLACEMENTS = new Set(["bottom", "left", "right"]);
-  const DEFAULT_PLACEMENT = "bottom";
+  // (removed) placement support; rail is inline on Home.
+
   const INLINE_MAX_LENGTH = 150000; // 150 KB guardrail so it dont kill itself :/ should be plenty for most uses, will probably add an function to auto delete old ones later if i get around to it
   const LEGACY_SOURCE_PREFIX = "Directorys/Files/";
   const LEGACY_SOURCE_REPLACEMENT = "Sources/Files/";
@@ -59,7 +58,6 @@
 
   const state = {
     enabled: readEnabledSetting(),
-    placement: readPlacementSetting(),
     items: readStoredItems(),
     active: false,
     viewportDesktop: isDesktopViewport()
@@ -111,13 +109,7 @@
     catch { return false; }
   }
 
-  function readPlacementSetting() {
-    try {
-      const stored = localStorage.getItem(PLACEMENT_KEY);
-      if (stored && VALID_PLACEMENTS.has(stored)) return stored;
-    } catch {}
-    return DEFAULT_PLACEMENT;
-  }
+  // (removed) placement setting; rail is inline on Home.
 
   // Centering is always enabled (no toggle).
 
@@ -128,11 +120,7 @@
     } catch {}
   }
 
-  function writePlacementSetting(value) {
-    try {
-      localStorage.setItem(PLACEMENT_KEY, value);
-    } catch {}
-  }
+  // (removed) placement persistence
 
   // (removed) center-cards setting persistence
 
@@ -176,7 +164,6 @@
       window.dispatchEvent(new CustomEvent("rsp:recent-sources-updated", {
         detail: {
           enabled: state.enabled,
-          placement: state.placement,
           items: state.items.slice(),
           active: state.active
         }
@@ -395,10 +382,7 @@
     }
   }
 
-  function applyPlacement() {
-    if (!recentRail) return;
-    recentRail.dataset.placement = state.placement;
-  }
+  // (removed) applyPlacement
 
   function readNumber(key) {
     try {
@@ -760,9 +744,7 @@
       document.body.classList.remove("recent-sources-active");
       return;
     }
-    applyPlacement();
-    const isVertical = state.placement === "left" || state.placement === "right";
-    const displayLimit = isVertical ? VERTICAL_DISPLAY_LIMIT : HORIZONTAL_DISPLAY_LIMIT;
+    const displayLimit = HORIZONTAL_DISPLAY_LIMIT;
     const items = state.items.slice(0, displayLimit);
     const shouldShow = state.enabled && items.length > 0 && !state.active;
     if (!shouldShow) {
@@ -790,7 +772,7 @@
 
     const grid = document.createElement("div");
     grid.className = "recent-sources-grid";
-    grid.dataset.layout = isVertical ? "2x3" : "3x2";
+    grid.dataset.layout = "row";
 
     items.forEach((entry) => {
       const card = buildCard(entry);
@@ -819,13 +801,7 @@
     notifyChange();
   }
 
-  function setPlacement(value) {
-    const normalized = VALID_PLACEMENTS.has(value) ? value : DEFAULT_PLACEMENT;
-    state.placement = normalized;
-    writePlacementSetting(normalized);
-    render();
-    notifyChange();
-  }
+  // (removed) setPlacement
 
   // (removed) setCenterCards: centering is always enabled.
 
@@ -855,12 +831,6 @@
       const next = event.newValue === "true";
       if (state.enabled !== next) {
         state.enabled = next;
-        render();
-      }
-    } else if (event.key === PLACEMENT_KEY) {
-      const nextPlacement = event.newValue && VALID_PLACEMENTS.has(event.newValue) ? event.newValue : DEFAULT_PLACEMENT;
-      if (state.placement !== nextPlacement) {
-        state.placement = nextPlacement;
         render();
       }
     } else if (event.key === STORAGE_KEY) {
@@ -898,8 +868,6 @@
   window.RSPRecentSources = {
     isEnabled: () => state.enabled,
     setEnabled,
-    getPlacement: () => state.placement,
-    setPlacement,
     // Centering is always enabled (no toggle).
     isSourceActive: () => state.active,
     setSourceActive: setActiveSource,

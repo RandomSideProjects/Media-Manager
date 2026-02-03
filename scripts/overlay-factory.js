@@ -99,12 +99,7 @@ window.OverlayFactory = (function() {
           createElement('span', {}, ['Show Recently Watched'])
         ]),
         createElement('div', { className: 'recent-sources-controls' }, [
-          createElement('input', { type: 'checkbox', id: 'recentSourcesToggle', 'aria-label': 'Show recently watched' }),
-          createElement('select', { id: 'recentSourcesPlacement', 'aria-label': 'Recently watched placement' }, [
-            createElement('option', { value: 'bottom' }, ['Bottom']),
-            createElement('option', { value: 'left' }, ['Left']),
-            createElement('option', { value: 'right' }, ['Right'])
-          ])
+          createElement('input', { type: 'checkbox', id: 'recentSourcesToggle', 'aria-label': 'Show recently watched' })
         ])
       ])
     ]);

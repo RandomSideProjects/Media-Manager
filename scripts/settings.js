@@ -44,7 +44,6 @@ function ensureSettingsOverlay() {
       window.downloadConcurrencyValue = document.getElementById('downloadConcurrencyValue');
       window.storageShowCameraOptionsToggle = document.getElementById('storageShowCameraOptionsToggle');
       window.recentSourcesToggle = document.getElementById('recentSourcesToggle');
-      window.recentSourcesPlacement = document.getElementById('recentSourcesPlacement');
       
       // Setup initial states
       initializeSettingsValues();
@@ -149,14 +148,6 @@ function initializeSettingsValues() {
     recentSourcesToggle.dataset.bound = '1';
   }
   
-  if (recentSourcesPlacement && !recentSourcesPlacement.dataset.bound) {
-    recentSourcesPlacement.addEventListener('change', () => {
-      if (!window.RSPRecentSources || typeof window.RSPRecentSources.setPlacement !== 'function') return;
-      window.RSPRecentSources.setPlacement(recentSourcesPlacement.value);
-    });
-    recentSourcesPlacement.dataset.bound = '1';
-  }
-
   if (downloadConcurrencyRange && !downloadConcurrencyRange.dataset.bound) {
     downloadConcurrencyRange.addEventListener('input', handleDownloadConcurrencyInput);
     downloadConcurrencyRange.addEventListener('change', handleDownloadConcurrencyInput);
@@ -242,19 +233,11 @@ if (typeof window !== 'undefined') {
 
 function updateRecentSourcesControls() {
   const recentSourcesToggle = document.getElementById('recentSourcesToggle');
-  const recentSourcesPlacement = document.getElementById('recentSourcesPlacement');
   if (!recentSourcesToggle) return;
   const api = window.RSPRecentSources;
   const apiAvailable = api && typeof api.isEnabled === 'function';
   const enabled = apiAvailable ? api.isEnabled() === true : false;
   recentSourcesToggle.checked = enabled;
-  if (recentSourcesPlacement) {
-    const placement = api && typeof api.getPlacement === 'function' ? api.getPlacement() : 'bottom';
-    recentSourcesPlacement.value = placement;
-    recentSourcesPlacement.disabled = !enabled || !apiAvailable;
-  }
-  // Centering cards is always enabled now (no setting).
-
 }
 
 window.addEventListener('rsp:recent-sources-updated', () => {
