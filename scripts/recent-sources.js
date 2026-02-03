@@ -590,6 +590,24 @@
     wrapper.className = "source-card recent-source-card continue-card";
 
     const continueIndex = getContinueIndexForEntry(entry);
+
+    // Best-effort progress estimate from stored time/duration.
+    let ratio = 0;
+    let watched = 0;
+    let duration = 0;
+    try {
+      const sk = entry && entry.file ? String(entry.file) : "";
+      if (continueIndex !== null && continueIndex !== undefined) {
+        const durNum = Number(readString(`${sk}:itemDuration:${continueIndex}`));
+        if (Number.isFinite(durNum) && durNum > 0) duration = durNum;
+        const t = Number(readString(`${sk}:itemTime:${continueIndex}`));
+        if (Number.isFinite(t) && t >= 0) watched = t;
+        ratio = (duration > 0) ? Math.max(0, Math.min(1, watched / duration)) : 0;
+      }
+    } catch {}
+
+    // <5% watched is treated as "Start Watching" in the bottom label.
+
     const itemTitle = (continueIndex !== null && continueIndex !== undefined)
       ? (getItemTitleForEntry(entry, continueIndex) || `Item ${continueIndex + 1}`)
       : "Start watching";
@@ -619,30 +637,25 @@
     const bottom = document.createElement("div");
     bottom.className = "continue-bottom";
 
-    // Best-effort progress estimate from stored time/duration.
-    let ratio = 0;
-    let watched = 0;
-    let duration = hintedDuration;
-    try {
-      const sk = entry && entry.file ? String(entry.file) : "";
-      if (continueIndex !== null && continueIndex !== undefined) {
-        const durRaw = readString(`${sk}:itemDuration:${continueIndex}`);
-        const durNum = Number(durRaw);
-        if (Number.isFinite(durNum) && durNum > 0) duration = durNum;
-        const timeRaw = readString(`${sk}:itemTime:${continueIndex}`);
-        const t = Number(timeRaw);
-        if (Number.isFinite(t) && t >= 0) watched = t;
-        ratio = (Number.isFinite(duration) && duration > 0) ? Math.max(0, Math.min(1, watched / duration)) : 0;
-      }
-    } catch {}
+    // Progress estimate from stored time/duration.
+    // NOTE: ratio/watched/duration are computed above to support the <5% "Start Watching" state.
+    duration = hintedDuration || duration;
+    ratio = (duration > 0) ? Math.max(0, Math.min(1, watched / duration)) : 0;
 
     const isNextUp = isVideoSource && ratio >= 0.90;
 
-    // Bottom centered: watched/duration if <90%, else "Next Episode"
-    if (!isNextUp && isVideoSource) {
-      bottom.textContent = `${formatTime(watched)} / ${formatTime(duration)}`;
-    } else if (isVideoSource) {
-      bottom.textContent = "Next Episode";
+    // Bottom centered:
+    // - <5% watched -> "Start Watching"
+    // - <90% watched -> watched/duration
+    // - >=90% watched -> "Next Episode"
+    if (isVideoSource) {
+      if (ratio > 0 && ratio < 0.05) {
+        bottom.textContent = "Start Watching";
+      } else if (!isNextUp) {
+        bottom.textContent = `${formatTime(watched)} / ${formatTime(duration)}`;
+      } else {
+        bottom.textContent = "Next Episode";
+      }
     } else {
       bottom.textContent = "";
     }
