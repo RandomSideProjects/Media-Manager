@@ -273,6 +273,47 @@ body {
   outline: 3px solid rgba(99, 179, 237, 0.7);
   outline-offset: 3px;
 }
+
+/* Continue rail cards: thumbnail-first, text overlay (streaming-service style) */
+.recent-sources .source-card.continue-card {
+  position: relative;
+  padding: 0;
+  overflow: hidden;
+}
+.recent-sources .source-card.continue-card .source-thumb {
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  border-radius: 12px;
+  border: 0;
+  box-shadow: none;
+}
+.recent-sources .source-card.continue-card .continue-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 0.35rem;
+  padding: 0.9rem 1rem;
+  background: linear-gradient(to top, rgba(0,0,0,0.80), rgba(0,0,0,0.15) 65%, rgba(0,0,0,0) 100%);
+}
+.recent-sources .source-card.continue-card .continue-overlay h3 {
+  border-bottom: none;
+  padding-bottom: 0;
+  margin-bottom: 0;
+  font-size: clamp(0.9rem, 0.6rem + 0.6vw, 1.1rem);
+}
+.recent-sources .source-card.continue-card .continue-subtitle {
+  margin: 0;
+  opacity: 0.92;
+  font-size: clamp(0.8rem, 0.55rem + 0.35vw, 0.95rem);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 video {
   width: 100%;
   border-radius: 12px;

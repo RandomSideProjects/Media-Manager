@@ -1659,6 +1659,14 @@ function loadVideo(index) {
   const item = flatList[index];
   updateChaptersSelection(null);
   const resumeKey = resolveResumeKeyForItem(item);
+
+  // Store lightweight metadata for the home "Continue" rail.
+  try {
+    if (typeof sourceKey === 'string' && sourceKey) {
+      localStorage.setItem(`${sourceKey}:LastIndex`, String(index));
+      if (item && item.title) localStorage.setItem(`${sourceKey}:itemTitle:${index}`, String(item.title));
+    }
+  } catch {}
   if (resumeKey) {
     try { localStorage.setItem('lastEpSrc', resumeKey); } catch {}
   }
@@ -1835,6 +1843,41 @@ function handleActiveVideoError(event) {
   showPlayerAlert("Unfortunatly, this file in unavalible at this moment, please try again later.\n If this is a local source, please download the remaining files to continue");
 }
 
+// Thumbnail capture for the Home "Continue" rail.
+const __mmThumbCaptured = new Set();
+function mmThumbStorageKeyForIndex(idx) {
+  const sk = (typeof sourceKey === 'string' && sourceKey) ? sourceKey : '';
+  if (!sk || !Number.isFinite(Number(idx))) return '';
+  return `${sk}:thumb:${idx}`;
+}
+function tryCaptureThumbFromVideo(el, idx) {
+  if (!el) return;
+  const key = mmThumbStorageKeyForIndex(idx);
+  if (!key) return;
+  if (__mmThumbCaptured.has(key)) return;
+  // Avoid trying too early (black frames / no dimensions).
+  if (!(el.videoWidth > 0 && el.videoHeight > 0)) return;
+  if (!Number.isFinite(el.currentTime) || el.currentTime < 1) return;
+
+  __mmThumbCaptured.add(key);
+  try {
+    const canvas = document.createElement('canvas');
+    const maxW = 720;
+    const scale = Math.min(1, maxW / el.videoWidth);
+    canvas.width = Math.max(1, Math.floor(el.videoWidth * scale));
+    canvas.height = Math.max(1, Math.floor(el.videoHeight * scale));
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.drawImage(el, 0, 0, canvas.width, canvas.height);
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.70);
+    if (dataUrl && dataUrl.startsWith('data:image/')) {
+      localStorage.setItem(key, dataUrl);
+    }
+  } catch {
+    // Likely a CORS-tainted canvas; ignore.
+  }
+}
+
 function handleActiveVideoTimeUpdate(event) {
   const el = event && event.currentTarget ? event.currentTarget : video;
   if (!el) return;
@@ -1866,6 +1909,17 @@ function handleActiveVideoTimeUpdate(event) {
           writeSourceScopedValue && writeSourceScopedValue('SavedItemTime', String(progress.time));
         } catch {}
       }
+
+      // If the user is basically done, "Continue" should point at the next item.
+      try {
+        if (typeof sourceKey === 'string' && sourceKey) {
+          const nextIdx = (typeof currentIndex === 'number' && currentIndex < flatList.length - 1) ? (currentIndex + 1) : currentIndex;
+          const continueIdx = (ratio >= 0.90) ? nextIdx : currentIndex;
+          localStorage.setItem(`${sourceKey}:ContinueIndex`, String(continueIdx));
+        }
+      } catch {}
+
+      try { tryCaptureThumbFromVideo(el, currentIndex); } catch {}
       const part = curItem.__separatedParts[curItem.__activePartIndex || 0];
       if (part && part.src) {
         try { localStorage.setItem(part.src, el.currentTime); } catch {}
@@ -1887,6 +1941,18 @@ function handleActiveVideoTimeUpdate(event) {
       try {
         writeSourceScopedValue && writeSourceScopedValue('SavedItemTime', String(el.currentTime));
       } catch {}
+
+      // If the user is basically done, "Continue" should point at the next item.
+      try {
+        if (typeof sourceKey === 'string' && sourceKey) {
+          const ratio = safeDuration ? (el.currentTime / safeDuration) : 0;
+          const nextIdx = (typeof currentIndex === 'number' && currentIndex < flatList.length - 1) ? (currentIndex + 1) : currentIndex;
+          const continueIdx = (ratio >= 0.90) ? nextIdx : currentIndex;
+          localStorage.setItem(`${sourceKey}:ContinueIndex`, String(continueIdx));
+        }
+      } catch {}
+
+      try { tryCaptureThumbFromVideo(el, currentIndex); } catch {}
     }
   } catch {}
   updateEpisodeTimeOverlay(curItem, aggregatedTime);

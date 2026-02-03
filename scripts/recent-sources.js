@@ -396,15 +396,62 @@
     recentRail.dataset.placement = state.placement;
   }
 
+  function readNumber(key) {
+    try {
+      const raw = localStorage.getItem(key);
+      if (raw === null || raw === undefined) return null;
+      const num = parseInt(String(raw), 10);
+      return Number.isFinite(num) ? num : null;
+    } catch {
+      return null;
+    }
+  }
+
+  function readString(key) {
+    try {
+      const raw = localStorage.getItem(key);
+      return (raw === null || raw === undefined) ? "" : String(raw);
+    } catch {
+      return "";
+    }
+  }
+
+  function getContinueIndexForEntry(entry) {
+    const sk = entry && entry.file ? String(entry.file) : "";
+    if (!sk) return null;
+    const fromContinue = readNumber(`${sk}:ContinueIndex`);
+    if (fromContinue !== null) return fromContinue;
+    const fromSaved = readNumber(`${sk}:SavedItem`);
+    if (fromSaved !== null) return fromSaved;
+    const fromLast = readNumber(`${sk}:LastIndex`);
+    if (fromLast !== null) return fromLast;
+    return null;
+  }
+
+  function getThumbForEntry(entry, idx) {
+    const sk = entry && entry.file ? String(entry.file) : "";
+    if (!sk || idx === null || idx === undefined) return "";
+    return readString(`${sk}:thumb:${idx}`);
+  }
+
+  function getItemTitleForEntry(entry, idx) {
+    const sk = entry && entry.file ? String(entry.file) : "";
+    if (!sk || idx === null || idx === undefined) return "";
+    return readString(`${sk}:itemTitle:${idx}`);
+  }
+
   function buildCard(entry) {
     const wrapper = document.createElement("div");
-    wrapper.className = "source-card recent-source-card";
-    const poster = extractPoster(entry);
+    wrapper.className = "source-card recent-source-card continue-card";
+
+    const continueIndex = getContinueIndexForEntry(entry);
+    const poster = getThumbForEntry(entry, continueIndex) || extractPoster(entry);
     if (!poster) wrapper.classList.add("no-thumb");
+
     if (poster) {
       const img = document.createElement("img");
       img.className = "source-thumb";
-      img.alt = `${entry.title} poster`;
+      img.alt = `${entry.title} preview`;
       img.loading = "lazy";
       img.referrerPolicy = "no-referrer";
       img.onerror = () => wrapper.classList.add("no-thumb");
@@ -413,33 +460,26 @@
     }
 
     const content = document.createElement("div");
-    content.className = "source-right";
+    content.className = "source-right continue-overlay";
+
     const h3 = document.createElement("h3");
     h3.textContent = entry.title || entry.file;
 
-    const p1 = document.createElement("p");
-    const p2 = document.createElement("p");
-    const p3 = document.createElement("p");
-    p1.innerHTML = `<strong>${entry.categoryCount || 0}</strong> ${(entry.categoryCount || 0) === 1 ? "Season" : "Seasons"}`;
-    p2.innerHTML = `<strong>${entry.episodeCount || 0}</strong> ${(entry.episodeCount || 0) === 1 ? "Episode" : "Episodes"}`;
-    const separatedCount = Number(entry.separatedCategoryCount) || 0;
-    if (separatedCount > 0) {
-      p3.innerHTML = `<strong>${separatedCount}</strong> ${separatedCount === 1 ? "Movie" : "Movies"}`;
-    } else {
-      p3.style.display = "none";
-    }
+    const subtitle = document.createElement("p");
+    subtitle.className = "continue-subtitle";
+    const itemTitle = (continueIndex !== null) ? (getItemTitleForEntry(entry, continueIndex) || `Item ${continueIndex + 1}`) : "Start watching";
+    subtitle.textContent = itemTitle;
 
-    const when = entry.LatestTime ? formatLocalDate(entry.LatestTime) : formatLocalDate(entry.recordedAt);
-
-    content.append(h3, p1, p2);
-    if (separatedCount > 0) content.appendChild(p3);
+    content.append(h3, subtitle);
     wrapper.appendChild(content);
+
     wrapper.tabIndex = 0;
     wrapper.setAttribute("role", "button");
-    wrapper.setAttribute("aria-label", `Open ${entry.title || entry.file}`);
+    wrapper.setAttribute("aria-label", `Continue ${entry.title || entry.file}`);
+
     const activate = (event) => {
       event.preventDefault();
-      openEntry(entry);
+      openEntry(entry, { resumeIndex: continueIndex });
     };
     wrapper.addEventListener("click", activate);
     wrapper.addEventListener("keydown", (event) => {
@@ -450,7 +490,7 @@
     return wrapper;
   }
 
-  function openEntry(entry) {
+  function openEntry(entry, opts = {}) {
     if (!entry) return;
     if (entry.openKind === "local") {
       showNotice("This source was loaded from a local folder. Use Select Folder to open it again.", "warning");
@@ -490,7 +530,26 @@
       try {
         const response = window.loadSource(rawValue);
         if (response && typeof response.then === "function") {
-          response.catch((err) => console.error("[RecentSources] reopen failed", err));
+          response
+            .then((ok) => {
+              const idx = Number.isFinite(Number(opts.resumeIndex)) ? Number(opts.resumeIndex) : null;
+              if (!ok || idx === null) return;
+              // Jump straight into the player at the requested index.
+              try {
+                if (typeof window.currentIndex === 'number') window.currentIndex = idx;
+                else if (typeof currentIndex === 'number') currentIndex = idx;
+              } catch {}
+              try {
+                if (typeof selectorScreen !== 'undefined' && selectorScreen) selectorScreen.style.display = 'none';
+                if (typeof playerScreen !== 'undefined' && playerScreen) playerScreen.style.display = 'block';
+                if (typeof backBtn !== 'undefined' && backBtn) backBtn.style.display = 'inline-block';
+                if (typeof theaterBtn !== 'undefined' && theaterBtn) theaterBtn.style.display = 'inline-block';
+              } catch {}
+              try {
+                if (typeof window.loadVideo === 'function') window.loadVideo(idx);
+              } catch {}
+            })
+            .catch((err) => console.error("[RecentSources] reopen failed", err));
         }
       } catch (err) {
         console.error("[RecentSources] reopen threw", err);
@@ -527,7 +586,7 @@
     const header = document.createElement("div");
     header.className = "recent-sources-header";
     const title = document.createElement("h3");
-    title.textContent = "Recent sources";
+    title.textContent = "Continue watching";
     const count = document.createElement("span");
     count.className = "recent-sources-count";
     count.textContent = `${items.length} / ${displayLimit}`;
