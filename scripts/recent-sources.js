@@ -6,6 +6,7 @@
   const STORAGE_KEY = "rsp_recent_sources_list_v1";
   const TOGGLE_KEY = "rsp_recent_sources_enabled";
   const PLACEMENT_KEY = "rsp_recent_sources_placement";
+  const CENTER_CARDS_KEY = "rsp_recent_sources_center_cards";
   const INLINE_PREFIX = "rsp_recent_inline_payload:";
   const STORAGE_LIMIT = 6;
   const VERTICAL_DISPLAY_LIMIT = 5;
@@ -60,6 +61,7 @@
   const state = {
     enabled: readEnabledSetting(),
     placement: readPlacementSetting(),
+    centerCards: readCenterCardsSetting(),
     items: readStoredItems(),
     active: false,
     viewportDesktop: isDesktopViewport()
@@ -119,6 +121,17 @@
     return DEFAULT_PLACEMENT;
   }
 
+  function readCenterCardsSetting() {
+    // Default ON.
+    try {
+      const raw = localStorage.getItem(CENTER_CARDS_KEY);
+      if (raw === null || raw === undefined) return true;
+      return raw === "true";
+    } catch {
+      return true;
+    }
+  }
+
   function writeEnabledSetting(value) {
     try {
       if (value) localStorage.setItem(TOGGLE_KEY, "true");
@@ -129,6 +142,13 @@
   function writePlacementSetting(value) {
     try {
       localStorage.setItem(PLACEMENT_KEY, value);
+    } catch {}
+  }
+
+  function writeCenterCardsSetting(value) {
+    try {
+      if (value) localStorage.setItem(CENTER_CARDS_KEY, "true");
+      else localStorage.setItem(CENTER_CARDS_KEY, "false");
     } catch {}
   }
 
@@ -799,7 +819,8 @@
     // If content overflows, keep it left-aligned so the scroll starts at the beginning.
     const updateCentering = () => {
       try {
-        const centered = grid.scrollWidth <= (grid.clientWidth + 2);
+        const shouldCenter = state.centerCards === true;
+        const centered = shouldCenter && grid.scrollWidth <= (grid.clientWidth + 2);
         grid.classList.toggle('is-centered', centered);
       } catch {}
     };
@@ -819,6 +840,14 @@
     const normalized = VALID_PLACEMENTS.has(value) ? value : DEFAULT_PLACEMENT;
     state.placement = normalized;
     writePlacementSetting(normalized);
+    render();
+    notifyChange();
+  }
+
+  function setCenterCards(value) {
+    const desired = value === true;
+    state.centerCards = desired;
+    writeCenterCardsSetting(desired);
     render();
     notifyChange();
   }
@@ -894,6 +923,8 @@
     setEnabled,
     getPlacement: () => state.placement,
     setPlacement,
+    isCenterCardsEnabled: () => state.centerCards,
+    setCenterCards,
     isSourceActive: () => state.active,
     setSourceActive: setActiveSource,
     getItems: () => state.items.slice(),

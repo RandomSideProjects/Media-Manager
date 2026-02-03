@@ -106,6 +106,10 @@ window.OverlayFactory = (function() {
             createElement('option', { value: 'right' }, ['Right'])
           ])
         ])
+      ]),
+      createElement('div', { className: 'setting-row' }, [
+        createElement('input', { type: 'checkbox', id: 'recentSourcesCenterToggle', 'aria-label': 'Center continue watching cards when few' }),
+        createElement('label', { for: 'recentSourcesCenterToggle' }, ['Center Continue Watching cards'])
       ])
     ]);
 
