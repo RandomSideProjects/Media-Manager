@@ -268,7 +268,7 @@ body {
   flex-direction: column;
   justify-content: space-between;
   gap: 0.35rem;
-  padding: 0.75rem 0.8rem;
+  padding: 0.75rem 0.8rem 0.96rem;
   background: linear-gradient(to top, rgba(0,0,0,0.28), rgba(0,0,0,0.08) 60%, rgba(0,0,0,0.18) 100%);
 }
 .recent-sources .source-card.continue-card .continue-overlay--centered {
