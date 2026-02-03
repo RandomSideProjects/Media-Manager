@@ -491,7 +491,13 @@ function renderEpisodeList() {
         if (ratio !== null) {
           const fill = document.createElement('div');
           fill.className = 'episode-progress-fill';
-          fill.style.width = `${Math.round(ratio * 1000) / 10}%`;
+
+          // If an item is essentially finished, treat it as complete.
+          // This avoids the “almost done but not green” look when you’re within the last minute/percent.
+          const effectiveRatio = (ratio >= 0.90) ? 1 : ratio;
+          if (effectiveRatio >= 1) button.classList.add('episode--complete');
+
+          fill.style.width = `${Math.round(effectiveRatio * 1000) / 10}%`;
           button.appendChild(fill);
         }
       } catch {}

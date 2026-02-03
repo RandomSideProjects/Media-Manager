@@ -408,6 +408,14 @@ button:hover {
   pointer-events: none;
   z-index: 0;
 }
+
+/* Completed items: stronger "fully done" green */
+.episode-button.episode--complete .episode-progress-fill {
+  background: rgba(76, 175, 80, 0.45);
+}
+body.light-mode .episode-button.episode--complete .episode-progress-fill {
+  background: rgba(46, 125, 50, 0.35);
+}
 .episode-button > * {
   position: relative;
   z-index: 1;
