@@ -1674,6 +1674,15 @@ function loadVideo(index) {
       if (Number.isFinite(hintedDuration) && hintedDuration > 0) {
         localStorage.setItem(`${sourceKey}:itemDuration:${index}`, String(hintedDuration));
       }
+
+      // On start: grab a random frame thumb (video items only), once.
+      try {
+        const hintedDuration2 = Number(item && item.durationSeconds);
+        const canThumb = (item && typeof item.src === 'string' && item.src && Number.isFinite(hintedDuration2) && hintedDuration2 > 1);
+        if (canThumb) {
+          generateThumbFromSrcOnce(index, item.src, hintedDuration2);
+        }
+      } catch {}
     }
   } catch {}
   if (resumeKey) {
@@ -1854,19 +1863,36 @@ function handleActiveVideoError(event) {
 
 // Thumbnail capture for the Home "Continue" rail.
 const __mmThumbCaptured = new Set();
+const __mmThumbGenInFlight = new Set();
+
 function mmThumbStorageKeyForIndex(idx) {
   const sk = (typeof sourceKey === 'string' && sourceKey) ? sourceKey : '';
   if (!sk || !Number.isFinite(Number(idx))) return '';
   return `${sk}:thumb:${idx}`;
 }
-function tryCaptureThumbFromVideo(el, idx) {
+
+function hasStoredThumbForIndex(idx) {
+  const key = mmThumbStorageKeyForIndex(idx);
+  if (!key) return true;
+  if (__mmThumbCaptured.has(key)) return true;
+  try {
+    const existing = localStorage.getItem(key);
+    if (existing && String(existing).startsWith('data:image/')) {
+      __mmThumbCaptured.add(key);
+      return true;
+    }
+  } catch {}
+  return false;
+}
+
+function storeThumbForIndexFromVideoElement(el, idx) {
   if (!el) return;
   const key = mmThumbStorageKeyForIndex(idx);
   if (!key) return;
-  if (__mmThumbCaptured.has(key)) return;
+  if (hasStoredThumbForIndex(idx)) return;
   // Avoid trying too early (black frames / no dimensions).
   if (!(el.videoWidth > 0 && el.videoHeight > 0)) return;
-  if (!Number.isFinite(el.currentTime) || el.currentTime < 1) return;
+  if (!Number.isFinite(el.currentTime) || el.currentTime < 0.25) return;
 
   __mmThumbCaptured.add(key);
   try {
@@ -1880,10 +1906,85 @@ function tryCaptureThumbFromVideo(el, idx) {
     ctx.drawImage(el, 0, 0, canvas.width, canvas.height);
     const dataUrl = canvas.toDataURL('image/jpeg', 0.70);
     if (dataUrl && dataUrl.startsWith('data:image/')) {
-      localStorage.setItem(key, dataUrl);
+      try { localStorage.setItem(key, dataUrl); } catch {}
     }
   } catch {
     // Likely a CORS-tainted canvas; ignore.
+  }
+}
+
+function generateThumbFromSrcOnce(idx, src, durationHintSeconds) {
+  if (!src) return;
+  if (!Number.isFinite(Number(idx))) return;
+  if (hasStoredThumbForIndex(idx)) return;
+  const key = mmThumbStorageKeyForIndex(idx);
+  if (!key) return;
+  if (__mmThumbGenInFlight.has(key)) return;
+
+  const durHint = Number(durationHintSeconds);
+  if (!Number.isFinite(durHint) || durHint <= 1) return;
+
+  __mmThumbGenInFlight.add(key);
+
+  try {
+    const el = document.createElement('video');
+    el.muted = true;
+    el.playsInline = true;
+    el.preload = 'auto';
+    try { el.crossOrigin = 'anonymous'; } catch {}
+    el.style.position = 'fixed';
+    el.style.left = '-99999px';
+    el.style.top = '0';
+    el.style.width = '1px';
+    el.style.height = '1px';
+    el.style.opacity = '0';
+    document.body.appendChild(el);
+
+    let done = false;
+    const cleanup = () => {
+      try { el.removeEventListener('error', onError); } catch {}
+      try { el.removeEventListener('loadedmetadata', onMeta); } catch {}
+      try { el.removeEventListener('seeked', onSeeked); } catch {}
+      try { el.pause(); } catch {}
+      try { el.removeAttribute('src'); } catch {}
+      try { el.load(); } catch {}
+      try { el.remove(); } catch {}
+      __mmThumbGenInFlight.delete(key);
+    };
+    const finish = () => {
+      if (done) return;
+      done = true;
+      cleanup();
+    };
+
+    const onError = () => finish();
+    const onMeta = () => {
+      const realDur = (Number.isFinite(el.duration) && el.duration > 0) ? el.duration : durHint;
+      const maxSeek = Math.max(0.5, realDur - 1.5);
+      // Keep it away from intro/black frames: 10%..75%
+      const target = Math.max(0.5, Math.min(maxSeek, realDur * (0.10 + Math.random() * 0.65)));
+      try { el.currentTime = target; } catch { finish(); }
+    };
+    const onSeeked = () => {
+      try { storeThumbForIndexFromVideoElement(el, idx); } catch {}
+      finish();
+    };
+
+    el.addEventListener('error', onError);
+    el.addEventListener('loadedmetadata', onMeta);
+    el.addEventListener('seeked', onSeeked);
+
+    try {
+      el.src = src;
+      el.load();
+    } catch {
+      finish();
+      return;
+    }
+
+    setTimeout(() => finish(), 8000);
+  } catch {
+    __mmThumbGenInFlight.delete(key);
   }
 }
 
@@ -1920,15 +2021,30 @@ function handleActiveVideoTimeUpdate(event) {
       }
 
       // If the user is basically done, "Continue" should point at the next item.
+      // Also: at >=90%, prefetch a thumbnail for the next episode (best-effort), once.
       try {
         if (typeof sourceKey === 'string' && sourceKey) {
-          const nextIdx = (typeof currentIndex === 'number' && currentIndex < flatList.length - 1) ? (currentIndex + 1) : currentIndex;
+          const hasNext = (typeof currentIndex === 'number' && currentIndex < flatList.length - 1);
+          const nextIdx = hasNext ? (currentIndex + 1) : currentIndex;
           const continueIdx = (ratio >= 0.90) ? nextIdx : currentIndex;
           localStorage.setItem(`${sourceKey}:ContinueIndex`, String(continueIdx));
+
+          if (ratio >= 0.90 && hasNext) {
+            const nextItem = flatList[nextIdx];
+            const nextSrc = nextItem && typeof nextItem.src === 'string' ? nextItem.src : '';
+            const nextHintedDuration = Number(nextItem && nextItem.durationSeconds);
+            if (nextSrc && Number.isFinite(nextHintedDuration) && nextHintedDuration > 1) {
+              try {
+                localStorage.setItem(`${sourceKey}:itemSrc:${nextIdx}`, String(nextSrc));
+                localStorage.setItem(`${sourceKey}:itemDuration:${nextIdx}`, String(nextHintedDuration));
+              } catch {}
+              generateThumbFromSrcOnce(nextIdx, nextSrc, nextHintedDuration);
+            }
+          }
         }
       } catch {}
 
-      try { tryCaptureThumbFromVideo(el, currentIndex); } catch {}
+      try { storeThumbForIndexFromVideoElement(el, currentIndex); } catch {}
       // Persist current time for Home rail progress/preview context.
       try {
         if (typeof sourceKey === 'string' && sourceKey && Number.isFinite(Number(currentIndex))) {
@@ -1966,16 +2082,31 @@ function handleActiveVideoTimeUpdate(event) {
       } catch {}
 
       // If the user is basically done, "Continue" should point at the next item.
+      // Also: at >=90%, prefetch a thumbnail for the next episode (best-effort), once.
       try {
         if (typeof sourceKey === 'string' && sourceKey) {
           const ratio = safeDuration ? (el.currentTime / safeDuration) : 0;
-          const nextIdx = (typeof currentIndex === 'number' && currentIndex < flatList.length - 1) ? (currentIndex + 1) : currentIndex;
+          const hasNext = (typeof currentIndex === 'number' && currentIndex < flatList.length - 1);
+          const nextIdx = hasNext ? (currentIndex + 1) : currentIndex;
           const continueIdx = (ratio >= 0.90) ? nextIdx : currentIndex;
           localStorage.setItem(`${sourceKey}:ContinueIndex`, String(continueIdx));
+
+          if (ratio >= 0.90 && hasNext) {
+            const nextItem = flatList[nextIdx];
+            const nextSrc = nextItem && typeof nextItem.src === 'string' ? nextItem.src : '';
+            const nextHintedDuration = Number(nextItem && nextItem.durationSeconds);
+            if (nextSrc && Number.isFinite(nextHintedDuration) && nextHintedDuration > 1) {
+              try {
+                localStorage.setItem(`${sourceKey}:itemSrc:${nextIdx}`, String(nextSrc));
+                localStorage.setItem(`${sourceKey}:itemDuration:${nextIdx}`, String(nextHintedDuration));
+              } catch {}
+              generateThumbFromSrcOnce(nextIdx, nextSrc, nextHintedDuration);
+            }
+          }
         }
       } catch {}
 
-      try { tryCaptureThumbFromVideo(el, currentIndex); } catch {}
+      try { storeThumbForIndexFromVideoElement(el, currentIndex); } catch {}
       // Persist current time for Home rail progress/preview context.
       try {
         if (typeof sourceKey === 'string' && sourceKey && Number.isFinite(Number(currentIndex))) {
