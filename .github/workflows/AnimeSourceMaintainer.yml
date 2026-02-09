@@ -443,6 +443,17 @@ jobs:
                     if (fs.existsSync(posterAbs)) {
                       console.log('Poster already exists, skipping:', posterAbs);
                       poster = `./Posters/Anime/${posterName}`;
+
+                      // Ensure the source JSON points at the local repo poster path (even if it previously had a remote URL).
+                      try {
+                        if (posterFieldKey) {
+                          sourceFileNeedsWrite = setPosterFieldTo(json, posterFieldKey, desiredSourcePosterPath) || sourceFileNeedsWrite;
+                        } else {
+                          sourceFileNeedsWrite = setPosterFieldTo(json, 'Image', desiredSourcePosterPath) || sourceFileNeedsWrite;
+                        }
+                      } catch (e) {
+                        console.warn('Failed to update poster path in source file (existing poster):', file, '-', e.message);
+                      }
                     } else {
                       let sourceBuffer;
                       if (imgUrlNormalized.startsWith('data:')) {
