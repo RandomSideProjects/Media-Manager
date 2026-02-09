@@ -544,63 +544,13 @@ async function downloadSourceFolder(options = {}) {
   const rootFolder = zip.folder(zipRootName);
   rootFolder.file('Media-Manager-source.txt', 'https://github.com/RandomSideProjects/Media-Manager/ is the origin of this web app.');
 
-  // If the source poster is a remote URL, embed it into the zip and rewrite the manifest Image
-  // to a local path so offline/local-folder mode can still display poster art.
-  const isHttpUrl = (value) => {
-    try { return typeof value === 'string' && /^https?:\/\//i.test(value.trim()); } catch { return false; }
-  };
-  const isLocalPath = (value) => {
-    if (typeof value !== 'string') return false;
-    const v = value.trim();
-    if (!v) return false;
-    // treat absolute/relative file paths and our Sources/ convention as local
-    if (v.startsWith('Sources/') || v.startsWith('./') || v.startsWith('/') || v.startsWith('../')) return true;
-    // file:// is also local
-    if (/^file:\/\//i.test(v)) return true;
-    return false;
-  };
-  const inferImageExt = (url, contentType) => {
-    const ct = (contentType || '').toLowerCase();
-    if (ct.includes('image/webp')) return '.webp';
-    if (ct.includes('image/png')) return '.png';
-    if (ct.includes('image/jpeg') || ct.includes('image/jpg')) return '.jpg';
-    if (ct.includes('image/gif')) return '.gif';
-    // fallback: try URL
-    try {
-      const raw = String(url || '');
-      const m = raw.match(/\.(webp|png|jpe?g|gif)(?:$|[?#])/i);
-      if (m && m[1]) {
-        const ext = m[1].toLowerCase();
-        return ext === 'jpeg' ? '.jpg' : `.${ext}`;
-      }
-    } catch {}
-    return '.jpg';
-  };
-
-  let posterForManifest = (sourceImageUrl && sourceImageUrl !== 'N/A') ? String(sourceImageUrl).trim() : '';
-  if (posterForManifest && isHttpUrl(posterForManifest) && !isLocalPath(posterForManifest)) {
-    try {
-      const res = await fetch(posterForManifest, { cache: 'no-store' });
-      if (res && (res.ok || res.status === 0)) {
-        const ct = res.headers ? res.headers.get('content-type') : '';
-        const ext = inferImageExt(posterForManifest, ct);
-        const posterPath = `Sources/${zipRootName}/poster${ext}`;
-        const buf = await res.arrayBuffer();
-        rootFolder.file(posterPath, buf);
-        posterForManifest = posterPath;
-      }
-    } catch (err) {
-      logDl('Poster embed failed (continuing with original URL)', err);
-    }
-  }
-
   // Add a LocalID so local-folder progress keys can be stable across sessions
   let localId;
   try { const n = Math.floor((Date.now() + Math.random() * 1000000)) % 1000000; localId = `Local${String(n).padStart(6, '0')}`; }
   catch { localId = 'Local000000'; }
   const manifest = {
     title: titleText,
-    Image: posterForManifest || 'N/A',
+    Image: sourceImageUrl || 'N/A',
     categories: [],
     LocalID: localId
   };
