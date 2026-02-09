@@ -109,8 +109,27 @@ async function handleExtractedFiles(files) {
   }
   try { setSourceKey(localId || 'local', { prefix: 'local' }); } catch {}
 
+  // Try to resolve a poster file referenced by the manifest (local path inside the selected folder).
+  let posterObjectUrl = '';
+  try {
+    const posterPathRaw = extractPoster(json);
+    const posterPath = (typeof posterPathRaw === 'string') ? posterPathRaw.trim() : '';
+    const isHttp = (v) => { try { return typeof v === 'string' && /^https?:\/\//i.test(v.trim()); } catch { return false; } };
+    if (posterPath && !isHttp(posterPath)) {
+      const posterLower = posterPath.toLowerCase().replace(/^\.?\/?/, '');
+      const f = files.find(file => {
+        const rp = String((file.webkitRelativePath || file.relativePath || file.name || '')).replace(/\\/g, '/').toLowerCase();
+        return rp.endsWith('/' + posterLower) || rp.endsWith(posterLower);
+      });
+      if (f) {
+        posterObjectUrl = URL.createObjectURL(f);
+      }
+    }
+  } catch {}
+
   // Helper to resolve a file for an episode by matching the relative path suffix if possible
   function findEpisodeFile(epSrc) {
+
     try {
       const parts = String(epSrc || '').split('/').filter(Boolean);
       const fileName = parts.pop() || '';
@@ -234,8 +253,18 @@ async function handleExtractedFiles(files) {
   }));
   directoryTitle.textContent = dirTitle;
   try { document.title = `${(dirTitle || '').trim() || 'Source'} on RSP Media Manager`; } catch {}
-  sourceImageUrl = '';
-  if (directoryPoster) { try { directoryPoster.removeAttribute('src'); } catch {} directoryPoster.style.display = 'none'; }
+  sourceImageUrl = posterObjectUrl || '';
+  if (directoryPoster) {
+    const hidePoster = () => { directoryPoster.style.display = 'none'; };
+    if (posterObjectUrl) {
+      directoryPoster.onerror = hidePoster;
+      directoryPoster.src = posterObjectUrl;
+      directoryPoster.style.display = 'inline-block';
+    } else {
+      try { directoryPoster.removeAttribute('src'); } catch {}
+      directoryPoster.style.display = 'none';
+    }
+  }
   if (directoryHeader) directoryHeader.style.display = 'flex';
   directoryTitle.style.display = "block";
   errorMessage.style.display = "none";
@@ -251,7 +280,8 @@ async function handleExtractedFiles(files) {
       window.RSPRecentSources.record(json, {
         sourceKey: localId,
         openValue: `local::${localId}`,
-        kind: 'local'
+        kind: 'local',
+        poster: posterObjectUrl || ''
       });
     } catch (err) {
       console.warn('[RecentSources] Unable to record local source', err);
