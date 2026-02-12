@@ -1,7 +1,7 @@
 {
   "title": "Nukitashi the Animation",
   "Image": "./Sources/Posters/Anime/Nukitashi_the_Animation.webp",
-  "LatestTime": "2026-02-12T13:23:41.860Z",
+  "LatestTime": "2026-02-12T13:31:38.878Z",
   "categories": [
     {
       "category": "Season 1",
@@ -29,11 +29,23 @@
           "src": "https://files.catbox.moe/usx4ir.mp4",
           "fileSizeBytes": 192910663,
           "durationSeconds": 1461
+        },
+        {
+          "title": "Episode 5",
+          "src": "https://files.catbox.moe/99or13.mp4",
+          "fileSizeBytes": 192668874,
+          "durationSeconds": 1461
+        },
+        {
+          "title": "Episode 6",
+          "src": "https://files.catbox.moe/p2n17q.mp4",
+          "fileSizeBytes": 192475829,
+          "durationSeconds": 1425
         }
       ]
     }
   ],
-  "totalFileSizeBytes": 769786248,
-  "totalDurationSeconds": 5803,
+  "totalFileSizeBytes": 1154930951,
+  "totalDurationSeconds": 8689,
   "hidden": true
 }
