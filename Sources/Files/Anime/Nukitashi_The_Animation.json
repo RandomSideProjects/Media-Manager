@@ -1,0 +1,33 @@
+{
+  "title": "Nukitashi the Animation",
+  "Image": "https://i.animepahe.si/posters/c16fdd4725fe593da3e71344dd076552cfa5f77b2076ee51de4cd26714866bd5.jpg",
+  "LatestTime": "2026-02-12T06:01:57.679Z",
+  "categories": [
+    {
+      "category": "Season 1",
+      "episodes": [
+        {
+          "title": "Episode 1",
+          "src": "https://files.catbox.moe/v1big0.mp4",
+          "fileSizeBytes": 191734382,
+          "durationSeconds": 1420
+        },
+        {
+          "title": "Episode 2",
+          "src": "https://files.catbox.moe/zb6fkb.mp4",
+          "fileSizeBytes": 192595810,
+          "durationSeconds": 1461
+        },
+        {
+          "title": "Episode 3",
+          "src": "https://files.catbox.moe/7qzai7.mp4",
+          "fileSizeBytes": 192545393,
+          "durationSeconds": 1461
+        }
+      ]
+    }
+  ],
+  "totalFileSizeBytes": 576875585,
+  "totalDurationSeconds": 4342,
+  "hidden": true
+}
