@@ -11,10 +11,10 @@ permissions:
 
 jobs:
   build-index:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Check out repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
         with:
           fetch-depth: 0
 
@@ -29,7 +29,7 @@ jobs:
           git reset --hard "origin/$BRANCH"
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '20'
 
@@ -391,8 +391,17 @@ jobs:
             console.log('Updated README.md with manga sources');
           })().catch(err => { console.error(err); process.exit(1); });
           NODE
+      - name: Sanitize JSON image links (no randomsideprojects.github.io)
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Convert any GitHub Pages absolute URLs back to repo-relative paths in JSON.
+          perl -pi -e 's#https?://randomsideprojects\.github\.(?:io|ii)/Media-Manager/#./#g' \
+            "Sources/MangaSourceList.json" \
+            $(find "Sources/Files/Manga" -type f -name '*.json' -print)
+
       - name: Commit and push changes
-        uses: stefanzweifel/git-auto-commit-action@v5
+        uses: stefanzweifel/git-auto-commit-action@b863ae1933cb653a53c021fe36dbb774e1fb9403 # v5
         with:
           branch: ${{ github.ref_name }}
           commit_message: 'chore: update Sources/MangaSourceList.json, manga posters, and README.md'
