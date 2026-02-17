@@ -44,6 +44,11 @@
       ]
     }
   ],
+<<<<<<< Updated upstream
   "totalFileSizeBytes": 672442572,
   "totalDurationSeconds": 8682
+=======
+  "totalFileSizeBytes": 549925024,
+  "totalDurationSeconds": 7235
+>>>>>>> Stashed changes
 }

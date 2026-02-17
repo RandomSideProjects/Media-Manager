@@ -2221,6 +2221,7 @@ function addEpisode(container, data) {
       epError.innerHTML = '';
       const uploadingMsg = document.createElement('span'); uploadingMsg.style.color = 'blue'; uploadingMsg.textContent = 'Uploading'; epError.appendChild(uploadingMsg);
 
+<<<<<<< Updated upstream
       const hangEl = document.createElement('div');
       hangEl.style.marginTop = '6px';
       hangEl.style.color = '#c9c9c9';
@@ -2229,12 +2230,15 @@ function addEpisode(container, data) {
       hangEl.textContent = 'Finalizing… 0.0s';
       epError.appendChild(hangEl);
 
+=======
+>>>>>>> Stashed changes
       const progWrap = document.createElement('span'); progWrap.style.display = 'inline-flex'; progWrap.style.alignItems = 'center'; progWrap.style.marginLeft = '0.5em';
       const progressBar = document.createElement('progress'); progressBar.max = 100; progressBar.value = 0;
       const speedEl = document.createElement('span'); speedEl.className = 'mm-upload-speed'; speedEl.style.marginLeft = '0.5em'; speedEl.style.minWidth = '70px'; speedEl.style.textAlign = 'right'; speedEl.style.opacity = '0.8'; speedEl.textContent = '—';
       progWrap.append(progressBar, speedEl);
       epError.appendChild(progWrap);
 
+<<<<<<< Updated upstream
       let hangTimerId = null;
       let hangStartMs = 0;
       const startHangTimer = () => {
@@ -2255,6 +2259,8 @@ function addEpisode(container, data) {
         hangEl.style.display = 'none';
       };
 
+=======
+>>>>>>> Stashed changes
       const fmtSpeed = (bps) => {
         const n = Number(bps);
         if (!Number.isFinite(n) || n <= 0) return '—';
@@ -2300,7 +2306,10 @@ function addEpisode(container, data) {
               progressBar.value = adj;
               try { uploadingMsg.textContent = `Processing ${Math.round(adj)}%`; } catch {}
               try { if (info && info.bps != null) speedEl.textContent = fmtSpeed(info.bps); } catch {}
+<<<<<<< Updated upstream
               if (pct >= 100) { try { startHangTimer(); } catch {} }
+=======
+>>>>>>> Stashed changes
             }, { context: 'manual', allowProxy: false });
             pageUrls.push(url);
           }
@@ -2318,9 +2327,13 @@ function addEpisode(container, data) {
             progressBar.value = adj;
             try { uploadingMsg.textContent = `Processing ${Math.round(adj)}%`; } catch {}
             try { if (info && info.bps != null) speedEl.textContent = fmtSpeed(info.bps); } catch {}
+<<<<<<< Updated upstream
             if (pct >= 100) { try { startHangTimer(); } catch {} }
           }, { context: 'manual', allowProxy: false });
           try { stopHangTimer(); } catch {}
+=======
+          }, { context: 'manual', allowProxy: false });
+>>>>>>> Stashed changes
           epSrc.value = url;
           try { epDiv.dataset.VolumePageCount = String(pageUrls.length); epDiv.dataset.volumePageCount = String(pageUrls.length); } catch {}
           epError.textContent = '';
@@ -2337,6 +2350,7 @@ function addEpisode(container, data) {
               progressBar.value = percent;
               try { uploadingMsg.textContent = `Uploading ${Math.round(percent)}%`; } catch {}
               try { if (info && info.bps != null) speedEl.textContent = fmtSpeed(info.bps); } catch {}
+<<<<<<< Updated upstream
               if (percent >= 100) { try { startHangTimer(); } catch {} }
             },
             { context: 'manual', allowProxy: false }
@@ -2346,6 +2360,15 @@ function addEpisode(container, data) {
           epError.textContent = '';
         }
         catch (err) { try { stopHangTimer(); } catch {} epError.innerHTML = '<span style="color:red">Upload failed</span>'; epSrc.value = ''; }
+=======
+            },
+            { context: 'manual', allowProxy: false }
+          );
+          epSrc.value = url;
+          epError.textContent = '';
+        }
+        catch (err) { epError.innerHTML = '<span style="color:red">Upload failed</span>'; epSrc.value = ''; }
+>>>>>>> Stashed changes
       }
     } else {
     if (isMangaMode()) {
@@ -2382,6 +2405,7 @@ function addEpisode(container, data) {
       epError.innerHTML = '';
       const uploadingMsg = document.createElement('span'); uploadingMsg.style.color = 'blue'; uploadingMsg.textContent = 'Uploading'; epError.appendChild(uploadingMsg);
 
+<<<<<<< Updated upstream
       const hangEl = document.createElement('div');
       hangEl.style.marginTop = '6px';
       hangEl.style.color = '#c9c9c9';
@@ -2390,12 +2414,15 @@ function addEpisode(container, data) {
       hangEl.textContent = 'Finalizing… 0.0s';
       epError.appendChild(hangEl);
 
+=======
+>>>>>>> Stashed changes
       const progWrap = document.createElement('span'); progWrap.style.display = 'inline-flex'; progWrap.style.alignItems = 'center'; progWrap.style.marginLeft = '0.5em';
       const progressBar = document.createElement('progress'); progressBar.max = 100; progressBar.value = 0;
       const speedEl = document.createElement('span'); speedEl.className = 'mm-upload-speed'; speedEl.style.marginLeft = '0.5em'; speedEl.style.minWidth = '70px'; speedEl.style.textAlign = 'right'; speedEl.style.opacity = '0.8'; speedEl.textContent = '—';
       progWrap.append(progressBar, speedEl);
       epError.appendChild(progWrap);
 
+<<<<<<< Updated upstream
       let hangTimerId = null;
       let hangStartMs = 0;
       const startHangTimer = () => {
@@ -2416,6 +2443,8 @@ function addEpisode(container, data) {
         hangEl.style.display = 'none';
       };
 
+=======
+>>>>>>> Stashed changes
       const fmtSpeed = (bps) => {
         const n = Number(bps);
         if (!Number.isFinite(n) || n <= 0) return '—';
