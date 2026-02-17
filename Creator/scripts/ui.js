@@ -2220,7 +2220,49 @@ function addEpisode(container, data) {
       epSrc.value = '';
       epError.innerHTML = '';
       const uploadingMsg = document.createElement('span'); uploadingMsg.style.color = 'blue'; uploadingMsg.textContent = 'Uploading'; epError.appendChild(uploadingMsg);
-      const progressBar = document.createElement('progress'); progressBar.max = 100; progressBar.value = 0; progressBar.style.marginLeft = '0.5em'; epError.appendChild(progressBar);
+
+      const hangEl = document.createElement('div');
+      hangEl.style.marginTop = '6px';
+      hangEl.style.color = '#c9c9c9';
+      hangEl.style.fontSize = '0.85em';
+      hangEl.style.display = 'none';
+      hangEl.textContent = 'Finalizing… 0.0s';
+      epError.appendChild(hangEl);
+
+      const progWrap = document.createElement('span'); progWrap.style.display = 'inline-flex'; progWrap.style.alignItems = 'center'; progWrap.style.marginLeft = '0.5em';
+      const progressBar = document.createElement('progress'); progressBar.max = 100; progressBar.value = 0;
+      const speedEl = document.createElement('span'); speedEl.className = 'mm-upload-speed'; speedEl.style.marginLeft = '0.5em'; speedEl.style.minWidth = '70px'; speedEl.style.textAlign = 'right'; speedEl.style.opacity = '0.8'; speedEl.textContent = '—';
+      progWrap.append(progressBar, speedEl);
+      epError.appendChild(progWrap);
+
+      let hangTimerId = null;
+      let hangStartMs = 0;
+      const startHangTimer = () => {
+        if (hangTimerId) return;
+        hangStartMs = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+        hangEl.style.display = '';
+        hangTimerId = setInterval(() => {
+          const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+          const secs = Math.max(0, (now - hangStartMs) / 1000);
+          hangEl.textContent = `Finalizing… ${secs.toFixed(1)}s`;
+        }, 250);
+      };
+      const stopHangTimer = () => {
+        if (hangTimerId) {
+          try { clearInterval(hangTimerId); } catch {}
+          hangTimerId = null;
+        }
+        hangEl.style.display = 'none';
+      };
+
+      const fmtSpeed = (bps) => {
+        const n = Number(bps);
+        if (!Number.isFinite(n) || n <= 0) return '—';
+        const mb = n / (1024 * 1024);
+        if (mb >= 1) return `${mb.toFixed(1)} MB/s`;
+        const kb = n / 1024;
+        return `${kb.toFixed(0)} KB/s`;
+      };
 
       // Read expansion settings (prefer live UI state if panel is open)
       let expand = false, expandManual = true;
@@ -2253,7 +2295,13 @@ function addEpisode(container, data) {
             const ext = (() => { const m = name.toLowerCase().match(/\.(jpe?g|png|gif|webp|bmp)$/); return m ? m[0] : '.png'; })();
             const pageFile = new File([imgBlob], `${i + 1}${ext}`, { type: imgBlob.type || 'application/octet-stream' });
             const base = (i / totalSteps) * 100;
-            const url = await uploadToCatboxWithProgress(pageFile, pct => { const adj = Math.max(0, Math.min(100, base + pct / totalSteps)); progressBar.value = adj; try { uploadingMsg.textContent = `Processing ${Math.round(adj)}%`; } catch {} }, { context: 'manual', allowProxy: false });
+            const url = await uploadToCatboxWithProgress(pageFile, (pct, info) => {
+              const adj = Math.max(0, Math.min(100, base + pct / totalSteps));
+              progressBar.value = adj;
+              try { uploadingMsg.textContent = `Processing ${Math.round(adj)}%`; } catch {}
+              try { if (info && info.bps != null) speedEl.textContent = fmtSpeed(info.bps); } catch {}
+              if (pct >= 100) { try { startHangTimer(); } catch {} }
+            }, { context: 'manual', allowProxy: false });
             pageUrls.push(url);
           }
           const pagesMap = {};
@@ -2264,17 +2312,40 @@ function addEpisode(container, data) {
           let volNum = 1;
           try { const m = (epTitle.value||'').match(/(\d+)/); if (m) volNum = parseInt(m[1], 10) || 1; } catch {}
           const volFile = new File([volBlob], `${volNum}.json`, { type: 'application/json' });
-          const url = await uploadToCatboxWithProgress(volFile, pct => { const base = ((names.length) / totalSteps) * 100; const adj = Math.max(0, Math.min(100, base + pct / totalSteps)); progressBar.value = adj; try { uploadingMsg.textContent = `Processing ${Math.round(adj)}%`; } catch {} }, { context: 'manual', allowProxy: false });
+          const url = await uploadToCatboxWithProgress(volFile, (pct, info) => {
+            const base = ((names.length) / totalSteps) * 100;
+            const adj = Math.max(0, Math.min(100, base + pct / totalSteps));
+            progressBar.value = adj;
+            try { uploadingMsg.textContent = `Processing ${Math.round(adj)}%`; } catch {}
+            try { if (info && info.bps != null) speedEl.textContent = fmtSpeed(info.bps); } catch {}
+            if (pct >= 100) { try { startHangTimer(); } catch {} }
+          }, { context: 'manual', allowProxy: false });
+          try { stopHangTimer(); } catch {}
           epSrc.value = url;
           try { epDiv.dataset.VolumePageCount = String(pageUrls.length); epDiv.dataset.volumePageCount = String(pageUrls.length); } catch {}
           epError.textContent = '';
         } catch (err) {
+          try { stopHangTimer(); } catch {}
           epError.innerHTML = '<span style="color:red">Upload failed</span>';
           epSrc.value = '';
         }
       } else {
-        try { const url = await uploadToCatboxWithProgress(file, (percent) => { progressBar.value = percent; try { uploadingMsg.textContent = `Uploading ${Math.round(percent)}%`; } catch {} }, { context: 'manual', allowProxy: false }); epSrc.value = url; epError.textContent = ''; }
-        catch (err) { epError.innerHTML = '<span style="color:red">Upload failed</span>'; epSrc.value = ''; }
+        try {
+          const url = await uploadToCatboxWithProgress(
+            file,
+            (percent, info) => {
+              progressBar.value = percent;
+              try { uploadingMsg.textContent = `Uploading ${Math.round(percent)}%`; } catch {}
+              try { if (info && info.bps != null) speedEl.textContent = fmtSpeed(info.bps); } catch {}
+              if (percent >= 100) { try { startHangTimer(); } catch {} }
+            },
+            { context: 'manual', allowProxy: false }
+          );
+          try { stopHangTimer(); } catch {}
+          epSrc.value = url;
+          epError.textContent = '';
+        }
+        catch (err) { try { stopHangTimer(); } catch {} epError.innerHTML = '<span style="color:red">Upload failed</span>'; epSrc.value = ''; }
       }
     } else {
     if (isMangaMode()) {
@@ -2310,7 +2381,50 @@ function addEpisode(container, data) {
       epSrc.value = '';
       epError.innerHTML = '';
       const uploadingMsg = document.createElement('span'); uploadingMsg.style.color = 'blue'; uploadingMsg.textContent = 'Uploading'; epError.appendChild(uploadingMsg);
-      const progressBar = document.createElement('progress'); progressBar.max = 100; progressBar.value = 0; progressBar.style.marginLeft = '0.5em'; epError.appendChild(progressBar);
+
+      const hangEl = document.createElement('div');
+      hangEl.style.marginTop = '6px';
+      hangEl.style.color = '#c9c9c9';
+      hangEl.style.fontSize = '0.85em';
+      hangEl.style.display = 'none';
+      hangEl.textContent = 'Finalizing… 0.0s';
+      epError.appendChild(hangEl);
+
+      const progWrap = document.createElement('span'); progWrap.style.display = 'inline-flex'; progWrap.style.alignItems = 'center'; progWrap.style.marginLeft = '0.5em';
+      const progressBar = document.createElement('progress'); progressBar.max = 100; progressBar.value = 0;
+      const speedEl = document.createElement('span'); speedEl.className = 'mm-upload-speed'; speedEl.style.marginLeft = '0.5em'; speedEl.style.minWidth = '70px'; speedEl.style.textAlign = 'right'; speedEl.style.opacity = '0.8'; speedEl.textContent = '—';
+      progWrap.append(progressBar, speedEl);
+      epError.appendChild(progWrap);
+
+      let hangTimerId = null;
+      let hangStartMs = 0;
+      const startHangTimer = () => {
+        if (hangTimerId) return;
+        hangStartMs = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+        hangEl.style.display = '';
+        hangTimerId = setInterval(() => {
+          const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+          const secs = Math.max(0, (now - hangStartMs) / 1000);
+          hangEl.textContent = `Finalizing… ${secs.toFixed(1)}s`;
+        }, 250);
+      };
+      const stopHangTimer = () => {
+        if (hangTimerId) {
+          try { clearInterval(hangTimerId); } catch {}
+          hangTimerId = null;
+        }
+        hangEl.style.display = 'none';
+      };
+
+      const fmtSpeed = (bps) => {
+        const n = Number(bps);
+        if (!Number.isFinite(n) || n <= 0) return '—';
+        const mb = n / (1024 * 1024);
+        if (mb >= 1) return `${mb.toFixed(1)} MB/s`;
+        const kb = n / 1024;
+        return `${kb.toFixed(0)} KB/s`;
+      };
+
       try {
         const MAX_UPLOAD_BYTES = 200 * 1024 * 1024;
         const useArchive = (!isMangaMode() && file.size > MAX_UPLOAD_BYTES);
@@ -2327,9 +2441,10 @@ function addEpisode(container, data) {
               }
               throw new Error('Archive.org uploader not available');
             })()
-          : uploadToCatboxWithProgress(file, (percent) => {
+          : uploadToCatboxWithProgress(file, (percent, info) => {
               progressBar.value = percent;
               try { uploadingMsg.textContent = `Uploading ${Math.round(percent)}%`; } catch {}
+              try { if (info && info.bps != null) speedEl.textContent = fmtSpeed(info.bps); } catch {}
             }, { context: 'manual', allowProxy: false });
         epSrc.value = await url;
         epError.textContent = '';

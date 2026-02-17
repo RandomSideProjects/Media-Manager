@@ -255,6 +255,18 @@
       "LatestTime": "2025-11-28T05:17:08.886Z"
     },
     {
+      "file": "Iihii.json",
+      "path": "./Files/Anime/Iihii.json",
+      "title": "iihii",
+      "poster": "N/A",
+      "categoryCount": 1,
+      "episodeCount": 12,
+      "itemCount": 12,
+      "totalFileSizeBytes": 1879729543,
+      "LatestTime": "2026-02-17T17:19:13.487060Z",
+      "totalDurationSeconds": 0
+    },
+    {
       "file": "AnotherWorldSmartphone.json",
       "path": "./Files/Anime/AnotherWorldSmartphone.json",
       "title": "In Another World With My Smartphone",
@@ -643,6 +655,18 @@
       "totalFileSizeBytes": 1663738722,
       "totalDurationSeconds": 17145,
       "LatestTime": "2025-09-28T04:27:33.010Z"
+    },
+    {
+      "file": "Workpls.json",
+      "path": "./Files/Anime/Workpls.json",
+      "title": "workpls",
+      "poster": "https://litter.catbox.moe/0ubkjt76fmma59ow.jpeg",
+      "categoryCount": 1,
+      "episodeCount": 24,
+      "itemCount": 24,
+      "totalFileSizeBytes": 5320298717,
+      "LatestTime": "2026-02-17T17:14:23.111701Z",
+      "totalDurationSeconds": 0
     },
     {
       "file": "You_And_I_Are_Polar_Opposites.json",

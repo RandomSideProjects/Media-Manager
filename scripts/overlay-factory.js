@@ -1043,6 +1043,50 @@ window.OverlayFactory = (function() {
                 createElement('option', { value: 'proxy' }, ['Proxy'])
               ]),
               createElement('p', { className: 'dev-menu-hint select' }, ['Choose Default (worker) or Proxy (custom URL).'])
+            ]),
+            createElement('label', { className: 'dev-menu-toggle' }, [
+              createElement('input', { type: 'checkbox', id: 'devCatboxForceProxyUnder100Mb' }),
+              createElement('span', {}, ['Force Catbox proxy for files under 100MB'])
+            ]),
+            createElement('p', { className: 'dev-menu-hint' }, ['When enabled, small uploads always use the Catbox worker/proxy (even if allowProxy=false).'])
+          ]),
+
+          createElement('div', { className: 'dev-menu-section' }, [
+            createElement('h4', {}, ['Copyparty (Direct Upload for Creator)']),
+            createElement('label', { className: 'dev-menu-toggle' }, [
+              createElement('input', { type: 'checkbox', id: 'devCopypartyDirectEnabled' }),
+              createElement('span', {}, ['Enable Copyparty for direct uploads (otherwise use Catbox)'])
+            ]),
+            createElement('p', { className: 'dev-menu-hint' }, ['When OFF, Creator keeps using Catbox for allowProxy=false uploads.']),
+            createElement('div', { className: 'dev-field' }, [
+              createElement('label', { for: 'devCopypartyUrl' }, ['Server folder URL']),
+              createElement('input', {
+                type: 'text',
+                id: 'devCopypartyUrl',
+                className: 'dev-field-input',
+                placeholder: 'https://cpr.xpbliss.fyi/pub/MM/Some.json/ShowName/'
+              }),
+              createElement('p', { className: 'dev-menu-hint' }, ['Used when uploading with allowProxy=false (replaces direct Catbox). Must be writable.'])
+            ]),
+            createElement('div', { className: 'dev-field' }, [
+              createElement('label', { for: 'devCopypartyPw' }, ['Password (header pw)']),
+              createElement('input', {
+                type: 'password',
+                id: 'devCopypartyPw',
+                className: 'dev-field-input',
+                placeholder: 'pw'
+              }),
+              createElement('p', { className: 'dev-menu-hint' }, ['Saved to localStorage with other dev settings.'])
+            ]),
+            createElement('div', { className: 'dev-field' }, [
+              createElement('label', { for: 'devCopypartyPublicBase' }, ['Public base (URL rewrite)']),
+              createElement('input', {
+                type: 'text',
+                id: 'devCopypartyPublicBase',
+                className: 'dev-field-input',
+                placeholder: 'https://cpr.xpbliss.fyi'
+              }),
+              createElement('p', { className: 'dev-menu-hint' }, ['Optional: rewrite returned URLs to use this host (keeps path the same).'])
             ])
           ]),
 

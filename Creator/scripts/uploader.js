@@ -3,7 +3,7 @@
 // Variables (top)
 const UPLOADER_CATBOX_BACKEND_URL = 'https://mm.littlehacker303.workers.dev/catbox/user/api.php';
 const CUSTOM_CATBOX_LIMIT = 104857600;
-const DIRECT_CATBOX_UPLOAD_URL = 'https://catbox.moe/user/api.php';
+const DIRECT_CATBOX_UPLOAD_URL = 'https://mm.littlehacker303.workers.dev/catbox/user/api.php';
 
 function getActiveCatboxDefault() {
   if (typeof window !== 'undefined') {
@@ -88,33 +88,99 @@ function isProxyCatboxUrl(url) {
 
 function resolveCatboxUploadUrl(settings, { fileSizeBytes, allowProxy = true } = {}) {
   const raw = settings && typeof settings.catboxUploadUrl === 'string' ? settings.catboxUploadUrl.trim() : '';
-  if (!allowProxy) {
-    if (raw && !isProxyCatboxUrl(raw)) {
-      return raw;
-    }
-    return DIRECT_CATBOX_UPLOAD_URL;
-  }
-  if (raw && Number.isFinite(fileSizeBytes) && fileSizeBytes >= CUSTOM_CATBOX_LIMIT) {
-    return getActiveCatboxDefault();
-  }
-  if (raw) return raw;
-  return getActiveCatboxDefault();
+
+  const cpEnabled = !!(settings && settings.copypartyDirectEnabled === true);
+  const cp = settings && typeof settings.copypartyUrl === 'string' ? settings.copypartyUrl.trim() : '';
+  const canUseCopyparty = cpEnabled && !!cp;
+
+  // If Copyparty is enabled, only route to Copyparty for large files (>= 100MB)
+  const CP_THRESHOLD = 100 * 1024 * 1024;
+  const shouldUseCopyparty = canUseCopyparty
+    && Number.isFinite(fileSizeBytes)
+    && fileSizeBytes >= CP_THRESHOLD;
+
+  // Per request: stop using direct Catbox; ALL Catbox uploads go via the worker/proxy URL.
+  // We still allow a custom proxy URL, but only if it is actually a proxy.
+  const proxyUrl = (raw && isProxyCatboxUrl(raw)) ? raw : getActiveCatboxDefault();
+
+  if (shouldUseCopyparty) return '__COPYPARTY__';
+
+  // Ignore allowProxy; always return proxyUrl for Catbox
+  return proxyUrl;
 }
 
 function assertUploadSizeLimit() {
   // Delegated to backend limits now
 }
 
+function shouldForceCatboxProxyForFile(file) {
+  try {
+    const type = (file && typeof file.type === 'string') ? file.type.toLowerCase() : '';
+    const name = (file && typeof file.name === 'string') ? file.name.toLowerCase() : '';
+    // Always send images + json through the worker/proxy
+    if (type.startsWith('image/')) return true;
+    if (type === 'application/json' || type.endsWith('+json')) return true;
+    if (name.endsWith('.json')) return true;
+    if (name.endsWith('.webp') || name.endsWith('.png') || name.endsWith('.jpg') || name.endsWith('.jpeg') || name.endsWith('.gif')) return true;
+  } catch {}
+  return false;
+}
+
 // opts: { context?: 'batch'|'manual' }
 async function uploadToCatbox(file, opts) {
   const options = (opts && typeof opts === 'object') ? opts : {};
-  const form = new FormData();
-  form.append('reqtype', 'fileupload');
-  form.append('fileToUpload', file);
 
   // Pull current settings; anonymous defaults to true
   const st = readUploadSettings();
   const settings = st && typeof st === 'object' ? st : {};
+
+  const fileSizeBytes = file && typeof file.size === 'number' ? file.size : undefined;
+
+  const forceProxyByType = shouldForceCatboxProxyForFile(file);
+  const uploadUrl = forceProxyByType
+    ? getActiveCatboxDefault()
+    : resolveCatboxUploadUrl(settings, { fileSizeBytes, allowProxy: options.allowProxy !== false });
+
+  // Copyparty direct upload path
+  if (!forceProxyByType && uploadUrl === '__COPYPARTY__') {
+    const cpUrl = settings && typeof settings.copypartyUrl === 'string' ? settings.copypartyUrl.trim() : '';
+    const cpPw = settings && typeof settings.copypartyPw === 'string' ? settings.copypartyPw : '';
+    if (!cpUrl) throw new Error('Copyparty URL missing in settings');
+
+    const fd = new FormData();
+    fd.append('f', file);
+
+    const res = await fetch(cpUrl, {
+      method: 'POST',
+      headers: Object.assign({ accept: 'json' }, cpPw ? { pw: cpPw } : {}),
+      body: fd
+    });
+    if (!res.ok) throw new Error('Upload error');
+    const payload = await res.json().catch(() => null);
+    let url = (payload && (payload.fileurl || (payload.files && payload.files[0] && payload.files[0].url)))
+      ? (payload.fileurl || payload.files[0].url)
+      : '';
+    if (!url) throw new Error('Upload error');
+
+    // Optional URL rewrite
+    try {
+      const publicBase = settings && typeof settings.copypartyPublicBase === 'string' ? settings.copypartyPublicBase.trim() : '';
+      if (publicBase) {
+        const got = new URL(String(url));
+        const pub = new URL(publicBase);
+        got.protocol = pub.protocol;
+        got.host = pub.host;
+        url = got.toString();
+      }
+    } catch {}
+
+    return String(url);
+  }
+
+  const form = new FormData();
+  form.append('reqtype', 'fileupload');
+  form.append('fileToUpload', file);
+
   let isAnon = (typeof settings.anonymous === 'boolean') ? settings.anonymous : true;
   // Per-flow overrides when master anonymous is enabled
   try {
@@ -127,8 +193,6 @@ async function uploadToCatbox(file, opts) {
     form.append('userhash', effectiveUserhash);
   }
 
-  const fileSizeBytes = file && typeof file.size === 'number' ? file.size : undefined;
-  const uploadUrl = resolveCatboxUploadUrl(settings, { fileSizeBytes, allowProxy: options.allowProxy !== false });
   assertUploadSizeLimit(uploadUrl, fileSizeBytes);
 
   const res = await fetch(uploadUrl, {
@@ -149,7 +213,124 @@ function uploadToCatboxWithProgress(file, onProgress, opts) {
     const st = readUploadSettings();
     const settings = st && typeof st === 'object' ? st : { anonymous: true, userhash: '' };
     const fileSizeBytes = file && typeof file.size === 'number' ? file.size : undefined;
-    const uploadUrl = resolveCatboxUploadUrl(settings, { fileSizeBytes, allowProxy: options.allowProxy !== false });
+
+    const forceProxyByType = shouldForceCatboxProxyForFile(file);
+    const uploadUrl = forceProxyByType
+      ? getActiveCatboxDefault()
+      : resolveCatboxUploadUrl(settings, { fileSizeBytes, allowProxy: options.allowProxy !== false });
+
+    // Copyparty direct upload path
+    if (!forceProxyByType && uploadUrl === '__COPYPARTY__') {
+      const cpUrl = settings && typeof settings.copypartyUrl === 'string' ? settings.copypartyUrl.trim() : '';
+      const cpPw = settings && typeof settings.copypartyPw === 'string' ? settings.copypartyPw : '';
+      if (!cpUrl) {
+        reject(new Error('Copyparty URL missing in settings'));
+        return;
+      }
+
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', cpUrl);
+      try { xhr.setRequestHeader('accept', 'json'); } catch {}
+      if (cpPw) {
+        try { xhr.setRequestHeader('pw', cpPw); } catch {}
+      }
+
+      const form = new FormData();
+      form.append('f', file);
+
+      const createAbortError = () => {
+        if (typeof DOMException === 'function') return new DOMException('Upload aborted', 'AbortError');
+        const err = new Error('Upload aborted');
+        err.name = 'AbortError';
+        return err;
+      };
+
+      let settled = false;
+      const cleanup = () => {
+        if (signal && typeof signal.removeEventListener === 'function') {
+          try { signal.removeEventListener('abort', onAbort); } catch {}
+        }
+      };
+      const finalizeResolve = (value) => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        resolve(value);
+      };
+      const finalizeReject = (error) => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        reject(error);
+      };
+      const onAbort = () => {
+        try { xhr.abort(); } catch {}
+        finalizeReject(createAbortError());
+      };
+
+      if (signal && typeof signal.addEventListener === 'function') {
+        if (signal.aborted) {
+          onAbort();
+          return;
+        }
+        signal.addEventListener('abort', onAbort, { once: true });
+      }
+
+      if (xhr.upload && typeof onProgress === 'function') {
+        let lastMs = 0;
+        let lastLoaded = 0;
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) {
+            const percent = (e.loaded / e.total) * 100;
+            const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+            const dt = lastMs ? Math.max(0.001, (now - lastMs) / 1000) : 0;
+            const dBytes = lastMs ? Math.max(0, e.loaded - lastLoaded) : 0;
+            const bps = (dt > 0) ? (dBytes / dt) : 0;
+            lastMs = now;
+            lastLoaded = e.loaded;
+            onProgress(percent, { loadedBytes: e.loaded, totalBytes: e.total, bps });
+          }
+        };
+      }
+
+      xhr.onreadystatechange = () => {
+        if (xhr.readyState === 4) {
+          const ok = xhr.status >= 200 && xhr.status < 300;
+          if (ok) {
+            try {
+              const payload = JSON.parse(String(xhr.responseText || ''));
+              let url = (payload && (payload.fileurl || (payload.files && payload.files[0] && payload.files[0].url)))
+                ? (payload.fileurl || payload.files[0].url)
+                : '';
+              if (!url) throw new Error('Missing fileurl');
+
+              // Optional URL rewrite: swap the returned origin/host for a faster public domain
+              try {
+                const publicBase = settings && typeof settings.copypartyPublicBase === 'string' ? settings.copypartyPublicBase.trim() : '';
+                if (publicBase) {
+                  const got = new URL(String(url));
+                  const pub = new URL(publicBase);
+                  got.protocol = pub.protocol;
+                  got.host = pub.host;
+                  url = got.toString();
+                }
+              } catch {}
+
+              finalizeResolve(String(url));
+            } catch (e) {
+              finalizeReject(new Error('Copyparty upload parse error'));
+            }
+          } else {
+            finalizeReject(new Error('Upload error: ' + xhr.status));
+          }
+        }
+      };
+      xhr.onerror = () => finalizeReject(new Error('Network error'));
+
+      xhr.send(form);
+      return;
+    }
+
     assertUploadSizeLimit(uploadUrl, fileSizeBytes);
     const xhr = new XMLHttpRequest();
     xhr.open('POST', uploadUrl);
@@ -207,10 +388,18 @@ function uploadToCatboxWithProgress(file, onProgress, opts) {
     }
 
     if (xhr.upload && typeof onProgress === 'function') {
+      let lastMs = 0;
+      let lastLoaded = 0;
       xhr.upload.onprogress = (e) => {
         if (e.lengthComputable) {
           const percent = (e.loaded / e.total) * 100;
-          onProgress(percent);
+          const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+          const dt = lastMs ? Math.max(0.001, (now - lastMs) / 1000) : 0;
+          const dBytes = lastMs ? Math.max(0, e.loaded - lastLoaded) : 0;
+          const bps = (dt > 0) ? (dBytes / dt) : 0;
+          lastMs = now;
+          lastLoaded = e.loaded;
+          onProgress(percent, { loadedBytes: e.loaded, totalBytes: e.total, bps });
         }
       };
     }

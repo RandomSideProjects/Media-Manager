@@ -66,7 +66,7 @@ function showHostFailure(container, codeText) {
   }
 }
 
-const CATBOX_DIRECT_UPLOAD_URL = 'https://catbox.moe/user/api.php';
+const CATBOX_DIRECT_UPLOAD_URL = 'https://mm.littlehacker303.workers.dev/catbox/user/api.php';
 const CATBOX_PROXY_UPLOAD_URL = 'https://mm.littlehacker303.workers.dev/catbox/user/api.php';
 const SERVER_DEFAULT_PAHE_ANIME_API_BASE = 'https://anime.apex-cloud.workers.dev';
 

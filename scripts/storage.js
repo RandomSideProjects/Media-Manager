@@ -166,7 +166,7 @@
         }
       }
     }
-    return 'https://catbox.moe/user/api.php';
+    return 'https://mm.littlehacker303.workers.dev/catbox/user/api.php';
   }
 
   async function uploadJsonToCatbox(json, fileName) {
@@ -1766,5 +1766,138 @@
     document.addEventListener('DOMContentLoaded', wireUp, { once: true });
   } else {
     wireUp();
+  }
+})();
+
+// --- Watch progress / watchtime migration prompt (old domain -> new domain)
+(function () {
+  const OLD_BASES = [
+    'https://farting-carrots.tail0f5dae.ts.net'
+  ];
+  const NEW_BASE = 'https://cpr.xpbliss.fyi';
+  const DISMISS_KEY = 'mm_progress_migrate_prompt_dismissed:v1';
+
+  function normalizeBase(s) {
+    try {
+      const u = new URL(String(s));
+      return `${u.protocol}//${u.host}`;
+    } catch {
+      return String(s || '').replace(/\/+$/, '');
+    }
+  }
+
+  function relatedKeys(k) {
+    return [k, `${k}:duration`, `${k}:cbzPage`, `${k}:cbzPages`];
+  }
+
+  function detectAnyOldKey() {
+    try {
+      const keys = Object.keys(localStorage);
+      const olds = OLD_BASES.map(normalizeBase);
+      for (const k of keys) {
+        if (typeof k !== 'string') continue;
+        for (const ob of olds) {
+          if (k.startsWith(ob + '/')) return { found: true, oldBase: ob };
+        }
+      }
+    } catch {}
+    return { found: false, oldBase: '' };
+  }
+
+  function migrateByBase(oldBase, newBase, { deleteOld = false } = {}) {
+    const ob = normalizeBase(oldBase);
+    const nb = normalizeBase(newBase);
+    let copied = 0;
+    let deleted = 0;
+    let touched = 0;
+
+    const keys = Object.keys(localStorage);
+    const baseKeys = new Set();
+    for (const k of keys) {
+      if (typeof k !== 'string') continue;
+      if (!k.startsWith(ob + '/')) continue;
+      const baseOld = k.replace(/:(duration|cbzPage|cbzPages)$/,'');
+      baseKeys.add(baseOld);
+    }
+
+    baseKeys.forEach((baseOld) => {
+      const baseNew = nb + baseOld.slice(ob.length);
+      touched += 1;
+      relatedKeys(baseOld).forEach((oldKey) => {
+        const suffix = oldKey.slice(baseOld.length);
+        const newKey = baseNew + suffix;
+        const val = localStorage.getItem(oldKey);
+        if (val === null) return;
+        localStorage.setItem(newKey, val);
+        copied += 1;
+        if (deleteOld) {
+          localStorage.removeItem(oldKey);
+          deleted += 1;
+        }
+      });
+    });
+
+    return { ok: true, oldBase: ob, newBase: nb, touched, copied, deleted };
+  }
+
+  function showPrompt(oldBase) {
+    if (!(window.mmNotices && typeof window.mmNotices.show === 'function')) return;
+
+    window.mmNotices.show({
+      title: 'Storage migration',
+      tone: 'info',
+      persistent: true,
+      message: `We found watch progress stored under an older domain (${oldBase}). Convert it to the new domain (${NEW_BASE})?`,
+      actions: [
+        {
+          label: 'Convert',
+          tone: 'success',
+          onClick: () => {
+            try {
+              const res = migrateByBase(oldBase, NEW_BASE, { deleteOld: false });
+              try { localStorage.setItem(DISMISS_KEY, '1'); } catch {}
+              window.mmNotices.show({
+                title: 'Storage migration',
+                tone: 'success',
+                message: `Migrated ${res.copied} keys (kept originals).`,
+                autoCloseMs: 6000
+              });
+            } catch (e) {
+              window.mmNotices.show({
+                title: 'Storage migration',
+                tone: 'error',
+                message: `Migration failed: ${e && e.message ? e.message : e}`,
+                persistent: true
+              });
+            }
+          }
+        },
+        {
+          label: 'Not now',
+          tone: 'default',
+          onClick: () => {
+            try { localStorage.setItem(DISMISS_KEY, '1'); } catch {}
+          }
+        }
+      ],
+      dismissLabel: 'Close'
+    });
+  }
+
+  function run() {
+    try {
+      if (localStorage.getItem(DISMISS_KEY) === '1') return;
+    } catch {}
+
+    const found = detectAnyOldKey();
+    if (!found.found) return;
+
+    showPrompt(found.oldBase);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', run, { once: true });
+  } else {
+    run();
   }
 })();

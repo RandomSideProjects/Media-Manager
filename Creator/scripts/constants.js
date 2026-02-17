@@ -9,6 +9,6 @@ if (typeof window !== 'undefined') {
     window.MM_DEFAULT_GITHUB_WORKER_URL = 'https://mm.littlehacker303.workers.dev/gh';
   }
   if (!window.MM_DEFAULT_CATBOX_UPLOAD_URL) {
-    window.MM_DEFAULT_CATBOX_UPLOAD_URL = 'https://catbox.moe/user/api.php';
+    window.MM_DEFAULT_CATBOX_UPLOAD_URL = 'https://mm.littlehacker303.workers.dev/catbox/user/api.php';
   }
 }

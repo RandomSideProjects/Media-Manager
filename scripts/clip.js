@@ -155,7 +155,7 @@ async function resolveClipUploadEndpoint() {
       console.warn('[Clip] Falling back to direct Catbox endpoint', err);
     }
   }
-  return 'https://catbox.moe/user/api.php';
+  return 'https://mm.littlehacker303.workers.dev/catbox/user/api.php';
 }
 
 function showClipNotice(message, tone = 'warning') {
