@@ -1,7 +1,7 @@
 {
   "title": "You And I Are Polar Opposites",
-  "Image": "./Sources/Posters/Anime/You_And_I_Are_Polar_Opposites.webp",
-  "LatestTime": "2026-02-17T18:47:01.294Z",
+  "Image": "https://i.animepahe.si/posters/2c1068e3f59d77254be3c75ff4131567ea1e05c02d27e81154e9c2db4445e53a.jpg",
+  "LatestTime": "2026-02-17T19:20:22.735Z",
   "categories": [
     {
       "category": "Season 1",
@@ -34,10 +34,16 @@
           "src": "https://files.catbox.moe/jc1vcj.mp4",
           "fileSizeBytes": 123498957,
           "durationSeconds": 1447
+        },
+        {
+          "title": "Episode 6",
+          "src": "https://cpr.xpbliss.fyi/pub/MM/AnimePahe_Seihantai_na_Kimi_to_Boku_Eng_Dub_-_06_1080p_Yameii.mp4",
+          "fileSizeBytes": 122517548,
+          "durationSeconds": 1447
         }
       ]
     }
   ],
-  "totalFileSizeBytes": 549925024,
-  "totalDurationSeconds": 7235
+  "totalFileSizeBytes": 672442572,
+  "totalDurationSeconds": 8682
 }
