@@ -1,31 +1,37 @@
 {
   "title": "You Can't Be In a Rom-Com with Your Childhood Friends!",
   "Image": "./Sources/Posters/Anime/You_Can't_Be_In_a_Rom-Com_with_Your_Childhood_Friends!.webp",
-  "LatestTime": "2026-02-09T16:46:31.413Z",
+  "LatestTime": "2026-02-17T19:24:31.272Z",
   "categories": [
     {
       "category": "Season 1",
       "episodes": [
         {
-          "title": "Episode 1",
-          "src": "https://files.catbox.moe/ed35cl.mp4",
+          "title": "Episode 01",
+          "src": "https://cpr.xpbliss.fyi/pub/MM/You_Can_T_Be_In_A_Rom_Com_With_Your_Childhood_Friends.json/You%20Can%27t%20Be%20In%20a%20Rom-Com%20with%20Your%20Childhood%20Friends%21/S01_E01__ABS0001.mp4",
           "fileSizeBytes": 194053518,
           "durationSeconds": 1430
         },
         {
-          "title": "Episode 2",
-          "src": "https://files.catbox.moe/9ap537.mp4",
+          "title": "Episode 02",
+          "src": "https://cpr.xpbliss.fyi/pub/MM/You_Can_T_Be_In_A_Rom_Com_With_Your_Childhood_Friends.json/You%20Can%27t%20Be%20In%20a%20Rom-Com%20with%20Your%20Childhood%20Friends%21/S01_E02__ABS0002.mp4",
           "durationSeconds": 1430
         },
         {
-          "title": "Episode 3",
-          "src": "https://files.catbox.moe/t10bqj.mp4",
+          "title": "Episode 03",
+          "src": "https://cpr.xpbliss.fyi/pub/MM/You_Can_T_Be_In_A_Rom_Com_With_Your_Childhood_Friends.json/You%20Can%27t%20Be%20In%20a%20Rom-Com%20with%20Your%20Childhood%20Friends%21/S01_E03__ABS0003.mp4",
           "fileSizeBytes": 143256500,
+          "durationSeconds": 1430
+        },
+        {
+          "title": "Episode 4",
+          "src": "https://cpr.xpbliss.fyi/pub/MM/AnimePahe_Osananajimi_to_wa_Love_Comedy_ni_Naranai_Eng_Dub_-_04_1080p_Yameii.mp4",
+          "fileSizeBytes": 170311186,
           "durationSeconds": 1430
         }
       ]
     }
   ],
-  "totalFileSizeBytes": 337310018,
-  "totalDurationSeconds": 4290
+  "totalFileSizeBytes": 507621204,
+  "totalDurationSeconds": 5720
 }
