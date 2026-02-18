@@ -205,6 +205,18 @@
       "LatestTime": "2025-09-05T07:20:01.007Z"
     },
     {
+      "file": "Ghost_Stories.json",
+      "path": "./Files/Anime/Ghost_Stories.json",
+      "title": "Ghost Stories",
+      "poster": "./Posters/Anime/Ghost_Stories.webp",
+      "categoryCount": 1,
+      "episodeCount": 20,
+      "itemCount": 20,
+      "totalFileSizeBytes": 3830305448,
+      "totalDurationSeconds": 28305,
+      "LatestTime": "2026-02-18T18:48:50.714Z"
+    },
+    {
       "file": "GGLR.json",
       "path": "./Files/Anime/GGLR.json",
       "title": "GO! GO! LOSER RANGER!",
