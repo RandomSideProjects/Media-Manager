@@ -67,9 +67,9 @@ This directory contains all available media sources.
 - [Tune In to the Midnight Heart](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FTune_In_To_The_Midnight_Heart.json)
 - [Watari-kun's ****** Is About To Collapse](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FWatari_Kun_S_Is_About_To_Collapse.json)
 - [Wise Man's Grandchild](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FWise_Man_S_Grandchild.json)
+- [You And I Are Polar Opposites](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FYou_And_I_Are_Polar_Opposites.json)
 - [You are Ms. Servent (Kimi-wa Meido sama)](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FMeidoSama.json)
-- [You_And_I_Are_Polar_Opposites](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FYou_And_I_Are_Polar_Opposites.json)
-- [You_Can_T_Be_In_A_Rom_Com_With_Your_Childhood_Friends](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FYou_Can_T_Be_In_A_Rom_Com_With_Your_Childhood_Friends.json)
+- [You Can't Be In a Rom-Com with Your Childhood Friends!](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FYou_Can_T_Be_In_A_Rom_Com_With_Your_Childhood_Friends.json)
 - [Your Lie in April](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FYour_Lie_In_April.json)
 
 
