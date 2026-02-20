@@ -71,6 +71,7 @@ This directory contains all available media sources.
 - [You are Ms. Servent (Kimi-wa Meido sama)](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FMeidoSama.json)
 - [You Can't Be In a Rom-Com with Your Childhood Friends!](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FYou_Can_T_Be_In_A_Rom_Com_With_Your_Childhood_Friends.json)
 - [Your Lie in April](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FYour_Lie_In_April.json)
+- [Yuri!!! On ICE](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FYuri_On_Ice.json)
 
 
 ## Anime Sources

@@ -703,6 +703,18 @@
       "totalFileSizeBytes": 2884046983,
       "totalDurationSeconds": 30187,
       "LatestTime": "2025-12-07T05:34:24.600Z"
+    },
+    {
+      "file": "Yuri_On_Ice.json",
+      "path": "./Files/Anime/Yuri_On_Ice.json",
+      "title": "Yuri!!! On ICE",
+      "poster": "./Posters/Anime/Yuri!!!_On_ICE.webp",
+      "categoryCount": 1,
+      "episodeCount": 12,
+      "itemCount": 12,
+      "totalFileSizeBytes": 2323013127,
+      "totalDurationSeconds": 16867,
+      "LatestTime": "2026-02-20T23:12:22.200Z"
     }
   ]
 }

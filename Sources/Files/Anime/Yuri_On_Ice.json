@@ -1,0 +1,86 @@
+{
+  "title": "Yuri!!! On ICE",
+  "Image": "./Sources/Posters/Anime/Yuri!!!_On_ICE.webp",
+  "LatestTime": "2026-02-20T23:12:22.200Z",
+  "categories": [
+    {
+      "category": "Season 1",
+      "episodes": [
+        {
+          "title": "Episode 1",
+          "src": "https://cpr.xpbliss.fyi/pub/MM/AnimePahe_Yuri_on_Ice_Eng_Dub_-_01_BD_1080p_sam.mp4",
+          "fileSizeBytes": 207668499,
+          "durationSeconds": 1405
+        },
+        {
+          "title": "Episode 2",
+          "src": "https://cpr.xpbliss.fyi/pub/MM/AnimePahe_Yuri_on_Ice_Eng_Dub_-_02_BD_1080p_sam.mp4",
+          "fileSizeBytes": 172584438,
+          "durationSeconds": 1405
+        },
+        {
+          "title": "Episode 3",
+          "src": "https://cpr.xpbliss.fyi/pub/MM/AnimePahe_Yuri_on_Ice_Eng_Dub_-_03_BD_1080p_sam.mp4",
+          "fileSizeBytes": 204978743,
+          "durationSeconds": 1405
+        },
+        {
+          "title": "Episode 4",
+          "src": "https://cpr.xpbliss.fyi/pub/MM/AnimePahe_Yuri_on_Ice_Eng_Dub_-_04_BD_1080p_sam.mp4",
+          "fileSizeBytes": 165649339,
+          "durationSeconds": 1405
+        },
+        {
+          "title": "Episode 5",
+          "src": "https://cpr.xpbliss.fyi/pub/MM/AnimePahe_Yuri_on_Ice_Eng_Dub_-_05_BD_1080p_sam.mp4",
+          "fileSizeBytes": 175448714,
+          "durationSeconds": 1405
+        },
+        {
+          "title": "Episode 6",
+          "src": "https://cpr.xpbliss.fyi/pub/MM/AnimePahe_Yuri_on_Ice_Eng_Dub_-_06_BD_1080p_sam.mp4",
+          "fileSizeBytes": 202880074,
+          "durationSeconds": 1405
+        },
+        {
+          "title": "Episode 7",
+          "src": "https://cpr.xpbliss.fyi/pub/MM/AnimePahe_Yuri_on_Ice_Eng_Dub_-_07_BD_1080p_sam.mp4",
+          "fileSizeBytes": 199873958,
+          "durationSeconds": 1405
+        },
+        {
+          "title": "Episode 8",
+          "src": "https://cpr.xpbliss.fyi/pub/MM/AnimePahe_Yuri_on_Ice_Eng_Dub_-_08_BD_1080p_sam.mp4",
+          "fileSizeBytes": 209292744,
+          "durationSeconds": 1405
+        },
+        {
+          "title": "Episode 9",
+          "src": "https://cpr.xpbliss.fyi/pub/MM/AnimePahe_Yuri_on_Ice_Eng_Dub_-_09_BD_1080p_sam.mp4",
+          "fileSizeBytes": 202416990,
+          "durationSeconds": 1405
+        },
+        {
+          "title": "Episode 10",
+          "src": "https://cpr.xpbliss.fyi/pub/MM/AnimePahe_Yuri_on_Ice_Eng_Dub_-_10_BD_1080p_sam.mp4",
+          "fileSizeBytes": 153772403,
+          "durationSeconds": 1405
+        },
+        {
+          "title": "Episode 11",
+          "src": "https://cpr.xpbliss.fyi/pub/MM/AnimePahe_Yuri_on_Ice_Eng_Dub_-_11_BD_1080p_sam.mp4",
+          "fileSizeBytes": 221030002,
+          "durationSeconds": 1405
+        },
+        {
+          "title": "Episode 12",
+          "src": "https://cpr.xpbliss.fyi/pub/MM/AnimePahe_Yuri_on_Ice_-_12_BD_1080p_sam.mp4",
+          "fileSizeBytes": 207417223,
+          "durationSeconds": 1412
+        }
+      ]
+    }
+  ],
+  "totalFileSizeBytes": 2323013127,
+  "totalDurationSeconds": 16867
+}
