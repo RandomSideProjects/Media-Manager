@@ -1956,8 +1956,22 @@ function addEpisode(container, data) {
 	    if (!row || !file) return;
 	    const opts = (options && typeof options === 'object') ? options : {};
 	    const signal = opts.signal;
+
+	    const isCopypartyActiveForFile = (f) => {
+	      try {
+	        const st = (typeof window !== 'undefined' && window.mm_uploadSettings && typeof window.mm_uploadSettings.load === 'function')
+	          ? window.mm_uploadSettings.load()
+	          : JSON.parse(localStorage.getItem('mm_upload_settings') || '{}');
+	        const cpEnabled = !!(st && st.copypartyDirectEnabled === true);
+	        const cpUrl = st && typeof st.copypartyUrl === 'string' ? st.copypartyUrl.trim() : '';
+	        return cpEnabled && !!cpUrl && f && typeof f.size === 'number' && f.size >= (100 * 1024 * 1024);
+	      } catch {
+	        return false;
+	      }
+	    };
+
 	    const MAX_UPLOAD_BYTES = 200 * 1024 * 1024;
-	    if (!isMangaMode() && file.size > MAX_UPLOAD_BYTES) {
+	    if (!isMangaMode() && !isCopypartyActiveForFile(file) && file.size > MAX_UPLOAD_BYTES) {
 	      let shouldArchive = (typeof opts.archiveLarge === 'boolean') ? opts.archiveLarge : null;
 	      if (shouldArchive === null) {
 	        const msg = 'This file is over 200MB, would you like to upload it to Archive.org instead?';
@@ -1996,7 +2010,7 @@ function addEpisode(container, data) {
     }
 	    try {
 	      const MAX_UPLOAD_BYTES = 200 * 1024 * 1024;
-	      const useArchive = (!isMangaMode() && file.size > MAX_UPLOAD_BYTES);
+	      const useArchive = (!isMangaMode() && !isCopypartyActiveForFile(file) && file.size > MAX_UPLOAD_BYTES);
 	      let archiveResult = null;
 	      const url = await (useArchive
 	        ? (async () => {
@@ -2359,9 +2373,22 @@ function addEpisode(container, data) {
         epDiv.dataset.volumePageCount = String(names.length);
       } catch {}
     } else {
+      const isCopypartyActiveForFile = (f) => {
+        try {
+          const st = (typeof window !== 'undefined' && window.mm_uploadSettings && typeof window.mm_uploadSettings.load === 'function')
+            ? window.mm_uploadSettings.load()
+            : JSON.parse(localStorage.getItem('mm_upload_settings') || '{}');
+          const cpEnabled = !!(st && st.copypartyDirectEnabled === true);
+          const cpUrl = st && typeof st.copypartyUrl === 'string' ? st.copypartyUrl.trim() : '';
+          return cpEnabled && !!cpUrl && f && typeof f.size === 'number' && f.size >= (100 * 1024 * 1024);
+        } catch {
+          return false;
+        }
+      };
+
       const MAX_UPLOAD_BYTES = 200 * 1024 * 1024;
       let shouldArchive = false;
-      if (file.size > MAX_UPLOAD_BYTES) {
+      if (!isCopypartyActiveForFile(file) && file.size > MAX_UPLOAD_BYTES) {
         const msg = 'This file is over 200MB, would you like to upload it to Archive.org instead?';
         const subtitle = 'Please note that their upload speeds are very slow and may take "forever" to upload.';
         if (typeof window !== 'undefined' && typeof window.mmConfirmArchiveInstead === 'function') {
@@ -2427,7 +2454,19 @@ function addEpisode(container, data) {
 
       try {
         const MAX_UPLOAD_BYTES = 200 * 1024 * 1024;
-        const useArchive = (!isMangaMode() && file.size > MAX_UPLOAD_BYTES);
+
+        // Only enforce the 200MB limit when Copyparty is NOT active for this file.
+        let useCopyparty = false;
+        try {
+          const st = (typeof window !== 'undefined' && window.mm_uploadSettings && typeof window.mm_uploadSettings.load === 'function')
+            ? window.mm_uploadSettings.load()
+            : JSON.parse(localStorage.getItem('mm_upload_settings') || '{}');
+          const cpEnabled = !!(st && st.copypartyDirectEnabled === true);
+          const cpUrl = st && typeof st.copypartyUrl === 'string' ? st.copypartyUrl.trim() : '';
+          useCopyparty = cpEnabled && !!cpUrl && file && typeof file.size === 'number' && file.size >= (100 * 1024 * 1024);
+        } catch {}
+
+        const useArchive = (!useCopyparty && !isMangaMode() && file.size > MAX_UPLOAD_BYTES);
         let archiveResult = null;
         const url = useArchive
           ? (async () => {
