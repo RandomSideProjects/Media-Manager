@@ -1,0 +1,2140 @@
+{
+  "mappings": [
+    {
+      "old": "https://cpr.xpbliss.fyi/pub/MM/ApothDiaries.json/Apothecary%20diaries/S01_E01__ABS0001.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S01E01-Maomao%20%5B6846Aa97%5D%22%20ITEM%201.mp4"
+    },
+    {
+      "old": "https://cpr.xpbliss.fyi/pub/MM/ApothDiaries.json/Apothecary%20diaries/S01_E02__ABS0002.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S01E02-Chilly%20Apothecary%20%5B8Bfea0Fa%5D%22%20ITEM%202.mp4"
+    },
+    {
+      "old": "https://cpr.xpbliss.fyi/pub/MM/ApothDiaries.json/Apothecary%20diaries/S01_E03__ABS0003.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S01E03-The%20Unsettling%20Matter%20Of%20The%20Spirit%20%5B3B28F408%5D%22%20ITEM%203.mp4"
+    },
+    {
+      "old": "https://cpr.xpbliss.fyi/pub/MM/ApothDiaries.json/Apothecary%20diaries/S01_E04__ABS0004.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S01E04-The%20Threat%20%5B0F6673Ee%5D%22%20ITEM%204.mp4"
+    },
+    {
+      "old": "https://cpr.xpbliss.fyi/pub/MM/ApothDiaries.json/Apothecary%20diaries/S01_E05__ABS0005.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S01E05-Covert%20Operations%20%5BDf40B67D%5D%22%20ITEM%205.mp4"
+    },
+    {
+      "old": "https://cpr.xpbliss.fyi/pub/MM/ApothDiaries.json/Apothecary%20diaries/S01_E06__ABS0006.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S01E06-The%20Garden%20Party%20%5BA54A6Cbe%5D%22%20ITEM%206.mp4"
+    },
+    {
+      "old": "https://cpr.xpbliss.fyi/pub/MM/ApothDiaries.json/Apothecary%20diaries/S01_E07__ABS0007.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S01E07-Homecoming%20%5B18D04784%5D%22%20ITEM%207.mp4"
+    },
+    {
+      "old": "https://cpr.xpbliss.fyi/pub/MM/ApothDiaries.json/Apothecary%20diaries/S01_E08__ABS0008.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S01E08-Wheat%20Stalks%20%5B72213Acb%5D%22%20ITEM%208.mp4"
+    },
+    {
+      "old": "https://cpr.xpbliss.fyi/pub/MM/ApothDiaries.json/Apothecary%20diaries/S01_E09__ABS0009.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S01E09-Suicide%20Or%20Murder%20%5B216038A3%5D%22%20ITEM%209.mp4"
+    },
+    {
+      "old": "https://cpr.xpbliss.fyi/pub/MM/ApothDiaries.json/Apothecary%20diaries/S01_E10__ABS0010.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S01E10-Honey%20%5BAe6748A5%5D%22%20ITEM%2010.mp4"
+    },
+    {
+      "old": "https://cpr.xpbliss.fyi/pub/MM/ApothDiaries.json/Apothecary%20diaries/S01_E11__ABS0011.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S01E11-Reducing%20Two%20To%20One%20%5B936Be997%5D%22%20ITEM%2011.mp4"
+    },
+    {
+      "old": "https://cpr.xpbliss.fyi/pub/MM/ApothDiaries.json/Apothecary%20diaries/S01_E12__ABS0012.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S01E12-The%20Eunuch%20And%20The%20Courtesan%20%5BD971A45C%5D%22%20ITEM%2012.mp4"
+    },
+    {
+      "old": "https://cpr.xpbliss.fyi/pub/MM/ApothDiaries.json/Apothecary%20diaries/S01_E13__ABS0013.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S01E13-Serving%20In%20The%20Outer%20Court%20%5BC3B5A1Ba%5D%22%20ITEM%2013.mp4"
+    },
+    {
+      "old": "https://cpr.xpbliss.fyi/pub/MM/ApothDiaries.json/Apothecary%20diaries/S01_E14__ABS0014.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S01E14-The%20New%20Pure%20Consort%20%5B4A26D007%5D%22%20ITEM%2014.mp4"
+    },
+    {
+      "old": "https://cpr.xpbliss.fyi/pub/MM/ApothDiaries.json/Apothecary%20diaries/S01_E15__ABS0015.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S01E15-Raw%20Fish%20%5BBd87C209%5D%22%20ITEM%2015.mp4"
+    },
+    {
+      "old": "https://cpr.xpbliss.fyi/pub/MM/ApothDiaries.json/Apothecary%20diaries/S01_E16__ABS0016.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S01E16-Lead%20%5B89E6A7A0%5D%22%20ITEM%2016.mp4"
+    },
+    {
+      "old": "https://cpr.xpbliss.fyi/pub/MM/ApothDiaries.json/Apothecary%20diaries/S01_E17__ABS0017.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S01E17-A%20Jaunt%20Around%20Town%20%5BF50D0886%5D%22%20ITEM%2017.mp4"
+    },
+    {
+      "old": "https://cpr.xpbliss.fyi/pub/MM/ApothDiaries.json/Apothecary%20diaries/S01_E18__ABS0018.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S01E18-Lakan%20%5BF93266A4%5D%22%20ITEM%2018.mp4"
+    },
+    {
+      "old": "https://cpr.xpbliss.fyi/pub/MM/ApothDiaries.json/Apothecary%20diaries/S01_E19__ABS0019.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S01E19-Chance%20Or%20Something%20More%20%5B38E110F6%5D%22%20ITEM%2019.mp4"
+    },
+    {
+      "old": "https://cpr.xpbliss.fyi/pub/MM/ApothDiaries.json/Apothecary%20diaries/S01_E20__ABS0020.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S01E20-Thornapple%20%5BAd86Be2E%5D%22%20ITEM%2020.mp4"
+    },
+    {
+      "old": "https://cpr.xpbliss.fyi/pub/MM/ApothDiaries.json/Apothecary%20diaries/S01_E21__ABS0021.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S01E21-How%20To%20Buy%20Out%20A%20Contract%20%5B1F7A03F6%5D%22%20ITEM%2021.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/nuc82m.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/AnotherWorldSmartphone.json/In%20Another%20World%20With%20My%20Smartphone/S02_E02__ABS0014.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/e9gu3q.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/AnotherWorldSmartphone.json/In%20Another%20World%20With%20My%20Smartphone/S02_E03__ABS0015.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/i9ucjl.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/AnotherWorldSmartphone.json/In%20Another%20World%20With%20My%20Smartphone/S02_E01__ABS0013.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/zs7wm6.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/AnotherWorldSmartphone.json/In%20Another%20World%20With%20My%20Smartphone/S02_E04__ABS0016.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/93r1nb.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/AnotherWorldSmartphone.json/In%20Another%20World%20With%20My%20Smartphone/S02_E05__ABS0017.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/uogfyw.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/AnotherWorldSmartphone.json/In%20Another%20World%20With%20My%20Smartphone/S02_E07__ABS0019.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/1pf2jz.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/AnotherWorldSmartphone.json/In%20Another%20World%20With%20My%20Smartphone/S02_E08__ABS0020.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/5o3qnk.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/AnotherWorldSmartphone.json/In%20Another%20World%20With%20My%20Smartphone/S02_E06__ABS0018.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/no9btr.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/AnotherWorldSmartphone.json/In%20Another%20World%20With%20My%20Smartphone/S02_E09__ABS0021.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/cxfbic.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/AnotherWorldSmartphone.json/In%20Another%20World%20With%20My%20Smartphone/S02_E11__ABS0023.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/o1qp1k.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/AnotherWorldSmartphone.json/In%20Another%20World%20With%20My%20Smartphone/S02_E10__ABS0022.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/ywze0e.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/AnotherWorldSmartphone.json/In%20Another%20World%20With%20My%20Smartphone/S02_E12__ABS0024.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/woph4x.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S01E01-Maomao%20%5B6846Aa97%5D%22%20ITEM%201.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/8x5aav.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S01E02-Chilly%20Apothecary%20%5B8Bfea0Fa%5D%22%20ITEM%202.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/qxt6d7.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S01E04-The%20Threat%20%5B0F6673Ee%5D%22%20ITEM%204.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/ulm5is.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S01E06-The%20Garden%20Party%20%5BA54A6Cbe%5D%22%20ITEM%206.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/4cpa2f.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S01E05-Covert%20Operations%20%5BDf40B67D%5D%22%20ITEM%205.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/h1de10.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S01E07-Homecoming%20%5B18D04784%5D%22%20ITEM%207.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/7bsp8d.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S01E03-The%20Unsettling%20Matter%20Of%20The%20Spirit%20%5B3B28F408%5D%22%20ITEM%203.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/zssayo.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S01E08-Wheat%20Stalks%20%5B72213Acb%5D%22%20ITEM%208.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/58p0z5.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S01E09-Suicide%20Or%20Murder%20%5B216038A3%5D%22%20ITEM%209.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/ugnv1r.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S01E10-Honey%20%5BAe6748A5%5D%22%20ITEM%2010.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/tzaj4h.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S01E11-Reducing%20Two%20To%20One%20%5B936Be997%5D%22%20ITEM%2011.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/nusgca.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S01E12-The%20Eunuch%20And%20The%20Courtesan%20%5BD971A45C%5D%22%20ITEM%2012.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/914api.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S01E13-Serving%20In%20The%20Outer%20Court%20%5BC3B5A1Ba%5D%22%20ITEM%2013.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/333rd7.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S01E14-The%20New%20Pure%20Consort%20%5B4A26D007%5D%22%20ITEM%2014.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/al6ihy.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S01E15-Raw%20Fish%20%5BBd87C209%5D%22%20ITEM%2015.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/uq85x0.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S01E16-Lead%20%5B89E6A7A0%5D%22%20ITEM%2016.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/i4duzp.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S01E18-Lakan%20%5BF93266A4%5D%22%20ITEM%2018.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/cqdggs.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S01E17-A%20Jaunt%20Around%20Town%20%5BF50D0886%5D%22%20ITEM%2017.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/tfpxv7.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S01E19-Chance%20Or%20Something%20More%20%5B38E110F6%5D%22%20ITEM%2019.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/pya9wh.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S01E20-Thornapple%20%5BAd86Be2E%5D%22%20ITEM%2020.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/rsq5ga.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S01E21-How%20To%20Buy%20Out%20A%20Contract%20%5B1F7A03F6%5D%22%20ITEM%2021.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/w8d9wm.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S01E22-Blue%20Roses%20%5BDe08Df5B%5D%22%20ITEM%2022.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/omvw6j.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S01E24-Jinshi%20And%20Maomao%20%5B995D2Cf3%5D%22%20ITEM%2024.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/4g34m0.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S01E23-Balsam%20And%20Woodsorrel%20%5B62839F86%5D%22%20ITEM%2023.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/y4i4ka.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Call_Of_The_Night.json/Call%20Of%20The%20Night/S01_E02__ABS0002.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/6czzk1.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Call_Of_The_Night.json/Call%20Of%20The%20Night/S01_E01__ABS0001.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/6ytfzy.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Call_Of_The_Night.json/Call%20Of%20The%20Night/S01_E03__ABS0003.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/8kl8rg.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Call_Of_The_Night.json/Call%20Of%20The%20Night/S01_E04__ABS0004.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/m6130l.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Call_Of_The_Night.json/Call%20Of%20The%20Night/S01_E05__ABS0005.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/xzl8ax.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Call_Of_The_Night.json/Call%20Of%20The%20Night/S01_E06__ABS0006.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/yqp7gd.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Call_Of_The_Night.json/Call%20Of%20The%20Night/S01_E08__ABS0008.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/2ppjcu.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Call_Of_The_Night.json/Call%20Of%20The%20Night/S01_E09__ABS0009.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/fq30ju.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Call_Of_The_Night.json/Call%20Of%20The%20Night/S01_E07__ABS0007.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/abzt7h.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Call_Of_The_Night.json/Call%20Of%20The%20Night/S01_E11__ABS0011.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/hom1xy.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Call_Of_The_Night.json/Call%20Of%20The%20Night/S01_E12__ABS0012.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/xw6u2m.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Call_Of_The_Night.json/Call%20Of%20The%20Night/S01_E10__ABS0010.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/m7skr2.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Call_Of_The_Night.json/Call%20Of%20The%20Night/S02_E03__ABS0016.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/5bhwag.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Call_Of_The_Night.json/Call%20Of%20The%20Night/S01_E13__ABS0013.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/2860j7.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Call_Of_The_Night.json/Call%20Of%20The%20Night/S02_E01__ABS0014.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/0ttkh0.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Call_Of_The_Night.json/Call%20Of%20The%20Night/S02_E02__ABS0015.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/clzwrb.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Call_Of_The_Night.json/Call%20Of%20The%20Night/S02_E04__ABS0017.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/hvp4we.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Call_Of_The_Night.json/Call%20Of%20The%20Night/S02_E05__ABS0018.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/w28215.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Call_Of_The_Night.json/Call%20Of%20The%20Night/S02_E07__ABS0020.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/0mpvhg.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Call_Of_The_Night.json/Call%20Of%20The%20Night/S02_E06__ABS0019.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/lxzf6m.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Campfire_Cooking_In_Another_World_With_My_Absurd_Skill.json/Campfire%20Cooking%20in%20Another%20World%20with%20My%20Absurd%20Skill/S01_E01__ABS0001.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/a6ezya.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Campfire_Cooking_In_Another_World_With_My_Absurd_Skill.json/Campfire%20Cooking%20in%20Another%20World%20with%20My%20Absurd%20Skill/S01_E02__ABS0002.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/06945j.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Campfire_Cooking_In_Another_World_With_My_Absurd_Skill.json/Campfire%20Cooking%20in%20Another%20World%20with%20My%20Absurd%20Skill/S01_E05__ABS0005.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/07gwpt.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Campfire_Cooking_In_Another_World_With_My_Absurd_Skill.json/Campfire%20Cooking%20in%20Another%20World%20with%20My%20Absurd%20Skill/S01_E03__ABS0003.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/ddyxud.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Campfire_Cooking_In_Another_World_With_My_Absurd_Skill.json/Campfire%20Cooking%20in%20Another%20World%20with%20My%20Absurd%20Skill/S01_E04__ABS0004.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/8ms8xm.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Campfire_Cooking_In_Another_World_With_My_Absurd_Skill.json/Campfire%20Cooking%20in%20Another%20World%20with%20My%20Absurd%20Skill/S01_E06__ABS0006.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/nwipa2.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Campfire_Cooking_In_Another_World_With_My_Absurd_Skill.json/Campfire%20Cooking%20in%20Another%20World%20with%20My%20Absurd%20Skill/S01_E09__ABS0009.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/77x7lm.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Campfire_Cooking_In_Another_World_With_My_Absurd_Skill.json/Campfire%20Cooking%20in%20Another%20World%20with%20My%20Absurd%20Skill/S01_E07__ABS0007.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/znz0uu.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Campfire_Cooking_In_Another_World_With_My_Absurd_Skill.json/Campfire%20Cooking%20in%20Another%20World%20with%20My%20Absurd%20Skill/S01_E08__ABS0008.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/riwzi8.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Cuckoos.json/A%20Couple%20Of%20Cuckoos/S02_E06__ABS0030.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/fb3wwr.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Cuckoos.json/A%20Couple%20Of%20Cuckoos/S02_E05__ABS0029.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/lr93zv.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Campfire_Cooking_In_Another_World_With_My_Absurd_Skill.json/Campfire%20Cooking%20in%20Another%20World%20with%20My%20Absurd%20Skill/S01_E10__ABS0010.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/92dntq.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Campfire_Cooking_In_Another_World_With_My_Absurd_Skill.json/Campfire%20Cooking%20in%20Another%20World%20with%20My%20Absurd%20Skill/S01_E11__ABS0011.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/iuym9y.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Campfire_Cooking_In_Another_World_With_My_Absurd_Skill.json/Campfire%20Cooking%20in%20Another%20World%20with%20My%20Absurd%20Skill/S01_E12__ABS0012.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/elyqcv.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/DanDaDan.json/DanDaDan/S02_E10__ABS0022.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/xzalpj.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/DanDaDan.json/DanDaDan/S02_E09__ABS0021.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/90kn0u.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Dealing_With_Mikadono_Sisters_Is_A_Breeze.json/Dealing%20With%20Mikadono%20Sisters%20Is%20A%20Breeze/S01_E02__ABS0002.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/9qjabd.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Dealing_With_Mikadono_Sisters_Is_A_Breeze.json/Dealing%20With%20Mikadono%20Sisters%20Is%20A%20Breeze/S01_E01__ABS0001.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/xon0a0.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/DanDaDan.json/DanDaDan/S02_E12__ABS0024.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/wfbck3.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/DanDaDan.json/DanDaDan/S02_E11__ABS0023.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/6fyhuj.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Dealing_With_Mikadono_Sisters_Is_A_Breeze.json/Dealing%20With%20Mikadono%20Sisters%20Is%20A%20Breeze/S01_E03__ABS0003.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/p0g2cn.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Dealing_With_Mikadono_Sisters_Is_A_Breeze.json/Dealing%20With%20Mikadono%20Sisters%20Is%20A%20Breeze/S01_E04__ABS0004.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/scxui0.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Dealing_With_Mikadono_Sisters_Is_A_Breeze.json/Dealing%20With%20Mikadono%20Sisters%20Is%20A%20Breeze/S01_E06__ABS0006.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/tkdfmv.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Dealing_With_Mikadono_Sisters_Is_A_Breeze.json/Dealing%20With%20Mikadono%20Sisters%20Is%20A%20Breeze/S01_E05__ABS0005.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/65hs1l.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Dealing_With_Mikadono_Sisters_Is_A_Breeze.json/Dealing%20With%20Mikadono%20Sisters%20Is%20A%20Breeze/S01_E07__ABS0007.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/rkt8ns.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Dealing_With_Mikadono_Sisters_Is_A_Breeze.json/Dealing%20With%20Mikadono%20Sisters%20Is%20A%20Breeze/S01_E08__ABS0008.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/8gjslx.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Dealing_With_Mikadono_Sisters_Is_A_Breeze.json/Dealing%20With%20Mikadono%20Sisters%20Is%20A%20Breeze/S01_E10__ABS0010.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/5fzee8.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Dealing_With_Mikadono_Sisters_Is_A_Breeze.json/Dealing%20With%20Mikadono%20Sisters%20Is%20A%20Breeze/S01_E09__ABS0009.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/s4o6pw.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Dealing_With_Mikadono_Sisters_Is_A_Breeze.json/Dealing%20With%20Mikadono%20Sisters%20Is%20A%20Breeze/S01_E12__ABS0012.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/frvb28.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Dealing_With_Mikadono_Sisters_Is_A_Breeze.json/Dealing%20With%20Mikadono%20Sisters%20Is%20A%20Breeze/S01_E11__ABS0011.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/z7z1my.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Easygoing_Territory_Defense_By_The_Optimistic_Lord_Production.json/Easygoing%20Territory%20Defense%20by%20the%20Optimistic%20Lord/S01_E01__ABS0001.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/rvlgo7.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Easygoing_Territory_Defense_By_The_Optimistic_Lord_Production.json/Easygoing%20Territory%20Defense%20by%20the%20Optimistic%20Lord/S01_E03__ABS0003.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/brgfjz.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Easygoing_Territory_Defense_By_The_Optimistic_Lord_Production.json/Easygoing%20Territory%20Defense%20by%20the%20Optimistic%20Lord/S01_E02__ABS0002.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/465lzv.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Easygoing_Territory_Defense_By_The_Optimistic_Lord_Production.json/Easygoing%20Territory%20Defense%20by%20the%20Optimistic%20Lord/S01_E04__ABS0004.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/k5v1mw.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Farming_Life_In_Another_World.json/Farming%20Life%20In%20Another%20World/S01_E03__ABS0003.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/brclxu.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Farming_Life_In_Another_World.json/Farming%20Life%20In%20Another%20World/S01_E07__ABS0007.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/43b84h.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Farming_Life_In_Another_World.json/Farming%20Life%20In%20Another%20World/S01_E04__ABS0004.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/tjld1c.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Farming_Life_In_Another_World.json/Farming%20Life%20In%20Another%20World/S01_E01__ABS0001.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/6r729r.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Farming_Life_In_Another_World.json/Farming%20Life%20In%20Another%20World/S01_E02__ABS0002.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/a8au3g.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Farming_Life_In_Another_World.json/Farming%20Life%20In%20Another%20World/S01_E05__ABS0005.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/1ad5mg.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Farming_Life_In_Another_World.json/Farming%20Life%20In%20Another%20World/S01_E09__ABS0009.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/gf3xsy.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Farming_Life_In_Another_World.json/Farming%20Life%20In%20Another%20World/S01_E06__ABS0006.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/50eagj.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Franxx.json/DARLING%20in%20the%20FRANXX/S01_E01__ABS0001.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/k3sfg6.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Farming_Life_In_Another_World.json/Farming%20Life%20In%20Another%20World/S01_E10__ABS0010.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/ptuu18.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Franxx.json/DARLING%20in%20the%20FRANXX/S01_E02__ABS0002.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/gswv5v.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Farming_Life_In_Another_World.json/Farming%20Life%20In%20Another%20World/S01_E11__ABS0011.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/qfu36h.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Farming_Life_In_Another_World.json/Farming%20Life%20In%20Another%20World/S01_E12__ABS0012.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/b2yf1h.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Farming_Life_In_Another_World.json/Farming%20Life%20In%20Another%20World/S01_E08__ABS0008.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/92mga6.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Franxx.json/DARLING%20in%20the%20FRANXX/S01_E03__ABS0003.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/oly8mc.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Franxx.json/DARLING%20in%20the%20FRANXX/S01_E06__ABS0006.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/enyxyh.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Franxx.json/DARLING%20in%20the%20FRANXX/S01_E04__ABS0004.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/630ie5.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Franxx.json/DARLING%20in%20the%20FRANXX/S01_E05__ABS0005.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/87xyoj.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Franxx.json/DARLING%20in%20the%20FRANXX/S01_E07__ABS0007.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/9gwvkq.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Franxx.json/DARLING%20in%20the%20FRANXX/S01_E10__ABS0010.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/gt7aj7.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Franxx.json/DARLING%20in%20the%20FRANXX/S01_E08__ABS0008.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/o8d0fq.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Franxx.json/DARLING%20in%20the%20FRANXX/S01_E09__ABS0009.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/srd4j1.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Franxx.json/DARLING%20in%20the%20FRANXX/S01_E11__ABS0011.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/bvzbfp.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Franxx.json/DARLING%20in%20the%20FRANXX/S01_E13__ABS0013.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/sk9i2x.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Franxx.json/DARLING%20in%20the%20FRANXX/S01_E12__ABS0012.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/ei99hd.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Franxx.json/DARLING%20in%20the%20FRANXX/S01_E14__ABS0014.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/ter8jx.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Franxx.json/DARLING%20in%20the%20FRANXX/S01_E16__ABS0016.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/oiw9j6.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Franxx.json/DARLING%20in%20the%20FRANXX/S01_E15__ABS0015.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/awqyj0.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Franxx.json/DARLING%20in%20the%20FRANXX/S01_E18__ABS0018.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/p5eige.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Franxx.json/DARLING%20in%20the%20FRANXX/S01_E17__ABS0017.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/rpngsl.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Franxx.json/DARLING%20in%20the%20FRANXX/S01_E20__ABS0020.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/q8sn2i.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Franxx.json/DARLING%20in%20the%20FRANXX/S01_E19__ABS0019.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/nkk4g1.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Franxx.json/DARLING%20in%20the%20FRANXX/S01_E22__ABS0022.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/wme1bd.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Franxx.json/DARLING%20in%20the%20FRANXX/S01_E21__ABS0021.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/9v5x4i.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Franxx.json/DARLING%20in%20the%20FRANXX/S01_E23__ABS0023.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/ko1k0u.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Franxx.json/DARLING%20in%20the%20FRANXX/S01_E24__ABS0024.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/p4m4fp.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Frieren.json/Frieren_%20Beyond%20Journey%27s%20End/S01_E01__ABS0001.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/e345ak.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Frieren.json/Frieren_%20Beyond%20Journey%27s%20End/S01_E02__ABS0002.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/vt9wxb.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Frieren.json/Frieren_%20Beyond%20Journey%27s%20End/S01_E03__ABS0003.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/5v510g.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Frieren.json/Frieren_%20Beyond%20Journey%27s%20End/S01_E06__ABS0006.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/0ei5mz.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Frieren.json/Frieren_%20Beyond%20Journey%27s%20End/S01_E05__ABS0005.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/l408s8.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Frieren.json/Frieren_%20Beyond%20Journey%27s%20End/S01_E07__ABS0007.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/8excmq.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Frieren.json/Frieren_%20Beyond%20Journey%27s%20End/S01_E04__ABS0004.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/3q0uwl.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Frieren.json/Frieren_%20Beyond%20Journey%27s%20End/S01_E08__ABS0008.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/dh4cru.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Frieren.json/Frieren_%20Beyond%20Journey%27s%20End/S01_E10__ABS0010.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/e3bzx6.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Frieren.json/Frieren_%20Beyond%20Journey%27s%20End/S01_E11__ABS0011.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/uc9d4h.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Frieren.json/Frieren_%20Beyond%20Journey%27s%20End/S01_E09__ABS0009.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/u3fm6q.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Frieren.json/Frieren_%20Beyond%20Journey%27s%20End/S01_E13__ABS0013.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/eui15w.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Frieren.json/Frieren_%20Beyond%20Journey%27s%20End/S01_E12__ABS0012.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/f2jeu2.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Frieren.json/Frieren_%20Beyond%20Journey%27s%20End/S01_E17__ABS0017.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/h8ct85.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Frieren.json/Frieren_%20Beyond%20Journey%27s%20End/S01_E14__ABS0014.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/zy7606.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Frieren.json/Frieren_%20Beyond%20Journey%27s%20End/S01_E16__ABS0016.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/1amakj.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Frieren.json/Frieren_%20Beyond%20Journey%27s%20End/S01_E15__ABS0015.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/4bfuuq.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Frieren.json/Frieren_%20Beyond%20Journey%27s%20End/S01_E18__ABS0018.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/kjm5c6.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Frieren.json/Frieren_%20Beyond%20Journey%27s%20End/S01_E19__ABS0019.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/df32ew.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Frieren.json/Frieren_%20Beyond%20Journey%27s%20End/S01_E20__ABS0020.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/8fhbwo.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Frieren.json/Frieren_%20Beyond%20Journey%27s%20End/S01_E21__ABS0021.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/4f35fg.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Frieren.json/Frieren_%20Beyond%20Journey%27s%20End/S01_E22__ABS0022.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/3pcm2q.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Frieren.json/Frieren_%20Beyond%20Journey%27s%20End/S01_E23__ABS0023.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/ysccs7.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Frieren.json/Frieren_%20Beyond%20Journey%27s%20End/S01_E24__ABS0024.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/h2w9y7.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Frieren.json/Frieren_%20Beyond%20Journey%27s%20End/S01_E25__ABS0025.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/xa7q1e.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Frieren.json/Frieren_%20Beyond%20Journey%27s%20End/S01_E27__ABS0027.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/d2qxb1.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Frieren.json/Frieren_%20Beyond%20Journey%27s%20End/S01_E26__ABS0026.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/wuyfws.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Frieren.json/Frieren_%20Beyond%20Journey%27s%20End/S01_E28__ABS0028.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/2uk0lj.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Gamers.json/Gamers%21/S01_E01__ABS0001.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/li7ug8.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Gamers.json/Gamers%21/S01_E05__ABS0005.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/89n1zm.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Gamers.json/Gamers%21/S01_E03__ABS0003.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/ye87km.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Gamers.json/Gamers%21/S01_E06__ABS0006.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/l8a2c7.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Gamers.json/Gamers%21/S01_E04__ABS0004.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/gagyh9.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Gamers.json/Gamers%21/S01_E02__ABS0002.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/pagu3y.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Gamers.json/Gamers%21/S01_E08__ABS0008.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/jw411b.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Gamers.json/Gamers%21/S01_E07__ABS0007.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/tjmh3r.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Gamers.json/Gamers%21/S01_E10__ABS0010.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/yaa3be.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Gamers.json/Gamers%21/S01_E11__ABS0011.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/9r6w3d.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Gamers.json/Gamers%21/S01_E09__ABS0009.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/sn0f0z.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Gamers.json/Gamers%21/S01_E12__ABS0012.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/h1j0m8.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/GGLR.json/GO%21%20GO%21%20LOSER%20RANGER%21/S02_E02__ABS0014.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/06gdwz.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/GGLR.json/GO%21%20GO%21%20LOSER%20RANGER%21/S02_E03__ABS0015.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/sm01bg.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/GGLR.json/GO%21%20GO%21%20LOSER%20RANGER%21/S02_E01__ABS0013.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/18q1hk.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/GGLR.json/GO%21%20GO%21%20LOSER%20RANGER%21/S02_E04__ABS0016.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/2dm8nz.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/GGLR.json/GO%21%20GO%21%20LOSER%20RANGER%21/S02_E06__ABS0018.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/7o53hb.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/GGLR.json/GO%21%20GO%21%20LOSER%20RANGER%21/S02_E05__ABS0017.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/1qc5bd.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/GGLR.json/GO%21%20GO%21%20LOSER%20RANGER%21/S02_E07__ABS0019.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/35qt3d.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/GGLR.json/GO%21%20GO%21%20LOSER%20RANGER%21/S02_E08__ABS0020.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/db4zjf.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/GGLR.json/GO%21%20GO%21%20LOSER%20RANGER%21/S02_E09__ABS0021.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/qkv3yz.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/GGLR.json/GO%21%20GO%21%20LOSER%20RANGER%21/S02_E10__ABS0022.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/rk5g2r.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/GGLR.json/GO%21%20GO%21%20LOSER%20RANGER%21/S02_E11__ABS0023.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/yylcoy.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/GGLR.json/GO%21%20GO%21%20LOSER%20RANGER%21/S02_E12__ABS0024.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/yvytcl.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Hokkaido%21.json/Hokkaido%20Gals%20Are%20Super%20Adorable%21/S01_E01__ABS0001.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/3m6xak.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Hokkaido%21.json/Hokkaido%20Gals%20Are%20Super%20Adorable%21/S01_E02__ABS0002.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/fsx8a5.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Hokkaido%21.json/Hokkaido%20Gals%20Are%20Super%20Adorable%21/S01_E03__ABS0003.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/mrhsf4.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Hokkaido%21.json/Hokkaido%20Gals%20Are%20Super%20Adorable%21/S01_E05__ABS0005.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/8mhl4g.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Hokkaido%21.json/Hokkaido%20Gals%20Are%20Super%20Adorable%21/S01_E04__ABS0004.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/g5rbqp.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Hokkaido%21.json/Hokkaido%20Gals%20Are%20Super%20Adorable%21/S01_E06__ABS0006.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/l49e4r.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Hokkaido%21.json/Hokkaido%20Gals%20Are%20Super%20Adorable%21/S01_E08__ABS0008.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/nd5fkg.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Hokkaido%21.json/Hokkaido%20Gals%20Are%20Super%20Adorable%21/S01_E07__ABS0007.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/0u7vh2.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Hokkaido%21.json/Hokkaido%20Gals%20Are%20Super%20Adorable%21/S01_E09__ABS0009.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/90ip4o.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Hokkaido%21.json/Hokkaido%20Gals%20Are%20Super%20Adorable%21/S01_E11__ABS0011.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/0uo63s.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Hokkaido%21.json/Hokkaido%20Gals%20Are%20Super%20Adorable%21/S01_E10__ABS0010.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/gy730i.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Hokkaido%21.json/Hokkaido%20Gals%20Are%20Super%20Adorable%21/S01_E12__ABS0012.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/bak5hp.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/IceGuy.json/The%20Ice%20Guy%20and%20His%20Cool%20Female%20Colleague/S01_E03__ABS0003.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/x2cn1m.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/IceGuy.json/The%20Ice%20Guy%20and%20His%20Cool%20Female%20Colleague/S01_E01__ABS0001.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/jyl0e5.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/IceGuy.json/The%20Ice%20Guy%20and%20His%20Cool%20Female%20Colleague/S01_E04__ABS0004.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/9ljr4s.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/IceGuy.json/The%20Ice%20Guy%20and%20His%20Cool%20Female%20Colleague/S01_E02__ABS0002.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/gckbdc.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/IceGuy.json/The%20Ice%20Guy%20and%20His%20Cool%20Female%20Colleague/S01_E05__ABS0005.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/t31kbb.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/IceGuy.json/The%20Ice%20Guy%20and%20His%20Cool%20Female%20Colleague/S01_E06__ABS0006.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/plm6o2.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/IceGuy.json/The%20Ice%20Guy%20and%20His%20Cool%20Female%20Colleague/S01_E09__ABS0009.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/udjsq9.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/IceGuy.json/The%20Ice%20Guy%20and%20His%20Cool%20Female%20Colleague/S01_E07__ABS0007.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/ee1z3m.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/IceGuy.json/The%20Ice%20Guy%20and%20His%20Cool%20Female%20Colleague/S01_E10__ABS0010.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/pu21r4.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/IceGuy.json/The%20Ice%20Guy%20and%20His%20Cool%20Female%20Colleague/S01_E11__ABS0011.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/hq31wq.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/IceGuy.json/The%20Ice%20Guy%20and%20His%20Cool%20Female%20Colleague/S01_E08__ABS0008.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/yzfy2y.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/IceGuy.json/The%20Ice%20Guy%20and%20His%20Cool%20Female%20Colleague/S01_E12__ABS0012.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/cjccu7.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Konosuba_God_S_Blessing_On_This_Wonderful_World.json/KONOSUBA/S01_E03__ABS0003.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/zs619f.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Konosuba_God_S_Blessing_On_This_Wonderful_World.json/KONOSUBA/S01_E04__ABS0004.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/zlb0lf.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Konosuba_God_S_Blessing_On_This_Wonderful_World.json/KONOSUBA/S01_E01__ABS0001.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/xt4ztr.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Konosuba_God_S_Blessing_On_This_Wonderful_World.json/KONOSUBA/S01_E02__ABS0002.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/bpxq25.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Konosuba_God_S_Blessing_On_This_Wonderful_World.json/KONOSUBA/S01_E08__ABS0008.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/pnpn91.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Konosuba_God_S_Blessing_On_This_Wonderful_World.json/KONOSUBA/S01_E05__ABS0005.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/8j48v0.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Konosuba_God_S_Blessing_On_This_Wonderful_World.json/KONOSUBA/S01_E09__ABS0009.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/ye9abv.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Konosuba_God_S_Blessing_On_This_Wonderful_World.json/KONOSUBA/S01_E07__ABS0007.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/gtzbg5.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Konosuba_God_S_Blessing_On_This_Wonderful_World.json/KONOSUBA/S01_E10__ABS0010.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/6oxqjo.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Love_Chunibyo_Other_Delusions.json/Love%2C%20Chunibyo%20%26%20Other%20Delusions/S01_E01__ABS0001.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/brtmit.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Love_Chunibyo_Other_Delusions.json/Love%2C%20Chunibyo%20%26%20Other%20Delusions/S01_E02__ABS0002.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/66zuc4.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Love_Chunibyo_Other_Delusions.json/Love%2C%20Chunibyo%20%26%20Other%20Delusions/S01_E04__ABS0004.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/7podvv.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Love_Chunibyo_Other_Delusions.json/Love%2C%20Chunibyo%20%26%20Other%20Delusions/S01_E03__ABS0003.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/3lsy2d.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Love_Chunibyo_Other_Delusions.json/Love%2C%20Chunibyo%20%26%20Other%20Delusions/S01_E05__ABS0005.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/chd2vz.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Love_Chunibyo_Other_Delusions.json/Love%2C%20Chunibyo%20%26%20Other%20Delusions/S01_E06__ABS0006.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/4inlz2.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Love_Chunibyo_Other_Delusions.json/Love%2C%20Chunibyo%20%26%20Other%20Delusions/S01_E07__ABS0007.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/ddxdyz.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Love_Chunibyo_Other_Delusions.json/Love%2C%20Chunibyo%20%26%20Other%20Delusions/S01_E08__ABS0008.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/jpseat.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Love_Chunibyo_Other_Delusions.json/Love%2C%20Chunibyo%20%26%20Other%20Delusions/S01_E09__ABS0009.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/qx09mj.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Love_Chunibyo_Other_Delusions.json/Love%2C%20Chunibyo%20%26%20Other%20Delusions/S01_E10__ABS0010.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/o473v7.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Love_Chunibyo_Other_Delusions.json/Love%2C%20Chunibyo%20%26%20Other%20Delusions/S01_E11__ABS0011.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/muw8cx.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Love_Chunibyo_Other_Delusions.json/Love%2C%20Chunibyo%20%26%20Other%20Delusions/S01_E12__ABS0012.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/wjlaiz.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Love_Flops.json/Love%20Flops/S01_E02__ABS0002.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/1dxz41.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Love_Flops.json/Love%20Flops/S01_E01__ABS0001.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/bny158.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Love_Flops.json/Love%20Flops/S01_E03__ABS0003.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/40vo6u.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Love_Flops.json/Love%20Flops/S01_E04__ABS0004.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/xcm89u.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Love_Flops.json/Love%20Flops/S01_E07__ABS0007.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/8vwstk.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Love_Flops.json/Love%20Flops/S01_E05__ABS0005.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/xjjt2x.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Love_Flops.json/Love%20Flops/S01_E06__ABS0006.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/d52uk4.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Love_Flops.json/Love%20Flops/S01_E08__ABS0008.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/avvx1a.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Love_Flops.json/Love%20Flops/S01_E09__ABS0009.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/xk73uq.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Love_Flops.json/Love%20Flops/S01_E12__ABS0012.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/1s3xg3.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Love_Flops.json/Love%20Flops/S01_E10__ABS0010.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/o8kwx0.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Love_Flops.json/Love%20Flops/S01_E11__ABS0011.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/v9hczy.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/My%20Love%20Story%20With%20Yamada-kun%20At%20Lv999.json/My%20Love%20Story%20With%20Yamada-kun%20At%20Lv999/S01_E01__ABS0001.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/ps4z9x.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/My%20Love%20Story%20With%20Yamada-kun%20At%20Lv999.json/My%20Love%20Story%20With%20Yamada-kun%20At%20Lv999/S01_E02__ABS0002.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/ic3tj7.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/My%20Love%20Story%20With%20Yamada-kun%20At%20Lv999.json/My%20Love%20Story%20With%20Yamada-kun%20At%20Lv999/S01_E03__ABS0003.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/2665hz.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/My%20Love%20Story%20With%20Yamada-kun%20At%20Lv999.json/My%20Love%20Story%20With%20Yamada-kun%20At%20Lv999/S01_E04__ABS0004.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/1xs6ng.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/My%20Love%20Story%20With%20Yamada-kun%20At%20Lv999.json/My%20Love%20Story%20With%20Yamada-kun%20At%20Lv999/S01_E05__ABS0005.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/fs3448.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/My%20Love%20Story%20With%20Yamada-kun%20At%20Lv999.json/My%20Love%20Story%20With%20Yamada-kun%20At%20Lv999/S01_E06__ABS0006.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/ed4ytp.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/My%20Love%20Story%20With%20Yamada-kun%20At%20Lv999.json/My%20Love%20Story%20With%20Yamada-kun%20At%20Lv999/S01_E07__ABS0007.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/cxqajk.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/My%20Love%20Story%20With%20Yamada-kun%20At%20Lv999.json/My%20Love%20Story%20With%20Yamada-kun%20At%20Lv999/S01_E08__ABS0008.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/bw1ibh.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/My%20Love%20Story%20With%20Yamada-kun%20At%20Lv999.json/My%20Love%20Story%20With%20Yamada-kun%20At%20Lv999/S01_E09__ABS0009.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/jeiqap.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/My%20Love%20Story%20With%20Yamada-kun%20At%20Lv999.json/My%20Love%20Story%20With%20Yamada-kun%20At%20Lv999/S01_E10__ABS0010.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/rd4lnx.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/My%20Love%20Story%20With%20Yamada-kun%20At%20Lv999.json/My%20Love%20Story%20With%20Yamada-kun%20At%20Lv999/S01_E11__ABS0011.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/n0hmwl.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/My%20Love%20Story%20With%20Yamada-kun%20At%20Lv999.json/My%20Love%20Story%20With%20Yamada-kun%20At%20Lv999/S01_E13__ABS0013.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/6eynx9.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/My%20Love%20Story%20With%20Yamada-kun%20At%20Lv999.json/My%20Love%20Story%20With%20Yamada-kun%20At%20Lv999/S01_E12__ABS0012.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/27cs0k.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/My_Deer_Friend_Nokotan.json/My%20Deer%20Friend%20Nokotan/S01_E01__ABS0001.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/fphf0x.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/My_Deer_Friend_Nokotan.json/My%20Deer%20Friend%20Nokotan/S01_E04__ABS0004.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/u51w95.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/My_Deer_Friend_Nokotan.json/My%20Deer%20Friend%20Nokotan/S01_E03__ABS0003.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/e3iqdm.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/My_Deer_Friend_Nokotan.json/My%20Deer%20Friend%20Nokotan/S01_E02__ABS0002.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/qkersw.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/My_Deer_Friend_Nokotan.json/My%20Deer%20Friend%20Nokotan/S01_E10__ABS0010.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/ytqnnv.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/My_Deer_Friend_Nokotan.json/My%20Deer%20Friend%20Nokotan/S01_E09__ABS0009.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/pjl1pi.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/My_Deer_Friend_Nokotan.json/My%20Deer%20Friend%20Nokotan/S01_E08__ABS0008.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/jv9rjs.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/My_Deer_Friend_Nokotan.json/My%20Deer%20Friend%20Nokotan/S01_E11__ABS0011.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/dw87uu.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/My_Deer_Friend_Nokotan.json/My%20Deer%20Friend%20Nokotan/S01_E12__ABS0012.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/2ghymd.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/My_Dress_Up_Darling.json/My%20Dress-up%20Darling/S02_E07__ABS0019.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/juebnj.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/My_Dress_Up_Darling.json/My%20Dress-up%20Darling/S02_E08__ABS0020.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/7lwl8i.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/My_Dress_Up_Darling.json/My%20Dress-up%20Darling/S02_E09__ABS0021.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/obxu8k.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/My_Dress_Up_Darling.json/My%20Dress-up%20Darling/S02_E10__ABS0022.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/87ha6j.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/My_Dress_Up_Darling.json/My%20Dress-up%20Darling/S02_E11__ABS0023.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/uhp45y.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/My_Dress_Up_Darling.json/My%20Dress-up%20Darling/S02_E12__ABS0024.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/v1big0.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Nukitashi_The_Animation.json/Nukitashi%20the%20Animation/S01_E01__ABS0001.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/zb6fkb.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Nukitashi_The_Animation.json/Nukitashi%20the%20Animation/S01_E02__ABS0002.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/7qzai7.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Nukitashi_The_Animation.json/Nukitashi%20the%20Animation/S01_E03__ABS0003.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/usx4ir.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Nukitashi_The_Animation.json/Nukitashi%20the%20Animation/S01_E04__ABS0004.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/99or13.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Nukitashi_The_Animation.json/Nukitashi%20the%20Animation/S01_E05__ABS0005.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/p2n17q.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Nukitashi_The_Animation.json/Nukitashi%20the%20Animation/S01_E06__ABS0006.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/7u78fl.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Nukitashi_The_Animation.json/Nukitashi%20the%20Animation/S01_E07__ABS0007.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/zw8efd.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Nukitashi_The_Animation.json/Nukitashi%20the%20Animation/S01_E09__ABS0009.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/rh1k1l.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Nukitashi_The_Animation.json/Nukitashi%20the%20Animation/S01_E08__ABS0008.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/wst2sd.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Nyaight_Of_The_Living_Cat.json/Nyaight%20Of%20The%20Living%20Cat/S01_E01__ABS0001.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/hslwgw.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Nyaight_Of_The_Living_Cat.json/Nyaight%20Of%20The%20Living%20Cat/S01_E02__ABS0002.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/povxpg.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Nyaight_Of_The_Living_Cat.json/Nyaight%20Of%20The%20Living%20Cat/S01_E03__ABS0003.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/kbahq3.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Nyaight_Of_The_Living_Cat.json/Nyaight%20Of%20The%20Living%20Cat/S01_E04__ABS0004.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/a2z03v.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Nyaight_Of_The_Living_Cat.json/Nyaight%20Of%20The%20Living%20Cat/S01_E05__ABS0005.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/o7qfam.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Nyaight_Of_The_Living_Cat.json/Nyaight%20Of%20The%20Living%20Cat/S01_E06__ABS0006.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/1n40ps.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Nyaight_Of_The_Living_Cat.json/Nyaight%20Of%20The%20Living%20Cat/S01_E08__ABS0008.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/5umr5z.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Nyaight_Of_The_Living_Cat.json/Nyaight%20Of%20The%20Living%20Cat/S01_E07__ABS0007.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/rgxm6z.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Nyaight_Of_The_Living_Cat.json/Nyaight%20Of%20The%20Living%20Cat/S01_E09__ABS0009.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/qe0su0.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Nyaight_Of_The_Living_Cat.json/Nyaight%20Of%20The%20Living%20Cat/S01_E10__ABS0010.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/1u0bic.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Nyaight_Of_The_Living_Cat.json/Nyaight%20Of%20The%20Living%20Cat/S01_E11__ABS0011.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/z9g36l.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/One-Punch_Man.json/One-Punch%20Man/S01_E04__ABS0004.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/mvi9jk.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/One-Punch_Man.json/One-Punch%20Man/S01_E02__ABS0002.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/tailfl.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/One-Punch_Man.json/One-Punch%20Man/S01_E01__ABS0001.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/v6dawe.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/One-Punch_Man.json/One-Punch%20Man/S01_E03__ABS0003.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/vdrfb4.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/One-Punch_Man.json/One-Punch%20Man/S01_E06__ABS0006.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/l47zq1.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/One-Punch_Man.json/One-Punch%20Man/S01_E05__ABS0005.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/f5wmnc.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/One-Punch_Man.json/One-Punch%20Man/S01_E07__ABS0007.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/455y4k.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/One-Punch_Man.json/One-Punch%20Man/S01_E08__ABS0008.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/x3jafq.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/One-Punch_Man.json/One-Punch%20Man/S01_E10__ABS0010.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/m1c3l6.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/One-Punch_Man.json/One-Punch%20Man/S01_E09__ABS0009.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/o3ocdj.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/One-Punch_Man.json/One-Punch%20Man/S01_E11__ABS0011.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/auiy8e.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/One-Punch_Man.json/One-Punch%20Man/S02_E01__ABS0013.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/kyspgz.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/One-Punch_Man.json/One-Punch%20Man/S01_E12__ABS0012.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/bybhjb.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/One-Punch_Man.json/One-Punch%20Man/S02_E03__ABS0015.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/93485x.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/One-Punch_Man.json/One-Punch%20Man/S02_E02__ABS0014.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/cizrbt.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/One-Punch_Man.json/One-Punch%20Man/S02_E04__ABS0016.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/457hgl.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/One-Punch_Man.json/One-Punch%20Man/S02_E05__ABS0017.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/uw8kcw.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/One-Punch_Man.json/One-Punch%20Man/S02_E06__ABS0018.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/zqmyfb.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/One-Punch_Man.json/One-Punch%20Man/S02_E07__ABS0019.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/ymskt5.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/One-Punch_Man.json/One-Punch%20Man/S02_E08__ABS0020.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/o1p55m.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/One-Punch_Man.json/One-Punch%20Man/S02_E10__ABS0022.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/oaz0iw.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/One-Punch_Man.json/One-Punch%20Man/S02_E09__ABS0021.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/uz0iy2.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/One-Punch_Man.json/One-Punch%20Man/S02_E11__ABS0023.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/sdmkeb.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/One-Punch_Man.json/One-Punch%20Man/S02_E12__ABS0024.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/1n3jqb.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Re_Zero.json/Re_%20Zero/S01_E01__ABS0001.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/xfuryg.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Re_Zero.json/Re_%20Zero/S01_E02__ABS0002.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/lzvqdg.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Re_Zero.json/Re_%20Zero/S01_E04__ABS0004.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/n90zmh.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Re_Zero.json/Re_%20Zero/S01_E03__ABS0003.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/ud701a.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Re_Zero.json/Re_%20Zero/S01_E05__ABS0005.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/eezyyn.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Re_Zero.json/Re_%20Zero/S01_E06__ABS0006.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/6ec3fp.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Re_Zero.json/Re_%20Zero/S01_E07__ABS0007.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/o1bvid.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Re_Zero.json/Re_%20Zero/S01_E08__ABS0008.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/nmdkv5.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Re_Zero.json/Re_%20Zero/S01_E09__ABS0009.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/w1wjzk.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Re_Zero.json/Re_%20Zero/S01_E10__ABS0010.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/9jqhp4.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Re_Zero.json/Re_%20Zero/S01_E11__ABS0011.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/fe7zfr.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Re_Zero.json/Re_%20Zero/S01_E13__ABS0013.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/sd46jx.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Re_Zero.json/Re_%20Zero/S01_E12__ABS0012.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/o3ykng.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Re_Zero.json/Re_%20Zero/S01_E14__ABS0014.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/fyo2er.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Re_Zero.json/Re_%20Zero/S01_E15__ABS0015.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/t9rfuf.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Re_Zero.json/Re_%20Zero/S01_E16__ABS0016.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/hoqwlh.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Re_Zero.json/Re_%20Zero/S02_E03__ABS0028.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/9prkj5.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Re_Zero.json/Re_%20Zero/S02_E02__ABS0027.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/f3jzlv.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Re_Zero.json/Re_%20Zero/S02_E01__ABS0026.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/j8a9rf.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Re_Zero.json/Re_%20Zero/S02_E04__ABS0029.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/s4v2ji.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Re_Zero.json/Re_%20Zero/S02_E05__ABS0030.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/dvl6nw.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Re_Zero.json/Re_%20Zero/S02_E07__ABS0032.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/9uynxe.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Re_Zero.json/Re_%20Zero/S02_E06__ABS0031.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/69rhve.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Re_Zero.json/Re_%20Zero/S02_E08__ABS0033.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/u49xpp.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Re_Zero.json/Re_%20Zero/S02_E09__ABS0034.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/vzi29a.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Re_Zero.json/Re_%20Zero/S02_E10__ABS0035.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/qmvtg3.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Re_Zero.json/Re_%20Zero/S02_E11__ABS0036.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/k5sbe8.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Re_Zero.json/Re_%20Zero/S02_E13__ABS0038.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/ns7ajs.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Re_Zero.json/Re_%20Zero/S02_E12__ABS0037.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/52dqxr.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Re_Zero.json/Re_%20Zero/S03_E03__ABS0053.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/ttmjde.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Re_Zero.json/Re_%20Zero/S03_E02__ABS0052.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/6rw5ic.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Re_Zero.json/Re_%20Zero/S03_E04__ABS0054.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/bblfjb.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Re_Zero.json/Re_%20Zero/S03_E01__ABS0051.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/kbij9o.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Re_Zero.json/Re_%20Zero/S03_E06__ABS0056.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/fqgtp5.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Re_Zero.json/Re_%20Zero/S03_E05__ABS0055.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/v3rwwq.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Re_Zero.json/Re_%20Zero/S03_E07__ABS0057.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/isffmj.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Re_Zero.json/Re_%20Zero/S03_E08__ABS0058.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/22rlcr.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Re_Zero.json/Re_%20Zero/S03_E09__ABS0059.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/z31tvg.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Re_Zero.json/Re_%20Zero/S03_E10__ABS0060.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/902u4d.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Re_Zero.json/Re_%20Zero/S03_E11__ABS0061.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/idjej3.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Re_Zero.json/Re_%20Zero/S03_E12__ABS0062.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/15jn34.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Re_Zero.json/Re_%20Zero/S03_E13__ABS0063.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/0wrctx.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Re_Zero.json/Re_%20Zero/S03_E14__ABS0064.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/dgm0hb.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Re_Zero.json/Re_%20Zero/S03_E15__ABS0065.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/g2duq4.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Re_Zero.json/Re_%20Zero/S03_E16__ABS0066.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/ed9iva.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Shikimori.json/Shikimori%27s%20Not%20Just%20a%20Cutie/S01_E03__ABS0003.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/4r907b.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Shikimori.json/Shikimori%27s%20Not%20Just%20a%20Cutie/S01_E01__ABS0001.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/0hx6x4.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Shikimori.json/Shikimori%27s%20Not%20Just%20a%20Cutie/S01_E02__ABS0002.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/76hpvb.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Shikimori.json/Shikimori%27s%20Not%20Just%20a%20Cutie/S01_E04__ABS0004.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/kewv57.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Shikimori.json/Shikimori%27s%20Not%20Just%20a%20Cutie/S01_E05__ABS0005.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/d4sh6j.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Shikimori.json/Shikimori%27s%20Not%20Just%20a%20Cutie/S01_E08__ABS0008.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/0m7jou.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Shikimori.json/Shikimori%27s%20Not%20Just%20a%20Cutie/S01_E06__ABS0006.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/4k6x5c.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Shikimori.json/Shikimori%27s%20Not%20Just%20a%20Cutie/S01_E07__ABS0007.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/rwo4d3.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Shikimori.json/Shikimori%27s%20Not%20Just%20a%20Cutie/S01_E09__ABS0009.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/20e644.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Shikimori.json/Shikimori%27s%20Not%20Just%20a%20Cutie/S01_E12__ABS0012.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/x85mra.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Shikimori.json/Shikimori%27s%20Not%20Just%20a%20Cutie/S01_E10__ABS0010.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/812iuo.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Shikimori.json/Shikimori%27s%20Not%20Just%20a%20Cutie/S01_E11__ABS0011.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/mrw67b.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Shiunji_Children.json/The%20Shiunji%20Family%20Children/S01_E01__ABS0001.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/1s35i2.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Shiunji_Children.json/The%20Shiunji%20Family%20Children/S01_E02__ABS0002.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/o8rwqx.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Shiunji_Children.json/The%20Shiunji%20Family%20Children/S01_E04__ABS0004.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/af7nkq.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Shiunji_Children.json/The%20Shiunji%20Family%20Children/S01_E05__ABS0005.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/jzwitx.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Shiunji_Children.json/The%20Shiunji%20Family%20Children/S01_E03__ABS0003.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/tm4b0p.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Shiunji_Children.json/The%20Shiunji%20Family%20Children/S01_E06__ABS0006.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/e1d6de.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Shiunji_Children.json/The%20Shiunji%20Family%20Children/S01_E07__ABS0007.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/329e7z.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Shiunji_Children.json/The%20Shiunji%20Family%20Children/S01_E08__ABS0008.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/h033o9.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Shiunji_Children.json/The%20Shiunji%20Family%20Children/S01_E09__ABS0009.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/llfy2a.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Shiunji_Children.json/The%20Shiunji%20Family%20Children/S01_E10__ABS0010.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/lbsizp.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Shiunji_Children.json/The%20Shiunji%20Family%20Children/S01_E11__ABS0011.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/qdxzp0.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Shiunji_Children.json/The%20Shiunji%20Family%20Children/S01_E12__ABS0012.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/cm643e.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Solo_Leveling.json/Solo%20Leveling/S01_E01__ABS0001.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/9fcq4j.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Solo_Leveling.json/Solo%20Leveling/S01_E02__ABS0002.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/1pn10d.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Solo_Leveling.json/Solo%20Leveling/S01_E03__ABS0003.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/jmakxq.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Solo_Leveling.json/Solo%20Leveling/S01_E04__ABS0004.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/30yvxv.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Solo_Leveling.json/Solo%20Leveling/S01_E08__ABS0008.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/lofn9s.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Solo_Leveling.json/Solo%20Leveling/S01_E06__ABS0006.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/xncp5m.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Solo_Leveling.json/Solo%20Leveling/S01_E05__ABS0005.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/xzmm54.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Solo_Leveling.json/Solo%20Leveling/S01_E10__ABS0010.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/2yot29.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Solo_Leveling.json/Solo%20Leveling/S01_E09__ABS0009.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/ur1djt.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Solo_Leveling.json/Solo%20Leveling/S01_E07__ABS0007.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/10hf5e.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Solo_Leveling.json/Solo%20Leveling/S01_E11__ABS0011.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/ey9mc6.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Solo_Leveling.json/Solo%20Leveling/S01_E12__ABS0012.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/321ldx.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Solo_Leveling.json/Solo%20Leveling/S02_E01__ABS0013.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/j716yu.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Solo_Leveling.json/Solo%20Leveling/S02_E03__ABS0015.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/uiall9.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Solo_Leveling.json/Solo%20Leveling/S02_E04__ABS0016.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/xsoupj.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Solo_Leveling.json/Solo%20Leveling/S02_E02__ABS0014.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/75wqgr.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Solo_Leveling.json/Solo%20Leveling/S02_E05__ABS0017.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/2f3kh5.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Solo_Leveling.json/Solo%20Leveling/S02_E06__ABS0018.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/v4m3da.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Solo_Leveling.json/Solo%20Leveling/S02_E07__ABS0019.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/1xe09v.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Solo_Leveling.json/Solo%20Leveling/S02_E09__ABS0021.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/8yg85c.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Solo_Leveling.json/Solo%20Leveling/S02_E08__ABS0020.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/6jeric.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Solo_Leveling.json/Solo%20Leveling/S02_E10__ABS0022.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/brsrua.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Solo_Leveling.json/Solo%20Leveling/S02_E11__ABS0023.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/0xraaf.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Solo_Leveling.json/Solo%20Leveling/S02_E12__ABS0024.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/xdposr.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Solo_Leveling.json/Solo%20Leveling/S02_E13__ABS0025.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/4pb7lw.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/The_Dreaming_Boy_is_a_Realist.json/The%20Dreaming%20Boy%20is%20a%20Realist/S01_E02__ABS0002.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/10c4ui.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/The_Dreaming_Boy_is_a_Realist.json/The%20Dreaming%20Boy%20is%20a%20Realist/S01_E01__ABS0001.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/hea76q.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/The_Dreaming_Boy_is_a_Realist.json/The%20Dreaming%20Boy%20is%20a%20Realist/S01_E04__ABS0004.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/k6eefi.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/The_Dreaming_Boy_is_a_Realist.json/The%20Dreaming%20Boy%20is%20a%20Realist/S01_E03__ABS0003.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/nok23x.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/The_Dreaming_Boy_is_a_Realist.json/The%20Dreaming%20Boy%20is%20a%20Realist/S01_E05__ABS0005.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/k5sea3.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/The_Dreaming_Boy_is_a_Realist.json/The%20Dreaming%20Boy%20is%20a%20Realist/S01_E06__ABS0006.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/09trf0.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/The_Dreaming_Boy_is_a_Realist.json/The%20Dreaming%20Boy%20is%20a%20Realist/S01_E07__ABS0007.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/103fw2.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/The_Dreaming_Boy_is_a_Realist.json/The%20Dreaming%20Boy%20is%20a%20Realist/S01_E08__ABS0008.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/575xqp.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/The_Dreaming_Boy_is_a_Realist.json/The%20Dreaming%20Boy%20is%20a%20Realist/S01_E09__ABS0009.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/dg481w.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/The_Dreaming_Boy_is_a_Realist.json/The%20Dreaming%20Boy%20is%20a%20Realist/S01_E10__ABS0010.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/5ixw29.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/The_Dreaming_Boy_is_a_Realist.json/The%20Dreaming%20Boy%20is%20a%20Realist/S01_E11__ABS0011.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/l927km.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/The_Dreaming_Boy_is_a_Realist.json/The%20Dreaming%20Boy%20is%20a%20Realist/S01_E12__ABS0012.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/gnnlnm.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Tomochan.json/Tomo-chan%20Is%20A%20Girl%21/S01_E02__ABS0002.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/9ipnjt.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Tomochan.json/Tomo-chan%20Is%20A%20Girl%21/S01_E01__ABS0001.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/yb5ao4.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Tomochan.json/Tomo-chan%20Is%20A%20Girl%21/S01_E03__ABS0003.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/ibbddm.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Tomochan.json/Tomo-chan%20Is%20A%20Girl%21/S01_E04__ABS0004.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/24urfq.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Tomochan.json/Tomo-chan%20Is%20A%20Girl%21/S01_E05__ABS0005.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/xht29r.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Tomochan.json/Tomo-chan%20Is%20A%20Girl%21/S01_E06__ABS0006.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/cpkd6x.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Tomochan.json/Tomo-chan%20Is%20A%20Girl%21/S01_E08__ABS0008.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/oqzdoz.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Tomochan.json/Tomo-chan%20Is%20A%20Girl%21/S01_E07__ABS0007.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/1zxeqy.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Tomochan.json/Tomo-chan%20Is%20A%20Girl%21/S01_E09__ABS0009.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/4sag7d.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Tomochan.json/Tomo-chan%20Is%20A%20Girl%21/S01_E11__ABS0011.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/rhmmfg.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Tomochan.json/Tomo-chan%20Is%20A%20Girl%21/S01_E10__ABS0010.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/dncobu.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Tomochan.json/Tomo-chan%20Is%20A%20Girl%21/S01_E12__ABS0012.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/5hi250.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Tomochan.json/Tomo-chan%20Is%20A%20Girl%21/S01_E13__ABS0013.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/km8wjp.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Toradora.json/Toradora%21/S01_E01__ABS0001.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/hvmbeo.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Toradora.json/Toradora%21/S01_E02__ABS0002.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/cf4hon.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Toradora.json/Toradora%21/S01_E03__ABS0003.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/yb5wm5.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Toradora.json/Toradora%21/S01_E04__ABS0004.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/a95lth.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Toradora.json/Toradora%21/S01_E05__ABS0005.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/gokl87.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Toradora.json/Toradora%21/S01_E06__ABS0006.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/yt2fmp.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Toradora.json/Toradora%21/S01_E07__ABS0007.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/jw5n2k.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Toradora.json/Toradora%21/S01_E08__ABS0008.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/c93thd.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Toradora.json/Toradora%21/S01_E10__ABS0010.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/uhw0ki.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Toradora.json/Toradora%21/S01_E09__ABS0009.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/ppuu6h.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Toradora.json/Toradora%21/S01_E11__ABS0011.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/rowdfd.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Toradora.json/Toradora%21/S01_E12__ABS0012.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/2xhce1.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Toradora.json/Toradora%21/S01_E13__ABS0013.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/uk2n9a.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Toradora.json/Toradora%21/S01_E14__ABS0014.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/0vdtu8.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Toradora.json/Toradora%21/S01_E15__ABS0015.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/htwvb4.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Toradora.json/Toradora%21/S01_E17__ABS0017.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/6dh8og.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Toradora.json/Toradora%21/S01_E16__ABS0016.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/ki3q2u.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Toradora.json/Toradora%21/S01_E18__ABS0018.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/kfsdia.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Toradora.json/Toradora%21/S01_E19__ABS0019.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/okjwe3.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Toradora.json/Toradora%21/S01_E20__ABS0020.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/yh2avm.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Toradora.json/Toradora%21/S01_E22__ABS0022.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/cvx2dp.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Toradora.json/Toradora%21/S01_E21__ABS0021.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/xxgeus.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Toradora.json/Toradora%21/S01_E23__ABS0023.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/p2ro4s.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Toradora.json/Toradora%21/S01_E24__ABS0024.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/o53wr2.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Toradora.json/Toradora%21/S01_E25__ABS0025.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/tcozoz.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Toradora.json/Toradora%21/S02_E01__ABS0026.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/51v9cl.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Toradora.json/Toradora%21/S02_E02__ABS0027.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/3ymiyl.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Toradora.json/Toradora%21/S02_E03__ABS0028.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/4lkszj.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Toradora.json/Toradora%21/S02_E04__ABS0029.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/rgszs7.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Toradora.json/Toradora%21/S03_E01__ABS0030.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/rl7s52.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Tune_In_To_The_Midnight_Heart.json/Tune%20In%20to%20the%20Midnight%20Heart/S01_E02__ABS0002.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/app3zy.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Tune_In_To_The_Midnight_Heart.json/Tune%20In%20to%20the%20Midnight%20Heart/S01_E01__ABS0001.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/kfzoq6.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Watari_Kun_S_Is_About_To_Collapse.json/Watari-kun%27s%20_%20Is%20About%20To%20Collapse/S01_E01__ABS0001.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/ypzksh.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Watari_Kun_S_Is_About_To_Collapse.json/Watari-kun%27s%20_%20Is%20About%20To%20Collapse/S01_E02__ABS0002.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/vnw0u6.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Watari_Kun_S_Is_About_To_Collapse.json/Watari-kun%27s%20_%20Is%20About%20To%20Collapse/S01_E03__ABS0003.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/dgdwcc.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Watari_Kun_S_Is_About_To_Collapse.json/Watari-kun%27s%20_%20Is%20About%20To%20Collapse/S01_E04__ABS0004.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/k7i0z2.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Watari_Kun_S_Is_About_To_Collapse.json/Watari-kun%27s%20_%20Is%20About%20To%20Collapse/S01_E05__ABS0005.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/058ief.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Watari_Kun_S_Is_About_To_Collapse.json/Watari-kun%27s%20_%20Is%20About%20To%20Collapse/S01_E06__ABS0006.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/oc5mkp.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Watari_Kun_S_Is_About_To_Collapse.json/Watari-kun%27s%20_%20Is%20About%20To%20Collapse/S01_E09__ABS0009.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/jdvrwt.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Watari_Kun_S_Is_About_To_Collapse.json/Watari-kun%27s%20_%20Is%20About%20To%20Collapse/S01_E07__ABS0007.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/9xlok3.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Watari_Kun_S_Is_About_To_Collapse.json/Watari-kun%27s%20_%20Is%20About%20To%20Collapse/S01_E10__ABS0010.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/wejwsy.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Watari_Kun_S_Is_About_To_Collapse.json/Watari-kun%27s%20_%20Is%20About%20To%20Collapse/S01_E08__ABS0008.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/ldq9jx.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Watari_Kun_S_Is_About_To_Collapse.json/Watari-kun%27s%20_%20Is%20About%20To%20Collapse/S01_E11__ABS0011.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/zkxp51.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Wise_Man_S_Grandchild.json/Wise%20Man%27s%20Grandchild/S01_E01__ABS0001.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/oixt3c.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Wise_Man_S_Grandchild.json/Wise%20Man%27s%20Grandchild/S01_E02__ABS0002.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/3bro39.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Wise_Man_S_Grandchild.json/Wise%20Man%27s%20Grandchild/S01_E04__ABS0004.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/bqtcbh.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Wise_Man_S_Grandchild.json/Wise%20Man%27s%20Grandchild/S01_E03__ABS0003.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/l7n220.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Wise_Man_S_Grandchild.json/Wise%20Man%27s%20Grandchild/S01_E05__ABS0005.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/3qj84i.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Wise_Man_S_Grandchild.json/Wise%20Man%27s%20Grandchild/S01_E06__ABS0006.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/hceolk.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Wise_Man_S_Grandchild.json/Wise%20Man%27s%20Grandchild/S01_E07__ABS0007.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/x6jng0.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Wise_Man_S_Grandchild.json/Wise%20Man%27s%20Grandchild/S01_E08__ABS0008.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/il5z8u.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Wise_Man_S_Grandchild.json/Wise%20Man%27s%20Grandchild/S01_E10__ABS0010.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/grw8z7.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Wise_Man_S_Grandchild.json/Wise%20Man%27s%20Grandchild/S01_E09__ABS0009.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/kwwu55.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Wise_Man_S_Grandchild.json/Wise%20Man%27s%20Grandchild/S01_E11__ABS0011.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/l4lciu.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/Wise_Man_S_Grandchild.json/Wise%20Man%27s%20Grandchild/S01_E12__ABS0012.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/bkqwfv.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/You_And_I_Are_Polar_Opposites.json/You%20And%20I%20Are%20Polar%20Opposites/S01_E01__ABS0001.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/8jk4kh.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/You_And_I_Are_Polar_Opposites.json/You%20And%20I%20Are%20Polar%20Opposites/S01_E02__ABS0002.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/9ap537.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/You_Can_T_Be_In_A_Rom_Com_With_Your_Childhood_Friends.json/You%20Can%27t%20Be%20In%20a%20Rom-Com%20with%20Your%20Childhood%20Friends%21/S01_E02__ABS0002.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/ed35cl.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/You_Can_T_Be_In_A_Rom_Com_With_Your_Childhood_Friends.json/You%20Can%27t%20Be%20In%20a%20Rom-Com%20with%20Your%20Childhood%20Friends%21/S01_E01__ABS0001.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/t10bqj.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/You_Can_T_Be_In_A_Rom_Com_With_Your_Childhood_Friends.json/You%20Can%27t%20Be%20In%20a%20Rom-Com%20with%20Your%20Childhood%20Friends%21/S01_E03__ABS0003.mp4"
+    },
+    {
+      "old": "https://cpr.xpbliss.fyi/pub/MM/ApothDiaries.json/Apothecary%20diaries/S01_E22__ABS0022.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S01E22-Blue%20Roses%20%5BDe08Df5B%5D%22%20ITEM%2022.mp4"
+    },
+    {
+      "old": "https://cpr.xpbliss.fyi/pub/MM/ApothDiaries.json/Apothecary%20diaries/S01_E23__ABS0023.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S01E23-Balsam%20And%20Woodsorrel%20%5B62839F86%5D%22%20ITEM%2023.mp4"
+    },
+    {
+      "old": "https://cpr.xpbliss.fyi/pub/MM/ApothDiaries.json/Apothecary%20diaries/S01_E24__ABS0024.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S01E24-Jinshi%20And%20Maomao%20%5B995D2Cf3%5D%22%20ITEM%2024.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/f4yepj.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S02E01-Maomao%20And%20Maomao%20%5BF878C427%5D%22%20ITEM%201.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/v7nf40.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S02E02-Caravan%20%5B9141124E%5D%22%20ITEM%202.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/ju6j6q.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S02E03-Corpse%20Fungus%20%5B3Fb0Cf29%5D%22%20ITEM%203.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/kmnvmv.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S02E04-Mirrors%20%5B869Ab6C8%5D%22%20ITEM%204.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/u4kdwa.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S02E05-Moon%20Fairy%20%5B481F3Afa%5D%22%20ITEM%205.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/97i4r7.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S02E06-The%20Crystal%20Pavilion%2C%20For%20The%20Third%20Time%20%5BFccfb94C%5D%22%20ITEM%206.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/9gey1v.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S02E07-The%20Shrine%20Of%20Choosing%20%5B6229300E%5D%22%20ITEM%207.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/slbt40.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S02E08-The%20Empress%20Dowager%20%5B09Ba3A26%5D%22%20ITEM%208.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/melf2q.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S02E09-The%20Late%20Emperor%20%5BD808C69F%5D%22%20ITEM%209.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/yzg945.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S02E10-A%20Ghost%20Story%20%5BD0B77894%5D%22%20ITEM%2010.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/f59hgb.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S02E11-The%20Hunt%20%5B638Efe1F%5D%22%20ITEM%2011.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/htykf4.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S02E12-Ka%20Zuigetsu%20%5BC9A5182F%5D%22%20ITEM%2012.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/md56lq.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S02E13-The%20Baths%20%5B86500C76%5D%22%20ITEM%2013.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/49btuj.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S02E14-The%20Dancing%20Ghost%20%5BBb8E6C7C%5D%22%20ITEM%2014.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/d2u5cj.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S02E15-Ice%20%5B3E27De51%5D%22%20ITEM%2015.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/x82bul.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S02E16-Festering%20Resentment%20%5B1D80E113%5D%22%20ITEM%2016.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/4bby51.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S02E17-The%20Fox%20Village%20%5B658Afc79%5D%22%20ITEM%2017.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/b3u0wx.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S02E18-Lantern%20Plant%20%5B948Baa06%5D%22%20ITEM%2018.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/h5w8kg.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S02E19-Festival%20%5B178E9650%5D%22%20ITEM%2019.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/ftbqnm.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S02E20-The%20Stronghold%20%5BBf17484C%5D%22%20ITEM%2020.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/66xcba.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S02E21-Taibon%20%5B4985817F%5D%22%20ITEM%2021.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/kqkmxv.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S02E22-Royal%20Guard%20%5BD729Ca41%5D%22%20ITEM%2022.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/meg9c0.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S02E23-The%20Shi%20Clan%20%5B1606Fa56%5D%22%20ITEM%2023.mp4"
+    },
+    {
+      "old": "https://files.catbox.moe/3vgkhr.mp4",
+      "new": "https://cpr.xpbliss.fyi/pub/MM/02-19-25/1/%22S02E24-The%20Beginning%20%5B42003257%5D%22%20ITEM%2024.mp4"
+    }
+  ]
+}
