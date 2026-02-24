@@ -1,7 +1,7 @@
 {
   "title": "You Can't Be In a Rom-Com with Your Childhood Friends!",
-  "Image": "./Sources/Posters/Anime/You_Can't_Be_In_a_Rom-Com_with_Your_Childhood_Friends!.webp",
-  "LatestTime": "2026-02-17T19:24:31.272Z",
+  "Image": "https://i.animepahe.si/posters/6f28c8daa661f02d4811da60ad01850969b8cd2fe40762f47b1bb8470066bd2c.jpg",
+  "LatestTime": "2026-02-24T01:26:39.395Z",
   "categories": [
     {
       "category": "Season 1",
@@ -28,10 +28,16 @@
           "src": "https://cpr.xpbliss.fyi/pub/MM/AnimePahe_Osananajimi_to_wa_Love_Comedy_ni_Naranai_Eng_Dub_-_04_1080p_Yameii.mp4",
           "fileSizeBytes": 170311186,
           "durationSeconds": 1430
+        },
+        {
+          "title": "Episode 5",
+          "src": "https://cpr.xpbliss.fyi/pub/MM/AnimePahe_Osananajimi_to_wa_Love_Comedy_ni_Naranai_Eng_Dub_-_05_1080p_Yameii.mp4",
+          "fileSizeBytes": 146071348,
+          "durationSeconds": 1430
         }
       ]
     }
   ],
-  "totalFileSizeBytes": 507621204,
-  "totalDurationSeconds": 5720
+  "totalFileSizeBytes": 653692552,
+  "totalDurationSeconds": 7150
 }
