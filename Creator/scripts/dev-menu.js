@@ -22,10 +22,9 @@
   let webhookUrlInput = null;
   let catboxUrlInput = null;
   let catboxForceProxyUnder100MbToggle = null;
-  let copypartyUrlInput = null;
+  let copypartyUploadUrlInput = null;
   let copypartyPwInput = null;
-  let copypartyPublicBaseInput = null;
-  let copypartyDirectEnabledToggle = null;
+  let copypartyThresholdInput = null;
   let paheAnimeApiBaseInput = null;
   let paheKwikApiBaseInput = null;
   let paheKwikAuthTokenInput = null;
@@ -50,10 +49,9 @@
     webhookUrlInput = document.getElementById("devWebhookUrl");
     catboxUrlInput = document.getElementById("devCatboxUploadUrl");
     catboxForceProxyUnder100MbToggle = document.getElementById("devCatboxForceProxyUnder100Mb");
-    copypartyUrlInput = document.getElementById("devCopypartyUrl");
+    copypartyUploadUrlInput = document.getElementById("devCopypartyUploadUrl");
     copypartyPwInput = document.getElementById("devCopypartyPw");
-    copypartyPublicBaseInput = document.getElementById("devCopypartyPublicBase");
-    copypartyDirectEnabledToggle = document.getElementById("devCopypartyDirectEnabled");
+    copypartyThresholdInput = document.getElementById("devCopypartyThresholdMb");
     paheAnimeApiBaseInput = document.getElementById("devPaheAnimeApiBase");
     paheKwikApiBaseInput = document.getElementById("devPaheKwikApiBase");
     paheKwikAuthTokenInput = document.getElementById("devPaheKwikAuthToken");
@@ -333,17 +331,14 @@
         if (catboxForceProxyUnder100MbToggle && settings.catboxForceProxyUnder100Mb !== undefined) {
           catboxForceProxyUnder100MbToggle.checked = !!settings.catboxForceProxyUnder100Mb;
         }
-        if (copypartyUrlInput && settings.copypartyUrl !== undefined) {
-          copypartyUrlInput.value = settings.copypartyUrl || '';
+        if (copypartyUploadUrlInput && settings.copypartyUploadUrl !== undefined) {
+          copypartyUploadUrlInput.value = settings.copypartyUploadUrl || '';
         }
         if (copypartyPwInput && settings.copypartyPw !== undefined) {
           copypartyPwInput.value = settings.copypartyPw || '';
         }
-        if (copypartyPublicBaseInput && settings.copypartyPublicBase !== undefined) {
-          copypartyPublicBaseInput.value = settings.copypartyPublicBase || '';
-        }
-        if (copypartyDirectEnabledToggle && settings.copypartyDirectEnabled !== undefined) {
-          copypartyDirectEnabledToggle.checked = !!settings.copypartyDirectEnabled;
+        if (copypartyThresholdInput && settings.copypartyThresholdMb !== undefined) {
+          copypartyThresholdInput.value = String(settings.copypartyThresholdMb ?? 100);
         }
         if (paheAnimeApiBaseInput && settings.paheAnimeApiBase !== undefined) {
           paheAnimeApiBaseInput.value = settings.paheAnimeApiBase || '';
@@ -495,14 +490,14 @@
       catboxForceProxyUnder100MbToggle.addEventListener('change', commit);
     }
 
-    if (copypartyUrlInput) {
+    if (copypartyUploadUrlInput) {
       const commit = () => {
         if (typeof saveSettingsPartial !== 'function') return;
-        try { saveSettingsPartial({ copypartyUrl: copypartyUrlInput.value.trim() }); }
-        catch (err) { console.warn('[CreatorDevMenu] Failed to save Copyparty URL', err); }
+        try { saveSettingsPartial({ copypartyUploadUrl: copypartyUploadUrlInput.value.trim() }); }
+        catch (err) { console.warn('[CreatorDevMenu] Failed to save Copyparty upload URL', err); }
       };
-      copypartyUrlInput.addEventListener('change', commit);
-      copypartyUrlInput.addEventListener('blur', commit);
+      copypartyUploadUrlInput.addEventListener('change', commit);
+      copypartyUploadUrlInput.addEventListener('blur', commit);
     }
 
     if (copypartyPwInput) {
@@ -515,23 +510,19 @@
       copypartyPwInput.addEventListener('blur', commit);
     }
 
-    if (copypartyPublicBaseInput) {
+    if (copypartyThresholdInput) {
       const commit = () => {
         if (typeof saveSettingsPartial !== 'function') return;
-        try { saveSettingsPartial({ copypartyPublicBase: copypartyPublicBaseInput.value.trim() }); }
-        catch (err) { console.warn('[CreatorDevMenu] Failed to save Copyparty public base', err); }
+        try {
+          const raw = parseFloat(copypartyThresholdInput.value);
+          const v = Number.isFinite(raw) ? Math.max(6, Math.min(100, raw)) : 100;
+          saveSettingsPartial({ copypartyThresholdMb: v });
+        } catch (err) {
+          console.warn('[CreatorDevMenu] Failed to save Copyparty threshold', err);
+        }
       };
-      copypartyPublicBaseInput.addEventListener('change', commit);
-      copypartyPublicBaseInput.addEventListener('blur', commit);
-    }
-
-    if (copypartyDirectEnabledToggle) {
-      const commit = () => {
-        if (typeof saveSettingsPartial !== 'function') return;
-        try { saveSettingsPartial({ copypartyDirectEnabled: !!copypartyDirectEnabledToggle.checked }); }
-        catch (err) { console.warn('[CreatorDevMenu] Failed to save Copyparty direct enabled toggle', err); }
-      };
-      copypartyDirectEnabledToggle.addEventListener('change', commit);
+      copypartyThresholdInput.addEventListener('change', commit);
+      copypartyThresholdInput.addEventListener('blur', commit);
     }
 
     if (paheAnimeApiBaseInput) {

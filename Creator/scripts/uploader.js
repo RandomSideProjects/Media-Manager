@@ -89,15 +89,14 @@ function isProxyCatboxUrl(url) {
 function resolveCatboxUploadUrl(settings, { fileSizeBytes, allowProxy = true } = {}) {
   const raw = settings && typeof settings.catboxUploadUrl === 'string' ? settings.catboxUploadUrl.trim() : '';
 
-  const cpEnabled = !!(settings && settings.copypartyDirectEnabled === true);
-  const cp = settings && typeof settings.copypartyUrl === 'string' ? settings.copypartyUrl.trim() : '';
-  const canUseCopyparty = cpEnabled && !!cp;
+  const cp = settings && typeof settings.copypartyUploadUrl === 'string' ? settings.copypartyUploadUrl.trim() : '';
+  const cpPw = settings && typeof settings.copypartyPw === 'string' ? settings.copypartyPw : '';
+  const thresholdMbRaw = (settings && Number.isFinite(parseFloat(settings.copypartyThresholdMb))) ? parseFloat(settings.copypartyThresholdMb) : 100;
+  const thresholdMb = Math.max(6, Math.min(100, thresholdMbRaw)); // enforce 5 < x <= 100
+  const canUseCopyparty = !!cp;
 
-  // If Copyparty is enabled, only route to Copyparty for large files (>= 100MB)
-  const CP_THRESHOLD = 100 * 1024 * 1024;
-  const shouldUseCopyparty = canUseCopyparty
-    && Number.isFinite(fileSizeBytes)
-    && fileSizeBytes >= CP_THRESHOLD;
+  const CP_THRESHOLD = thresholdMb * 1024 * 1024;
+  const shouldUseCopyparty = canUseCopyparty && Number.isFinite(fileSizeBytes) && fileSizeBytes >= CP_THRESHOLD;
 
   // Per request: stop using direct Catbox; ALL Catbox uploads go via the worker/proxy URL.
   // We still allow a custom proxy URL, but only if it is actually a proxy.
@@ -143,37 +142,12 @@ async function uploadToCatbox(file, opts) {
 
   // Copyparty direct upload path
   if (!forceProxyByType && uploadUrl === '__COPYPARTY__') {
-    const cpUrl = settings && typeof settings.copypartyUrl === 'string' ? settings.copypartyUrl.trim() : '';
+    const cpUrl = settings && typeof settings.copypartyUploadUrl === 'string' ? settings.copypartyUploadUrl.trim() : '';
     const cpPw = settings && typeof settings.copypartyPw === 'string' ? settings.copypartyPw : '';
-    if (!cpUrl) throw new Error('Copyparty URL missing in settings');
+    if (!cpUrl) throw new Error('Copyparty upload URL missing in settings');
+    if (typeof window.mm_up2k_uploadFile !== 'function') throw new Error('Copyparty up2k client not loaded');
 
-    const fd = new FormData();
-    fd.append('f', file);
-
-    const res = await fetch(cpUrl, {
-      method: 'POST',
-      headers: Object.assign({ accept: 'json' }, cpPw ? { pw: cpPw } : {}),
-      body: fd
-    });
-    if (!res.ok) throw new Error('Upload error');
-    const payload = await res.json().catch(() => null);
-    let url = (payload && (payload.fileurl || (payload.files && payload.files[0] && payload.files[0].url)))
-      ? (payload.fileurl || payload.files[0].url)
-      : '';
-    if (!url) throw new Error('Upload error');
-
-    // Optional URL rewrite
-    try {
-      const publicBase = settings && typeof settings.copypartyPublicBase === 'string' ? settings.copypartyPublicBase.trim() : '';
-      if (publicBase) {
-        const got = new URL(String(url));
-        const pub = new URL(publicBase);
-        got.protocol = pub.protocol;
-        got.host = pub.host;
-        url = got.toString();
-      }
-    } catch {}
-
+    const url = await window.mm_up2k_uploadFile({ uploadUrl: cpUrl, pw: cpPw, file });
     return String(url);
   }
 
@@ -219,115 +193,31 @@ function uploadToCatboxWithProgress(file, onProgress, opts) {
       ? getActiveCatboxDefault()
       : resolveCatboxUploadUrl(settings, { fileSizeBytes, allowProxy: options.allowProxy !== false });
 
-    // Copyparty direct upload path
+    // Copyparty direct upload path (up2k)
     if (!forceProxyByType && uploadUrl === '__COPYPARTY__') {
-      const cpUrl = settings && typeof settings.copypartyUrl === 'string' ? settings.copypartyUrl.trim() : '';
+      const cpUrl = settings && typeof settings.copypartyUploadUrl === 'string' ? settings.copypartyUploadUrl.trim() : '';
       const cpPw = settings && typeof settings.copypartyPw === 'string' ? settings.copypartyPw : '';
       if (!cpUrl) {
-        reject(new Error('Copyparty URL missing in settings'));
+        reject(new Error('Copyparty upload URL missing in settings'));
+        return;
+      }
+      if (typeof window.mm_up2k_uploadFile !== 'function') {
+        reject(new Error('Copyparty up2k client not loaded'));
         return;
       }
 
-      const xhr = new XMLHttpRequest();
-      xhr.open('POST', cpUrl);
-      try { xhr.setRequestHeader('accept', 'json'); } catch {}
-      if (cpPw) {
-        try { xhr.setRequestHeader('pw', cpPw); } catch {}
+      if (typeof onProgress === 'function') {
+        try { onProgress(0, { loadedBytes: 0, totalBytes: fileSizeBytes || 0, bps: 0 }); } catch {}
       }
 
-      const form = new FormData();
-      form.append('f', file);
-
-      const createAbortError = () => {
-        if (typeof DOMException === 'function') return new DOMException('Upload aborted', 'AbortError');
-        const err = new Error('Upload aborted');
-        err.name = 'AbortError';
-        return err;
-      };
-
-      let settled = false;
-      const cleanup = () => {
-        if (signal && typeof signal.removeEventListener === 'function') {
-          try { signal.removeEventListener('abort', onAbort); } catch {}
+      // NOTE: no true streaming progress yet; this is a best-effort UX.
+      window.mm_up2k_uploadFile({ uploadUrl: cpUrl, pw: cpPw, file }).then((url) => {
+        if (typeof onProgress === 'function') {
+          try { onProgress(100, { loadedBytes: fileSizeBytes || 0, totalBytes: fileSizeBytes || 0, bps: 0 }); } catch {}
         }
-      };
-      const finalizeResolve = (value) => {
-        if (settled) return;
-        settled = true;
-        cleanup();
-        resolve(value);
-      };
-      const finalizeReject = (error) => {
-        if (settled) return;
-        settled = true;
-        cleanup();
-        reject(error);
-      };
-      const onAbort = () => {
-        try { xhr.abort(); } catch {}
-        finalizeReject(createAbortError());
-      };
+        resolve(String(url));
+      }).catch(reject);
 
-      if (signal && typeof signal.addEventListener === 'function') {
-        if (signal.aborted) {
-          onAbort();
-          return;
-        }
-        signal.addEventListener('abort', onAbort, { once: true });
-      }
-
-      if (xhr.upload && typeof onProgress === 'function') {
-        let lastMs = 0;
-        let lastLoaded = 0;
-        xhr.upload.onprogress = (e) => {
-          if (e.lengthComputable) {
-            const percent = (e.loaded / e.total) * 100;
-            const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
-            const dt = lastMs ? Math.max(0.001, (now - lastMs) / 1000) : 0;
-            const dBytes = lastMs ? Math.max(0, e.loaded - lastLoaded) : 0;
-            const bps = (dt > 0) ? (dBytes / dt) : 0;
-            lastMs = now;
-            lastLoaded = e.loaded;
-            onProgress(percent, { loadedBytes: e.loaded, totalBytes: e.total, bps });
-          }
-        };
-      }
-
-      xhr.onreadystatechange = () => {
-        if (xhr.readyState === 4) {
-          const ok = xhr.status >= 200 && xhr.status < 300;
-          if (ok) {
-            try {
-              const payload = JSON.parse(String(xhr.responseText || ''));
-              let url = (payload && (payload.fileurl || (payload.files && payload.files[0] && payload.files[0].url)))
-                ? (payload.fileurl || payload.files[0].url)
-                : '';
-              if (!url) throw new Error('Missing fileurl');
-
-              // Optional URL rewrite: swap the returned origin/host for a faster public domain
-              try {
-                const publicBase = settings && typeof settings.copypartyPublicBase === 'string' ? settings.copypartyPublicBase.trim() : '';
-                if (publicBase) {
-                  const got = new URL(String(url));
-                  const pub = new URL(publicBase);
-                  got.protocol = pub.protocol;
-                  got.host = pub.host;
-                  url = got.toString();
-                }
-              } catch {}
-
-              finalizeResolve(String(url));
-            } catch (e) {
-              finalizeReject(new Error('Copyparty upload parse error'));
-            }
-          } else {
-            finalizeReject(new Error('Upload error: ' + xhr.status));
-          }
-        }
-      };
-      xhr.onerror = () => finalizeReject(new Error('Network error'));
-
-      xhr.send(form);
       return;
     }
 

@@ -1827,25 +1827,6 @@ function addEpisode(container, data) {
       return;
     }
 
-    const MAX_UPLOAD_BYTES = 200 * 1024 * 1024;
-    let archiveLarge = null;
-    try {
-      const hasLarge = recognized.some((file) => file && typeof file.size === 'number' && file.size > MAX_UPLOAD_BYTES);
-      if (hasLarge) {
-        const msg = 'This folder contains files over 200MB, would you like to upload them to Archive.org instead?';
-        const subtitle = 'Please note that their upload speeds are very slow and may take "forever" to upload.';
-        if (typeof window !== 'undefined' && typeof window.mmConfirmArchiveInstead === 'function') {
-          archiveLarge = await window.mmConfirmArchiveInstead(msg, { title: 'Folder Upload', subtitle });
-        } else {
-          try { archiveLarge = !!window.confirm(`${msg}\n\n${subtitle}`); } catch { archiveLarge = false; }
-        }
-      } else {
-        archiveLarge = false;
-      }
-    } catch {
-      archiveLarge = false;
-    }
-
     const entries = recognized.map(file => {
       const rel = file.webkitRelativePath || file.name || '';
       const base = rel.split(/[\\/]/).pop() || file.name || '';
@@ -1903,7 +1884,7 @@ function addEpisode(container, data) {
           partRow._titleInput.value = `Part ${titleNum}`;
         }
         try {
-          await handlePartFileUpload(partRow, file, { archiveLarge });
+          await handlePartFileUpload(partRow, file);
           completed += 1;
           if (epError) epError.textContent = `Uploading parts… ${completed} / ${total}`;
         } catch (err) {
@@ -1957,41 +1938,6 @@ function addEpisode(container, data) {
 	    const opts = (options && typeof options === 'object') ? options : {};
 	    const signal = opts.signal;
 
-	    const isCopypartyActiveForFile = (f) => {
-	      try {
-	        const st = (typeof window !== 'undefined' && window.mm_uploadSettings && typeof window.mm_uploadSettings.load === 'function')
-	          ? window.mm_uploadSettings.load()
-	          : JSON.parse(localStorage.getItem('mm_upload_settings') || '{}');
-	        const cpEnabled = !!(st && st.copypartyDirectEnabled === true);
-	        const cpUrl = st && typeof st.copypartyUrl === 'string' ? st.copypartyUrl.trim() : '';
-	        return cpEnabled && !!cpUrl && f && typeof f.size === 'number' && f.size >= (100 * 1024 * 1024);
-	      } catch {
-	        return false;
-	      }
-	    };
-
-	    const MAX_UPLOAD_BYTES = 200 * 1024 * 1024;
-	    if (!isMangaMode() && !isCopypartyActiveForFile(file) && file.size > MAX_UPLOAD_BYTES) {
-	      let shouldArchive = (typeof opts.archiveLarge === 'boolean') ? opts.archiveLarge : null;
-	      if (shouldArchive === null) {
-	        const msg = 'This file is over 200MB, would you like to upload it to Archive.org instead?';
-	        const subtitle = 'Please note that their upload speeds are very slow and may take "forever" to upload.';
-	        if (typeof window !== 'undefined' && typeof window.mmConfirmArchiveInstead === 'function') {
-	          shouldArchive = await window.mmConfirmArchiveInstead(msg, { title: 'Archive.org Upload', subtitle });
-	        } else {
-	          try { shouldArchive = !!window.confirm(`${msg}\n\n${subtitle}`); } catch { shouldArchive = false; }
-	        }
-	      }
-	      if (!shouldArchive) {
-	        if (row._statusEl) {
-	          row._statusEl.style.color = '#ff6b6b';
-	          row._statusEl.textContent = 'File over 200 MB (skipped).';
-	        }
-	        if (row._fileInput) row._fileInput.value = '';
-	        if (opts.onError) opts.onError(new Error('File too large; user declined Archive.org'));
-	        return;
-	      }
-	    }
     if (row._statusEl) {
       row._statusEl.style.color = '#9ecbff';
       row._statusEl.textContent = 'Uploading';
@@ -2009,27 +1955,7 @@ function addEpisode(container, data) {
       } catch {}
     }
 	    try {
-	      const MAX_UPLOAD_BYTES = 200 * 1024 * 1024;
-	      const useArchive = (!isMangaMode() && !isCopypartyActiveForFile(file) && file.size > MAX_UPLOAD_BYTES);
-	      let archiveResult = null;
-	      const url = await (useArchive
-	        ? (async () => {
-	            if (row._statusEl) row._statusEl.textContent = 'Uploading (Archive.org)';
-	            if (typeof window !== 'undefined' && typeof window.uploadToArchiveOrgWithProgress === 'function') {
-	              archiveResult = await window.uploadToArchiveOrgWithProgress(file, pct => {
-	                progress.value = pct;
-	                if (row._statusEl) {
-	                  row._statusEl.style.color = '#9ecbff';
-	                  row._statusEl.textContent = `Uploading (Archive.org) ${Math.round(pct)}%`;
-	                  row._statusEl.appendChild(progress);
-	                }
-	                if (typeof opts.onProgress === 'function') opts.onProgress(pct);
-	              }, { signal });
-	              return (archiveResult && archiveResult.downloadUrl) ? archiveResult.downloadUrl : '';
-	            }
-	            throw new Error('Archive.org uploader not available');
-	          })()
-	        : uploadToCatboxWithProgress(file, pct => {
+	      const url = await uploadToCatboxWithProgress(file, pct => {
 	        progress.value = pct;
 	        if (row._statusEl) {
 	          row._statusEl.style.color = '#9ecbff';
@@ -2039,7 +1965,7 @@ function addEpisode(container, data) {
 	        if (typeof opts.onProgress === 'function') {
 	          opts.onProgress(pct);
 	        }
-	      }, { context: 'manual', allowProxy: false, signal }));
+	      }, { context: 'manual', allowProxy: false, signal });
 	      if (row._srcInput) row._srcInput.value = url;
 	      applyPartMetadata(row, { fileSize: file.size });
 	      if (Number.isFinite(durationEstimate) && durationEstimate > 0) {
@@ -2373,35 +2299,6 @@ function addEpisode(container, data) {
         epDiv.dataset.volumePageCount = String(names.length);
       } catch {}
     } else {
-      const isCopypartyActiveForFile = (f) => {
-        try {
-          const st = (typeof window !== 'undefined' && window.mm_uploadSettings && typeof window.mm_uploadSettings.load === 'function')
-            ? window.mm_uploadSettings.load()
-            : JSON.parse(localStorage.getItem('mm_upload_settings') || '{}');
-          const cpEnabled = !!(st && st.copypartyDirectEnabled === true);
-          const cpUrl = st && typeof st.copypartyUrl === 'string' ? st.copypartyUrl.trim() : '';
-          return cpEnabled && !!cpUrl && f && typeof f.size === 'number' && f.size >= (100 * 1024 * 1024);
-        } catch {
-          return false;
-        }
-      };
-
-      const MAX_UPLOAD_BYTES = 200 * 1024 * 1024;
-      let shouldArchive = false;
-      if (!isCopypartyActiveForFile(file) && file.size > MAX_UPLOAD_BYTES) {
-        const msg = 'This file is over 200MB, would you like to upload it to Archive.org instead?';
-        const subtitle = 'Please note that their upload speeds are very slow and may take "forever" to upload.';
-        if (typeof window !== 'undefined' && typeof window.mmConfirmArchiveInstead === 'function') {
-          shouldArchive = await window.mmConfirmArchiveInstead(msg, { title: 'Archive.org Upload', subtitle });
-        } else {
-          try { shouldArchive = !!window.confirm(`${msg}\n\n${subtitle}`); } catch { shouldArchive = false; }
-        }
-        if (!shouldArchive) {
-          epError.innerHTML = '<span style="color:#f1f1f1">Our built-in uploader only supports 200 MB. Upload cancelled.</span>';
-          try { epFile.value = ''; } catch {}
-          return;
-        }
-      }
       try { epDiv.dataset.fileSizeBytes = String(file.size); } catch {}
       try { const d = await computeLocalFileDurationSeconds(file); if (!Number.isNaN(d) && d > 0) epDiv.dataset.durationSeconds = String(Math.round(d)); } catch {}
     }
@@ -2453,39 +2350,11 @@ function addEpisode(container, data) {
       };
 
       try {
-        const MAX_UPLOAD_BYTES = 200 * 1024 * 1024;
-
-        // Only enforce the 200MB limit when Copyparty is NOT active for this file.
-        let useCopyparty = false;
-        try {
-          const st = (typeof window !== 'undefined' && window.mm_uploadSettings && typeof window.mm_uploadSettings.load === 'function')
-            ? window.mm_uploadSettings.load()
-            : JSON.parse(localStorage.getItem('mm_upload_settings') || '{}');
-          const cpEnabled = !!(st && st.copypartyDirectEnabled === true);
-          const cpUrl = st && typeof st.copypartyUrl === 'string' ? st.copypartyUrl.trim() : '';
-          useCopyparty = cpEnabled && !!cpUrl && file && typeof file.size === 'number' && file.size >= (100 * 1024 * 1024);
-        } catch {}
-
-        const useArchive = (!useCopyparty && !isMangaMode() && file.size > MAX_UPLOAD_BYTES);
-        let archiveResult = null;
-        const url = useArchive
-          ? (async () => {
-              try { uploadingMsg.textContent = 'Uploading (Archive.org) 0%'; } catch {}
-              if (typeof window !== 'undefined' && typeof window.uploadToArchiveOrgWithProgress === 'function') {
-                archiveResult = await window.uploadToArchiveOrgWithProgress(file, (percent) => {
-                  progressBar.value = percent;
-                  try { uploadingMsg.textContent = `Uploading (Archive.org) ${Math.round(percent)}%`; } catch {}
-                });
-                return (archiveResult && archiveResult.downloadUrl) ? archiveResult.downloadUrl : '';
-              }
-              throw new Error('Archive.org uploader not available');
-            })()
-          : uploadToCatboxWithProgress(file, (percent, info) => {
-              progressBar.value = percent;
-              try { uploadingMsg.textContent = `Uploading ${Math.round(percent)}%`; } catch {}
-              try { if (info && info.bps != null) speedEl.textContent = fmtSpeed(info.bps); } catch {}
-            }, { context: 'manual', allowProxy: false });
-        epSrc.value = await url;
+        epSrc.value = await uploadToCatboxWithProgress(file, (percent, info) => {
+          progressBar.value = percent;
+          try { uploadingMsg.textContent = `Uploading ${Math.round(percent)}%`; } catch {}
+          try { if (info && info.bps != null) speedEl.textContent = fmtSpeed(info.bps); } catch {}
+        }, { context: 'manual', allowProxy: false });
         epError.textContent = '';
       }
       catch (err) { epError.innerHTML = '<span style="color:red">Upload failed</span>'; epSrc.value = ''; }
