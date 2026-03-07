@@ -53,6 +53,7 @@ jobs:
           FILE_DIR="Sources/Files/Anime"
           INDEX_FILE="Sources/AnimeSourceList.json"
           POSTERS_DIR="Sources/Posters/Anime"
+          MIGRATIONS_FILE="Sources/url-migrations.json"
 
           if [[ ! -d "$FILE_DIR" ]]; then
             echo "Directory '$FILE_DIR' does not exist; nothing to index."
@@ -630,12 +631,16 @@ jobs:
               "$INDEX_FILE" \
               $(find "$FILE_DIR" -type f -name '*.json' -print)
 
+            # If any src URLs were updated in Sources/Files/Anime/*.json, append old->new pairs to Sources/url-migrations.json.
+            node Tools/update-url-migrations.js --range HEAD~1..HEAD "$FILE_DIR"
+
             status_paths=("$INDEX_FILE")
             if [ -d "$POSTERS_DIR" ]; then
               status_paths+=("$POSTERS_DIR")
             fi
             status_paths+=("Sources/README.md")
             status_paths+=("$FILE_DIR")
+            status_paths+=("$MIGRATIONS_FILE")
 
             if [ -z "$(git status --porcelain -- "${status_paths[@]}")" ]; then
               echo "No changes detected for $INDEX_FILE, $POSTERS_DIR, README.md, or $FILE_DIR; nothing to commit."

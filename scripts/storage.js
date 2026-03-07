@@ -1772,7 +1772,20 @@
 // --- Watch progress / watchtime migration (old urls -> new urls)
 // Home page load: automatically migrates localStorage keys based on Sources/url-migrations.json.
 (function () {
-  const MIGRATIONS_URL = './Sources/url-migrations.json';
+  const MIGRATIONS_URL = (() => {
+    try {
+      const src = document.currentScript && document.currentScript.src ? String(document.currentScript.src) : '';
+      if (src) return new URL('../Sources/url-migrations.json', src).href;
+    } catch {}
+
+    try {
+      const script = document.querySelector('script[src$="scripts/storage.js"],script[src$="/scripts/storage.js"],script[src$="storage.js"]');
+      const src = script && script.getAttribute('src') ? String(script.getAttribute('src')) : '';
+      if (src) return new URL('../Sources/url-migrations.json', new URL(src, document.baseURI).href).href;
+    } catch {}
+
+    return './Sources/url-migrations.json';
+  })();
 
   function relatedKeys(k) {
     return [k, `${k}:duration`, `${k}:cbzPage`, `${k}:cbzPages`];

@@ -400,9 +400,15 @@ jobs:
             "Sources/MangaSourceList.json" \
             $(find "Sources/Files/Manga" -type f -name '*.json' -print)
 
+      - name: Update Sources/url-migrations.json (src URL changes)
+        shell: bash
+        run: |
+          set -euo pipefail
+          node Tools/update-url-migrations.js --range HEAD~1..HEAD "Sources/Files/Manga"
+
       - name: Commit and push changes
         uses: stefanzweifel/git-auto-commit-action@b863ae1933cb653a53c021fe36dbb774e1fb9403 # v5
         with:
           branch: ${{ github.ref_name }}
           commit_message: 'chore: update Sources/MangaSourceList.json, manga posters, and README.md'
-          file_pattern: 'Sources/MangaSourceList.json Sources/Posters/Manga/** Sources/README.md Sources/Files/Manga/**'
+          file_pattern: 'Sources/MangaSourceList.json Sources/Posters/Manga/** Sources/README.md Sources/Files/Manga/** Sources/url-migrations.json'
