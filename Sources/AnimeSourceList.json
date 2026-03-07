@@ -537,18 +537,6 @@
       "LatestTime": "2025-09-28T01:18:29.309Z"
     },
     {
-      "file": "Spy_x_Family.json",
-      "path": "./Files/Anime/Spy_x_Family.json",
-      "title": "Spy 𝙭 Family",
-      "poster": "./Posters/Anime/Spy_𝙭_Family.webp",
-      "categoryCount": 3,
-      "episodeCount": 49,
-      "itemCount": 49,
-      "totalFileSizeBytes": 7537692559,
-      "totalDurationSeconds": 70380,
-      "LatestTime": "2026-03-07T05:10:13.635Z"
-    },
-    {
       "file": "Spy_X_Family.json",
       "path": "./Files/Anime/Spy_X_Family.json",
       "title": "Spy 𝙭 Family",

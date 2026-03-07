@@ -58,7 +58,6 @@ This directory contains all available media sources.
 - [So I'm a Spider, So What?](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FSo_I_M_A_Spider_So_What.json)
 - [Solo Leveling](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FSolo_Leveling.json)
 - [Spy 𝙭 Family](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FSpy_X_Family.json)
-- [Spy 𝙭 Family](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FSpy_x_Family.json)
 - [The 100 Girlfriends Who Really, Really, Really, Really, Really Love You](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FHyakano.json)
 - [The Dreaming Boy is a Realist](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FThe_Dreaming_Boy_is_a_Realist.json)
 - [The Ice Guy and His Cool Female Colleague](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FIceGuy.json)
