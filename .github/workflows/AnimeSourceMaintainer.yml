@@ -635,8 +635,8 @@ jobs:
               "$INDEX_FILE" \
               "${json_files[@]}"
 
-            # If any src URLs were updated in Sources/Files/Anime/*.json, append old->new pairs to Sources/url-migrations.json.
-            node Tools/update-url-migrations.js --range HEAD..WORKTREE "$FILE_DIR"
+            # Scan recent history for src URL changes and append old->new pairs to Sources/url-migrations.json.
+            node Tools/update-url-migrations.js --commit-depth 25 "$FILE_DIR"
 
             status_paths=("$INDEX_FILE")
             if [ -d "$POSTERS_DIR" ]; then

@@ -408,7 +408,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          node Tools/update-url-migrations.js --range HEAD..WORKTREE "Sources/Files/Manga"
+          node Tools/update-url-migrations.js --commit-depth 25 "Sources/Files/Manga"
 
       - name: Commit and push changes
         uses: stefanzweifel/git-auto-commit-action@b863ae1933cb653a53c021fe36dbb774e1fb9403 # v5

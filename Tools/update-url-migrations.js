@@ -7,16 +7,22 @@ const { execSync } = require('child_process');
 
 function parseArgs(argv) {
   const dirs = [];
-  let range = 'HEAD..WORKTREE';
+  let range = '';
+  let commitDepth = 25;
   let migrationsFile = 'Sources/url-migrations.json';
 
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--help' || a === '-h') {
-      return { help: true, dirs, range, migrationsFile };
+      return { help: true, dirs, range, commitDepth, migrationsFile };
     }
     if (a === '--range') {
       range = String(argv[i + 1] || '').trim();
+      i += 1;
+      continue;
+    }
+    if (a === '--commit-depth') {
+      commitDepth = Math.max(1, Number.parseInt(String(argv[i + 1] || '25'), 10) || 25);
       i += 1;
       continue;
     }
@@ -29,7 +35,7 @@ function parseArgs(argv) {
     dirs.push(a);
   }
 
-  return { help: false, dirs, range, migrationsFile };
+  return { help: false, dirs, range, commitDepth, migrationsFile };
 }
 
 function usage() {
@@ -37,11 +43,12 @@ function usage() {
     'update-url-migrations.js',
     '',
     'Usage:',
-    '  node Tools/update-url-migrations.js [--range A..B] [--migrations-file path] <dir> [dir...]',
+    '  node Tools/update-url-migrations.js [--commit-depth N] [--range A..B] [--migrations-file path] <dir> [dir...]',
     '',
     'Examples:',
     '  node Tools/update-url-migrations.js Sources/Files/Anime',
-    '  node Tools/update-url-migrations.js --range HEAD..WORKTREE Sources/Files/Anime Sources/Files/Manga',
+    '  node Tools/update-url-migrations.js --commit-depth 25 Sources/Files/Anime Sources/Files/Manga',
+    '  node Tools/update-url-migrations.js --range HEAD~1..HEAD Sources/Files/Anime',
     ''
   ].join('\n');
 }
@@ -178,45 +185,39 @@ function stableJsonStringify(obj) {
   return JSON.stringify(obj, null, 2) + '\n';
 }
 
-function main() {
-  const { help, dirs, range, migrationsFile } = parseArgs(process.argv.slice(2));
-  if (help || !dirs.length) {
-    process.stdout.write(usage());
-    process.exit(help ? 0 : 2);
-  }
+function addMappingsFromJsons(filePath, oldJson, newJson, existingPairs, mappings, newlyAdded) {
+  if (!oldJson || !newJson) return;
 
-  const normalizedDirs = dirs
-    .map(d => String(d || '').trim().replace(/\\/g, '/').replace(/\/+$/, ''))
-    .filter(Boolean);
+  const oldMap = collectSrcMap(oldJson);
+  const newMap = collectSrcMap(newJson);
 
-  const m = String(range || '').trim().match(/^(.+?)(?:\.{2,3})(.+)$/);
-  if (!m) {
-    console.error(`[url-migrations] Invalid --range "${range}". Expected "A..B".`);
-    process.exit(2);
-  }
-  const fromRef = m[1].trim();
-  const toRef = m[2].trim();
-  const useWorktree = /^(WORKTREE|WORKING_TREE|WORKINGTREE)$/i.test(toRef);
+  for (const [key, oldUrl] of oldMap.entries()) {
+    const newUrl = newMap.get(key);
+    if (!newUrl) continue;
+    if (oldUrl === newUrl) continue;
+    const oldTrim = String(oldUrl || '').trim();
+    const newTrim = String(newUrl || '').trim();
+    if (!oldTrim || !newTrim || oldTrim === newTrim) continue;
 
-  if (!useWorktree && !gitRefExists(toRef)) {
-    console.error(`[url-migrations] Git ref not found: ${toRef}`);
-    process.exit(2);
-  }
-  if (!gitRefExists(fromRef)) {
-    console.log(`[url-migrations] Git ref not found (${fromRef}); skipping (likely initial commit).`);
-    return;
-  }
+    const pairKey = `${oldTrim} -> ${newTrim}`;
+    if (existingPairs.has(pairKey)) continue;
 
+    existingPairs.add(pairKey);
+    const record = { old: oldTrim, new: newTrim };
+    mappings.push(record);
+    newlyAdded.push({ filePath, key, old: oldTrim, new: newTrim });
+  }
+}
+
+function listChangedJsonFilesBetween(fromRef, toRef, normalizedDirs) {
   const changedJsonFiles = new Set();
+
   for (const dir of normalizedDirs) {
     let diffRaw = '';
     try {
-      diffRaw = useWorktree
-        ? execGit(`git diff --name-only ${JSON.stringify(fromRef)} -- ${JSON.stringify(dir)}`)
-        : execGit(`git diff --name-only ${JSON.stringify(fromRef)} ${JSON.stringify(toRef)} -- ${JSON.stringify(dir)}`);
+      diffRaw = execGit(`git diff --name-only ${JSON.stringify(fromRef)} ${JSON.stringify(toRef)} -- ${JSON.stringify(dir)}`);
     } catch {
-      console.log('[url-migrations] Could not compute git diff; skipping.');
-      return;
+      continue;
     }
 
     for (const line of diffRaw.split('\n')) {
@@ -228,10 +229,51 @@ function main() {
     }
   }
 
-  if (!changedJsonFiles.size) {
-    console.log('[url-migrations] No changed JSON files in', normalizedDirs.join(', '));
-    return;
+  return changedJsonFiles;
+}
+
+function collectCommitPairs(normalizedDirs, commitDepth) {
+  const pathArgs = normalizedDirs.map(dir => JSON.stringify(dir)).join(' ');
+  let commitsRaw = '';
+  try {
+    commitsRaw = execGit(`git rev-list --first-parent --max-count=${commitDepth} HEAD -- ${pathArgs}`);
+  } catch {
+    return [];
   }
+
+  const commits = commitsRaw
+    .split('\n')
+    .map(line => line.trim())
+    .filter(Boolean)
+    .reverse();
+
+  const pairs = [];
+  for (const commit of commits) {
+    let parent = '';
+    try {
+      const parentLine = execGit(`git rev-list --parents -n 1 ${JSON.stringify(commit)}`);
+      const parts = parentLine.split(/\s+/).filter(Boolean);
+      parent = parts[1] || '';
+    } catch {
+      parent = '';
+    }
+    if (!parent) continue;
+    pairs.push({ fromRef: parent, toRef: commit });
+  }
+
+  return pairs;
+}
+
+function main() {
+  const { help, dirs, range, commitDepth, migrationsFile } = parseArgs(process.argv.slice(2));
+  if (help || !dirs.length) {
+    process.stdout.write(usage());
+    process.exit(help ? 0 : 2);
+  }
+
+  const normalizedDirs = dirs
+    .map(d => String(d || '').trim().replace(/\\/g, '/').replace(/\/+$/, ''))
+    .filter(Boolean);
 
   const migrationsPath = migrationsFile || 'Sources/url-migrations.json';
   const payload = loadMigrationsPayload(migrationsPath);
@@ -243,30 +285,60 @@ function main() {
   );
 
   const newlyAdded = [];
+  if (range) {
+    const m = String(range || '').trim().match(/^(.+?)(?:\.{2,3})(.+)$/);
+    if (!m) {
+      console.error(`[url-migrations] Invalid --range "${range}". Expected "A..B".`);
+      process.exit(2);
+    }
 
-  for (const filePath of changedJsonFiles) {
-    const oldJson = loadJsonFromGit(fromRef, filePath);
-    const newJson = loadJsonFromDisk(filePath);
-    if (!oldJson || !newJson) continue;
+    const fromRef = m[1].trim();
+    const toRef = m[2].trim();
+    if (!gitRefExists(fromRef) || !gitRefExists(toRef)) {
+      console.log('[url-migrations] Range refs not found; skipping.');
+      return;
+    }
 
-    const oldMap = collectSrcMap(oldJson);
-    const newMap = collectSrcMap(newJson);
+    const changedJsonFiles = listChangedJsonFilesBetween(fromRef, toRef, normalizedDirs);
+    if (!changedJsonFiles.size) {
+      console.log('[url-migrations] No changed JSON files in', normalizedDirs.join(', '));
+      return;
+    }
 
-    for (const [key, oldUrl] of oldMap.entries()) {
-      const newUrl = newMap.get(key);
-      if (!newUrl) continue;
-      if (oldUrl === newUrl) continue;
-      const oldTrim = String(oldUrl || '').trim();
-      const newTrim = String(newUrl || '').trim();
-      if (!oldTrim || !newTrim || oldTrim === newTrim) continue;
+    for (const filePath of changedJsonFiles) {
+      addMappingsFromJsons(
+        filePath,
+        loadJsonFromGit(fromRef, filePath),
+        loadJsonFromGit(toRef, filePath),
+        existingPairs,
+        mappings,
+        newlyAdded
+      );
+    }
+  } else {
+    const commitPairs = collectCommitPairs(normalizedDirs, commitDepth);
+    if (!commitPairs.length) {
+      console.log('[url-migrations] No recent commits to scan in', normalizedDirs.join(', '));
+      return;
+    }
 
-      const pairKey = `${oldTrim} -> ${newTrim}`;
-      if (existingPairs.has(pairKey)) continue;
+    for (const { fromRef, toRef } of commitPairs) {
+      const changedJsonFiles = listChangedJsonFilesBetween(fromRef, toRef, normalizedDirs);
+      for (const filePath of changedJsonFiles) {
+        addMappingsFromJsons(
+          filePath,
+          loadJsonFromGit(fromRef, filePath),
+          loadJsonFromGit(toRef, filePath),
+          existingPairs,
+          mappings,
+          newlyAdded
+        );
+      }
+    }
 
-      existingPairs.add(pairKey);
-      const record = { old: oldTrim, new: newTrim };
-      mappings.push(record);
-      newlyAdded.push({ filePath, key, old: oldTrim, new: newTrim });
+    if (!newlyAdded.length) {
+      console.log(`[url-migrations] No src URL changes detected in last ${commitDepth} commits.`);
+      return;
     }
   }
 
