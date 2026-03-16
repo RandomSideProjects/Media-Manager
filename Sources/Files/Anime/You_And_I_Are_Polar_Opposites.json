@@ -1,61 +1,68 @@
 {
   "title": "You And I Are Polar Opposites",
-  "Image": "./Sources/Posters/Anime/You_And_I_Are_Polar_Opposites.webp",
-  "LatestTime": "2026-03-04T14:21:13.478Z",
+  "Image": "https://i.animepahe.si/posters/2c1068e3f59d77254be3c75ff4131567ea1e05c02d27e81154e9c2db4445e53a.jpg",
+  "LatestTime": "2026-03-16T02:14:40.800Z",
   "categories": [
     {
       "category": "Season 1",
       "episodes": [
         {
-          "title": "Episode 1",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/You_And_I_Are_Polar_Opposites.json/You%20And%20I%20Are%20Polar%20Opposites/S01_E01__ABS0001.mp4",
+          "title": "Episode 01",
+          "src": "https://cpr.xpbliss.fyi/pub/MM/S01E01_Episode_1.mp4",
+          "fileSizeBytes": 145972049,
           "durationSeconds": 1447
         },
         {
-          "title": "Episode 2",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/You_And_I_Are_Polar_Opposites.json/You%20And%20I%20Are%20Polar%20Opposites/S01_E02__ABS0002.mp4",
+          "title": "Episode 02",
+          "src": "https://cpr.xpbliss.fyi/pub/MM/S01E02_Episode_2.mp4",
           "fileSizeBytes": 154769363,
           "durationSeconds": 1447
         },
         {
           "title": "Episode 3",
-          "src": "https://files.catbox.moe/kbkx1b.mp4",
+          "src": "https://cpr.xpbliss.fyi/pub/MM/S01E03_Episode_3.mp4",
           "fileSizeBytes": 130896008,
           "durationSeconds": 1447
         },
         {
           "title": "Episode 4",
-          "src": "https://files.catbox.moe/qumzjc.mp4",
+          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/S01E04_Episode_4.mp4",
           "fileSizeBytes": 140760696,
           "durationSeconds": 1447
         },
         {
           "title": "Episode 5",
-          "src": "https://files.catbox.moe/jc1vcj.mp4",
+          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/S01E05_Episode_5.mp4",
           "fileSizeBytes": 123498957,
           "durationSeconds": 1447
         },
         {
           "title": "Episode 6",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/AnimePahe_Seihantai_na_Kimi_to_Boku_Eng_Dub_-_06_1080p_Yameii.mp4",
+          "src": "https://cpr.xpbliss.fyi/pub/MM/S01E06_Episode_6.mp4",
           "fileSizeBytes": 122517548,
           "durationSeconds": 1447
         },
         {
           "title": "Episode 7",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/AnimePahe_Seihantai_na_Kimi_to_Boku_Eng_Dub_-_07_1080p_Yameii.mp4",
+          "src": "https://cpr.xpbliss.fyi/pub/MM/S01E07_Episode_7.mp4",
           "fileSizeBytes": 133353225,
           "durationSeconds": 1432
         },
         {
           "title": "Episode 8",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/AnimePahe_Seihantai_na_Kimi_to_Boku_Eng_Dub_-_08_1080p_Yameii.mp4",
-          "fileSizeBytes": 131373860,
+          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/S01E08_Episode_8.mp4-1773626967.573806-_VQO1ALa.mp4",
+          "fileSizeBytes": 131373861,
+          "durationSeconds": 1432
+        },
+        {
+          "title": "Episode 9",
+          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/S01E09_Episode_9.mp4",
+          "fileSizeBytes": 122053340,
           "durationSeconds": 1432
         }
       ]
     }
   ],
-  "totalFileSizeBytes": 937169657,
-  "totalDurationSeconds": 11546
+  "totalFileSizeBytes": 1205195047,
+  "totalDurationSeconds": 12978
 }
