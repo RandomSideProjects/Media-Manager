@@ -717,21 +717,29 @@
             rowCtx.setStatus((attempt === 1)
               ? 'Uploading'
               : `Retry ${attempt} of ${maxAttempts}`, { color: null });
-            rowCtx.setProgress(0, { state: 'active', totalBytes });
-            try {
-              const fileSizeBytes = (file && typeof file.size === 'number' && file.size >= 0) ? file.size : null;
-              const url = await uploadToCatboxWithProgress(
-                file,
-                pct => {
-                  const loaded = Number.isFinite(fileSizeBytes) ? (pct / 100) * fileSizeBytes : undefined;
-                  rowCtx.setProgress(pct, { loadedBytes: loaded });
-                },
-                { context: 'batch', signal: uploadAbortController.signal, allowProxy: false }
-              );
-              if (epSrcInput) epSrcInput.value = url;
-              if (epError) epError.textContent = '';
-              rowCtx.setStatus('Done', { color: '#6ec1e4' });
-              rowCtx.setProgress(100, { state: 'complete', loadedBytes: fileSizeBytes });
+	            rowCtx.setProgress(0, { state: 'active', totalBytes });
+	            try {
+	              const fileSizeBytes = (file && typeof file.size === 'number' && file.size >= 0) ? file.size : null;
+              const categoryTitle = (() => {
+                try {
+                  const input = catDiv && typeof catDiv.querySelector === 'function'
+                    ? catDiv.querySelector('.category-header input[type="text"]')
+                    : null;
+                  return input && typeof input.value === 'string' ? input.value : '';
+                } catch { return ''; }
+              })();
+	              const url = await uploadToCatboxWithProgress(
+	                file,
+	                pct => {
+	                  const loaded = Number.isFinite(fileSizeBytes) ? (pct / 100) * fileSizeBytes : undefined;
+	                  rowCtx.setProgress(pct, { loadedBytes: loaded });
+	                },
+	                { context: 'batch', signal: uploadAbortController.signal, allowProxy: false, creatorItem: { categoryTitle, itemIndex: num || 1, sourceTitle: title } }
+	              );
+	              if (epSrcInput) epSrcInput.value = url;
+	              if (epError) epError.textContent = '';
+	              rowCtx.setStatus('Done', { color: '#6ec1e4' });
+	              rowCtx.setProgress(100, { state: 'complete', loadedBytes: fileSizeBytes });
               completedCount++;
 	              folderUploadSummary.textContent = `${completedCount} / ${plannedTotal} completed`;
               return;
@@ -941,29 +949,37 @@
             rowCtx.setStatus((attempt === 1)
               ? 'Uploading'
               : `Retry ${attempt} of ${maxAttempts}`, { color: null });
-            rowCtx.setProgress(0, { state: 'active', totalBytes: fileSizeBytes });
-            try {
-              if (isManga() && fileForUpload && /\.cbz$/i.test(fileForUpload.name || '')) {
-                try {
-                  const ab = await fileForUpload.arrayBuffer();
+	            rowCtx.setProgress(0, { state: 'active', totalBytes: fileSizeBytes });
+	            try {
+	              if (isManga() && fileForUpload && /\.cbz$/i.test(fileForUpload.name || '')) {
+	                try {
+	                  const ab = await fileForUpload.arrayBuffer();
                   const zip = await JSZip.loadAsync(ab);
                   const names = Object.keys(zip.files).filter((n) => /\.(jpe?g|png|gif|webp|bmp)$/i.test(n));
                   epDiv.dataset.VolumePageCount = String(names.length);
-                  epDiv.dataset.volumePageCount = String(names.length);
-                } catch {}
-              }
-              const url = await uploadToCatboxWithProgress(
-                fileForUpload,
-                (pct) => {
-                  const loaded = Number.isFinite(fileSizeBytes) ? (pct / 100) * fileSizeBytes : undefined;
-                  rowCtx.setProgress(pct, { loadedBytes: loaded });
-                },
-                { context: 'batch', signal: uploadAbortController.signal, allowProxy: false }
-              );
-              if (epSrcInput) epSrcInput.value = url;
-              if (epError) epError.textContent = '';
-              rowCtx.setStatus('Done', { color: '#6ec1e4' });
-              rowCtx.setProgress(100, { state: 'complete', loadedBytes: fileSizeBytes });
+	                  epDiv.dataset.volumePageCount = String(names.length);
+	                } catch {}
+	              }
+              const categoryTitle = (() => {
+                try {
+                  const input = catDiv && typeof catDiv.querySelector === 'function'
+                    ? catDiv.querySelector('.category-header input[type="text"]')
+                    : null;
+                  return input && typeof input.value === 'string' ? input.value : '';
+                } catch { return ''; }
+              })();
+	              const url = await uploadToCatboxWithProgress(
+	                fileForUpload,
+	                (pct) => {
+	                  const loaded = Number.isFinite(fileSizeBytes) ? (pct / 100) * fileSizeBytes : undefined;
+	                  rowCtx.setProgress(pct, { loadedBytes: loaded });
+	                },
+	                { context: 'batch', signal: uploadAbortController.signal, allowProxy: false, creatorItem: { categoryTitle, itemIndex: rawNum || 1, sourceTitle: title } }
+	              );
+	              if (epSrcInput) epSrcInput.value = url;
+	              if (epError) epError.textContent = '';
+	              rowCtx.setStatus('Done', { color: '#6ec1e4' });
+	              rowCtx.setProgress(100, { state: 'complete', loadedBytes: fileSizeBytes });
               completedCount++;
 	              folderUploadSummary.textContent = `${completedCount} / ${plannedTotal} completed`;
               return;

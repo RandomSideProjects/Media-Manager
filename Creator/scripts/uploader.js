@@ -55,6 +55,111 @@ if (typeof window !== 'undefined') {
   window.mm_normalizeCatboxUrl = normalizeCatboxUrl;
 }
 
+function pad2(value) {
+  const n = Math.floor(Number(value));
+  if (!Number.isFinite(n) || n < 0) return '00';
+  return String(n).padStart(2, '0');
+}
+
+function parseSeasonNumber(categoryTitle) {
+  const raw = (typeof categoryTitle === 'string') ? categoryTitle.trim() : '';
+  if (!raw) return null;
+  const match = raw.match(/^season\s*#?\s*(\d{1,3})\s*$/i);
+  if (!match) return null;
+  const n = parseInt(match[1], 10);
+  if (!Number.isFinite(n) || n <= 0) return null;
+  return n;
+}
+
+function sanitizeFilenameSegment(value, { fallback = 'Item', maxLen = 80 } = {}) {
+  const base = (typeof value === 'string') ? value : String(value || '');
+  const normalized = typeof base.normalize === 'function' ? base.normalize('NFKD') : base;
+  const filtered = normalized
+    .replace(/[\u0000-\u001f\u007f]/g, ' ')
+    .replace(/[\\/:*?"<>|]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  const safe = filtered.replace(/[^A-Za-z0-9 _.-]+/g, '').trim();
+  const collapsed = safe.replace(/\s+/g, '_').replace(/_+/g, '_').replace(/^_+|_+$/g, '');
+  const finalValue = collapsed || fallback;
+  return finalValue.length > maxLen ? finalValue.slice(0, maxLen) : finalValue;
+}
+
+function buildCreatorItemFilenameBase({ categoryTitle, itemIndex, sourceTitle } = {}) {
+  const season = parseSeasonNumber(categoryTitle);
+  const idx = Math.max(1, Math.floor(Number(itemIndex) || 1));
+  const indexPart = season ? `S${pad2(season)}E${pad2(idx)}` : pad2(idx);
+  const titlePart = sanitizeFilenameSegment(sourceTitle, { fallback: 'Item' });
+  return `${indexPart}_${titlePart}`;
+}
+
+function randomUploadBase(len = 10) {
+  try {
+    if (typeof crypto !== 'undefined' && crypto && typeof crypto.randomUUID === 'function') {
+      return crypto.randomUUID().replace(/-/g, '').slice(0, Math.max(8, len));
+    }
+  } catch {}
+  try {
+    if (typeof crypto !== 'undefined' && crypto && typeof crypto.getRandomValues === 'function') {
+      const bytes = new Uint8Array(Math.max(8, Math.ceil(len / 2)));
+      crypto.getRandomValues(bytes);
+      return Array.from(bytes).map((b) => b.toString(16).padStart(2, '0')).join('').slice(0, len);
+    }
+  } catch {}
+  return Math.random().toString(16).slice(2, 2 + len);
+}
+
+function inferExtensionFromFileName(name) {
+  const raw = (typeof name === 'string') ? name : '';
+  const idx = raw.lastIndexOf('.');
+  if (idx <= 0) return '';
+  const ext = raw.slice(idx);
+  if (!/^\.[a-z0-9]{1,8}$/i.test(ext)) return '';
+  return ext;
+}
+
+function withUploadFilename(file, opts) {
+  const options = (opts && typeof opts === 'object') ? opts : {};
+  if (!(file instanceof File)) return file;
+
+  const ext = inferExtensionFromFileName(file.name);
+  const explicitFilenameRaw = (typeof options.filename === 'string' ? options.filename : (typeof options.fileName === 'string' ? options.fileName : '')).trim();
+  const filenameBaseRaw = typeof options.filenameBase === 'string' ? options.filenameBase.trim() : '';
+  const creatorItem = options && typeof options.creatorItem === 'object' ? options.creatorItem : null;
+
+  const shouldRandomize = options.randomizeFilename !== false;
+
+  let nextName = '';
+  if (explicitFilenameRaw) {
+    nextName = explicitFilenameRaw;
+    if (ext && !/\.[a-z0-9]{1,8}$/i.test(nextName)) nextName = `${nextName}${ext}`;
+  } else if (filenameBaseRaw) {
+    nextName = `${filenameBaseRaw}${ext}`;
+  } else if (creatorItem) {
+    nextName = `${buildCreatorItemFilenameBase(creatorItem)}${ext}`;
+  } else if (shouldRandomize) {
+    nextName = `${randomUploadBase()}${ext}`;
+  } else {
+    nextName = file.name;
+  }
+
+  nextName = sanitizeFilenameSegment(nextName, { fallback: file.name || 'upload' });
+  if (ext && !nextName.toLowerCase().endsWith(ext.toLowerCase())) {
+    nextName = `${nextName}${ext}`;
+  }
+  if (nextName === file.name) return file;
+
+  try {
+    return new File([file], nextName, { type: file.type || 'application/octet-stream', lastModified: file.lastModified });
+  } catch {
+    return file;
+  }
+}
+
+if (typeof window !== 'undefined') {
+  window.mm_buildCreatorItemFilenameBase = buildCreatorItemFilenameBase;
+}
+
 function readUploadSettings() {
   try {
     if (typeof window !== 'undefined' && window.mm_uploadSettings && typeof window.mm_uploadSettings.load === 'function') {
@@ -128,14 +233,15 @@ function shouldForceCatboxProxyForFile(file) {
 // opts: { context?: 'batch'|'manual' }
 async function uploadToCatbox(file, opts) {
   const options = (opts && typeof opts === 'object') ? opts : {};
+  const uploadFile = withUploadFilename(file, options);
 
   // Pull current settings; anonymous defaults to true
   const st = readUploadSettings();
   const settings = st && typeof st === 'object' ? st : {};
 
-  const fileSizeBytes = file && typeof file.size === 'number' ? file.size : undefined;
+  const fileSizeBytes = uploadFile && typeof uploadFile.size === 'number' ? uploadFile.size : undefined;
 
-  const forceProxyByType = shouldForceCatboxProxyForFile(file);
+  const forceProxyByType = shouldForceCatboxProxyForFile(uploadFile);
   const uploadUrl = forceProxyByType
     ? getActiveCatboxDefault()
     : resolveCatboxUploadUrl(settings, { fileSizeBytes, allowProxy: options.allowProxy !== false });
@@ -147,13 +253,13 @@ async function uploadToCatbox(file, opts) {
     if (!cpUrl) throw new Error('Copyparty upload URL missing in settings');
     if (typeof window.mm_up2k_uploadFile !== 'function') throw new Error('Copyparty up2k client not loaded');
 
-    const url = await window.mm_up2k_uploadFile({ uploadUrl: cpUrl, pw: cpPw, file });
+    const url = await window.mm_up2k_uploadFile({ uploadUrl: cpUrl, pw: cpPw, file: uploadFile });
     return String(url);
   }
 
   const form = new FormData();
   form.append('reqtype', 'fileupload');
-  form.append('fileToUpload', file);
+  form.append('fileToUpload', uploadFile);
 
   let isAnon = (typeof settings.anonymous === 'boolean') ? settings.anonymous : true;
   // Per-flow overrides when master anonymous is enabled
@@ -184,11 +290,12 @@ function uploadToCatboxWithProgress(file, onProgress, opts) {
   const options = (opts && typeof opts === 'object') ? opts : {};
   const signal = options.signal;
   return new Promise((resolve, reject) => {
+    const uploadFile = withUploadFilename(file, options);
     const st = readUploadSettings();
     const settings = st && typeof st === 'object' ? st : { anonymous: true, userhash: '' };
-    const fileSizeBytes = file && typeof file.size === 'number' ? file.size : undefined;
+    const fileSizeBytes = uploadFile && typeof uploadFile.size === 'number' ? uploadFile.size : undefined;
 
-    const forceProxyByType = shouldForceCatboxProxyForFile(file);
+    const forceProxyByType = shouldForceCatboxProxyForFile(uploadFile);
     const uploadUrl = forceProxyByType
       ? getActiveCatboxDefault()
       : resolveCatboxUploadUrl(settings, { fileSizeBytes, allowProxy: options.allowProxy !== false });
@@ -211,7 +318,7 @@ function uploadToCatboxWithProgress(file, onProgress, opts) {
       }
 
       // NOTE: no true streaming progress yet; this is a best-effort UX.
-      window.mm_up2k_uploadFile({ uploadUrl: cpUrl, pw: cpPw, file }).then((url) => {
+      window.mm_up2k_uploadFile({ uploadUrl: cpUrl, pw: cpPw, file: uploadFile }).then((url) => {
         if (typeof onProgress === 'function') {
           try { onProgress(100, { loadedBytes: fileSizeBytes || 0, totalBytes: fileSizeBytes || 0, bps: 0 }); } catch {}
         }
@@ -226,7 +333,7 @@ function uploadToCatboxWithProgress(file, onProgress, opts) {
     xhr.open('POST', uploadUrl);
     const form = new FormData();
     form.append('reqtype', 'fileupload');
-    form.append('fileToUpload', file);
+    form.append('fileToUpload', uploadFile);
     // Pull current settings; anonymous defaults to true
     let isAnon = (typeof settings.anonymous === 'boolean') ? settings.anonymous : true;
     try {

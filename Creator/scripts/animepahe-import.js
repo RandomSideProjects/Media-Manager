@@ -552,7 +552,7 @@
     return "";
   }
 
-  async function uploadFileToCatbox(file, { signal, onProgress } = {}) {
+  async function uploadFileToCatbox(file, { signal, onProgress, creatorItem } = {}) {
     const uploader = (typeof window !== "undefined" && typeof window.uploadToCatboxWithProgress === "function")
       ? window.uploadToCatboxWithProgress
       : (typeof uploadToCatboxWithProgress === "function" ? uploadToCatboxWithProgress : null);
@@ -561,7 +561,7 @@
       if (typeof onProgress === "function") {
         try { onProgress(Number(pct)); } catch {}
       }
-    }, { context: "batch", signal });
+    }, { context: "batch", signal, creatorItem });
   }
 
   function ensureTargetCategory({ createNew } = {}) {
@@ -1055,8 +1055,18 @@
           } catch {}
 
           setEpStatus("Uploading…", "#9ecbff", { value: 0, max: 100 });
+          const categoryTitle = (() => {
+            try {
+              const cat = episodesDiv && typeof episodesDiv.closest === "function" ? episodesDiv.closest(".category") : null;
+              const input = cat && typeof cat.querySelector === "function"
+                ? cat.querySelector('.category-header input[type="text"]')
+                : null;
+              return input && typeof input.value === "string" ? input.value : "";
+            } catch { return ""; }
+          })();
           const catboxUrl = await uploadFileToCatbox(file, {
             signal: abortController.signal,
+            creatorItem: { categoryTitle, itemIndex: Number(ep.episode) || (idx + 1), sourceTitle: label },
             onProgress: (pct) => {
               const safe = Number.isFinite(pct) ? Math.max(0, Math.min(100, pct)) : 0;
               setEpStatus(`Uploading ${Math.round(safe)}%`, "#9ecbff", { value: safe, max: 100 });

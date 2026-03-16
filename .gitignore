@@ -2,3 +2,5 @@
 .DS_Store
 .DS_Store
 /Tools/__pycache__
+mm-src-url-report.summary.txt
+mm-src-url-report.json

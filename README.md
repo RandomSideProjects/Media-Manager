@@ -40,7 +40,7 @@ Browser-only player for video libraries and CBZ manga archives. Point it at a JS
 - Enable **Clipping** (and **Clip preview** if desired) to record short segments. Success paths upload to Catbox; failures still offer a local WebM download.
 
 ## Creator web app
-Launch `Creator/index.html` for a guided editor that can import existing manifests, convert folders full of media/CBZ files, upload posters/assets to Catbox, and manage manga options like CBZ expansion. Upload settings (library type, anonymous mode, concurrency) persist locally so you can fine-tune workflows.
+Launch `Creator/index.html` for a guided editor that can import existing manifests, convert folders full of media/CBZ files, upload posters/assets to Catbox, and manage manga options like CBZ expansion. Upload settings (library type, anonymous mode, concurrency) persist locally so you can fine-tune workflows. Uploads randomize filenames by default; Creator item uploads use `S##E##_Title` when the category is `Season #`, otherwise `##_Title`.
 
 ## JSON schema (abridged)
 ```json
