@@ -7,7 +7,7 @@ const { execSync } = require('child_process');
 
 function parseArgs(argv) {
   const dirs = [];
-  let range = 'HEAD~1..HEAD';
+  let range = 'HEAD..WORKTREE';
   let migrationsFile = 'Sources/url-migrations.json';
 
   for (let i = 0; i < argv.length; i++) {
@@ -41,7 +41,7 @@ function usage() {
     '',
     'Examples:',
     '  node Tools/update-url-migrations.js Sources/Files/Anime',
-    '  node Tools/update-url-migrations.js --range HEAD~1..HEAD Sources/Files/Anime Sources/Files/Manga',
+    '  node Tools/update-url-migrations.js --range HEAD..WORKTREE Sources/Files/Anime Sources/Files/Manga',
     ''
   ].join('\n');
 }
@@ -196,8 +196,9 @@ function main() {
   }
   const fromRef = m[1].trim();
   const toRef = m[2].trim();
+  const useWorktree = /^(WORKTREE|WORKING_TREE|WORKINGTREE)$/i.test(toRef);
 
-  if (!gitRefExists(toRef)) {
+  if (!useWorktree && !gitRefExists(toRef)) {
     console.error(`[url-migrations] Git ref not found: ${toRef}`);
     process.exit(2);
   }
@@ -206,26 +207,28 @@ function main() {
     return;
   }
 
-  let diffRaw = '';
-  try {
-    diffRaw = execGit(`git diff --name-only ${JSON.stringify(fromRef)} ${JSON.stringify(toRef)}`);
-  } catch (e) {
-    console.log('[url-migrations] Could not compute git diff; skipping.');
-    return;
+  const changedJsonFiles = new Set();
+  for (const dir of normalizedDirs) {
+    let diffRaw = '';
+    try {
+      diffRaw = useWorktree
+        ? execGit(`git diff --name-only ${JSON.stringify(fromRef)} -- ${JSON.stringify(dir)}`)
+        : execGit(`git diff --name-only ${JSON.stringify(fromRef)} ${JSON.stringify(toRef)} -- ${JSON.stringify(dir)}`);
+    } catch {
+      console.log('[url-migrations] Could not compute git diff; skipping.');
+      return;
+    }
+
+    for (const line of diffRaw.split('\n')) {
+      const ff = line.trim().replace(/\\/g, '/');
+      if (!ff || !ff.toLowerCase().endsWith('.json')) continue;
+      if (ff === dir || ff.startsWith(dir + '/')) {
+        changedJsonFiles.add(ff);
+      }
+    }
   }
 
-  const diffNames = diffRaw
-    .split('\n')
-    .map(s => s.trim())
-    .filter(Boolean);
-
-  const changedJsonFiles = diffNames.filter((f) => {
-    if (!f.toLowerCase().endsWith('.json')) return false;
-    const ff = f.replace(/\\/g, '/');
-    return normalizedDirs.some(d => ff === d || ff.startsWith(d + '/'));
-  });
-
-  if (!changedJsonFiles.length) {
+  if (!changedJsonFiles.size) {
     console.log('[url-migrations] No changed JSON files in', normalizedDirs.join(', '));
     return;
   }

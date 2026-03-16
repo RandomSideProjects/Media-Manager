@@ -396,15 +396,19 @@ jobs:
         run: |
           set -euo pipefail
           # Convert any GitHub Pages absolute URLs back to repo-relative paths in JSON.
+          json_files=()
+          while IFS= read -r -d '' json_file; do
+            json_files+=("$json_file")
+          done < <(find "Sources/Files/Manga" -type f -name '*.json' -print0)
           perl -pi -e 's#https?://randomsideprojects\.github\.(?:io|ii)/Media-Manager/#./#g' \
             "Sources/MangaSourceList.json" \
-            $(find "Sources/Files/Manga" -type f -name '*.json' -print)
+            "${json_files[@]}"
 
       - name: Update Sources/url-migrations.json (src URL changes)
         shell: bash
         run: |
           set -euo pipefail
-          node Tools/update-url-migrations.js --range HEAD~1..HEAD "Sources/Files/Manga"
+          node Tools/update-url-migrations.js --range HEAD..WORKTREE "Sources/Files/Manga"
 
       - name: Commit and push changes
         uses: stefanzweifel/git-auto-commit-action@b863ae1933cb653a53c021fe36dbb774e1fb9403 # v5
