@@ -85,6 +85,47 @@ function sanitizeFilenameSegment(value, { fallback = 'Item', maxLen = 80 } = {})
   return finalValue.length > maxLen ? finalValue.slice(0, maxLen) : finalValue;
 }
 
+function buildCopypartySourceFolderName(sourceTitle) {
+  const base = (typeof sourceTitle === 'string') ? sourceTitle : String(sourceTitle || '');
+  const normalized = typeof base.normalize === 'function' ? base.normalize('NFKD') : base;
+  const filtered = normalized
+    .replace(/['’]/g, '')
+    .replace(/[\u0000-\u001f\u007f]/g, ' ')
+    .replace(/[\\/:*?"<>|]/g, ' ')
+    .replace(/[^A-Za-z0-9! ]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!filtered) return '';
+
+  const endsWithBang = /!$/.test(filtered);
+  const words = filtered
+    .replace(/!+$/g, '')
+    .split(/\s+/)
+    .map((word) => word ? (word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()) : '')
+    .filter(Boolean);
+  if (!words.length) return '';
+
+  const joined = words.join('');
+  return `${joined}${endsWithBang ? '!' : ''}`;
+}
+
+function getCurrentSourceTitle() {
+  try {
+    if (typeof document === 'undefined') return '';
+    const input = document.getElementById('dirTitle');
+    return input && typeof input.value === 'string' ? input.value.trim() : '';
+  } catch {
+    return '';
+  }
+}
+
+function getCopypartySubdir(opts) {
+  const options = (opts && typeof opts === 'object') ? opts : {};
+  const explicit = typeof options.sourceFolder === 'string' ? options.sourceFolder.trim() : '';
+  if (explicit) return explicit;
+  return buildCopypartySourceFolderName(getCurrentSourceTitle());
+}
+
 function buildCreatorItemFilenameBase({ categoryTitle, itemIndex, sourceTitle } = {}) {
   const season = parseSeasonNumber(categoryTitle);
   const idx = Math.max(1, Math.floor(Number(itemIndex) || 1));
@@ -252,8 +293,8 @@ async function uploadToCatbox(file, opts) {
     const cpPw = settings && typeof settings.copypartyPw === 'string' ? settings.copypartyPw : '';
     if (!cpUrl) throw new Error('Copyparty upload URL missing in settings');
     if (typeof window.mm_up2k_uploadFile !== 'function') throw new Error('Copyparty up2k client not loaded');
-
-    const url = await window.mm_up2k_uploadFile({ uploadUrl: cpUrl, pw: cpPw, file: uploadFile });
+    const subdir = getCopypartySubdir(options);
+    const url = await window.mm_up2k_uploadFile({ uploadUrl: cpUrl, pw: cpPw, file: uploadFile, subdir });
     return String(url);
   }
 
@@ -318,7 +359,8 @@ function uploadToCatboxWithProgress(file, onProgress, opts) {
       }
 
       // NOTE: no true streaming progress yet; this is a best-effort UX.
-      window.mm_up2k_uploadFile({ uploadUrl: cpUrl, pw: cpPw, file: uploadFile }).then((url) => {
+      const subdir = getCopypartySubdir(options);
+      window.mm_up2k_uploadFile({ uploadUrl: cpUrl, pw: cpPw, file: uploadFile, subdir }).then((url) => {
         if (typeof onProgress === 'function') {
           try { onProgress(100, { loadedBytes: fileSizeBytes || 0, totalBytes: fileSizeBytes || 0, bps: 0 }); } catch {}
         }

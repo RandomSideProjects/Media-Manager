@@ -1,7 +1,7 @@
 "use strict";
 
 // Minimal up2k client for the Creator page (standalone, no Copyparty UI deps).
-// Exposes: window.mm_up2k_uploadFile({ uploadUrl, pw, file }) -> Promise<url>
+// Exposes: window.mm_up2k_uploadFile({ uploadUrl, pw, file, subdir }) -> Promise<url>
 //
 // Protocol notes (mirrors Copyparty up2k.js):
 // - chunk hash = SHA-512, take first 33 bytes, encode base64url (no padding)
@@ -78,6 +78,14 @@
     if (!remoteDir.startsWith('/')) remoteDir = '/' + remoteDir;
     if (!remoteDir.endsWith('/')) remoteDir += '/';
     return { baseUrl, remoteDir };
+  }
+
+  function appendSubdir(remoteDir, subdir) {
+    const trimmed = (typeof subdir === "string") ? subdir.trim() : "";
+    if (!trimmed) return remoteDir;
+    const cleaned = trimmed.replace(/^\/+|\/+$/g, "");
+    if (!cleaned) return remoteDir;
+    return `${remoteDir}${encodeURIComponent(cleaned)}/`;
   }
 
   async function doFetch(url, init, pw) {
@@ -160,12 +168,13 @@
     }
   }
 
-  async function mm_up2k_uploadFile({ uploadUrl, pw, file }) {
+  async function mm_up2k_uploadFile({ uploadUrl, pw, file, subdir }) {
     assert(uploadUrl, 'Copyparty upload URL missing');
     assert(file, 'file missing');
     assert(crypto && crypto.subtle, 'WebCrypto unavailable (needs HTTPS or localhost)');
 
-    const { baseUrl, remoteDir } = parseUploadUrl(uploadUrl);
+    const { baseUrl, remoteDir: rootRemoteDir } = parseUploadUrl(uploadUrl);
+    const remoteDir = appendSubdir(rootRemoteDir, subdir);
 
     const chunkSize = getChunkSize(file.size);
     const nchunks = Math.ceil(file.size / chunkSize);
