@@ -40,6 +40,7 @@ This directory contains all available media sources.
 - [KONOSUBA](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FKonosuba_God_S_Blessing_On_This_Wonderful_World.json)
 - [Love Flops](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FLove_Flops.json)
 - [Love, Chunibyo & Other Delusions](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FLove_Chunibyo_Other_Delusions.json)
+- [Lucky Star](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FLucky_Star.json)
 - [More Than a Married Couple, But Not Lovers](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FMarriedNotLovers.json)
 - [My Deer Friend Nokotan](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FMy_Deer_Friend_Nokotan.json)
 - [My Dress-up Darling](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FMy_Dress_Up_Darling.json)

@@ -341,6 +341,18 @@
       "LatestTime": "2025-10-11T05:39:02.686Z"
     },
     {
+      "file": "Lucky_Star.json",
+      "path": "./Files/Anime/Lucky_Star.json",
+      "title": "Lucky Star",
+      "poster": null,
+      "categoryCount": 1,
+      "episodeCount": 24,
+      "itemCount": 24,
+      "totalFileSizeBytes": 9513956325,
+      "totalDurationSeconds": 34115,
+      "LatestTime": null
+    },
+    {
       "file": "MarriedNotLovers.json",
       "path": "./Files/Anime/MarriedNotLovers.json",
       "title": "More Than a Married Couple, But Not Lovers",
