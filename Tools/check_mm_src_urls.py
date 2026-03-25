@@ -16,7 +16,7 @@ What it does
   - summary text (same name + .summary.txt)
 
 Usage
-  python3 Tools/check_mm_src_urls.py --dir "~/Documents/RSP Media Manager/Media-Manager/Sources/Files/Anime" \
+  python3 Tools/check_mm_src_urls.py --dir "~/Documents/RSP_Media_Manager/Media-Manager/Sources/Files/Anime" \
     --concurrency 16 --timeout 20
 
 Notes
