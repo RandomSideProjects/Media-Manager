@@ -344,13 +344,13 @@
       "file": "Lucky_Star.json",
       "path": "./Files/Anime/Lucky_Star.json",
       "title": "Lucky Star",
-      "poster": null,
+      "poster": "./Posters/Anime/Lucky_Star.webp",
       "categoryCount": 1,
       "episodeCount": 24,
       "itemCount": 24,
       "totalFileSizeBytes": 9513956325,
       "totalDurationSeconds": 34115,
-      "LatestTime": null
+      "LatestTime": "2026-03-25T17:33:38.176Z"
     },
     {
       "file": "MarriedNotLovers.json",
