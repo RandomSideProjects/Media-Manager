@@ -15,6 +15,7 @@ This directory contains all available media sources.
 - [Aharen Is Indecipherable](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FAharen.json)
 - [And You Thought There Is Never A Girl Online?](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FNeverThoughtGirlOnline.json)
 - [Apothecary diaries](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FApothDiaries.json)
+- [Apothicary Diaries](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FApothicary_Diaries.json)
 - [Bloom Into You](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FBloom_Into_You.json)
 - [Call Of The Night](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FCall_Of_The_Night.json)
 - [Campfire Cooking in Another World with My Absurd Skill](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FCampfire_Cooking_In_Another_World_With_My_Absurd_Skill.json)

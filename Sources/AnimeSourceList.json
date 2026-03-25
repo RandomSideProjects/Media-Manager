@@ -61,6 +61,18 @@
       "LatestTime": "2025-09-10T02:01:39.815Z"
     },
     {
+      "file": "Apothicary_Diaries.json",
+      "path": "./Files/Anime/Apothicary_Diaries.json",
+      "title": "Apothicary Diaries",
+      "poster": "./Posters/Anime/Apothicary_Diaries.webp",
+      "categoryCount": 2,
+      "episodeCount": 48,
+      "itemCount": 48,
+      "totalFileSizeBytes": 11650661870,
+      "totalDurationSeconds": 67520,
+      "LatestTime": "2026-03-25T17:34:27.243Z"
+    },
+    {
       "file": "Bloom_Into_You.json",
       "path": "./Files/Anime/Bloom_Into_You.json",
       "title": "Bloom Into You",
