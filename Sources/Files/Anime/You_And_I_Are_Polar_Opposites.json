@@ -1,7 +1,7 @@
 {
   "title": "You And I Are Polar Opposites",
-  "Image": "./Sources/Posters/Anime/You_And_I_Are_Polar_Opposites.webp",
-  "LatestTime": "2026-03-16T02:14:40.800Z",
+  "Image": "https://i.animepahe.si/posters/2c1068e3f59d77254be3c75ff4131567ea1e05c02d27e81154e9c2db4445e53a.jpg",
+  "LatestTime": "2026-03-30T14:19:34.198Z",
   "categories": [
     {
       "category": "Season 1",
@@ -19,50 +19,56 @@
           "durationSeconds": 1447
         },
         {
-          "title": "Episode 3",
+          "title": "Episode 03",
           "src": "https://cpr.xpbliss.fyi/pub/MM/S01E03_Episode_3.mp4",
           "fileSizeBytes": 130896008,
           "durationSeconds": 1447
         },
         {
-          "title": "Episode 4",
+          "title": "Episode 04",
           "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/S01E04_Episode_4.mp4",
           "fileSizeBytes": 140760696,
           "durationSeconds": 1447
         },
         {
-          "title": "Episode 5",
+          "title": "Episode 05",
           "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/S01E05_Episode_5.mp4",
           "fileSizeBytes": 123498957,
           "durationSeconds": 1447
         },
         {
-          "title": "Episode 6",
+          "title": "Episode 06",
           "src": "https://cpr.xpbliss.fyi/pub/MM/S01E06_Episode_6.mp4",
           "fileSizeBytes": 122517548,
           "durationSeconds": 1447
         },
         {
-          "title": "Episode 7",
+          "title": "Episode 07",
           "src": "https://cpr.xpbliss.fyi/pub/MM/S01E07_Episode_7.mp4",
           "fileSizeBytes": 133353225,
           "durationSeconds": 1432
         },
         {
-          "title": "Episode 8",
+          "title": "Episode 08",
           "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/S01E08_Episode_8.mp4-1773626967.573806-_VQO1ALa.mp4",
           "fileSizeBytes": 131373861,
           "durationSeconds": 1432
         },
         {
-          "title": "Episode 9",
+          "title": "Episode 09",
           "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/S01E09_Episode_9.mp4",
           "fileSizeBytes": 122053340,
+          "durationSeconds": 1432
+        },
+        {
+          "title": "Episode 10",
+          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/YouAndIArePolarOpposites/S01E10_Episode_10.mp4",
+          "fileSizeBytes": 131842893,
           "durationSeconds": 1432
         }
       ]
     }
   ],
-  "totalFileSizeBytes": 1205195047,
-  "totalDurationSeconds": 12978
+  "totalFileSizeBytes": 1337037940,
+  "totalDurationSeconds": 14410
 }
