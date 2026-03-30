@@ -1,7 +1,7 @@
 {
   "title": "Tune In to the Midnight Heart",
-  "Image": "./Sources/Posters/Anime/Tune_In_to_the_Midnight_Heart.webp",
-  "LatestTime": "2026-03-16T04:08:43.556Z",
+  "Image": "https://i.animepahe.si/posters/109677344ff58542e86e21918670ac7fa8c65f279147f18c6b47a692c9b3befe.jpg",
+  "LatestTime": "2026-03-30T15:43:40.570Z",
   "categories": [
     {
       "category": "Season 1",
@@ -26,7 +26,7 @@
         },
         {
           "title": "Episode 04",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/TuneInToTheMidnightHeart/S01E04_Episode_4.mp4",
+          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/TuneInToTheMidnightHeart/S01E04_Episode_4.mp4-1774884779.657268-xARn94dk.mp4",
           "fileSizeBytes": 132382216,
           "durationSeconds": 1420
         },
@@ -38,25 +38,37 @@
         },
         {
           "title": "Episode 06",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/TuneInToTheMidnightHeart/AnimePahe_Mayonaka_Heart_Tune_Eng_Dub_-_06_1080p_Yameii.mp4",
+          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/TuneInToTheMidnightHeart/S01E06_Episode_6.mp4",
           "fileSizeBytes": 141250664,
           "durationSeconds": 1420
         },
         {
           "title": "Episode 07",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/TuneInToTheMidnightHeart/AnimePahe_Mayonaka_Heart_Tune_Eng_Dub_-_07_1080p_Yameii.mp4",
+          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/TuneInToTheMidnightHeart/S01E07_Episode_7.mp4",
           "fileSizeBytes": 175381109,
           "durationSeconds": 1420
         },
         {
           "title": "Episode 08",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/TuneInToTheMidnightHeart/AnimePahe_Mayonaka_Heart_Tune_Eng_Dub_-_08_1080p_Yameii.mp4",
+          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/TuneInToTheMidnightHeart/S01E08_Episode_8.mp4",
           "fileSizeBytes": 136528667,
+          "durationSeconds": 1420
+        },
+        {
+          "title": "Episode 9",
+          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/TuneInToTheMidnightHeart/S01E09_Episode_9.mp4-1774885090.970134-xARn94dk.mp4",
+          "fileSizeBytes": 154376234,
+          "durationSeconds": 1420
+        },
+        {
+          "title": "Episode 10",
+          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/TuneInToTheMidnightHeart/S01E10_Episode_10.mp4",
+          "fileSizeBytes": 149221713,
           "durationSeconds": 1420
         }
       ]
     }
   ],
-  "totalFileSizeBytes": 1193041120,
-  "totalDurationSeconds": 11360
+  "totalFileSizeBytes": 1496639067,
+  "totalDurationSeconds": 14200
 }
