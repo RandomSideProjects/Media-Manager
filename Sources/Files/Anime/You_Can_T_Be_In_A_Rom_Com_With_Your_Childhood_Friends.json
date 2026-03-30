@@ -1,62 +1,74 @@
 {
   "title": "You Can't Be In a Rom-Com with Your Childhood Friends!",
-  "Image": "./Sources/Posters/Anime/You_Can't_Be_In_a_Rom-Com_with_Your_Childhood_Friends!.webp",
-  "LatestTime": "2026-03-16T02:50:39.341Z",
+  "Image": "https://i.animepahe.si/posters/6f28c8daa661f02d4811da60ad01850969b8cd2fe40762f47b1bb8470066bd2c.jpg",
+  "LatestTime": "2026-03-30T14:23:36.629Z",
   "categories": [
     {
       "category": "Season 1",
       "episodes": [
         {
-          "title": "Episode 01",
+          "title": "Episode 1",
           "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/S01E01_Episode_1.mp4",
           "fileSizeBytes": 172081601,
           "durationSeconds": 1430
         },
         {
-          "title": "Episode 02",
+          "title": "Episode 2",
           "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/S01E02_Episode_2.mp4",
           "fileSizeBytes": 155546187,
           "durationSeconds": 1430
         },
         {
-          "title": "Episode 03",
+          "title": "Episode 3",
           "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/S01E03_Episode_3.mp4",
           "fileSizeBytes": 143256500,
           "durationSeconds": 1430
         },
         {
-          "title": "Episode 04",
+          "title": "Episode 4",
           "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/S01E04_Episode_4.mp4-1773627344.389303-_VQO1ALa.mp4",
           "fileSizeBytes": 170311186,
           "durationSeconds": 1430
         },
         {
-          "title": "Episode 05",
+          "title": "Episode 5",
           "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/S01E05_Episode_5.mp4-1773627420.200872-_VQO1ALa.mp4",
           "fileSizeBytes": 146071348,
           "durationSeconds": 1430
         },
         {
-          "title": "Episode 06",
+          "title": "Episode 6",
           "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/What/S01E07_Episode_07.mp4",
           "fileSizeBytes": 160072075,
           "durationSeconds": 1430
         },
         {
-          "title": "Episode 07",
+          "title": "Episode 7",
           "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/What/S01E07_Episode_07.mp4",
           "fileSizeBytes": 160072075,
           "durationSeconds": 1430
         },
         {
-          "title": "Episode 08",
+          "title": "Episode 8",
           "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/AnimePahe_Osananajimi_to_wa_Love_Comedy_ni_Naranai_Eng_Dub_-_08_1080p_Yameii.mp4",
           "fileSizeBytes": 198682148,
+          "durationSeconds": 1430
+        },
+        {
+          "title": "Episode 9",
+          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/YouCantBeInARomComWithYourChildhoodFriends!/S01E09_Episode_9.mp4",
+          "fileSizeBytes": 151010414,
+          "durationSeconds": 1430
+        },
+        {
+          "title": "Episode 10",
+          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/YouCantBeInARomComWithYourChildhoodFriends!/S01E10_Episode_10.mp4",
+          "fileSizeBytes": 165056895,
           "durationSeconds": 1430
         }
       ]
     }
   ],
-  "totalFileSizeBytes": 1306093120,
-  "totalDurationSeconds": 11440
+  "totalFileSizeBytes": 1622160429,
+  "totalDurationSeconds": 14300
 }
