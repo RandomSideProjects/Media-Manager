@@ -1,69 +1,81 @@
 {
   "title": "Nukitashi the Animation",
   "Image": "./Sources/Posters/Anime/Nukitashi_the_Animation.webp",
-  "LatestTime": "2026-03-15T03:44:27.600201Z",
+  "LatestTime": "2026-03-31T04:09:39.872Z",
   "categories": [
     {
       "category": "Season 1",
       "episodes": [
         {
           "title": "Episode 1",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/Tq9bht/e1.mp4",
-          "fileSizeBytes": 191734382,
+          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/NukitashiTheAnimation/S01E01_Episode_1.mov",
+          "fileSizeBytes": 202928245,
           "durationSeconds": 1420
         },
         {
           "title": "Episode 2",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/Tq9bht/e2.mp4",
-          "fileSizeBytes": 192595810,
-          "durationSeconds": 1461
+          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/NukitashiTheAnimation/S01E02_Episode_2.mov",
+          "fileSizeBytes": 214413468,
+          "durationSeconds": 1421
         },
         {
           "title": "Episode 3",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/Tq9bht/e3.mp4",
-          "fileSizeBytes": 192545393,
-          "durationSeconds": 1461
+          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/NukitashiTheAnimation/%22Nukitashi.The.Animation.S01E03.1080P.Bluray.Dual-Audio.Opus.2.0.X265-Stafer%22%20ITEM%203.mov",
+          "fileSizeBytes": 249936259,
+          "durationSeconds": 1421
         },
         {
           "title": "Episode 4",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/Tq9bht/e4.mp4",
-          "fileSizeBytes": 192910663,
-          "durationSeconds": 1461
+          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/NukitashiTheAnimation/%22Nukitashi.The.Animation.S01E04.1080P.Bluray.Dual-Audio.Opus.2.0.X265-Stafer%22%20ITEM%204.mov",
+          "fileSizeBytes": 232731135,
+          "durationSeconds": 1421
         },
         {
           "title": "Episode 5",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/Tq9bht/e5.mp4",
-          "fileSizeBytes": 192668874,
-          "durationSeconds": 1461
+          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/NukitashiTheAnimation/%22Nukitashi.The.Animation.S01E05.1080P.Bluray.Dual-Audio.Opus.2.0.X265-Stafer%22%20ITEM%205.mov",
+          "fileSizeBytes": 264578699,
+          "durationSeconds": 1421
         },
         {
           "title": "Episode 6",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/Tq9bht/e6.mp4",
-          "fileSizeBytes": 192475829,
-          "durationSeconds": 1425
+          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/NukitashiTheAnimation/S01E06_Episode_6.mov",
+          "fileSizeBytes": 204215452,
+          "durationSeconds": 1420
         },
         {
           "title": "Episode 7",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/Tq9bht/e7.mp4",
-          "fileSizeBytes": 192343099,
-          "durationSeconds": 1461
+          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/NukitashiTheAnimation/S01E07_Episode_7.mov",
+          "fileSizeBytes": 198481146,
+          "durationSeconds": 1421
         },
         {
           "title": "Episode 8",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/Tq9bht/e8.mp4",
-          "fileSizeBytes": 192722150,
-          "durationSeconds": 1425
+          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/NukitashiTheAnimation/S01E08_Episode_8.mov",
+          "fileSizeBytes": 206339192,
+          "durationSeconds": 1420
         },
         {
           "title": "Episode 9",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/Tq9bht/e9.mp4",
-          "fileSizeBytes": 193072173,
-          "durationSeconds": 1461
+          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/NukitashiTheAnimation/S01E09_Episode_9.mov",
+          "fileSizeBytes": 183004409,
+          "durationSeconds": 1421
+        },
+        {
+          "title": "Episode 10",
+          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/NukitashiTheAnimation/S01E10_Episode_10.mov",
+          "fileSizeBytes": 224637964,
+          "durationSeconds": 1421
+        },
+        {
+          "title": "Episode 11",
+          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/NukitashiTheAnimation/S01E11_Episode_11.mov",
+          "fileSizeBytes": 215917342,
+          "durationSeconds": 1421
         }
       ]
     }
   ],
-  "totalFileSizeBytes": 1733068373,
-  "totalDurationSeconds": 13036,
+  "totalFileSizeBytes": 2397183311,
+  "totalDurationSeconds": 15628,
   "hidden": true
 }
