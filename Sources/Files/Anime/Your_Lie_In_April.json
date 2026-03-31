@@ -1,141 +1,141 @@
 {
   "title": "Your Lie in April",
-  "Image": "./Sources/Posters/Anime/Your_Lie_in_April.webp",
-  "LatestTime": "2025-12-07T05:34:24.600Z",
+  "Image": "https://i.animepahe.si/posters/7a57407ed2298be9d0beedea83bf61fce0fe5994f753bd1fef633eaf7367f624.jpg",
+  "LatestTime": "2026-03-31T02:50:21.036Z",
   "categories": [
     {
       "category": "Season 1",
       "episodes": [
         {
           "title": "Episode 1",
-          "src": "https://files.catbox.moe/e4d3vh.mp4",
-          "fileSizeBytes": 174256480,
-          "durationSeconds": 1373
-        },
-        {
-          "title": "Episode 2",
-          "src": "https://files.catbox.moe/t3918z.mp4",
-          "fileSizeBytes": 138845592,
-          "durationSeconds": 1373
-        },
-        {
-          "title": "Episode 3",
-          "src": "https://files.catbox.moe/tkmtr6.mp4",
-          "fileSizeBytes": 134711509,
-          "durationSeconds": 1372
-        },
-        {
-          "title": "Episode 4",
-          "src": "https://files.catbox.moe/dyp53z.mp4",
-          "fileSizeBytes": 154362219,
-          "durationSeconds": 1372
-        },
-        {
-          "title": "Episode 5",
-          "src": "https://files.catbox.moe/vcvm1h.mp4",
-          "fileSizeBytes": 139201243,
-          "durationSeconds": 1370
-        },
-        {
-          "title": "Episode 6",
-          "src": "https://files.catbox.moe/1u2255.mp4",
-          "fileSizeBytes": 149015715,
-          "durationSeconds": 1374
-        },
-        {
-          "title": "Episode 7",
-          "src": "https://files.catbox.moe/arr51f.mp4",
-          "fileSizeBytes": 120296566,
-          "durationSeconds": 1372
-        },
-        {
-          "title": "Episode 8",
-          "src": "https://files.catbox.moe/u03zb4.mp4",
-          "fileSizeBytes": 122356014,
-          "durationSeconds": 1374
-        },
-        {
-          "title": "Episode 9",
-          "src": "https://files.catbox.moe/raivne.mp4",
-          "fileSizeBytes": 115432775,
-          "durationSeconds": 1372
-        },
-        {
-          "title": "Episode 10",
-          "src": "https://files.catbox.moe/mhxhql.mp4",
-          "fileSizeBytes": 120321102,
-          "durationSeconds": 1373
-        },
-        {
-          "title": "Episode 11",
-          "src": "https://files.catbox.moe/eeyp93.mp4",
+          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/YourLieInApril/S01E01_Episode_1.mp4",
           "fileSizeBytes": 119126607,
           "durationSeconds": 1373
         },
         {
+          "title": "Episode 2",
+          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/YourLieInApril/S01E02_Episode_2.mp4",
+          "fileSizeBytes": 140573711,
+          "durationSeconds": 1372
+        },
+        {
+          "title": "Episode 3",
+          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/YourLieInApril/S01E03_Episode_3.mp4",
+          "fileSizeBytes": 107334151,
+          "durationSeconds": 1372
+        },
+        {
+          "title": "Episode 4",
+          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/YourLieInApril/S01E04_Episode_4.mp4",
+          "fileSizeBytes": 122356014,
+          "durationSeconds": 1374
+        },
+        {
+          "title": "Episode 5",
+          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/YourLieInApril/S01E05_Episode_5.mp4",
+          "fileSizeBytes": 120321102,
+          "durationSeconds": 1373
+        },
+        {
+          "title": "Episode 6",
+          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/YourLieInApril/S01E06_Episode_6.mp4",
+          "fileSizeBytes": 99648249,
+          "durationSeconds": 1371
+        },
+        {
+          "title": "Episode 7",
+          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/YourLieInApril/S01E07_Episode_7.mp4",
+          "fileSizeBytes": 122897007,
+          "durationSeconds": 1371
+        },
+        {
+          "title": "Episode 8",
+          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/YourLieInApril/S01E08_Episode_8.mp4",
+          "fileSizeBytes": 115432775,
+          "durationSeconds": 1372
+        },
+        {
+          "title": "Episode 9",
+          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/YourLieInApril/S01E09_Episode_9.mp4",
+          "fileSizeBytes": 130066035,
+          "durationSeconds": 1371
+        },
+        {
+          "title": "Episode 10",
+          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/YourLieInApril/S01E10_Episode_10.mp4",
+          "fileSizeBytes": 142708318,
+          "durationSeconds": 1371
+        },
+        {
+          "title": "Episode 11",
+          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/YourLieInApril/S01E11_Episode_11.mp4",
+          "fileSizeBytes": 168667389,
+          "durationSeconds": 1372
+        },
+        {
           "title": "Episode 12",
-          "src": "https://files.catbox.moe/wzkcmk.mp4",
+          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/YourLieInApril/S01E12_Episode_12.mp4",
           "fileSizeBytes": 134214601,
           "durationSeconds": 1374
         },
         {
           "title": "Episode 13",
-          "src": "https://files.catbox.moe/1m4405.mp4",
-          "fileSizeBytes": 130066035,
-          "durationSeconds": 1371
-        },
-        {
-          "title": "Episode 14",
-          "src": "https://files.catbox.moe/0pxzw8.mp4",
-          "fileSizeBytes": 140573711,
-          "durationSeconds": 1372
-        },
-        {
-          "title": "Episode 15",
-          "src": "https://files.catbox.moe/efmxo6.mp4",
-          "fileSizeBytes": 99648249,
-          "durationSeconds": 1371
-        },
-        {
-          "title": "Episode 16",
-          "src": "https://files.catbox.moe/z8fhyb.mp4",
-          "fileSizeBytes": 142708318,
-          "durationSeconds": 1371
-        },
-        {
-          "title": "Episode 17",
-          "src": "https://files.catbox.moe/btiily.mp4",
+          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/YourLieInApril/S01E13_Episode_13.mp4",
           "fileSizeBytes": 100380890,
           "durationSeconds": 1372
         },
         {
-          "title": "Episode 18",
-          "src": "https://files.catbox.moe/26r7up.mp4",
-          "fileSizeBytes": 126294331,
-          "durationSeconds": 1371
+          "title": "Episode 14",
+          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/YourLieInApril/S01E14_Episode_14.mp4",
+          "fileSizeBytes": 138845592,
+          "durationSeconds": 1373
         },
         {
-          "title": "Episode 19",
-          "src": "https://files.catbox.moe/fc8mzw.mp4",
+          "title": "Episode 15",
+          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/YourLieInApril/S01E15_Episode_15.mp4",
+          "fileSizeBytes": 120296566,
+          "durationSeconds": 1372
+        },
+        {
+          "title": "Episode 16",
+          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/YourLieInApril/S01E16_Episode_16.mp4",
+          "fileSizeBytes": 134711509,
+          "durationSeconds": 1372
+        },
+        {
+          "title": "Episode 17",
+          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/YourLieInApril/S01E17_Episode_17.mp4",
+          "fileSizeBytes": 149015715,
+          "durationSeconds": 1374
+        },
+        {
+          "title": "Episode 18",
+          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/YourLieInApril/S01E18_Episode_18.mp4",
           "fileSizeBytes": 123336479,
           "durationSeconds": 1372
         },
         {
+          "title": "Episode 19",
+          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/YourLieInApril/S01E19_Episode_19.mp4",
+          "fileSizeBytes": 139201243,
+          "durationSeconds": 1370
+        },
+        {
           "title": "Episode 20",
-          "src": "https://files.catbox.moe/orjmt5.mp4",
-          "fileSizeBytes": 107334151,
-          "durationSeconds": 1372
+          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/YourLieInApril/S01E20_Episode_20.mp4",
+          "fileSizeBytes": 174256480,
+          "durationSeconds": 1373
         },
         {
           "title": "Episode 21",
-          "src": "https://files.catbox.moe/syevsh.mp4",
-          "fileSizeBytes": 122897007,
+          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/YourLieInApril/S01E21_Episode_21.mp4",
+          "fileSizeBytes": 126294331,
           "durationSeconds": 1371
         },
         {
           "title": "Episode 22",
-          "src": "https://files.catbox.moe/hz4lo6.mp4",
-          "fileSizeBytes": 168667389,
+          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/YourLieInApril/S01E22_Episode_22.mp4",
+          "fileSizeBytes": 154362219,
           "durationSeconds": 1372
         }
       ]
