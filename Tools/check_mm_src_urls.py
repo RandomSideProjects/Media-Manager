@@ -304,7 +304,27 @@ def main(argv: List[str]) -> int:
     lines.append("")
     lines.append(f"Sources with bad URLs: {len(bad_sources)}")
     for s in sorted(bad_sources, key=lambda x: x.get("badCount", 0), reverse=True)[:100]:
-        lines.append(f"- {s.get('title') or os.path.basename(s['file'])}: {s.get('badCount')} bad")
+        title = s.get("title") or os.path.basename(s["file"])
+        bad_count = int(s.get("badCount", 0) or 0)
+        lines.append(f"- {title}: {bad_count} bad")
+
+        # List the actual failures (episode/item number + status + URL)
+        failures = s.get("failures") or []
+        for fobj in failures:
+            ep = (fobj.get("episodeTitle") or "").strip()
+            status = fobj.get("status")
+            method = fobj.get("method") or ""
+            cat = (fobj.get("category") or "").strip()
+
+            # Show only the item index number(s), not the URL
+            m = re.search(r"\d+", ep)
+            idx = m.group(0) if m else (ep or "?")
+
+            item_label = idx
+            if cat and cat not in ep:
+                item_label = f"{cat} :: {idx}"
+
+            lines.append(f"    - {item_label} :: {status} {method}")
 
     with open(summary_path, "w", encoding="utf-8") as f:
         f.write("\n".join(lines) + "\n")

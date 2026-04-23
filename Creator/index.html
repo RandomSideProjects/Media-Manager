@@ -33,6 +33,10 @@
               <span>Single episode</span>
             </label>
             <label class="mm-toggle" style="gap:.4em; align-items:center;">
+              <input type="radio" name="paheMode" id="paheModeRange">
+              <span>Episode range</span>
+            </label>
+            <label class="mm-toggle" style="gap:.4em; align-items:center;">
               <input type="radio" name="paheMode" id="paheModeAll">
               <span>Whole show</span>
             </label>
@@ -41,6 +45,13 @@
           <div class="pahe-row" id="paheEpisodePickerRow">
             <label for="paheEpisodeSelect" style="min-width:66px;">Episode</label>
             <select id="paheEpisodeSelect" class="pahe-select"></select>
+          </div>
+
+          <div class="pahe-row pahe-range-row" id="paheEpisodeRangeRow" style="display:none;">
+            <label for="paheEpisodeStartSelect" style="min-width:66px;">Range</label>
+            <select id="paheEpisodeStartSelect" class="pahe-select"></select>
+            <span class="pahe-range-separator">to</span>
+            <select id="paheEpisodeEndSelect" class="pahe-select"></select>
           </div>
 
           <div class="pahe-row">

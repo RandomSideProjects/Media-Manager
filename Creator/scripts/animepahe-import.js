@@ -13,9 +13,13 @@
   const selectedTitle = document.getElementById("paheSelectedTitle");
   const selectedMeta = document.getElementById("paheSelectedMeta");
   const modeSingle = document.getElementById("paheModeSingle");
+  const modeRange = document.getElementById("paheModeRange");
   const modeAll = document.getElementById("paheModeAll");
   const episodePickerRow = document.getElementById("paheEpisodePickerRow");
+  const episodeRangeRow = document.getElementById("paheEpisodeRangeRow");
   const episodeSelect = document.getElementById("paheEpisodeSelect");
+  const episodeStartSelect = document.getElementById("paheEpisodeStartSelect");
+  const episodeEndSelect = document.getElementById("paheEpisodeEndSelect");
   const qualityBtn = document.getElementById("paheQualityBtn");
   const qualityMenu = document.getElementById("paheQualityMenu");
   const startBtn = document.getElementById("paheStartBtn");
@@ -225,8 +229,11 @@
       if (queryInput) queryInput.disabled = isBusy;
       if (startBtn) startBtn.disabled = isBusy;
       if (modeSingle) modeSingle.disabled = isBusy;
+      if (modeRange) modeRange.disabled = isBusy;
       if (modeAll) modeAll.disabled = isBusy;
       if (episodeSelect) episodeSelect.disabled = isBusy;
+      if (episodeStartSelect) episodeStartSelect.disabled = isBusy;
+      if (episodeEndSelect) episodeEndSelect.disabled = isBusy;
       if (qualityBtn) qualityBtn.disabled = isBusy;
       if (cancelBtn) cancelBtn.style.display = isBusy ? "" : "none";
     } catch {}
@@ -557,9 +564,9 @@
       ? window.uploadToCatboxWithProgress
       : (typeof uploadToCatboxWithProgress === "function" ? uploadToCatboxWithProgress : null);
     if (typeof uploader !== "function") throw new Error("Catbox uploader missing");
-    return await uploader(file, (pct) => {
+    return await uploader(file, (pct, info) => {
       if (typeof onProgress === "function") {
-        try { onProgress(Number(pct)); } catch {}
+        try { onProgress(Number(pct), info || {}); } catch {}
       }
     }, { context: "batch", signal, creatorItem });
   }
@@ -584,6 +591,95 @@
   let selectedShow = null;
   let episodeList = [];
   let abortController = null;
+
+  function repopulateEpisodeRangeSelects() {
+    if (!episodeStartSelect || !episodeEndSelect) return;
+
+    const previousStart = String(episodeStartSelect.value || "").trim();
+    const previousEnd = String(episodeEndSelect.value || "").trim();
+    episodeStartSelect.innerHTML = "";
+    episodeEndSelect.innerHTML = "";
+
+    episodeList.forEach((ep) => {
+      const label = `Episode ${ep.episode}`;
+      const startOpt = document.createElement("option");
+      startOpt.value = ep.episode;
+      startOpt.textContent = label;
+      episodeStartSelect.appendChild(startOpt);
+
+      const endOpt = document.createElement("option");
+      endOpt.value = ep.episode;
+      endOpt.textContent = label;
+      episodeEndSelect.appendChild(endOpt);
+    });
+
+    if (!episodeList.length) return;
+
+    const firstEpisode = String(episodeList[0].episode || "");
+    const lastEpisode = String(episodeList[episodeList.length - 1].episode || firstEpisode);
+    const hasStart = episodeList.some((ep) => ep && ep.episode === previousStart);
+    const hasEnd = episodeList.some((ep) => ep && ep.episode === previousEnd);
+    episodeStartSelect.value = hasStart ? previousStart : firstEpisode;
+    episodeEndSelect.value = hasEnd ? previousEnd : lastEpisode;
+    normalizeEpisodeRange();
+  }
+
+  function normalizeEpisodeRange(changedField) {
+    if (!episodeStartSelect || !episodeEndSelect) return;
+    const startIdx = episodeList.findIndex((ep) => ep && ep.episode === String(episodeStartSelect.value || ""));
+    const endIdx = episodeList.findIndex((ep) => ep && ep.episode === String(episodeEndSelect.value || ""));
+    if (startIdx < 0 || endIdx < 0) return;
+    if (startIdx <= endIdx) return;
+    if (changedField === "start") {
+      episodeEndSelect.value = episodeStartSelect.value;
+      return;
+    }
+    if (changedField === "end") {
+      episodeStartSelect.value = episodeEndSelect.value;
+      return;
+    }
+    const tmp = episodeStartSelect.value;
+    episodeStartSelect.value = episodeEndSelect.value;
+    episodeEndSelect.value = tmp;
+  }
+
+  function getEpisodeByValue(value) {
+    const episodeValue = String(value || "").trim();
+    return episodeList.find((ep) => ep && ep.episode === episodeValue) || null;
+  }
+
+  function getQualityAnchorEpisode() {
+    if (modeRange && modeRange.checked) return getEpisodeByValue(episodeStartSelect && episodeStartSelect.value);
+    if (modeSingle && modeSingle.checked) return getEpisodeByValue(episodeSelect && episodeSelect.value);
+    return episodeList[0] || null;
+  }
+
+  async function refreshQualityForCurrentSelection() {
+    const match = getQualityAnchorEpisode();
+    if (!match) return;
+    try {
+      await refreshQualityOptionsForEpisode(match.session);
+    } catch (err) {
+      log(`Failed to load quality options: ${err && err.message ? err.message : String(err)}`);
+    }
+  }
+
+  function getEpisodesToUpload() {
+    if (modeAll && modeAll.checked) return episodeList.slice();
+
+    if (modeRange && modeRange.checked) {
+      const startValue = String(episodeStartSelect && episodeStartSelect.value || "").trim();
+      const endValue = String(episodeEndSelect && episodeEndSelect.value || "").trim();
+      const startIdx = episodeList.findIndex((ep) => ep && ep.episode === startValue);
+      const endIdx = episodeList.findIndex((ep) => ep && ep.episode === endValue);
+      if (startIdx < 0 || endIdx < 0) return [];
+      const from = Math.min(startIdx, endIdx);
+      const to = Math.max(startIdx, endIdx);
+      return episodeList.slice(from, to + 1);
+    }
+
+    return [getEpisodeByValue(episodeSelect && episodeSelect.value)].filter(Boolean);
+  }
 
   function renderResults(items) {
     resultsEl.innerHTML = "";
@@ -684,6 +780,8 @@
     if (!selectedShow || !selectedShow.session) return;
     clearLog();
     episodeSelect.innerHTML = "";
+    if (episodeStartSelect) episodeStartSelect.innerHTML = "";
+    if (episodeEndSelect) episodeEndSelect.innerHTML = "";
     if (qualityMenu) qualityMenu.innerHTML = "";
     selectedQuality = null;
     updateQualityUiSelection();
@@ -708,8 +806,8 @@
           const num = parseInt(rawEp, 10);
           return {
             episode: Number.isFinite(num) ? String(num) : rawEp,
-          session: ep && ep.session ? String(ep.session) : "",
-          snapshot: ep && ep.snapshot ? String(ep.snapshot) : "",
+            session: ep && ep.session ? String(ep.session) : "",
+            snapshot: ep && ep.snapshot ? String(ep.snapshot) : "",
           };
         })
         .filter((ep) => ep.session && ep.episode)
@@ -721,6 +819,7 @@
         opt.textContent = `Episode ${ep.episode}`;
         episodeSelect.appendChild(opt);
       });
+      repopulateEpisodeRangeSelects();
 
       if (!episodeList.length) throw new Error("No episodes found");
 
@@ -891,23 +990,48 @@
   }
 
   function updateEpisodePickerVisibility() {
+    const single = !!(modeSingle && modeSingle.checked);
+    const range = !!(modeRange && modeRange.checked);
     const whole = !!(modeAll && modeAll.checked);
-    if (episodePickerRow) episodePickerRow.style.display = whole ? "none" : "";
-    if (startBtn) startBtn.textContent = whole ? "Upload show" : "Upload episode";
+    if (episodePickerRow) episodePickerRow.style.display = single ? "" : "none";
+    if (episodeRangeRow) episodeRangeRow.style.display = range ? "" : "none";
+    if (startBtn) {
+      startBtn.textContent = whole
+        ? "Upload show"
+        : (range ? "Upload range" : "Upload episode");
+    }
   }
 
-  if (modeSingle) modeSingle.addEventListener("change", updateEpisodePickerVisibility);
-  if (modeAll) modeAll.addEventListener("change", updateEpisodePickerVisibility);
+  if (modeSingle) {
+    modeSingle.addEventListener("change", () => {
+      updateEpisodePickerVisibility();
+      void refreshQualityForCurrentSelection();
+    });
+  }
+  if (modeRange) {
+    modeRange.addEventListener("change", () => {
+      updateEpisodePickerVisibility();
+      void refreshQualityForCurrentSelection();
+    });
+  }
+  if (modeAll) {
+    modeAll.addEventListener("change", () => {
+      updateEpisodePickerVisibility();
+      void refreshQualityForCurrentSelection();
+    });
+  }
   if (episodeSelect) {
-    episodeSelect.addEventListener("change", () => {
-      const selectedEpisode = String(episodeSelect.value || "").trim();
-      const match = episodeList.find((ep) => ep && ep.episode === selectedEpisode);
-      if (match) {
-        void (async () => {
-          try { await refreshQualityOptionsForEpisode(match.session); }
-          catch (err) { log(`Failed to load quality options: ${err && err.message ? err.message : String(err)}`); }
-        })();
-      }
+    episodeSelect.addEventListener("change", () => { void refreshQualityForCurrentSelection(); });
+  }
+  if (episodeStartSelect) {
+    episodeStartSelect.addEventListener("change", () => {
+      normalizeEpisodeRange("start");
+      void refreshQualityForCurrentSelection();
+    });
+  }
+  if (episodeEndSelect) {
+    episodeEndSelect.addEventListener("change", () => {
+      normalizeEpisodeRange("end");
     });
   }
 
@@ -921,10 +1045,6 @@
     abortController = new AbortController();
     setBusy(true);
     if (progressWrap) progressWrap.style.display = "";
-    if (progressBar) {
-      progressBar.max = modeAll.checked ? episodeList.length : 1;
-      progressBar.value = 0;
-    }
 
     try {
       const applyPoster = !!(applyPosterToggle && applyPosterToggle.checked);
@@ -943,11 +1063,13 @@
       const desiredSourceBase = selectedQuality && selectedQuality.base ? selectedQuality.base : "";
       const desiredSourceVariant = selectedQuality && Number.isFinite(selectedQuality.variant) ? selectedQuality.variant : 1;
 
-      const toUpload = modeAll.checked
-        ? episodeList.slice()
-        : [episodeList.find((ep) => ep.episode === String(episodeSelect.value || ""))].filter(Boolean);
+      const toUpload = getEpisodesToUpload();
 
       if (!toUpload.length) throw new Error("No episode selected");
+      if (progressBar) {
+        progressBar.max = toUpload.length;
+        progressBar.value = 0;
+      }
 
       const episodesDiv = ensureTargetCategory({ createNew: modeAll.checked });
       clearLog();
@@ -1067,9 +1189,13 @@
           const catboxUrl = await uploadFileToCatbox(file, {
             signal: abortController.signal,
             creatorItem: { categoryTitle, itemIndex: Number(ep.episode) || (idx + 1), sourceTitle: label },
-            onProgress: (pct) => {
+            onProgress: (pct, info) => {
               const safe = Number.isFinite(pct) ? Math.max(0, Math.min(100, pct)) : 0;
-              setEpStatus(`Uploading ${Math.round(safe)}%`, "#9ecbff", { value: safe, max: 100 });
+              const stage = info && typeof info.stage === "string" ? info.stage : "";
+              const verb = stage === "hashing"
+                ? "Hashing"
+                : (stage === "finalizing" ? "Finalizing" : "Uploading");
+              setEpStatus(`${verb} ${Math.round(safe)}%`, "#9ecbff", { value: safe, max: 100 });
             }
           });
 
