@@ -1,7 +1,6 @@
 "use strict";
 
 // Variables (top)
-const STATUS_URL = 'https://files.catbox.moe/6gkiu0.png';
 let SOURCES_SORT = localStorage.getItem('sources_sortOrder') || 'az';
 let SOURCES_HIDE_POSTERS = localStorage.getItem('sources_hidePosters') === '1';
 let SOURCES_META = [];

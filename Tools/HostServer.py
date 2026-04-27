@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Start an HTTP server rooted at the script directory."""
+"""Start an HTTP server rooted at the repository directory."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from pathlib import Path
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Serve the script's directory over HTTP.")
+    parser = argparse.ArgumentParser(description="Serve the repository directory over HTTP.")
     parser.add_argument(
         "--host",
         default="0.0.0.0",
@@ -19,7 +19,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--port",
         type=int,
-        default=80,
+        default=8000,
         help="Port number to listen on.",
     )
     return parser.parse_args()
