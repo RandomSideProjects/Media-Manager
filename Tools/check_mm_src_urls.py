@@ -5,8 +5,9 @@ Verbose URL checker for Media-Manager source JSONs.
 
 What it does
 - Recursively scans a directory for *.json
-- For each JSON, looks for: { categories: [ { episodes: [ { src: ... } ] } ] }
-- Checks each `src` URL with HEAD, falling back to GET Range bytes=0-0
+- For each JSON, looks for episode `src` URLs, plus common separated-part
+  URL arrays such as `sources`, `parts`, `items`, and `__separatedParts`
+- Checks each discovered URL with HEAD, falling back to GET Range bytes=0-0
 - Verbose logging:
   - logs each URL check
   - logs start/end of each source JSON
@@ -64,7 +65,7 @@ def load_json(path: str) -> Tuple[Optional[dict], Optional[str]]:
 
 
 def iter_episode_srcs(obj: dict):
-    # yields (category_name, episode_title, src_url)
+    # yields (category_name, item_label, src_url)
     cats = obj.get("categories") or []
     if not isinstance(cats, list):
         return
@@ -78,9 +79,31 @@ def iter_episode_srcs(obj: dict):
         for ep in eps:
             if not isinstance(ep, dict):
                 continue
+            ep_title = str(ep.get("title") or "")
+            seen = set()
             src = ep.get("src")
             if isinstance(src, str) and src.strip():
-                yield (str(cat_name) if cat_name is not None else "", str(ep.get("title") or ""), src.strip())
+                clean_src = src.strip()
+                seen.add(clean_src)
+                yield (str(cat_name) if cat_name is not None else "", ep_title, clean_src)
+
+            for parts_key in ("sources", "parts", "items", "__separatedParts"):
+                parts = ep.get(parts_key)
+                if not isinstance(parts, list):
+                    continue
+                for part_idx, part in enumerate(parts, start=1):
+                    if not isinstance(part, dict):
+                        continue
+                    part_src = part.get("src")
+                    if not isinstance(part_src, str) or not part_src.strip():
+                        continue
+                    clean_part_src = part_src.strip()
+                    if clean_part_src in seen:
+                        continue
+                    seen.add(clean_part_src)
+                    part_title = str(part.get("title") or f"Part {part_idx}")
+                    label = f"{ep_title} / {part_title}" if ep_title else part_title
+                    yield (str(cat_name) if cat_name is not None else "", label, clean_part_src)
 
 
 def http_check_url(
@@ -168,7 +191,7 @@ def main(argv: List[str]) -> int:
         "counts": {
             "jsonFiles": len(files),
             "sourcesParsed": 0,
-            "episodesFound": 0,
+            "srcUrlsFound": 0,
             "urlsChecked": 0,
             "badUrls": 0,
             "parseErrors": 0,
@@ -200,11 +223,11 @@ def main(argv: List[str]) -> int:
         }
 
         srcs = list(iter_episode_srcs(obj))
-        report["counts"]["episodesFound"] += len(srcs)
+        report["counts"]["srcUrlsFound"] += len(srcs)
         tasks_by_file[fp] = srcs
 
     total_urls = sum(len(v) for v in tasks_by_file.values())
-    eprint(f"Total episode src URLs found: {total_urls}")
+    eprint(f"Total src URLs found: {total_urls}")
 
     # Results per file
     per_file: Dict[str, Dict[str, Any]] = {}
@@ -297,7 +320,7 @@ def main(argv: List[str]) -> int:
     lines.append(f"Dir: {root}")
     lines.append(f"JSON files: {report['counts']['jsonFiles']}")
     lines.append(f"Sources parsed: {report['counts']['sourcesParsed']}")
-    lines.append(f"Episode src URLs: {report['counts']['episodesFound']}")
+    lines.append(f"Source URLs found: {report['counts']['srcUrlsFound']}")
     lines.append(f"URLs checked: {report['counts']['urlsChecked']}")
     lines.append(f"Bad URLs: {report['counts']['badUrls']}")
     lines.append(f"Elapsed: {time.time() - start:.1f}s")

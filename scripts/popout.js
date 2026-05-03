@@ -71,6 +71,14 @@
     try { if (typeof window.alert === "function") window.alert(msg); } catch {}
   }
 
+  function escapeHtmlAttribute(value) {
+    return String(value || "")
+      .replace(/&/g, "&amp;")
+      .replace(/"/g, "&quot;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+
   function computePopupSize(v) {
     const naturalWidth = (v && v.videoWidth) ? v.videoWidth : 16;
     const naturalHeight = (v && v.videoHeight) ? v.videoHeight : 9;
@@ -94,6 +102,7 @@
 
     try { v.pause(); } catch {}
     const src = v.src;
+    const srcAttr = escapeHtmlAttribute(src);
     const currentTime = v.currentTime || 0;
     const { popWidth, popHeight } = computePopupSize(v);
 
@@ -186,7 +195,7 @@
       </head>
       <body>
         <div id="popSpinner" class="spinner"></div>
-        <video id="popVideo" src="${src}" autoplay></video>
+        <video id="popVideo" src="${srcAttr}" autoplay></video>
         <div id="popToolbar" class="pop-toolbar placement-left" aria-hidden="true">
           <button id="popBackBtn" type="button">↩ Back 5s</button>
           <button id="popNextItemBtn" type="button">Next</button>
@@ -312,4 +321,3 @@
     window.MM_openPopout = openPopout;
   }
 })();
-
