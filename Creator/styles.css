@@ -501,6 +501,13 @@ button:active { transform: scale(0.98); }
   gap: 0.35em;
 }
 .pahe-progress progress { width: 100%; }
+.pahe-range-row {
+  gap: 0.45em;
+  flex-wrap: wrap;
+}
+.pahe-range-separator {
+  opacity: 0.8;
+}
 .pahe-log {
   margin-top: 0.5em;
   font-size: 0.9rem;

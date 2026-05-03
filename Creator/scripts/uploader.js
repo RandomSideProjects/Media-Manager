@@ -358,12 +358,18 @@ function uploadToCatboxWithProgress(file, onProgress, opts) {
         try { onProgress(0, { loadedBytes: 0, totalBytes: fileSizeBytes || 0, bps: 0 }); } catch {}
       }
 
-      // NOTE: no true streaming progress yet; this is a best-effort UX.
       const subdir = getCopypartySubdir(options);
-      window.mm_up2k_uploadFile({ uploadUrl: cpUrl, pw: cpPw, file: uploadFile, subdir }).then((url) => {
-        if (typeof onProgress === 'function') {
-          try { onProgress(100, { loadedBytes: fileSizeBytes || 0, totalBytes: fileSizeBytes || 0, bps: 0 }); } catch {}
+      window.mm_up2k_uploadFile({
+        uploadUrl: cpUrl,
+        pw: cpPw,
+        file: uploadFile,
+        subdir,
+        signal,
+        onProgress: (percent, info) => {
+          if (typeof onProgress !== 'function') return;
+          try { onProgress(percent, info); } catch {}
         }
+      }).then((url) => {
         resolve(String(url));
       }).catch(reject);
 

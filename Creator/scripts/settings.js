@@ -12,6 +12,8 @@ const SETTINGS_DEFAULT_GITHUB_WORKER_URL = (typeof window !== 'undefined' && typ
 const SETTINGS_LEGACY_GITHUB_WORKER_ROOT = 'https://mmback.littlehacker303.workers.dev/gh';
 const SETTINGS_CATBOX_BACKEND_URL = 'https://mm.littlehacker303.workers.dev/catbox/user/api.php';
 const SETTINGS_CATBOX_MODE_KEY = 'catboxOverrideMode';
+const SETTINGS_DEFAULT_COPYPARTY_HOST = 'cpr.xpbliss.fyi';
+const SETTINGS_DEFAULT_COPYPARTY_UPLOAD_PATH = '/pub/MM/';
 
 function normalizeGithubWorkerUrlValue(raw) {
   const trimmed = (typeof raw === 'string') ? raw.trim() : '';
@@ -31,6 +33,24 @@ function normalizeGithubWorkerUrlValue(raw) {
 
 function defaultCatboxUploadUrl() {
   return SETTINGS_CATBOX_BACKEND_URL;
+}
+
+function normalizeCopypartyUploadUrlValue(raw) {
+  const trimmed = (typeof raw === 'string') ? raw.trim() : '';
+  if (!trimmed) return '';
+  try {
+    const parsed = new URL(trimmed);
+    if (parsed.hostname === SETTINGS_DEFAULT_COPYPARTY_HOST && (!parsed.pathname || parsed.pathname === '/')) {
+      parsed.pathname = SETTINGS_DEFAULT_COPYPARTY_UPLOAD_PATH;
+      parsed.search = '';
+      parsed.hash = '';
+    } else if (parsed.pathname && !parsed.pathname.endsWith('/')) {
+      parsed.pathname += '/';
+    }
+    return parsed.toString();
+  } catch {
+    return trimmed;
+  }
 }
 
 function normalizeCatboxMode(value) {
@@ -108,7 +128,7 @@ function loadUploadSettings(){
       catboxUploadUrl: (typeof p.catboxUploadUrl === 'string' && p.catboxUploadUrl.trim()) ? p.catboxUploadUrl.trim() : defaultCatboxUploadUrl(),
       catboxOverrideMode: normalizeCatboxMode(p.catboxOverrideMode),
       copypartyThresholdMb: Number.isFinite(parseFloat(p.copypartyThresholdMb)) ? Math.max(6, Math.min(100, parseFloat(p.copypartyThresholdMb))) : 100,
-      copypartyUploadUrl: (typeof p.copypartyUploadUrl === 'string') ? p.copypartyUploadUrl.trim() : ((typeof p.copypartyUrl === 'string') ? p.copypartyUrl.trim() : ''),
+      copypartyUploadUrl: normalizeCopypartyUploadUrlValue((typeof p.copypartyUploadUrl === 'string') ? p.copypartyUploadUrl : ((typeof p.copypartyUrl === 'string') ? p.copypartyUrl : '')),
       copypartyPw: (typeof p.copypartyPw === 'string') ? p.copypartyPw : '',
       catboxForceProxyUnder100Mb: (typeof p.catboxForceProxyUnder100Mb === 'boolean') ? p.catboxForceProxyUnder100Mb : false,
       paheAnimeApiBase: (typeof p.paheAnimeApiBase === 'string' && p.paheAnimeApiBase.trim()) ? p.paheAnimeApiBase.trim() : DEFAULT_PAHE_ANIME_API_BASE,
@@ -164,7 +184,7 @@ function saveUploadSettings(s){
     catboxUploadUrl: (typeof s.catboxUploadUrl === 'string') ? s.catboxUploadUrl.trim() : '',
     catboxOverrideMode: normalizeCatboxMode(s.catboxOverrideMode),
     copypartyThresholdMb: Number.isFinite(parseFloat(s.copypartyThresholdMb)) ? Math.max(6, Math.min(100, parseFloat(s.copypartyThresholdMb))) : 100,
-    copypartyUploadUrl: (typeof s.copypartyUploadUrl === 'string') ? s.copypartyUploadUrl.trim() : ((typeof s.copypartyUrl === 'string') ? s.copypartyUrl.trim() : ''),
+    copypartyUploadUrl: normalizeCopypartyUploadUrlValue((typeof s.copypartyUploadUrl === 'string') ? s.copypartyUploadUrl : ((typeof s.copypartyUrl === 'string') ? s.copypartyUrl : '')),
     copypartyPw: (typeof s.copypartyPw === 'string') ? s.copypartyPw : '',
     catboxForceProxyUnder100Mb: !!s.catboxForceProxyUnder100Mb,
     paheAnimeApiBase: (typeof s.paheAnimeApiBase === 'string') ? s.paheAnimeApiBase.trim() : '',

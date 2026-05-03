@@ -1,7 +1,7 @@
 "use strict";
 
 // Minimal up2k client for the Creator page (standalone, no Copyparty UI deps).
-// Exposes: window.mm_up2k_uploadFile({ uploadUrl, pw, file, subdir }) -> Promise<url>
+// Exposes: window.mm_up2k_uploadFile({ uploadUrl, pw, file, subdir, onProgress, signal }) -> Promise<url>
 //
 // Protocol notes (mirrors Copyparty up2k.js):
 // - chunk hash = SHA-512, take first 33 bytes, encode base64url (no padding)
@@ -16,6 +16,17 @@
 
   function assert(cond, msg) {
     if (!cond) throw new Error(msg);
+  }
+
+  function createAbortError() {
+    if (typeof DOMException === "function") return new DOMException("Upload aborted", "AbortError");
+    const err = new Error("Upload aborted");
+    err.name = "AbortError";
+    return err;
+  }
+
+  function throwIfAborted(signal) {
+    if (signal && signal.aborted) throw createAbortError();
   }
 
   function b64url(u8) {
@@ -63,8 +74,61 @@
     }
   }
 
-  async function hashChunk33(file, car, cdr) {
-    const buf = await file.slice(car, cdr).arrayBuffer();
+  function readBlobWithProgress(blob, { signal, onProgress } = {}) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      let settled = false;
+
+      const cleanup = () => {
+        if (signal && typeof signal.removeEventListener === "function") {
+          try { signal.removeEventListener("abort", onAbort); } catch {}
+        }
+      };
+      const finalizeResolve = (value) => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        resolve(value);
+      };
+      const finalizeReject = (error) => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        reject(error);
+      };
+      const onAbort = () => {
+        try { reader.abort(); } catch {}
+        finalizeReject(createAbortError());
+      };
+
+      reader.onload = () => finalizeResolve(reader.result);
+      reader.onerror = () => finalizeReject(reader.error || new Error("Failed to read file chunk"));
+      reader.onabort = () => finalizeReject(createAbortError());
+      reader.onprogress = (event) => {
+        if (!event || typeof onProgress !== "function") return;
+        try {
+          onProgress({
+            loaded: Number(event.loaded) || 0,
+            total: Number(event.total) || blob.size || 0,
+          });
+        } catch {}
+      };
+
+      if (signal && typeof signal.addEventListener === "function") {
+        if (signal.aborted) {
+          onAbort();
+          return;
+        }
+        signal.addEventListener("abort", onAbort, { once: true });
+      }
+
+      reader.readAsArrayBuffer(blob);
+    });
+  }
+
+  async function hashChunk33(file, car, cdr, { signal, onProgress } = {}) {
+    const buf = await readBlobWithProgress(file.slice(car, cdr), { signal, onProgress });
+    throwIfAborted(signal);
     const dig = await crypto.subtle.digest("SHA-512", buf);
     const u8 = new Uint8Array(dig).subarray(0, 33);
     return b64url(u8);
@@ -75,6 +139,9 @@
     const u = new URL(uploadUrl);
     const baseUrl = u.origin;
     let remoteDir = u.pathname;
+    if (u.hostname === "cpr.xpbliss.fyi" && (!remoteDir || remoteDir === "/")) {
+      remoteDir = "/pub/MM/";
+    }
     if (!remoteDir.startsWith('/')) remoteDir = '/' + remoteDir;
     if (!remoteDir.endsWith('/')) remoteDir += '/';
     return { baseUrl, remoteDir };
@@ -88,10 +155,10 @@
     return `${remoteDir}${encodeURIComponent(cleaned)}/`;
   }
 
-  async function doFetch(url, init, pw) {
+  async function doFetch(url, init, pw, signal) {
     const headers = Object.assign({}, init && init.headers ? init.headers : {});
     if (pw) headers.PW = pw;
-    return fetch(url, Object.assign({}, init, { headers }));
+    return fetch(url, Object.assign({}, init, { headers, signal }));
   }
 
   function buildFileUrl(baseUrl, remoteDir, name, fk) {
@@ -100,7 +167,8 @@
     return url;
   }
 
-  async function handshake({ baseUrl, remoteDir, file, hashes, pw }) {
+  async function handshake({ baseUrl, remoteDir, file, hashes, pw, signal }) {
+    throwIfAborted(signal);
     const url = baseUrl + remoteDir;
     const req = {
       name: file.name,
@@ -113,9 +181,10 @@
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(req),
-    }, pw);
+    }, pw, signal);
 
     const txt = await res.text();
+    throwIfAborted(signal);
     if (!res.ok) {
       throw new Error(`Copyparty handshake failed HTTP ${res.status}: ${txt.slice(0, 200)}`);
     }
@@ -150,48 +219,194 @@
     };
   }
 
-  async function uploadChunk({ baseUrl, purl, name, wark, hash, blob, pw }) {
-    const url = baseUrl + purl + encodeURIComponent(name);
-    const res = await doFetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/octet-stream',
-        'X-Up2k-Hash': hash,
-        'X-Up2k-Wark': String(wark || ''),
-      },
-      body: blob,
-    }, pw);
+  function uploadChunk({ baseUrl, purl, name, wark, hash, blob, pw, signal, onProgress }) {
+    return new Promise((resolve, reject) => {
+      throwIfAborted(signal);
 
-    const txt = await res.text();
-    if (!res.ok) {
-      throw new Error(`Copyparty chunk upload failed HTTP ${res.status}: ${txt.slice(0, 200)}`);
-    }
+      const xhr = new XMLHttpRequest();
+      const url = baseUrl + purl + encodeURIComponent(name);
+      let settled = false;
+
+      const cleanup = () => {
+        if (signal && typeof signal.removeEventListener === "function") {
+          try { signal.removeEventListener("abort", onAbort); } catch {}
+        }
+      };
+      const finalizeResolve = (value) => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        resolve(value);
+      };
+      const finalizeReject = (error) => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        reject(error);
+      };
+      const onAbort = () => {
+        try { xhr.abort(); } catch {}
+        finalizeReject(createAbortError());
+      };
+
+      xhr.open("POST", url, true);
+      try { xhr.setRequestHeader("Content-Type", "application/octet-stream"); } catch {}
+      try { xhr.setRequestHeader("X-Up2k-Hash", hash); } catch {}
+      try { xhr.setRequestHeader("X-Up2k-Wark", String(wark || "")); } catch {}
+      if (pw) {
+        try { xhr.setRequestHeader("PW", pw); } catch {}
+      }
+
+      if (xhr.upload && typeof onProgress === "function") {
+        xhr.upload.onprogress = (event) => {
+          if (!event || !event.lengthComputable) return;
+          try {
+            onProgress({
+              loaded: Number(event.loaded) || 0,
+              total: Number(event.total) || blob.size || 0,
+            });
+          } catch {}
+        };
+      }
+
+      xhr.onload = () => {
+        const txt = typeof xhr.responseText === "string" ? xhr.responseText : "";
+        if (xhr.status >= 200 && xhr.status < 300) {
+          finalizeResolve(txt);
+          return;
+        }
+        finalizeReject(new Error(`Copyparty chunk upload failed HTTP ${xhr.status}: ${txt.slice(0, 200)}`));
+      };
+      xhr.onerror = () => finalizeReject(new Error("Copyparty chunk upload failed: network error"));
+      xhr.onabort = () => finalizeReject(createAbortError());
+
+      if (signal && typeof signal.addEventListener === "function") {
+        if (signal.aborted) {
+          onAbort();
+          return;
+        }
+        signal.addEventListener("abort", onAbort, { once: true });
+      }
+
+      xhr.send(blob);
+    });
   }
 
-  async function mm_up2k_uploadFile({ uploadUrl, pw, file, subdir }) {
+  function createProgressReporter(file, onProgress) {
+    const fileSize = Math.max(0, Number(file && file.size) || 0);
+    const finalizeBytes = Math.max(1, Math.min(Math.ceil(fileSize * 0.01), 256 * 1024));
+    let totalUploadBytes = fileSize;
+    let hashLoadedBytes = 0;
+    let uploadLoadedBytes = 0;
+    let stage = "hashing";
+    let stageLoadedBytes = 0;
+    let stageTotalBytes = fileSize;
+    let lastMs = 0;
+    let lastOverallLoaded = 0;
+
+    const getTotalWorkBytes = () => fileSize + totalUploadBytes + finalizeBytes;
+
+    return {
+      setUploadBytes(totalBytes) {
+        totalUploadBytes = Math.max(0, Number(totalBytes) || 0);
+      },
+      report(nextStage, nextStageLoadedBytes, nextStageTotalBytes) {
+        if (typeof onProgress !== "function") return;
+        stage = nextStage || stage;
+        stageLoadedBytes = Math.max(0, Number(nextStageLoadedBytes) || 0);
+        stageTotalBytes = Math.max(0, Number(nextStageTotalBytes) || 0);
+
+        if (stage === "hashing") {
+          hashLoadedBytes = Math.min(fileSize, stageLoadedBytes);
+        } else if (stage === "uploading") {
+          uploadLoadedBytes = Math.min(totalUploadBytes, stageLoadedBytes);
+        } else if (stage === "finalizing") {
+          hashLoadedBytes = fileSize;
+          uploadLoadedBytes = totalUploadBytes;
+        } else if (stage === "complete") {
+          hashLoadedBytes = fileSize;
+          uploadLoadedBytes = totalUploadBytes;
+          stageLoadedBytes = finalizeBytes;
+          stageTotalBytes = finalizeBytes;
+        }
+
+        const overallLoadedBytes = (stage === "complete")
+          ? getTotalWorkBytes()
+          : Math.min(getTotalWorkBytes(), hashLoadedBytes + uploadLoadedBytes);
+        const totalWorkBytes = getTotalWorkBytes();
+        const percent = totalWorkBytes > 0
+          ? Math.max(0, Math.min(100, (overallLoadedBytes / totalWorkBytes) * 100))
+          : (stage === "complete" ? 100 : 0);
+        const now = (typeof performance !== "undefined" && performance.now) ? performance.now() : Date.now();
+        const dt = lastMs ? Math.max(0.001, (now - lastMs) / 1000) : 0;
+        const deltaBytes = lastMs ? Math.max(0, overallLoadedBytes - lastOverallLoaded) : 0;
+        const bps = dt > 0 ? (deltaBytes / dt) : 0;
+        lastMs = now;
+        lastOverallLoaded = overallLoadedBytes;
+
+        try {
+          onProgress(percent, {
+            loadedBytes: overallLoadedBytes,
+            totalBytes: totalWorkBytes,
+            stage,
+            stageLoadedBytes,
+            stageTotalBytes,
+            bps,
+          });
+        } catch {}
+      },
+    };
+  }
+
+  async function mm_up2k_uploadFile({ uploadUrl, pw, file, subdir, onProgress, signal }) {
     assert(uploadUrl, 'Copyparty upload URL missing');
     assert(file, 'file missing');
     assert(crypto && crypto.subtle, 'WebCrypto unavailable (needs HTTPS or localhost)');
+    throwIfAborted(signal);
 
     const { baseUrl, remoteDir: rootRemoteDir } = parseUploadUrl(uploadUrl);
     const remoteDir = appendSubdir(rootRemoteDir, subdir);
 
     const chunkSize = getChunkSize(file.size);
     const nchunks = Math.ceil(file.size / chunkSize);
+    const reporter = createProgressReporter(file, onProgress);
+    reporter.report("hashing", 0, file.size);
 
     const hashes = [];
+    let hashedBytes = 0;
     for (let i = 0; i < nchunks; i++) {
+      throwIfAborted(signal);
       const car = i * chunkSize;
       const cdr = Math.min(file.size, car + chunkSize);
-      hashes.push(await hashChunk33(file, car, cdr));
+      const baseHashedBytes = hashedBytes;
+      hashes.push(await hashChunk33(file, car, cdr, {
+        signal,
+        onProgress: ({ loaded, total }) => {
+          reporter.report("hashing", Math.min(file.size, baseHashedBytes + Math.min(loaded, total || loaded)), file.size);
+        },
+      }));
+      hashedBytes = cdr;
+      reporter.report("hashing", hashedBytes, file.size);
     }
 
-    const hs = await handshake({ baseUrl, remoteDir, file, hashes, pw });
-
-    // Upload missing chunks, 1 chunk per request
-    for (const idx of hs.missingIdx) {
+    const hs = await handshake({ baseUrl, remoteDir, file, hashes, pw, signal });
+    const uploadSizes = hs.missingIdx.map((idx) => {
       const car = idx * chunkSize;
       const cdr = Math.min(file.size, car + chunkSize);
+      return Math.max(0, cdr - car);
+    });
+    const totalUploadBytes = uploadSizes.reduce((sum, size) => sum + size, 0);
+    reporter.setUploadBytes(totalUploadBytes);
+    reporter.report("uploading", 0, totalUploadBytes);
+
+    // Upload missing chunks, 1 chunk per request
+    let uploadedBytes = 0;
+    for (let i = 0; i < hs.missingIdx.length; i += 1) {
+      throwIfAborted(signal);
+      const idx = hs.missingIdx[i];
+      const car = idx * chunkSize;
+      const cdr = Math.min(file.size, car + chunkSize);
+      const chunkBytes = Math.max(0, cdr - car);
       await uploadChunk({
         baseUrl,
         purl: hs.purl,
@@ -200,11 +415,21 @@
         hash: hashes[idx],
         blob: file.slice(car, cdr),
         pw,
+        signal,
+        onProgress: ({ loaded, total }) => {
+          const safeTotal = Math.max(1, Number(total) || chunkBytes || 1);
+          const safeLoaded = Math.max(0, Math.min(safeTotal, Number(loaded) || 0));
+          reporter.report("uploading", uploadedBytes + safeLoaded, totalUploadBytes);
+        },
       });
+      uploadedBytes += chunkBytes;
+      reporter.report("uploading", uploadedBytes, totalUploadBytes);
     }
 
     // Final handshake to verify / let server finalize
-    await handshake({ baseUrl, remoteDir, file, hashes, pw });
+    reporter.report("finalizing", 0, 1);
+    await handshake({ baseUrl, remoteDir, file, hashes, pw, signal });
+    reporter.report("complete", 1, 1);
 
     return buildFileUrl(baseUrl, hs.purl, hs.name, hs.fk);
   }
