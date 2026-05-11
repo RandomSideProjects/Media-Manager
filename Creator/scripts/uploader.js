@@ -3,14 +3,18 @@
 // Variables (top)
 const UPLOADER_CATBOX_BACKEND_URL = 'https://mm.littlehacker303.workers.dev/catbox/user/api.php';
 const CUSTOM_CATBOX_LIMIT = 104857600;
-const DIRECT_CATBOX_UPLOAD_URL = 'https://mm.littlehacker303.workers.dev/catbox/user/api.php';
+const DIRECT_CATBOX_UPLOAD_URL = 'https://catbox.moe/user/api.php';
+
+function getUploadServerApi() {
+  return (typeof window !== 'undefined' && window.MMUploadServer) ? window.MMUploadServer : null;
+}
 
 function getActiveCatboxDefault() {
   if (typeof window !== 'undefined') {
     const active = typeof window.MM_ACTIVE_CATBOX_UPLOAD_URL === 'string' ? window.MM_ACTIVE_CATBOX_UPLOAD_URL.trim() : '';
     if (active) return active;
   }
-  return UPLOADER_CATBOX_BACKEND_URL;
+  return DIRECT_CATBOX_UPLOAD_URL;
 }
 
 function normalizeCatboxUrl(raw) {
@@ -49,6 +53,16 @@ function normalizeCatboxUrl(raw) {
   }
 
   return { url: normalizedUrl, code };
+}
+
+function extractUploadResponseUrl(raw) {
+  const text = (typeof raw === 'string') ? raw.trim() : '';
+  const normalized = normalizeCatboxUrl(text);
+  const candidate = normalized.url || text;
+  if (/^https?:\/\//i.test(candidate)) {
+    return candidate;
+  }
+  throw new Error('Catbox did not return a valid URL.');
 }
 
 if (typeof window !== 'undefined') {
@@ -211,99 +225,132 @@ function readUploadSettings() {
 }
 
 function defaultCatboxUploadUrl() {
+  const api = getUploadServerApi();
+  if (api && api.directUrl) return api.directUrl;
   return getActiveCatboxDefault();
 }
 
-function isProxyCatboxUrl(url) {
-  if (!url) return false;
-  try {
-    const trimmed = String(url).trim();
-    if (!trimmed) return false;
-    const lower = trimmed.toLowerCase();
-    if (lower.startsWith('https://mm.littlehacker303.workers.dev/catbox/')) return true;
-    if (lower.startsWith('https://mmback.littlehacker303.workers.dev/catbox/')) return true;
-    if (typeof window !== 'undefined' && typeof window.MM_PROXY_CATBOX_UPLOAD_URL === 'string') {
-      const proxy = window.MM_PROXY_CATBOX_UPLOAD_URL.trim().toLowerCase();
-      if (proxy && lower === proxy) return true;
+function normalizeCatboxMode(value) {
+  const api = getUploadServerApi();
+  if (api && typeof api.normalizeMode === 'function') {
+    return api.normalizeMode(value);
+  }
+  const trimmed = (typeof value === 'string') ? value.trim().toLowerCase() : 'auto';
+  if (trimmed === 'direct') return 'direct';
+  if (trimmed === 'proxy') return 'proxy';
+  if (trimmed === 'copyparty') return 'copyparty';
+  return 'auto';
+}
+
+function getCatboxProxyUrl(settings) {
+  const api = getUploadServerApi();
+  if (api && typeof api.getSettings === 'function') {
+    return api.getSettings().proxyUrl;
+  }
+  const raw = settings && typeof settings.catboxUploadUrl === 'string' ? settings.catboxUploadUrl.trim() : '';
+  return raw || UPLOADER_CATBOX_BACKEND_URL;
+}
+
+function shouldUseCopypartyForFile(settings, fileSizeBytes, mode) {
+  const api = getUploadServerApi();
+  if (api && typeof api.shouldUseCopyparty === 'function') {
+    return api.shouldUseCopyparty(settings, fileSizeBytes, mode);
+  }
+  const cp = settings && typeof settings.copypartyUploadUrl === 'string' ? settings.copypartyUploadUrl.trim() : '';
+  if (!cp) return false;
+  if (normalizeCatboxMode(mode) === 'copyparty') return true;
+  const thresholdMbRaw = (settings && Number.isFinite(parseFloat(settings.copypartyThresholdMb))) ? parseFloat(settings.copypartyThresholdMb) : 100;
+  const thresholdMb = Math.max(6, Math.min(100, thresholdMbRaw));
+  const thresholdBytes = thresholdMb * 1024 * 1024;
+  return Number.isFinite(fileSizeBytes) && fileSizeBytes >= thresholdBytes;
+}
+
+function resolveCatboxUploadTarget(settings, { fileSizeBytes, allowProxy = true } = {}) {
+  const api = getUploadServerApi();
+  if (api && typeof api.resolveTarget === 'function') {
+    return api.resolveTarget({ settings, fileSizeBytes, allowProxy });
+  }
+  const mode = normalizeCatboxMode(settings && settings.catboxOverrideMode);
+  const cp = settings && typeof settings.copypartyUploadUrl === 'string' ? settings.copypartyUploadUrl.trim() : '';
+  const proxyUrl = getCatboxProxyUrl(settings);
+  const active = (typeof window !== 'undefined' && typeof window.MM_ACTIVE_CATBOX_UPLOAD_URL === 'string')
+    ? window.MM_ACTIVE_CATBOX_UPLOAD_URL.trim()
+    : '';
+
+  if (shouldUseCopypartyForFile(settings, fileSizeBytes, mode)) {
+    return { kind: 'copyparty', url: cp, fallbackUrl: '' };
+  }
+  if (mode === 'proxy') {
+    return { kind: 'proxy', url: proxyUrl, fallbackUrl: '' };
+  }
+  if (mode === 'direct') {
+    return { kind: 'direct', url: DIRECT_CATBOX_UPLOAD_URL, fallbackUrl: '' };
+  }
+  if (active && active !== DIRECT_CATBOX_UPLOAD_URL && active !== cp) {
+    return { kind: 'auto', url: active, fallbackUrl: '' };
+  }
+  return {
+    kind: 'auto',
+    url: DIRECT_CATBOX_UPLOAD_URL,
+    fallbackUrl: allowProxy === false ? '' : proxyUrl
+  };
+}
+
+function updateCatboxRuntime(target) {
+  const api = getUploadServerApi();
+  if (api && typeof api.applyRuntime === 'function') {
+    const current = (typeof window.MM_ACTIVE_CATBOX_UPLOAD_URL === 'string' && window.MM_ACTIVE_CATBOX_UPLOAD_URL.trim())
+      ? window.MM_ACTIVE_CATBOX_UPLOAD_URL.trim()
+      : '';
+    if (target && target.kind === 'copyparty') {
+      window.MM_ACTIVE_CATBOX_UPLOAD_URL = current || DIRECT_CATBOX_UPLOAD_URL;
+    } else if (target && target.url) {
+      window.MM_ACTIVE_CATBOX_UPLOAD_URL = target.url;
     }
-    return false;
-  } catch {
-    return false;
+    api.applyRuntime({ source: 'uploader-runtime' });
+    return;
+  }
+  if (typeof window === 'undefined') return;
+  const current = (typeof window.MM_ACTIVE_CATBOX_UPLOAD_URL === 'string' && window.MM_ACTIVE_CATBOX_UPLOAD_URL.trim())
+    ? window.MM_ACTIVE_CATBOX_UPLOAD_URL.trim()
+    : '';
+  window.MM_DIRECT_CATBOX_UPLOAD_URL = DIRECT_CATBOX_UPLOAD_URL;
+  window.MM_PROXY_CATBOX_UPLOAD_URL = getCatboxProxyUrl(readUploadSettings());
+  window.MM_DEFAULT_CATBOX_UPLOAD_URL = DIRECT_CATBOX_UPLOAD_URL;
+  if (target && target.kind === 'copyparty') {
+    window.MM_ACTIVE_CATBOX_UPLOAD_URL = current || DIRECT_CATBOX_UPLOAD_URL;
+  } else if (target && target.url) {
+    window.MM_ACTIVE_CATBOX_UPLOAD_URL = target.url;
   }
 }
 
-function resolveCatboxUploadUrl(settings, { fileSizeBytes, allowProxy = true } = {}) {
-  const raw = settings && typeof settings.catboxUploadUrl === 'string' ? settings.catboxUploadUrl.trim() : '';
-
-  const cp = settings && typeof settings.copypartyUploadUrl === 'string' ? settings.copypartyUploadUrl.trim() : '';
-  const cpPw = settings && typeof settings.copypartyPw === 'string' ? settings.copypartyPw : '';
-  const thresholdMbRaw = (settings && Number.isFinite(parseFloat(settings.copypartyThresholdMb))) ? parseFloat(settings.copypartyThresholdMb) : 100;
-  const thresholdMb = Math.max(6, Math.min(100, thresholdMbRaw)); // enforce 5 < x <= 100
-  const canUseCopyparty = !!cp;
-
-  const CP_THRESHOLD = thresholdMb * 1024 * 1024;
-  const shouldUseCopyparty = canUseCopyparty && Number.isFinite(fileSizeBytes) && fileSizeBytes >= CP_THRESHOLD;
-
-  // Per request: stop using direct Catbox; ALL Catbox uploads go via the worker/proxy URL.
-  // We still allow a custom proxy URL, but only if it is actually a proxy.
-  const proxyUrl = (raw && isProxyCatboxUrl(raw)) ? raw : getActiveCatboxDefault();
-
-  if (shouldUseCopyparty) return '__COPYPARTY__';
-
-  // Ignore allowProxy; always return proxyUrl for Catbox
-  return proxyUrl;
+async function ensureUploadServerReady(settings, options = {}) {
+  const api = getUploadServerApi();
+  if (!api) return;
+  const mode = normalizeCatboxMode(settings && settings.catboxOverrideMode);
+  if (mode === 'auto' && typeof api.ensure === 'function') {
+    await api.ensure({
+      force: options.force === true,
+      fileSizeBytes: options.fileSizeBytes
+    });
+    return;
+  }
+  if (typeof api.applyRuntime === 'function') {
+    api.applyRuntime({ source: 'uploader-ensure-ready', mode });
+  }
 }
 
 function assertUploadSizeLimit() {
   // Delegated to backend limits now
 }
 
-function shouldForceCatboxProxyForFile(file) {
-  try {
-    const type = (file && typeof file.type === 'string') ? file.type.toLowerCase() : '';
-    const name = (file && typeof file.name === 'string') ? file.name.toLowerCase() : '';
-    // Always send images + json through the worker/proxy
-    if (type.startsWith('image/')) return true;
-    if (type === 'application/json' || type.endsWith('+json')) return true;
-    if (name.endsWith('.json')) return true;
-    if (name.endsWith('.webp') || name.endsWith('.png') || name.endsWith('.jpg') || name.endsWith('.jpeg') || name.endsWith('.gif')) return true;
-  } catch {}
-  return false;
-}
-
-// opts: { context?: 'batch'|'manual' }
-async function uploadToCatbox(file, opts) {
-  const options = (opts && typeof opts === 'object') ? opts : {};
-  const uploadFile = withUploadFilename(file, options);
-
-  // Pull current settings; anonymous defaults to true
-  const st = readUploadSettings();
-  const settings = st && typeof st === 'object' ? st : {};
-
-  const fileSizeBytes = uploadFile && typeof uploadFile.size === 'number' ? uploadFile.size : undefined;
-
-  const forceProxyByType = shouldForceCatboxProxyForFile(uploadFile);
-  const uploadUrl = forceProxyByType
-    ? getActiveCatboxDefault()
-    : resolveCatboxUploadUrl(settings, { fileSizeBytes, allowProxy: options.allowProxy !== false });
-
-  // Copyparty direct upload path
-  if (!forceProxyByType && uploadUrl === '__COPYPARTY__') {
-    const cpUrl = settings && typeof settings.copypartyUploadUrl === 'string' ? settings.copypartyUploadUrl.trim() : '';
-    const cpPw = settings && typeof settings.copypartyPw === 'string' ? settings.copypartyPw : '';
-    if (!cpUrl) throw new Error('Copyparty upload URL missing in settings');
-    if (typeof window.mm_up2k_uploadFile !== 'function') throw new Error('Copyparty up2k client not loaded');
-    const subdir = getCopypartySubdir(options);
-    const url = await window.mm_up2k_uploadFile({ uploadUrl: cpUrl, pw: cpPw, file: uploadFile, subdir });
-    return String(url);
-  }
-
+async function uploadCatboxRequest(uploadFile, settings, uploadUrl, options) {
+  const api = getUploadServerApi();
   const form = new FormData();
   form.append('reqtype', 'fileupload');
   form.append('fileToUpload', uploadFile);
 
   let isAnon = (typeof settings.anonymous === 'boolean') ? settings.anonymous : true;
-  // Per-flow overrides when master anonymous is enabled
   try {
     const ctx = options.context;
     if (isAnon && ctx === 'batch' && typeof settings.anonymousBatch === 'boolean') isAnon = !!settings.anonymousBatch;
@@ -314,75 +361,35 @@ async function uploadToCatbox(file, opts) {
     form.append('userhash', effectiveUserhash);
   }
 
+  const fileSizeBytes = uploadFile && typeof uploadFile.size === 'number' ? uploadFile.size : undefined;
   assertUploadSizeLimit(uploadUrl, fileSizeBytes);
 
   const res = await fetch(uploadUrl, {
     method: 'POST',
     body: form
   });
-  if (!res.ok) throw new Error('Upload error');
+  if (!res.ok) throw new Error(`Upload error (${res.status})`);
   const text = await res.text();
-  const normalized = normalizeCatboxUrl(text);
-  return normalized.url || text.trim();
+  const uploadedUrl = extractUploadResponseUrl(text);
+  if (typeof window !== 'undefined') {
+    window.MM_ACTIVE_CATBOX_UPLOAD_URL = uploadUrl;
+  }
+  if (api && typeof api.markResult === 'function') {
+    api.markResult({ endpoint: uploadUrl, ok: true });
+  }
+  return uploadedUrl;
 }
 
-// opts: { context?: 'batch'|'manual' }
-function uploadToCatboxWithProgress(file, onProgress, opts) {
-  const options = (opts && typeof opts === 'object') ? opts : {};
+function uploadCatboxRequestWithProgress(uploadFile, settings, uploadUrl, options, onProgress) {
+  const api = getUploadServerApi();
   const signal = options.signal;
   return new Promise((resolve, reject) => {
-    const uploadFile = withUploadFilename(file, options);
-    const st = readUploadSettings();
-    const settings = st && typeof st === 'object' ? st : { anonymous: true, userhash: '' };
-    const fileSizeBytes = uploadFile && typeof uploadFile.size === 'number' ? uploadFile.size : undefined;
-
-    const forceProxyByType = shouldForceCatboxProxyForFile(uploadFile);
-    const uploadUrl = forceProxyByType
-      ? getActiveCatboxDefault()
-      : resolveCatboxUploadUrl(settings, { fileSizeBytes, allowProxy: options.allowProxy !== false });
-
-    // Copyparty direct upload path (up2k)
-    if (!forceProxyByType && uploadUrl === '__COPYPARTY__') {
-      const cpUrl = settings && typeof settings.copypartyUploadUrl === 'string' ? settings.copypartyUploadUrl.trim() : '';
-      const cpPw = settings && typeof settings.copypartyPw === 'string' ? settings.copypartyPw : '';
-      if (!cpUrl) {
-        reject(new Error('Copyparty upload URL missing in settings'));
-        return;
-      }
-      if (typeof window.mm_up2k_uploadFile !== 'function') {
-        reject(new Error('Copyparty up2k client not loaded'));
-        return;
-      }
-
-      if (typeof onProgress === 'function') {
-        try { onProgress(0, { loadedBytes: 0, totalBytes: fileSizeBytes || 0, bps: 0 }); } catch {}
-      }
-
-      const subdir = getCopypartySubdir(options);
-      window.mm_up2k_uploadFile({
-        uploadUrl: cpUrl,
-        pw: cpPw,
-        file: uploadFile,
-        subdir,
-        signal,
-        onProgress: (percent, info) => {
-          if (typeof onProgress !== 'function') return;
-          try { onProgress(percent, info); } catch {}
-        }
-      }).then((url) => {
-        resolve(String(url));
-      }).catch(reject);
-
-      return;
-    }
-
-    assertUploadSizeLimit(uploadUrl, fileSizeBytes);
     const xhr = new XMLHttpRequest();
     xhr.open('POST', uploadUrl);
     const form = new FormData();
     form.append('reqtype', 'fileupload');
     form.append('fileToUpload', uploadFile);
-    // Pull current settings; anonymous defaults to true
+
     let isAnon = (typeof settings.anonymous === 'boolean') ? settings.anonymous : true;
     try {
       const ctx = options.context;
@@ -393,6 +400,9 @@ function uploadToCatboxWithProgress(file, onProgress, opts) {
     if (!isAnon) {
       form.append('userhash', effectiveUserhash);
     }
+
+    const fileSizeBytes = uploadFile && typeof uploadFile.size === 'number' ? uploadFile.size : undefined;
+    assertUploadSizeLimit(uploadUrl, fileSizeBytes);
 
     const createAbortError = () => {
       if (typeof DOMException === 'function') return new DOMException('Upload aborted', 'AbortError');
@@ -453,21 +463,138 @@ function uploadToCatboxWithProgress(file, onProgress, opts) {
       if (xhr.readyState === 4) {
         const ok = xhr.status >= 200 && xhr.status < 300;
         if (ok) {
-          const text = xhr.responseText.trim();
-          const normalized = normalizeCatboxUrl(text);
-          finalizeResolve(normalized.url || text);
+          const text = (xhr.responseText || '').trim();
+          const uploadedUrl = extractUploadResponseUrl(text);
+          if (typeof window !== 'undefined') {
+            window.MM_ACTIVE_CATBOX_UPLOAD_URL = uploadUrl;
+          }
+          if (api && typeof api.markResult === 'function') {
+            api.markResult({ endpoint: uploadUrl, ok: true });
+          }
+          finalizeResolve(uploadedUrl);
         } else {
-          const err = new Error('Upload error: ' + xhr.status);
-          finalizeReject(err);
+          finalizeReject(new Error('Upload error: ' + xhr.status));
         }
       }
     };
     xhr.onerror = () => {
-      const err = new Error('Network error');
-      finalizeReject(err);
+      finalizeReject(new Error('Network error'));
     };
 
     xhr.send(form);
+  });
+}
+
+// opts: { context?: 'batch'|'manual' }
+async function uploadToCatbox(file, opts) {
+  const api = getUploadServerApi();
+  const options = (opts && typeof opts === 'object') ? opts : {};
+  const uploadFile = withUploadFilename(file, options);
+
+  // Pull current settings; anonymous defaults to true
+  const st = readUploadSettings();
+  const settings = st && typeof st === 'object' ? st : {};
+  const fileSizeBytes = uploadFile && typeof uploadFile.size === 'number' ? uploadFile.size : undefined;
+  await ensureUploadServerReady(settings, { fileSizeBytes });
+  const target = resolveCatboxUploadTarget(settings, { fileSizeBytes, allowProxy: options.allowProxy !== false });
+  updateCatboxRuntime(target);
+
+  if (target.kind === 'copyparty') {
+    const cpUrl = settings && typeof settings.copypartyUploadUrl === 'string' ? settings.copypartyUploadUrl.trim() : '';
+    const cpPw = settings && typeof settings.copypartyPw === 'string' ? settings.copypartyPw : '';
+    if (!cpUrl) throw new Error('Copyparty upload URL missing in settings');
+    if (typeof window.mm_up2k_uploadFile !== 'function') throw new Error('Copyparty up2k client not loaded');
+    const subdir = getCopypartySubdir(options);
+    const url = await window.mm_up2k_uploadFile({ uploadUrl: cpUrl, pw: cpPw, file: uploadFile, subdir });
+    if (api && typeof api.markResult === 'function') {
+      api.markResult({ endpoint: cpUrl, ok: true, active: cpUrl, kind: 'copyparty' });
+    }
+    return String(url);
+  }
+  try {
+    return await uploadCatboxRequest(uploadFile, settings, target.url, options);
+  } catch (err) {
+    if (api && typeof api.markResult === 'function') {
+      api.markResult({ endpoint: target.url, ok: false, error: String(err && err.message ? err.message : err) });
+    }
+    if (target.kind === 'auto' && target.fallbackUrl && target.fallbackUrl !== target.url) {
+      const fallbackTarget = { kind: 'proxy', url: target.fallbackUrl, fallbackUrl: '' };
+      updateCatboxRuntime(fallbackTarget);
+      return await uploadCatboxRequest(uploadFile, settings, fallbackTarget.url, options);
+    }
+    throw err;
+  }
+}
+
+// opts: { context?: 'batch'|'manual' }
+async function uploadToCatboxWithProgress(file, onProgress, opts) {
+  const api = getUploadServerApi();
+  const options = (opts && typeof opts === 'object') ? opts : {};
+  const uploadFile = withUploadFilename(file, options);
+  const st = readUploadSettings();
+  const settings = st && typeof st === 'object' ? st : { anonymous: true, userhash: '' };
+  const fileSizeBytes = uploadFile && typeof uploadFile.size === 'number' ? uploadFile.size : undefined;
+  await ensureUploadServerReady(settings, { fileSizeBytes });
+  const target = resolveCatboxUploadTarget(settings, { fileSizeBytes, allowProxy: options.allowProxy !== false });
+  updateCatboxRuntime(target);
+
+  return new Promise((resolve, reject) => {
+    if (target.kind === 'copyparty') {
+      const cpUrl = settings && typeof settings.copypartyUploadUrl === 'string' ? settings.copypartyUploadUrl.trim() : '';
+      const cpPw = settings && typeof settings.copypartyPw === 'string' ? settings.copypartyPw : '';
+      if (!cpUrl) {
+        reject(new Error('Copyparty upload URL missing in settings'));
+        return;
+      }
+      if (typeof window.mm_up2k_uploadFile !== 'function') {
+        reject(new Error('Copyparty up2k client not loaded'));
+        return;
+      }
+
+      if (typeof onProgress === 'function') {
+        try { onProgress(0, { loadedBytes: 0, totalBytes: fileSizeBytes || 0, bps: 0 }); } catch {}
+      }
+
+      const subdir = getCopypartySubdir(options);
+      window.mm_up2k_uploadFile({
+        uploadUrl: cpUrl,
+        pw: cpPw,
+        file: uploadFile,
+        subdir,
+        signal: options.signal,
+        onProgress: (percent, info) => {
+          if (typeof onProgress !== 'function') return;
+          try { onProgress(percent, info); } catch {}
+        }
+      }).then((url) => {
+        if (api && typeof api.markResult === 'function') {
+          api.markResult({ endpoint: cpUrl, ok: true, active: cpUrl, kind: 'copyparty' });
+        }
+        resolve(String(url));
+      }).catch(reject);
+
+      return;
+    }
+    uploadCatboxRequestWithProgress(uploadFile, settings, target.url, options, onProgress)
+      .then(resolve)
+      .catch(async (err) => {
+        if (api && typeof api.markResult === 'function') {
+          api.markResult({ endpoint: target.url, ok: false, error: String(err && err.message ? err.message : err) });
+        }
+        if (target.kind === 'auto' && target.fallbackUrl && target.fallbackUrl !== target.url) {
+          try {
+            const fallbackTarget = { kind: 'proxy', url: target.fallbackUrl, fallbackUrl: '' };
+            updateCatboxRuntime(fallbackTarget);
+            const result = await uploadCatboxRequestWithProgress(uploadFile, settings, fallbackTarget.url, options, onProgress);
+            resolve(result);
+            return;
+          } catch (fallbackErr) {
+            reject(fallbackErr);
+            return;
+          }
+        }
+        reject(err);
+      });
   });
 }
 

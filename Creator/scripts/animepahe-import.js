@@ -396,36 +396,6 @@
     return String(payload.content.url);
   }
 
-  function getCatboxUploadEndpoint() {
-    try {
-      const active = (typeof window !== "undefined" && typeof window.MM_ACTIVE_CATBOX_UPLOAD_URL === "string")
-        ? window.MM_ACTIVE_CATBOX_UPLOAD_URL.trim()
-        : "";
-      if (active) return active;
-    } catch {}
-    try {
-      if (typeof window !== "undefined" && typeof window.mm_getCatboxUploadUrl === "function") {
-        const candidate = String(window.mm_getCatboxUploadUrl() || "").trim();
-        if (candidate) return candidate;
-      }
-    } catch {}
-    const st = readUploadSettings();
-    const fromSettings = st && typeof st.catboxUploadUrl === "string" ? st.catboxUploadUrl.trim() : "";
-    return fromSettings || "https://mm.littlehacker303.workers.dev/catbox/user/api.php";
-  }
-
-  function isCatboxProxyActive() {
-    const endpoint = String(getCatboxUploadEndpoint() || "").trim();
-    if (!endpoint) return false;
-    try {
-      const parsed = new URL(endpoint);
-      const host = (parsed.hostname || "").toLowerCase();
-      return host !== "catbox.moe";
-    } catch {
-      return true;
-    }
-  }
-
   async function fetchRemoteContentLength(url) {
     try {
       const head = await fetch(url, { method: "HEAD", cache: "no-store" });

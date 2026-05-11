@@ -58,6 +58,7 @@
   const DEFAULT_BACKEND_ROOT = "https://mm.littlehacker303.workers.dev";
   const PART_PRELOAD_METHOD_KEY = "dev:partPreloadMethod";
   const DEFAULT_PART_PRELOAD_METHOD = "swap";
+  const CATBOX_SETTINGS_KEY = "mm_upload_settings";
 
   function isDevModeEnabled() {
     if (typeof window === "undefined") return false;
@@ -203,32 +204,69 @@
   }
 
   function getCatboxSettings() {
+    const helper = window.MM_catbox || null;
+    if (helper && typeof helper.getState === "function") {
+      try {
+        const state = helper.getState();
+        return {
+          url: state && typeof state.proxyUrl === "string" ? state.proxyUrl.trim() : "",
+          mode: state && typeof state.mode === "string" ? state.mode : "auto"
+        };
+      } catch {}
+    }
     try {
       const stored = localStorage.getItem("mm_upload_settings");
       if (stored) {
         const parsed = JSON.parse(stored);
         return {
           url: (typeof parsed.catboxUploadUrl === "string") ? parsed.catboxUploadUrl.trim() : "",
-          mode: typeof parsed.catboxOverrideMode === "string" ? parsed.catboxOverrideMode : "default"
+          mode: normalizeCatboxMode(typeof parsed.catboxOverrideMode === "string" ? parsed.catboxOverrideMode : "auto")
         };
       }
     } catch {}
-    return { url: "", mode: "default" };
+    return { url: "", mode: "auto" };
+  }
+
+  function normalizeCatboxMode(value) {
+    if (window.MM_catbox && typeof window.MM_catbox.normalizeMode === "function") {
+      try { return window.MM_catbox.normalizeMode(value); } catch {}
+    }
+    const trimmed = (typeof value === "string") ? value.trim().toLowerCase() : "auto";
+    if (trimmed === "direct") return "direct";
+    if (trimmed === "proxy") return "proxy";
+    if (trimmed === "default") return "auto";
+    return "auto";
+  }
+
+  function persistCatboxSettings(partial) {
+    const helper = window.MM_catbox || null;
+    if (helper && typeof helper.persistSettingsPartial === "function") {
+      helper.persistSettingsPartial(partial);
+      return;
+    }
+    let current = {};
+    try {
+      const raw = localStorage.getItem(CATBOX_SETTINGS_KEY);
+      current = raw ? JSON.parse(raw) : {};
+      if (!current || typeof current !== "object") current = {};
+    } catch {
+      current = {};
+    }
+    localStorage.setItem(CATBOX_SETTINGS_KEY, JSON.stringify(Object.assign({}, current, partial)));
+    try {
+      window.dispatchEvent(new CustomEvent("rsp:catbox-default-updated", {
+        detail: { url: "", previous: "", meta: { source: "dev-menu-persist" } }
+      }));
+    } catch {}
   }
 
   function getCatboxSummary() {
     try {
-      if (window.MM_catbox && typeof window.MM_catbox.getLastResult === "function") {
-        const last = window.MM_catbox.getLastResult();
-        if (last && typeof last === "object") {
-          const endpoint = last.endpoint ? String(last.endpoint) : "unknown";
-          const active = (typeof last.active === "string" && last.active.trim())
-            ? last.active.trim()
-            : (typeof window.MM_ACTIVE_CATBOX_UPLOAD_URL === "string" ? window.MM_ACTIVE_CATBOX_UPLOAD_URL.trim() : "");
-          const parts = [`${endpoint}`];
-          if (active) parts.push(active);
-          return parts.join(" · ");
-        }
+      if (window.MM_catbox && typeof window.MM_catbox.getState === "function") {
+        const state = window.MM_catbox.getState();
+        const active = state && typeof state.activeUrl === "string" ? state.activeUrl.trim() : "";
+        const summary = state && typeof state.summary === "string" ? state.summary : "Auto using direct Catbox";
+        return active ? `${summary} · ${active}` : summary;
       }
       const active = typeof window.MM_ACTIVE_CATBOX_UPLOAD_URL === "string" ? window.MM_ACTIVE_CATBOX_UPLOAD_URL.trim() : "";
       return active || "Pending detection";
@@ -279,7 +317,7 @@
   function refreshCatboxControls() {
     const settings = getCatboxSettings();
     if (catboxUrlInput) catboxUrlInput.value = settings.url || '';
-    if (catboxModeSelect) catboxModeSelect.value = settings.mode || 'default';
+    if (catboxModeSelect) catboxModeSelect.value = settings.mode || 'auto';
   }
 
   function refreshBackendRootInput() {
@@ -383,9 +421,10 @@
     }
     if (catboxStateLabel) catboxStateLabel.textContent = "Detecting…";
     try {
-      await window.MM_catbox.ensure();
+      const nextState = await window.MM_catbox.ensure({ force: true });
       refreshDiagnostics();
-      showDevNotice("success", "Catbox detection complete.");
+      const summary = nextState && nextState.summary ? nextState.summary : "Catbox detection complete.";
+      showDevNotice("success", summary);
     } catch (err) {
       console.error("[DevMenu] Catbox detection failed", err);
       showDevNotice("error", err && err.message ? err.message : "Catbox detection failed.");
@@ -575,16 +614,27 @@
     }
 
     if (catboxUrlInput) {
-      catboxUrlInput.addEventListener("focus", () => {
-        if (catboxModeSelect) catboxModeSelect.value = 'proxy';
-      });
+      const commitCatboxUrl = () => {
+        try {
+          persistCatboxSettings({ catboxUploadUrl: (catboxUrlInput.value || "").trim() });
+        } catch (err) {
+          console.warn('[DevMenu] Failed to save Catbox URL', err);
+        }
+        refreshDiagnostics();
+      };
+      catboxUrlInput.addEventListener("change", commitCatboxUrl);
+      catboxUrlInput.addEventListener("blur", commitCatboxUrl);
     }
 
     if (catboxModeSelect) {
       catboxModeSelect.addEventListener("change", () => {
-        const mode = (catboxModeSelect.value || 'default').trim().toLowerCase();
+        const mode = normalizeCatboxMode(catboxModeSelect.value || 'auto');
         try {
-          saveSettingsPartial({ catboxOverrideMode: mode });
+          if (window.MM_catbox && typeof window.MM_catbox.setMode === "function") {
+            window.MM_catbox.setMode(mode);
+          } else {
+            persistCatboxSettings({ catboxOverrideMode: mode });
+          }
         } catch (err) {
           console.warn('[DevMenu] Failed to save Catbox mode', err);
         }

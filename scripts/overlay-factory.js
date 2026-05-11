@@ -772,6 +772,13 @@ window.OverlayFactory = (function() {
           }),
           createElement('span', { id: 'mmUploadConcurrencyValue', style: { minWidth: '2em', textAlign: 'right' } }, ['2'])
         ]),
+        createElement('div', { className: 'mm-settings-row', style: { justifyContent: 'space-between', alignItems: 'center', gap: '.75em' } }, [
+          createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: '.2em' } }, [
+            createElement('span', { style: { fontWeight: '600' } }, ['Upload server']),
+            createElement('small', { id: 'mmUploadServerSummary', className: 'mm-upload-server-summary' }, ['Auto using direct Catbox'])
+          ]),
+          createElement('button', { id: 'mmUploadServerManageBtn', type: 'button', className: 'mm-btn ghost' }, ['Override'])
+        ]),
         createElement('div', { className: 'mm-settings-row' }, [
           createElement('label', { className: 'mm-toggle', style: { gap: '.4em', alignItems: 'center' } }, [
             createElement('input', { type: 'checkbox', id: 'mmFolderUploadYellToggle', checked: 'checked' }),
@@ -816,6 +823,62 @@ window.OverlayFactory = (function() {
     return panel;
   }
 
+  function createUploadServerOverrideOverlay() {
+    removeOverlay('uploadServerOverrideOverlay');
+
+    const overlay = createElement('div', {
+      id: 'uploadServerOverrideOverlay',
+      className: 'mm-settings-panel',
+      role: 'dialog',
+      'aria-modal': 'true',
+      'aria-hidden': 'true',
+      'aria-labelledby': 'uploadServerOverrideTitle',
+      tabindex: '-1'
+    }, [
+      createElement('div', { className: 'mm-card upload-server-override-card' }, [
+        createElement('h3', { id: 'uploadServerOverrideTitle', style: { margin: '.2em 0 0.45em 0' } }, ['Override Upload Server']),
+        createElement('p', { id: 'uploadServerOverrideCurrent', className: 'upload-server-override-current' }, ['Current selection: auto']),
+        createElement('div', { className: 'upload-server-override-options' }, [
+          createElement('label', { className: 'upload-server-override-option' }, [
+            createElement('input', { type: 'radio', id: 'uploadServerModeAuto', name: 'uploadServerOverrideMode', value: 'auto', checked: 'checked' }),
+            createElement('div', {}, [
+              createElement('strong', {}, ['Auto']),
+              createElement('div', { className: 'upload-server-override-help' }, ['Try direct Catbox first, then fall back to proxy if needed.'])
+            ])
+          ]),
+          createElement('label', { className: 'upload-server-override-option' }, [
+            createElement('input', { type: 'radio', id: 'uploadServerModeDirect', name: 'uploadServerOverrideMode', value: 'direct' }),
+            createElement('div', {}, [
+              createElement('strong', {}, ['Direct']),
+              createElement('div', { className: 'upload-server-override-help' }, ['Always upload straight to Catbox.'])
+            ])
+          ]),
+          createElement('label', { className: 'upload-server-override-option' }, [
+            createElement('input', { type: 'radio', id: 'uploadServerModeProxy', name: 'uploadServerOverrideMode', value: 'proxy' }),
+            createElement('div', {}, [
+              createElement('strong', {}, ['Proxy']),
+              createElement('div', { className: 'upload-server-override-help' }, ['Always use the configured Catbox proxy URL.'])
+            ])
+          ]),
+          createElement('label', { id: 'uploadServerModeCopypartyRow', className: 'upload-server-override-option', style: { display: 'none' } }, [
+            createElement('input', { type: 'radio', id: 'uploadServerModeCopyparty', name: 'uploadServerOverrideMode', value: 'copyparty' }),
+            createElement('div', {}, [
+              createElement('strong', {}, ['Copyparty']),
+              createElement('div', { className: 'upload-server-override-help' }, ['Use the configured Copyparty upload URL directly.'])
+            ])
+          ])
+        ]),
+        createElement('div', { className: 'mm-actions' }, [
+          createElement('button', { id: 'uploadServerOverrideSave', className: 'mm-btn primary', type: 'button' }, ['Save']),
+          createElement('button', { id: 'uploadServerOverrideClose', className: 'mm-btn ghost', type: 'button' }, ['Close'])
+        ])
+      ])
+    ]);
+
+    document.body.appendChild(overlay);
+    return overlay;
+  }
+
   // Create confirm modal for Creator page
   function createConfirmModal() {
     removeOverlay('confirmModal');
@@ -858,22 +921,23 @@ window.OverlayFactory = (function() {
 	          createElement('div', { className: 'dev-menu-section' }, [
 	            createElement('h4', {}, ['Catbox Settings']),
             createElement('div', { className: 'dev-field' }, [
-              createElement('label', { for: 'devCatboxUploadUrl' }, ['Upload URL']),
+              createElement('label', { for: 'devCatboxUploadUrl' }, ['Proxy URL']),
               createElement('input', { 
                 type: 'text', 
                 id: 'devCatboxUploadUrl', 
                 className: 'dev-field-input',
                 placeholder: 'Catbox upload endpoint for proxy' 
               }),
-              createElement('p', { className: 'dev-menu-hint' }, ['Set only when Mode is Proxy.'])
+              createElement('p', { className: 'dev-menu-hint' }, ['Used only when Mode is Proxy, or when Auto falls back to proxy.'])
             ]),
             createElement('div', { className: 'dev-field' }, [
               createElement('label', { for: 'devCatboxMode' }, ['Mode']),
               createElement('select', { id: 'devCatboxMode', className: 'dev-field-input' }, [
-                createElement('option', { value: 'default' }, ['Default']),
+                createElement('option', { value: 'auto' }, ['Auto']),
+                createElement('option', { value: 'direct' }, ['Direct']),
                 createElement('option', { value: 'proxy' }, ['Proxy'])
               ]),
-              createElement('p', { className: 'dev-menu-hint select' }, ['Choose Default (worker) or Proxy (custom URL).'])
+              createElement('p', { className: 'dev-menu-hint select' }, ['Choose Auto, Direct, or Proxy.'])
             ])
 	          ]),
 
@@ -1027,28 +1091,30 @@ window.OverlayFactory = (function() {
           createElement('div', { className: 'dev-menu-section' }, [
             createElement('h4', {}, ['Catbox Settings']),
             createElement('div', { className: 'dev-field' }, [
-              createElement('label', { for: 'devCatboxUploadUrl' }, ['Upload URL']),
+              createElement('label', { for: 'devCatboxUploadUrl' }, ['Proxy URL']),
               createElement('input', { 
                 type: 'text', 
                 id: 'devCatboxUploadUrl', 
                 className: 'dev-field-input',
                 placeholder: 'Catbox upload endpoint for proxy' 
               }),
-              createElement('p', { className: 'dev-menu-hint' }, ['Set only when Mode is Proxy.'])
+              createElement('p', { className: 'dev-menu-hint' }, ['Used only when Mode is Proxy, or when Auto falls back to proxy.'])
             ]),
             createElement('div', { className: 'dev-field' }, [
               createElement('label', { for: 'devCatboxMode' }, ['Mode']),
               createElement('select', { id: 'devCatboxMode', className: 'dev-field-input' }, [
-                createElement('option', { value: 'default' }, ['Default']),
-                createElement('option', { value: 'proxy' }, ['Proxy'])
+                createElement('option', { value: 'auto' }, ['Auto']),
+                createElement('option', { value: 'direct' }, ['Direct']),
+                createElement('option', { value: 'proxy' }, ['Proxy']),
+                createElement('option', { value: 'copyparty' }, ['Copyparty'])
               ]),
-              createElement('p', { className: 'dev-menu-hint select' }, ['Choose Default (worker) or Proxy (custom URL).'])
+              createElement('p', { className: 'dev-menu-hint select' }, ['Choose Auto, Direct, Proxy, or Copyparty.'])
             ]),
             createElement('label', { className: 'dev-menu-toggle' }, [
               createElement('input', { type: 'checkbox', id: 'devCatboxForceProxyUnder100Mb' }),
               createElement('span', {}, ['Force Catbox proxy for files under 100MB'])
             ]),
-            createElement('p', { className: 'dev-menu-hint' }, ['When enabled, small uploads always use the Catbox worker/proxy (even if allowProxy=false).'])
+            createElement('p', { className: 'dev-menu-hint' }, ['When enabled, Auto mode sends smaller Catbox uploads to the proxy immediately.'])
           ]),
 
           createElement('div', { className: 'dev-menu-section' }, [
@@ -1176,6 +1242,7 @@ window.OverlayFactory = (function() {
     createFeedbackOverlay,
     createSourcesToolbar,
     createUploadSettingsPanel,
+    createUploadServerOverrideOverlay,
     createConfirmModal,
     createDevMenuOverlay,
     createCreatorDevMenuOverlay,

@@ -21,6 +21,7 @@
   let githubTokenInput = null;
   let webhookUrlInput = null;
   let catboxUrlInput = null;
+  let catboxModeSelect = null;
   let catboxForceProxyUnder100MbToggle = null;
   let copypartyUploadUrlInput = null;
   let copypartyPwInput = null;
@@ -48,6 +49,7 @@
     githubTokenInput = document.getElementById("devGithubToken");
     webhookUrlInput = document.getElementById("devWebhookUrl");
     catboxUrlInput = document.getElementById("devCatboxUploadUrl");
+    catboxModeSelect = document.getElementById("devCatboxMode");
     catboxForceProxyUnder100MbToggle = document.getElementById("devCatboxForceProxyUnder100Mb");
     copypartyUploadUrlInput = document.getElementById("devCopypartyUploadUrl");
     copypartyPwInput = document.getElementById("devCopypartyPw");
@@ -69,6 +71,10 @@
     }
     return window.DevMode === true;
   };
+
+  function getUploadServerApi() {
+    return window.MMUploadServer || null;
+  }
 
   function showNotice(tone, message) {
     const payload = { title: "Creator Dev Menu", message: String(message || ""), tone: tone || "info", autoCloseMs: 4000 };
@@ -129,17 +135,12 @@
 
   function getCatboxSummary() {
     try {
-      if (window.MM_catbox && typeof window.MM_catbox.getLastResult === "function") {
-        const last = window.MM_catbox.getLastResult();
-        if (last && typeof last === "object") {
-          const endpoint = last.endpoint ? String(last.endpoint) : "unknown";
-          const active = (typeof last.active === "string" && last.active.trim())
-            ? last.active.trim()
-            : (typeof window.MM_ACTIVE_CATBOX_UPLOAD_URL === "string"
-              ? window.MM_ACTIVE_CATBOX_UPLOAD_URL.trim()
-              : "");
-          return active ? `${endpoint} · ${active}` : endpoint;
-        }
+      const api = getUploadServerApi();
+      if (api && typeof api.getState === "function") {
+        const state = api.getState();
+        const active = state && typeof state.activeUrl === "string" ? state.activeUrl.trim() : "";
+        const label = state && typeof state.summary === "string" ? state.summary : "Auto using direct Catbox";
+        return active ? `${label} · ${active}` : label;
       }
       const active = typeof window.MM_ACTIVE_CATBOX_UPLOAD_URL === "string"
         ? window.MM_ACTIVE_CATBOX_UPLOAD_URL.trim()
@@ -157,13 +158,31 @@
     }
     if (catboxStateLabel) catboxStateLabel.textContent = "Detecting…";
     try {
-      await window.MM_catbox.ensure();
+      const nextState = await window.MM_catbox.ensure({ force: true });
       refreshDiagnostics();
-      showNotice("success", "Catbox detection complete.");
+      const summary = nextState && nextState.summary ? nextState.summary : "Catbox detection complete.";
+      showNotice("success", summary);
     } catch (err) {
       console.error("[CreatorDevMenu] Catbox detection failed", err);
       showNotice("error", err && err.message ? err.message : "Catbox detection failed.");
       refreshDiagnostics();
+    }
+  }
+
+  function syncCatboxModeOptions(uploadState) {
+    if (!catboxModeSelect) return;
+    const state = uploadState || (getUploadServerApi() && typeof getUploadServerApi().getState === "function"
+      ? getUploadServerApi().getState()
+      : null);
+    const hasCopyparty = !!(state && state.copypartyUrl);
+    const options = Array.from(catboxModeSelect.options || []);
+    options.forEach((option) => {
+      if (option.value === "copyparty") {
+        option.disabled = !hasCopyparty;
+      }
+    });
+    if (!hasCopyparty && catboxModeSelect.value === "copyparty") {
+      catboxModeSelect.value = "auto";
     }
   }
 
@@ -316,6 +335,9 @@
     if (typeof loadUploadSettings === 'function') {
       try {
         const settings = loadUploadSettings();
+        const uploadState = getUploadServerApi() && typeof getUploadServerApi().getState === 'function'
+          ? getUploadServerApi().getState()
+          : null;
         if (githubWorkerUrlInput && settings.githubWorkerUrl !== undefined) {
           githubWorkerUrlInput.value = settings.githubWorkerUrl || '';
         }
@@ -327,6 +349,10 @@
         }
         if (catboxUrlInput && settings.catboxUploadUrl !== undefined) {
           catboxUrlInput.value = settings.catboxUploadUrl || '';
+        }
+        if (catboxModeSelect) {
+          catboxModeSelect.value = (uploadState && uploadState.mode) ? uploadState.mode : (settings.catboxOverrideMode || 'auto');
+          syncCatboxModeOptions(uploadState);
         }
         if (catboxForceProxyUnder100MbToggle && settings.catboxForceProxyUnder100Mb !== undefined) {
           catboxForceProxyUnder100MbToggle.checked = !!settings.catboxForceProxyUnder100Mb;
@@ -469,9 +495,6 @@
           try {
             const value = catboxUrlInput.value.trim();
             saveSettingsPartial({ catboxUploadUrl: value });
-            if (typeof window !== 'undefined' && window.mm_uploadSettings && typeof window.mm_uploadSettings.save === 'function') {
-              window.mm_uploadSettings.save({ catboxUploadUrl: value });
-            }
           } catch (err) {
             console.warn('[CreatorDevMenu] Failed to save Catbox URL', err);
           }
@@ -479,6 +502,26 @@
       };
       catboxUrlInput.addEventListener('change', commitCatboxUrl);
       catboxUrlInput.addEventListener('blur', commitCatboxUrl);
+    }
+
+    if (catboxModeSelect) {
+      const commitCatboxMode = () => {
+        if (typeof saveSettingsPartial !== 'function') return;
+        try {
+          const nextMode = String(catboxModeSelect.value || 'auto').trim().toLowerCase();
+          if (nextMode === 'copyparty' && (!copypartyUploadUrlInput || !copypartyUploadUrlInput.value.trim())) {
+            catboxModeSelect.value = 'auto';
+            showNotice('warning', 'Set a Copyparty upload URL before switching to Copyparty mode.');
+            saveSettingsPartial({ catboxOverrideMode: 'auto' });
+            return;
+          }
+          saveSettingsPartial({ catboxOverrideMode: nextMode });
+        } catch (err) {
+          console.warn('[CreatorDevMenu] Failed to save Catbox mode', err);
+        }
+      };
+      catboxModeSelect.addEventListener('change', commitCatboxMode);
+      catboxModeSelect.addEventListener('blur', commitCatboxMode);
     }
 
     if (catboxForceProxyUnder100MbToggle) {
@@ -576,7 +619,7 @@
     refreshDiagnostics();
   });
 
-  window.addEventListener("rsp:catbox-default-updated", () => {
+  window.addEventListener("mm:upload-server-state", () => {
     refreshDiagnostics();
   });
 

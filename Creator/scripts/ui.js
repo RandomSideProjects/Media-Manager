@@ -10,7 +10,7 @@ let posterImageUrl = '';
 const posterWrapper = document.getElementById('posterWrapper');
 const posterChangeBtn = document.getElementById('posterChangeBtn');
 const addCategoryBtn = document.getElementById('addCategory');
-const outputEl = document.getElementById('output');
+const outputStatusEl = document.getElementById('outputStatus');
 const loadUrlInput = document.getElementById('loadUrl');
 const loadFileInput = document.getElementById('loadFileInput');
 const loadFileBtn = document.getElementById('loadFileBtn');
@@ -550,6 +550,47 @@ if (typeof window !== 'undefined') {
   window.addEventListener('rsp:dev-mode-changed', resetGithubUploadSequence);
 }
 
+function setOutputStatus(message, tone = 'info') {
+  if (!outputStatusEl) return;
+  const text = String(message || '').trim();
+  outputStatusEl.textContent = text;
+  outputStatusEl.className = '';
+  if (!text) return;
+  if (tone === 'error') outputStatusEl.classList.add('output-status-error');
+  else if (tone === 'warning') outputStatusEl.classList.add('output-status-warning');
+}
+
+function clearOutputStatus() {
+  setOutputStatus('');
+}
+
+function clearOutputLink() {
+  if (!outputLink) return;
+  outputLink.textContent = '';
+  outputLink.href = '#';
+}
+
+function isMeaningfulDirectoryPayload(payload) {
+  const data = (payload && typeof payload === 'object') ? payload : {};
+  const title = typeof data.title === 'string' ? data.title.trim() : '';
+  const image = typeof data.Image === 'string' ? data.Image.trim() : '';
+  const categories = Array.isArray(data.categories) ? data.categories : [];
+  const hasCategories = categories.some((category) => {
+    if (!category || typeof category !== 'object') return false;
+    const categoryTitle = typeof category.category === 'string' ? category.category.trim() : '';
+    const episodes = Array.isArray(category.episodes) ? category.episodes : [];
+    return !!categoryTitle || episodes.length > 0;
+  });
+  return !!title || !!hasCategories || (!!image && image !== 'N/A');
+}
+
+function clearCreatorOutputBox() {
+  directoryCode = '';
+  githubUploadUrl = '';
+  clearOutputLink();
+  clearOutputStatus();
+}
+
 // Helpers
 const sleep = (ms) => new Promise(res => setTimeout(res, ms));
 
@@ -593,6 +634,10 @@ function setCreatorPosterUrl(url) {
 
 if (typeof window !== 'undefined') {
   window.mm_setCreatorPosterUrl = setCreatorPosterUrl;
+  window.mm_setCreatorOutputStatus = setOutputStatus;
+  window.mm_clearCreatorOutputStatus = clearOutputStatus;
+  window.mm_isMeaningfulDirectoryPayload = isMeaningfulDirectoryPayload;
+  window.mm_clearCreatorOutputBox = clearCreatorOutputBox;
 }
 
 function getUploadSettingsSafe() {
@@ -2731,14 +2776,15 @@ function applyDirectoryJson(json) {
     categories: categoriesData
   };
   try { window.lastContent = JSON.stringify(contentOnly); } catch {}
-  if (outputEl) outputEl.textContent = '';
+  clearOutputStatus();
   clearPendingLoadFile();
 }
 
 async function loadDirectory(urlOverride) {
   const url = (typeof urlOverride === 'string' && urlOverride.trim()) ? urlOverride.trim() : (loadUrlInput ? loadUrlInput.value.trim() : '');
   if (!url) {
-    if (outputEl) outputEl.textContent = 'Enter a URL or select a file to load.';
+    clearOutputLink();
+    setOutputStatus('Enter a URL or select a file to load.', 'warning');
     return false;
   }
   try {
@@ -2756,7 +2802,8 @@ async function loadDirectory(urlOverride) {
     applyDirectoryJson(json);
     return true;
   } catch (err) {
-    if (outputEl) outputEl.textContent = 'Failed to load: ' + err.message;
+    clearOutputLink();
+    setOutputStatus('Failed to load: ' + err.message, 'error');
     return false;
   }
 }
@@ -2775,7 +2822,8 @@ async function loadDirectoryFromFile(file) {
     applyDirectoryJson(json);
     if (loadUrlInput) loadUrlInput.value = '';
   } catch (err) {
-    if (outputEl) outputEl.textContent = 'Failed to load: ' + err.message;
+    clearOutputLink();
+    setOutputStatus('Failed to load: ' + err.message, 'error');
   }
 }
 
@@ -2823,9 +2871,7 @@ window.addEventListener('mm_settings_saved', (e) => {
     try {
       document.getElementById('dirTitle').value = '';
       categoriesEl.innerHTML = '';
-      directoryCode = '';
-      githubUploadUrl = '';
-      updateOutput();
+      clearCreatorOutputBox();
       posterImageUrl = '';
       clearPosterPreviewUI();
       if (posterInput) { posterInput.value = ''; }
@@ -2842,9 +2888,9 @@ function updateOutput() {
     if (githubUploadUrl) {
       outputLink.textContent = githubUploadUrl;
       outputLink.href = githubUploadUrl;
+      clearOutputStatus();
     } else {
-      outputLink.textContent = '';
-      outputLink.href = '#';
+      clearOutputLink();
     }
     return;
   }
@@ -2855,6 +2901,7 @@ function updateOutput() {
     outputLink.textContent = directoryCode;
     outputLink.href = `https://randomsideprojects.github.io/Media-Manager/index.html?source=${directoryCode}`;
   }
+  clearOutputStatus();
 }
 const outputContainer = document.getElementById('outputContainer');
 outputContainer.addEventListener('contextmenu', (e) => { e.preventDefault(); isFullUrl = !isFullUrl; updateOutput(); });
@@ -2865,9 +2912,7 @@ createTabBtn.addEventListener('click', () => {
   loadUrlContainer.style.display = 'none';
   document.getElementById('dirTitle').value = '';
   categoriesEl.innerHTML = '';
-  directoryCode = '';
-  githubUploadUrl = '';
-  updateOutput();
+  clearCreatorOutputBox();
   posterImageUrl = '';
   clearPosterPreviewUI();
   if (posterInput) { posterInput.value = ''; }
@@ -2882,9 +2927,7 @@ editTabBtn.addEventListener('click', () => {
   loadUrlContainer.style.display = 'flex';
   document.getElementById('dirTitle').value = '';
   categoriesEl.innerHTML = '';
-  directoryCode = '';
-  githubUploadUrl = '';
-  updateOutput();
+  clearCreatorOutputBox();
   posterImageUrl = '';
   clearPosterPreviewUI();
   if (posterInput) { posterInput.value = ''; }

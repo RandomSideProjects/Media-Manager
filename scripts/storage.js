@@ -155,38 +155,66 @@
 
   async function resolveCatboxUploadEndpoint() {
     if (typeof window !== 'undefined' && window.MM_catbox) {
-      const proxyUrl = (typeof window.MM_catbox.proxyUrl === 'string') ? window.MM_catbox.proxyUrl.trim() : '';
-      if (proxyUrl) return proxyUrl;
       if (typeof window.MM_catbox.getUploadUrl === 'function') {
         try {
           const resolved = await window.MM_catbox.getUploadUrl();
           if (typeof resolved === 'string' && resolved.trim()) return resolved.trim();
         } catch (err) {
-          console.warn('[Storage] Falling back to default Catbox endpoint', err);
+          console.warn('[Storage] Falling back to direct Catbox endpoint', err);
         }
       }
     }
-    return 'https://mm.littlehacker303.workers.dev/catbox/user/api.php';
+    return 'https://catbox.moe/user/api.php';
+  }
+
+  function getCatboxFallbackEndpoint(primary) {
+    if (typeof window === 'undefined' || !window.MM_catbox || typeof window.MM_catbox.getUploadPlan !== 'function') {
+      return '';
+    }
+    try {
+      const plan = window.MM_catbox.getUploadPlan();
+      const current = (typeof primary === 'string') ? primary.trim() : '';
+      if (plan && typeof plan.fallbackUrl === 'string' && plan.fallbackUrl.trim() && plan.fallbackUrl.trim() !== current) {
+        return plan.fallbackUrl.trim();
+      }
+    } catch {}
+    return '';
   }
 
   async function uploadJsonToCatbox(json, fileName) {
     const blob = new Blob([json], { type: 'application/json' });
-    const formData = new FormData();
-    formData.append('reqtype', 'fileupload');
-    formData.append('fileToUpload', blob, fileName);
     const endpoint = await resolveCatboxUploadEndpoint();
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      body: formData
-    });
-    if (!response.ok) {
-      throw new Error(`Catbox upload failed (${response.status})`);
+    const tryUpload = async (targetUrl) => {
+      const formData = new FormData();
+      formData.append('reqtype', 'fileupload');
+      formData.append('fileToUpload', blob, fileName);
+      const response = await fetch(targetUrl, {
+        method: 'POST',
+        body: formData
+      });
+      if (!response.ok) {
+        throw new Error(`Catbox upload failed (${response.status})`);
+      }
+      const text = (await response.text()).trim();
+      if (!/^https?:\/\//i.test(text)) {
+        throw new Error('Catbox did not return a valid URL.');
+      }
+      if (typeof window !== 'undefined' && window.MM_catbox && typeof window.MM_catbox.markResult === 'function') {
+        window.MM_catbox.markResult({ endpoint: targetUrl, ok: true });
+      }
+      return text;
+    };
+
+    try {
+      return await tryUpload(endpoint);
+    } catch (error) {
+      if (typeof window !== 'undefined' && window.MM_catbox && typeof window.MM_catbox.markResult === 'function') {
+        window.MM_catbox.markResult({ endpoint, ok: false, error: String(error && error.message ? error.message : error) });
+      }
+      const fallback = getCatboxFallbackEndpoint(endpoint);
+      if (!fallback) throw error;
+      return await tryUpload(fallback);
     }
-    const text = (await response.text()).trim();
-    if (!/^https?:\/\//i.test(text)) {
-      throw new Error('Catbox did not return a valid URL.');
-    }
-    return text;
   }
 
   function triggerDownload(json, fileName) {

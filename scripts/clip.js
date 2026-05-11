@@ -155,7 +155,25 @@ async function resolveClipUploadEndpoint() {
       console.warn('[Clip] Falling back to direct Catbox endpoint', err);
     }
   }
-  return 'https://mm.littlehacker303.workers.dev/catbox/user/api.php';
+  return 'https://catbox.moe/user/api.php';
+}
+
+function isValidClipUploadUrl(value) {
+  return /^https?:\/\//i.test(String(value || '').trim());
+}
+
+function getClipUploadFallbackEndpoint(primary) {
+  if (typeof window === 'undefined' || !window.MM_catbox || typeof window.MM_catbox.getUploadPlan !== 'function') {
+    return '';
+  }
+  try {
+    const plan = window.MM_catbox.getUploadPlan();
+    const current = (typeof primary === 'string') ? primary.trim() : '';
+    if (plan && typeof plan.fallbackUrl === 'string' && plan.fallbackUrl.trim() && plan.fallbackUrl.trim() !== current) {
+      return plan.fallbackUrl.trim();
+    }
+  } catch {}
+  return '';
 }
 
 function showClipNotice(message, tone = 'warning') {
@@ -603,18 +621,42 @@ function hideClipOverlay() {
 
 async function uploadClipToCatboxWithProgress(blob, onProgress, fileName) {
   const endpoint = await resolveClipUploadEndpoint();
-  return new Promise((resolve, reject) => {
+  const attemptUpload = (targetUrl) => new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
-    xhr.open('POST', endpoint);
+    xhr.open('POST', targetUrl);
     const form = new FormData();
     form.append('reqtype', 'fileupload');
     const uploadName = (typeof fileName === 'string' && fileName.trim()) ? fileName.trim() : 'clip.webm';
     form.append('fileToUpload', blob, uploadName);
     xhr.upload.onprogress = e => { if (e.lengthComputable && typeof onProgress === 'function') { onProgress(e.loaded / e.total * 100); } };
-    xhr.onload = () => { if (xhr.status >= 200 && xhr.status < 300) { resolve((xhr.responseText || '').trim()); } else { reject(new Error('Upload failed: ' + xhr.status)); } };
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        const uploadedUrl = (xhr.responseText || '').trim();
+        if (!isValidClipUploadUrl(uploadedUrl)) {
+          reject(new Error('Catbox did not return a valid URL.'));
+          return;
+        }
+        if (typeof window !== 'undefined' && window.MM_catbox && typeof window.MM_catbox.markResult === 'function') {
+          window.MM_catbox.markResult({ endpoint: targetUrl, ok: true });
+        }
+        resolve(uploadedUrl);
+      } else {
+        reject(new Error('Upload failed: ' + xhr.status));
+      }
+    };
     xhr.onerror = () => reject(new Error('Network error'));
     xhr.send(form);
   });
+  try {
+    return await attemptUpload(endpoint);
+  } catch (error) {
+    if (typeof window !== 'undefined' && window.MM_catbox && typeof window.MM_catbox.markResult === 'function') {
+      window.MM_catbox.markResult({ endpoint, ok: false, error: String(error && error.message ? error.message : error) });
+    }
+    const fallback = getClipUploadFallbackEndpoint(endpoint);
+    if (!fallback) throw error;
+    return await attemptUpload(fallback);
+  }
 }
 
 function getCurrentMediaItem() {
