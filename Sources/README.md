@@ -41,6 +41,7 @@ This directory contains all available media sources.
 - [Love Flops](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FLove_Flops.json)
 - [Love, Chunibyo & Other Delusions](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FLove_Chunibyo_Other_Delusions.json)
 - [Lucky Star](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FLucky_Star.json)
+- [Makine: Too Many Losing Heroines](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FMakine__Too_Many_Losing_Heroines.json)
 - [More Than a Married Couple, But Not Lovers](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FMarriedNotLovers.json)
 - [My Deer Friend Nokotan](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FMy_Deer_Friend_Nokotan.json)
 - [My Dress-up Darling](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FMy_Dress_Up_Darling.json)
@@ -72,3 +73,4 @@ This directory contains all available media sources.
 - [You Can't Be In a Rom-Com with Your Childhood Friends!](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FYou_Can_T_Be_In_A_Rom_Com_With_Your_Childhood_Friends.json)
 - [Your Lie in April](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FYour_Lie_In_April.json)
 - [Yuri!!! On ICE](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FYuri_On_Ice.json)
+
