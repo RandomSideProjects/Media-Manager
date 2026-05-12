@@ -6,6 +6,28 @@
 const SERVER_DEFAULT_PAHE_ANIME_API_BASE = "https://anime.apex-cloud.workers.dev";
 let lastPaheStatusLine = "pending";
 
+function getSharedPaheProbeState() {
+  try {
+    if (typeof window === "undefined" || !window) return {};
+    const state = window.MM_PAHE_API_PROBE_STATE;
+    return state && typeof state === "object" ? state : {};
+  } catch {
+    return {};
+  }
+}
+
+function setSharedPaheProbeState(partial) {
+  try {
+    if (typeof window === "undefined" || !window) return {};
+    const prev = getSharedPaheProbeState();
+    const next = Object.assign({}, prev, partial && typeof partial === "object" ? partial : {});
+    window.MM_PAHE_API_PROBE_STATE = next;
+    return next;
+  } catch {
+    return {};
+  }
+}
+
 function getUploadServerApi() {
   return (typeof window !== "undefined" && window.MMUploadServer) ? window.MMUploadServer : null;
 }
@@ -151,16 +173,37 @@ function openUploadServerOverrideOverlay(statusBox) {
 
 async function probePaheSearchApi() {
   const base = readPaheApiBase();
-  const url = `${base}/?method=search&query=naruto`;
-  try {
-    const res = await fetch(url, { cache: "no-store" });
-    if (res && res.ok) {
-      return { ok: true, status: res.status, statusText: res.statusText || "OK" };
+  const shared = getSharedPaheProbeState();
+  if (shared.base === base) {
+    if (shared.status === "running" && shared.promise && typeof shared.promise.then === "function") {
+      try {
+        return await shared.promise;
+      } catch {}
     }
-    return { ok: false, status: res ? res.status : 0, statusText: res ? (res.statusText || "Error") : "Network error" };
-  } catch (err) {
-    return { ok: false, status: 0, statusText: (err && err.message) ? err.message : "Network error" };
+    if (shared.status === "done" && shared.result) {
+      return shared.result;
+    }
   }
+  const url = `${base}/?method=search&query=naruto`;
+  const promise = (async () => {
+    try {
+      const res = await fetch(url, { cache: "no-store" });
+      if (res && res.ok) {
+        const result = { ok: true, status: res.status, statusText: res.statusText || "OK" };
+        setSharedPaheProbeState({ status: "done", base, ok: true, result, promise: null });
+        return result;
+      }
+      const result = { ok: false, status: res ? res.status : 0, statusText: res ? (res.statusText || "Error") : "Network error" };
+      setSharedPaheProbeState({ status: "done", base, ok: false, result, promise: null });
+      return result;
+    } catch (err) {
+      const result = { ok: false, status: 0, statusText: (err && err.message) ? err.message : "Network error" };
+      setSharedPaheProbeState({ status: "done", base, ok: false, result, promise: null });
+      return result;
+    }
+  })();
+  setSharedPaheProbeState({ status: "running", base, promise });
+  return await promise;
 }
 
 async function checkHostAndLoadCreator() {
@@ -184,12 +227,14 @@ async function checkHostAndLoadCreator() {
     }
     try {
       window.MM_PAHE_API_OK = ok;
+      setSharedPaheProbeState({ status: "done", base: readPaheApiBase(), ok, line: lastPaheStatusLine, result: paheProbe, promise: null });
       window.dispatchEvent(new CustomEvent("mm:pahe-api-status", { detail: { ok, line: lastPaheStatusLine } }));
     } catch {}
   } else {
     lastPaheStatusLine = "disabled";
     try {
       window.MM_PAHE_API_OK = false;
+      setSharedPaheProbeState({ status: "disabled", base: readPaheApiBase(), ok: false, line: "disabled", result: { ok: false, status: 0, statusText: "disabled" }, promise: null });
       window.dispatchEvent(new CustomEvent("mm:pahe-api-status", { detail: { ok: false, line: "disabled" } }));
     } catch {}
   }

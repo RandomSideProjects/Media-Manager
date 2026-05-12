@@ -379,12 +379,25 @@ function measureLocalFileDuration(file) {
       const url = URL.createObjectURL(file);
       const video = document.createElement('video');
       video.preload = 'metadata';
-      const finalize = () => {
+      let settled = false;
+      const finalize = (value) => {
+        if (settled) return;
+        settled = true;
+        try { video.pause(); } catch {}
+        try { video.removeAttribute('src'); video.load(); } catch {}
         try { URL.revokeObjectURL(url); } catch {}
-        resolve(Number.isFinite(video.duration) ? video.duration : NaN);
+        try { video.remove(); } catch {}
+        resolve(value);
       };
-      video.onloadedmetadata = finalize;
-      video.onerror = () => resolve(NaN);
+      const timer = setTimeout(() => finalize(NaN), 10000);
+      video.onloadedmetadata = () => {
+        clearTimeout(timer);
+        finalize(Number.isFinite(video.duration) ? video.duration : NaN);
+      };
+      video.onerror = () => {
+        clearTimeout(timer);
+        finalize(NaN);
+      };
       video.src = url;
     } catch {
       resolve(NaN);
@@ -1964,6 +1977,13 @@ function addEpisode(container, data) {
     if (fileInput && fileInput.files && fileInput.files.length > 0) return;
     const url = (row._srcInput.value || '').trim();
     if (!/^https?:\/\//i.test(url)) return;
+    if (row.dataset) {
+      const previousUrl = row.dataset.metadataProbeUrl || '';
+      const previousState = row.dataset.metadataProbeState || '';
+      if (previousUrl === url && (previousState === 'pending' || previousState === 'done')) return;
+      row.dataset.metadataProbeUrl = url;
+      row.dataset.metadataProbeState = 'pending';
+    }
     if (row._statusEl) { row._statusEl.style.color = '#9ecbff'; row._statusEl.textContent = 'Fetching metadata…'; }
     try {
       const [size, duration] = await Promise.all([
@@ -1973,8 +1993,10 @@ function addEpisode(container, data) {
       if (Number.isFinite(size) && size >= 0) applyPartMetadata(row, { fileSize: size });
       if (Number.isFinite(duration) && duration > 0) applyPartMetadata(row, { duration });
       if (row._statusEl) row._statusEl.textContent = '';
+      if (row.dataset) row.dataset.metadataProbeState = 'done';
     } catch {
       if (row._statusEl) row._statusEl.textContent = '';
+      if (row.dataset && row.dataset.metadataProbeState === 'pending') row.dataset.metadataProbeState = 'failed';
     }
     recalcEpisodeSeparatedTotals();
     syncEpisodeMainSrc();
@@ -2449,14 +2471,6 @@ function addEpisode(container, data) {
 
   async function fetchRemoteContentLength(url) {
     try {
-      const head = await fetch(url, { method: 'HEAD', cache: 'no-store' });
-      if (head.ok) {
-        const cl = head.headers.get('content-length') || head.headers.get('Content-Length');
-        const n = cl ? parseInt(cl, 10) : NaN;
-        if (Number.isFinite(n) && n >= 0) return n;
-      }
-    } catch {}
-    try {
       const resp = await fetch(url, { method: 'GET', headers: { 'Range': 'bytes=0-0' }, cache: 'no-store' });
       if (resp.ok || resp.status === 206) {
         const cr = resp.headers.get('content-range') || resp.headers.get('Content-Range');
@@ -2478,9 +2492,24 @@ function addEpisode(container, data) {
         const v = document.createElement('video');
         v.preload = 'metadata';
         v.crossOrigin = 'anonymous';
-        const done = () => { const d = isFinite(v.duration) ? v.duration : NaN; resolve(d); };
-        v.onloadedmetadata = done;
-        v.onerror = () => resolve(NaN);
+        let settled = false;
+        const cleanup = (result) => {
+          if (settled) return;
+          settled = true;
+          try { v.pause(); } catch {}
+          try { v.removeAttribute('src'); v.load(); } catch {}
+          try { v.remove(); } catch {}
+          resolve(result);
+        };
+        const timer = setTimeout(() => cleanup(NaN), 10000);
+        v.onloadedmetadata = () => {
+          clearTimeout(timer);
+          cleanup(isFinite(v.duration) ? v.duration : NaN);
+        };
+        v.onerror = () => {
+          clearTimeout(timer);
+          cleanup(NaN);
+        };
         v.src = url;
       } catch { resolve(NaN); }
     });
@@ -2490,6 +2519,13 @@ function addEpisode(container, data) {
     if (epFile && epFile.files && epFile.files.length > 0) return;
     const url = (epSrc.value || '').trim();
     if (!/^https?:\/\//i.test(url)) return;
+    if (epDiv && epDiv.dataset) {
+      const previousUrl = epDiv.dataset.metadataProbeUrl || '';
+      const previousState = epDiv.dataset.metadataProbeState || '';
+      if (previousUrl === url && (previousState === 'pending' || previousState === 'done')) return;
+      epDiv.dataset.metadataProbeUrl = url;
+      epDiv.dataset.metadataProbeState = 'pending';
+    }
     if (isMangaMode()) {
       const lower = url.toLowerCase();
       if (/\.json(?:$|[?#])/i.test(lower)) {
@@ -2509,6 +2545,7 @@ function addEpisode(container, data) {
             epDiv.dataset.VolumePageCount = String(count);
             epDiv.dataset.volumePageCount = String(count);
           }
+          if (epDiv && epDiv.dataset) epDiv.dataset.metadataProbeState = 'done';
         } catch {}
       } else if (/\.cbz(?:$|[?#])/i.test(lower)) {
         try { epError.style.color = '#9ecbff'; epError.textContent = 'Fetching CBZ…'; } catch {}
@@ -2519,8 +2556,10 @@ function addEpisode(container, data) {
           const pages = Object.keys(zip.files).filter(n => /\.(jpe?g|png|gif|webp|bmp)$/i.test(n));
           epDiv.dataset.VolumePageCount = String(pages.length);
           epDiv.dataset.volumePageCount = String(pages.length);
+          if (epDiv && epDiv.dataset) epDiv.dataset.metadataProbeState = 'done';
         } catch {}
       } else {
+        if (epDiv && epDiv.dataset) epDiv.dataset.metadataProbeState = '';
         return;
       }
       // Attempt to auto-set title from URL filename (Chapter/Volume)
@@ -2548,6 +2587,7 @@ function addEpisode(container, data) {
         }
       } catch {}
       epError.textContent = '';
+      if (epDiv && epDiv.dataset) epDiv.dataset.metadataProbeState = 'done';
 	    } else {
 	      const sizeCandidate = epDiv.dataset ? Number(epDiv.dataset.fileSizeBytes) : NaN;
 	      const durCandidate = epDiv.dataset ? Number(epDiv.dataset.durationSeconds) : NaN;
@@ -2563,8 +2603,12 @@ function addEpisode(container, data) {
 	        if (Number.isFinite(size) && size >= 0) epDiv.dataset.fileSizeBytes = String(Math.round(size));
 	        if (Number.isFinite(dur) && dur > 0) epDiv.dataset.durationSeconds = String(Math.round(dur));
 	        epError.textContent = '';
+          if (epDiv && epDiv.dataset) epDiv.dataset.metadataProbeState = 'done';
 	      } catch { epError.textContent = ''; }
 	    }
+    if (epDiv && epDiv.dataset && epDiv.dataset.metadataProbeState === 'pending') {
+      epDiv.dataset.metadataProbeState = 'failed';
+    }
     if (separatedToggle.checked) {
       recalcEpisodeSeparatedTotals();
       syncEpisodeMainSrc();

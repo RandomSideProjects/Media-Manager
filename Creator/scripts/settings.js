@@ -476,28 +476,24 @@ function initializeUploadSettingsPanel() {
   });
 }
 
-// Test JSON sender (dev-only)
+// Test upload helper (dev-only)
 async function mm_sendTestJson() {
   try {
     const st = loadUploadSettings();
-    const effectiveUserhash = (st.userhash || '').trim() || DEFAULT_USERHASH;
-    let titleVal = '';
-    try { const t = document.getElementById('dirTitle'); titleVal = t ? (t.value || '').trim() : ''; } catch {}
-    let categoryCount = 0;
-    try { categoryCount = document.querySelectorAll('.category').length; } catch {}
+    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 ';
+    const bytes = new Uint8Array(100);
+    if (typeof crypto !== 'undefined' && crypto && typeof crypto.getRandomValues === 'function') {
+      crypto.getRandomValues(bytes);
+    } else {
+      for (let i = 0; i < bytes.length; i += 1) bytes[i] = Math.floor(Math.random() * 256);
+    }
+    let text = '';
+    for (let i = 0; i < bytes.length; i += 1) {
+      text += alphabet.charAt(bytes[i] % alphabet.length);
+    }
 
-    const payload = {
-      _type: 'media-manager-test',
-      page: 'Creator/index.html',
-      at: new Date().toISOString(),
-      settings: { anonymous: !!st.anonymous, userhash: st.anonymous ? '(ignored: anonymous=true)' : effectiveUserhash },
-      state: { title: titleVal, categories: categoryCount },
-      ua: navigator.userAgent || ''
-    };
-
-    const json = JSON.stringify(payload, null, 2);
-    const blob = new Blob([json], { type: 'application/json' });
-    const file = new File([blob], `mm_test_${Date.now()}.json`, { type: 'application/json' });
+    const blob = new Blob([text], { type: 'text/plain' });
+    const file = new File([blob], `mm_test_${Date.now()}_100B.txt`, { type: 'text/plain' });
 
     const url = await (window.uploadToCatboxWithProgress ? uploadToCatboxWithProgress(file) : (async () => {
       const fd = new FormData();
@@ -515,11 +511,84 @@ async function mm_sendTestJson() {
     } catch {}
     return url;
   } catch (err) {
-    console.error('[MM][TestJSON] ❌ Failed:', err);
+    console.error('[MM][TestUpload] ❌ Failed:', err);
     throw err;
   }
 }
 window.mm_sendTestJson = mm_sendTestJson;
+
+function mm_shouldAutoRunUploadTest() {
+  try {
+    const params = new URLSearchParams((typeof location !== 'undefined' && location && location.search) ? location.search : '');
+    const raw = (params.get('mmAutoUploadTest') || '').trim().toLowerCase();
+    return raw === '1' || raw === 'true' || raw === 'yes';
+  } catch {
+    return false;
+  }
+}
+
+function mm_ensureAutoUploadTestBanner() {
+  try {
+    let el = document.getElementById('mmAutoUploadTestStatus');
+    if (el) return el;
+    el = document.createElement('div');
+    el.id = 'mmAutoUploadTestStatus';
+    Object.assign(el.style, {
+      position: 'fixed',
+      top: '12px',
+      right: '12px',
+      maxWidth: '420px',
+      padding: '10px 12px',
+      borderRadius: '10px',
+      background: 'rgba(20, 20, 20, 0.95)',
+      color: '#f1f1f1',
+      border: '1px solid rgba(255,255,255,0.12)',
+      boxShadow: '0 12px 28px rgba(0,0,0,0.35)',
+      zIndex: '10040',
+      fontSize: '14px',
+      lineHeight: '1.45',
+      whiteSpace: 'pre-wrap'
+    });
+    document.body.appendChild(el);
+    return el;
+  } catch {
+    return null;
+  }
+}
+
+async function mm_autoRunUploadTestIfRequested() {
+  if (!mm_shouldAutoRunUploadTest()) return;
+  if (typeof window === 'undefined' || window.__mmAutoUploadTestStarted) return;
+  window.__mmAutoUploadTestStarted = true;
+
+  const banner = mm_ensureAutoUploadTestBanner();
+  if (banner) banner.textContent = 'Running Creator 100B upload test...';
+
+  try {
+    const url = await mm_sendTestJson();
+    const message = url
+      ? `Creator 100B upload test: success\n${url}`
+      : 'Creator 100B upload test: success';
+    if (banner) {
+      banner.textContent = message;
+      banner.style.borderColor = 'rgba(110, 193, 228, 0.55)';
+    }
+    try { window.mmAutoUploadTestResult = { ok: true, url: url || '' }; } catch {}
+  } catch (err) {
+    const message = `Creator 100B upload test: failed\n${err && err.message ? err.message : String(err)}`;
+    if (banner) {
+      banner.textContent = message;
+      banner.style.borderColor = 'rgba(255, 107, 107, 0.6)';
+    }
+    try { window.mmAutoUploadTestResult = { ok: false, error: err && err.message ? err.message : String(err) }; } catch {}
+  }
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('load', () => {
+    void mm_autoRunUploadTestIfRequested();
+  });
+}
 
 async function mm_manualUploadSource() {
   try {

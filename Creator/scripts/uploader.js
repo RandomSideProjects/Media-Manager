@@ -9,10 +9,28 @@ function getUploadServerApi() {
   return (typeof window !== 'undefined' && window.MMUploadServer) ? window.MMUploadServer : null;
 }
 
+function isUsableUploadUrl(raw) {
+  if (typeof raw !== 'string') return false;
+  const trimmed = raw.trim();
+  if (!trimmed) return false;
+  const lower = trimmed.toLowerCase();
+  if (lower === 'undefined' || lower === 'null') return false;
+  try {
+    const parsed = new URL(trimmed, (typeof location !== 'undefined' && location && location.href) ? location.href : undefined);
+    return /^https?:$/i.test(parsed.protocol);
+  } catch {
+    return false;
+  }
+}
+
+function sanitizeUploadUrl(raw, fallback = '') {
+  return isUsableUploadUrl(raw) ? raw.trim() : fallback;
+}
+
 function getActiveCatboxDefault() {
   if (typeof window !== 'undefined') {
     const active = typeof window.MM_ACTIVE_CATBOX_UPLOAD_URL === 'string' ? window.MM_ACTIVE_CATBOX_UPLOAD_URL.trim() : '';
-    if (active) return active;
+    if (isUsableUploadUrl(active)) return active;
   }
   return DIRECT_CATBOX_UPLOAD_URL;
 }
@@ -245,10 +263,11 @@ function normalizeCatboxMode(value) {
 function getCatboxProxyUrl(settings) {
   const api = getUploadServerApi();
   if (api && typeof api.getSettings === 'function') {
-    return api.getSettings().proxyUrl;
+    const proxyUrl = api.getSettings().proxyUrl;
+    return sanitizeUploadUrl(proxyUrl, UPLOADER_CATBOX_BACKEND_URL);
   }
   const raw = settings && typeof settings.catboxUploadUrl === 'string' ? settings.catboxUploadUrl.trim() : '';
-  return raw || UPLOADER_CATBOX_BACKEND_URL;
+  return sanitizeUploadUrl(raw, UPLOADER_CATBOX_BACKEND_URL);
 }
 
 function shouldUseCopypartyForFile(settings, fileSizeBytes, mode) {
@@ -268,13 +287,31 @@ function shouldUseCopypartyForFile(settings, fileSizeBytes, mode) {
 function resolveCatboxUploadTarget(settings, { fileSizeBytes, allowProxy = true } = {}) {
   const api = getUploadServerApi();
   if (api && typeof api.resolveTarget === 'function') {
-    return api.resolveTarget({ settings, fileSizeBytes, allowProxy });
+    const resolved = api.resolveTarget({ settings, fileSizeBytes, allowProxy }) || {};
+    const kind = typeof resolved.kind === 'string' ? resolved.kind : 'auto';
+    const proxyUrl = getCatboxProxyUrl(settings);
+    const fallbackBase = allowProxy === false ? '' : proxyUrl;
+    let url = sanitizeUploadUrl(resolved.url, '');
+    let fallbackUrl = sanitizeUploadUrl(resolved.fallbackUrl, '');
+    if (!url) {
+      if (kind === 'proxy') url = proxyUrl;
+      else if (kind === 'direct') url = DIRECT_CATBOX_UPLOAD_URL;
+      else if (kind === 'copyparty') {
+        const cpUrl = settings && typeof settings.copypartyUploadUrl === 'string' ? settings.copypartyUploadUrl.trim() : '';
+        url = sanitizeUploadUrl(cpUrl, '');
+      } else {
+        url = DIRECT_CATBOX_UPLOAD_URL;
+        fallbackUrl = fallbackUrl || fallbackBase;
+      }
+    }
+    if (!fallbackUrl && kind === 'auto') fallbackUrl = fallbackBase;
+    return Object.assign({}, resolved, { kind, url, fallbackUrl });
   }
   const mode = normalizeCatboxMode(settings && settings.catboxOverrideMode);
   const cp = settings && typeof settings.copypartyUploadUrl === 'string' ? settings.copypartyUploadUrl.trim() : '';
   const proxyUrl = getCatboxProxyUrl(settings);
   const active = (typeof window !== 'undefined' && typeof window.MM_ACTIVE_CATBOX_UPLOAD_URL === 'string')
-    ? window.MM_ACTIVE_CATBOX_UPLOAD_URL.trim()
+    ? sanitizeUploadUrl(window.MM_ACTIVE_CATBOX_UPLOAD_URL.trim(), '')
     : '';
 
   if (shouldUseCopypartyForFile(settings, fileSizeBytes, mode)) {
@@ -300,27 +337,27 @@ function updateCatboxRuntime(target) {
   const api = getUploadServerApi();
   if (api && typeof api.applyRuntime === 'function') {
     const current = (typeof window.MM_ACTIVE_CATBOX_UPLOAD_URL === 'string' && window.MM_ACTIVE_CATBOX_UPLOAD_URL.trim())
-      ? window.MM_ACTIVE_CATBOX_UPLOAD_URL.trim()
+      ? sanitizeUploadUrl(window.MM_ACTIVE_CATBOX_UPLOAD_URL.trim(), '')
       : '';
     if (target && target.kind === 'copyparty') {
       window.MM_ACTIVE_CATBOX_UPLOAD_URL = current || DIRECT_CATBOX_UPLOAD_URL;
-    } else if (target && target.url) {
-      window.MM_ACTIVE_CATBOX_UPLOAD_URL = target.url;
+    } else if (target && isUsableUploadUrl(target.url)) {
+      window.MM_ACTIVE_CATBOX_UPLOAD_URL = target.url.trim();
     }
     api.applyRuntime({ source: 'uploader-runtime' });
     return;
   }
   if (typeof window === 'undefined') return;
   const current = (typeof window.MM_ACTIVE_CATBOX_UPLOAD_URL === 'string' && window.MM_ACTIVE_CATBOX_UPLOAD_URL.trim())
-    ? window.MM_ACTIVE_CATBOX_UPLOAD_URL.trim()
+    ? sanitizeUploadUrl(window.MM_ACTIVE_CATBOX_UPLOAD_URL.trim(), '')
     : '';
   window.MM_DIRECT_CATBOX_UPLOAD_URL = DIRECT_CATBOX_UPLOAD_URL;
   window.MM_PROXY_CATBOX_UPLOAD_URL = getCatboxProxyUrl(readUploadSettings());
   window.MM_DEFAULT_CATBOX_UPLOAD_URL = DIRECT_CATBOX_UPLOAD_URL;
   if (target && target.kind === 'copyparty') {
     window.MM_ACTIVE_CATBOX_UPLOAD_URL = current || DIRECT_CATBOX_UPLOAD_URL;
-  } else if (target && target.url) {
-    window.MM_ACTIVE_CATBOX_UPLOAD_URL = target.url;
+  } else if (target && isUsableUploadUrl(target.url)) {
+    window.MM_ACTIVE_CATBOX_UPLOAD_URL = target.url.trim();
   }
 }
 
@@ -344,8 +381,16 @@ function assertUploadSizeLimit() {
   // Delegated to backend limits now
 }
 
+function assertUploadTargetUrl(uploadUrl) {
+  if (!isUsableUploadUrl(uploadUrl)) {
+    throw new Error('Upload target URL is invalid or missing.');
+  }
+}
+
 async function uploadCatboxRequest(uploadFile, settings, uploadUrl, options) {
   const api = getUploadServerApi();
+  const requestUrl = sanitizeUploadUrl(uploadUrl, '');
+  assertUploadTargetUrl(requestUrl);
   const form = new FormData();
   form.append('reqtype', 'fileupload');
   form.append('fileToUpload', uploadFile);
@@ -362,9 +407,9 @@ async function uploadCatboxRequest(uploadFile, settings, uploadUrl, options) {
   }
 
   const fileSizeBytes = uploadFile && typeof uploadFile.size === 'number' ? uploadFile.size : undefined;
-  assertUploadSizeLimit(uploadUrl, fileSizeBytes);
+  assertUploadSizeLimit(requestUrl, fileSizeBytes);
 
-  const res = await fetch(uploadUrl, {
+  const res = await fetch(requestUrl, {
     method: 'POST',
     body: form
   });
@@ -372,10 +417,10 @@ async function uploadCatboxRequest(uploadFile, settings, uploadUrl, options) {
   const text = await res.text();
   const uploadedUrl = extractUploadResponseUrl(text);
   if (typeof window !== 'undefined') {
-    window.MM_ACTIVE_CATBOX_UPLOAD_URL = uploadUrl;
+    window.MM_ACTIVE_CATBOX_UPLOAD_URL = requestUrl;
   }
   if (api && typeof api.markResult === 'function') {
-    api.markResult({ endpoint: uploadUrl, ok: true });
+    api.markResult({ endpoint: requestUrl, ok: true });
   }
   return uploadedUrl;
 }
@@ -384,8 +429,15 @@ function uploadCatboxRequestWithProgress(uploadFile, settings, uploadUrl, option
   const api = getUploadServerApi();
   const signal = options.signal;
   return new Promise((resolve, reject) => {
+    const requestUrl = sanitizeUploadUrl(uploadUrl, '');
+    try {
+      assertUploadTargetUrl(requestUrl);
+    } catch (err) {
+      reject(err);
+      return;
+    }
     const xhr = new XMLHttpRequest();
-    xhr.open('POST', uploadUrl);
+    xhr.open('POST', requestUrl);
     const form = new FormData();
     form.append('reqtype', 'fileupload');
     form.append('fileToUpload', uploadFile);
@@ -402,7 +454,7 @@ function uploadCatboxRequestWithProgress(uploadFile, settings, uploadUrl, option
     }
 
     const fileSizeBytes = uploadFile && typeof uploadFile.size === 'number' ? uploadFile.size : undefined;
-    assertUploadSizeLimit(uploadUrl, fileSizeBytes);
+    assertUploadSizeLimit(requestUrl, fileSizeBytes);
 
     const createAbortError = () => {
       if (typeof DOMException === 'function') return new DOMException('Upload aborted', 'AbortError');
@@ -466,10 +518,10 @@ function uploadCatboxRequestWithProgress(uploadFile, settings, uploadUrl, option
           const text = (xhr.responseText || '').trim();
           const uploadedUrl = extractUploadResponseUrl(text);
           if (typeof window !== 'undefined') {
-            window.MM_ACTIVE_CATBOX_UPLOAD_URL = uploadUrl;
+            window.MM_ACTIVE_CATBOX_UPLOAD_URL = requestUrl;
           }
           if (api && typeof api.markResult === 'function') {
-            api.markResult({ endpoint: uploadUrl, ok: true });
+            api.markResult({ endpoint: requestUrl, ok: true });
           }
           finalizeResolve(uploadedUrl);
         } else {
@@ -498,6 +550,9 @@ async function uploadToCatbox(file, opts) {
   await ensureUploadServerReady(settings, { fileSizeBytes });
   const target = resolveCatboxUploadTarget(settings, { fileSizeBytes, allowProxy: options.allowProxy !== false });
   updateCatboxRuntime(target);
+  if (target.kind !== 'copyparty') {
+    assertUploadTargetUrl(target.url);
+  }
 
   if (target.kind === 'copyparty') {
     const cpUrl = settings && typeof settings.copypartyUploadUrl === 'string' ? settings.copypartyUploadUrl.trim() : '';
@@ -537,6 +592,9 @@ async function uploadToCatboxWithProgress(file, onProgress, opts) {
   await ensureUploadServerReady(settings, { fileSizeBytes });
   const target = resolveCatboxUploadTarget(settings, { fileSizeBytes, allowProxy: options.allowProxy !== false });
   updateCatboxRuntime(target);
+  if (target.kind !== 'copyparty') {
+    assertUploadTargetUrl(target.url);
+  }
 
   return new Promise((resolve, reject) => {
     if (target.kind === 'copyparty') {

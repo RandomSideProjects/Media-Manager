@@ -61,6 +61,24 @@
     return Math.max(6, Math.min(100, parsed));
   }
 
+  function isUsableUploadUrl(raw) {
+    if (typeof raw !== "string") return false;
+    const trimmed = raw.trim();
+    if (!trimmed) return false;
+    const lower = trimmed.toLowerCase();
+    if (lower === "undefined" || lower === "null") return false;
+    try {
+      const parsed = new URL(trimmed, (typeof location !== "undefined" && location && location.href) ? location.href : undefined);
+      return /^https?:$/i.test(parsed.protocol);
+    } catch {
+      return false;
+    }
+  }
+
+  function sanitizeUploadUrl(raw, fallback = "") {
+    return isUsableUploadUrl(raw) ? raw.trim() : fallback;
+  }
+
   function isObject(value) {
     return !!value && typeof value === "object";
   }
@@ -87,9 +105,9 @@
       raw,
       mode,
       directUrl: DIRECT_URL,
-      proxyUrl: (typeof raw.catboxUploadUrl === "string" && raw.catboxUploadUrl.trim())
+      proxyUrl: sanitizeUploadUrl((typeof raw.catboxUploadUrl === "string" && raw.catboxUploadUrl.trim())
         ? raw.catboxUploadUrl.trim()
-        : DEFAULT_PROXY_URL,
+        : "", DEFAULT_PROXY_URL),
       copypartyUrl,
       copypartyPw: (typeof raw.copypartyPw === "string") ? raw.copypartyPw : "",
       copypartyThresholdMb: normalizeThresholdMb(raw.copypartyThresholdMb),
@@ -113,12 +131,13 @@
     const active = (typeof window.MM_ACTIVE_CATBOX_UPLOAD_URL === "string")
       ? window.MM_ACTIVE_CATBOX_UPLOAD_URL.trim()
       : "";
-    return active || "";
+    return sanitizeUploadUrl(active, "");
   }
 
   function setWindowActiveUrl(url) {
-    if (typeof url === "string" && url.trim()) {
-      window.MM_ACTIVE_CATBOX_UPLOAD_URL = url.trim();
+    const next = sanitizeUploadUrl(url, "");
+    if (next) {
+      window.MM_ACTIVE_CATBOX_UPLOAD_URL = next;
     }
   }
 
@@ -386,6 +405,22 @@
     const current = options.settings || getSettings();
     if (current.mode !== "auto") {
       return Promise.resolve(applyRuntime({ source: "detect-skip-manual-mode", mode: current.mode }));
+    }
+    if (!options.force) {
+      if (state.detection.status === "idle") {
+        setDetection({
+          status: "unverified",
+          preferredKind: getAutoPreferredKind(current),
+          checkedAt: state.detection.checkedAt || 0,
+          directOk: state.detection.directOk,
+          proxyOk: state.detection.proxyOk,
+          directStatus: state.detection.directStatus || 0,
+          proxyStatus: state.detection.proxyStatus || 0,
+          directError: state.detection.directError || "",
+          proxyError: state.detection.proxyError || ""
+        });
+      }
+      return Promise.resolve(applyRuntime({ source: "detect-passive-auto", mode: current.mode }));
     }
     if (!options.force && state.detection.status !== "idle" && state.detection.status !== "running") {
       return Promise.resolve(applyRuntime({ source: "detect-cached", mode: current.mode }));
