@@ -94,24 +94,51 @@
 
   function getSettings() {
     const raw = readRawSettings();
-    const copypartyUrl = (typeof raw.copypartyUploadUrl === "string" && raw.copypartyUploadUrl.trim())
-      ? raw.copypartyUploadUrl.trim()
-      : "";
-    let mode = normalizeMode(raw.catboxOverrideMode);
+    return normalizeSettingsShape(raw);
+  }
+
+  function normalizeSettingsShape(input) {
+    const raw = isObject(input) ? input : {};
+    const copypartyUrl = sanitizeUploadUrl(
+      (typeof raw.copypartyUrl === "string" && raw.copypartyUrl.trim())
+        ? raw.copypartyUrl.trim()
+        : ((typeof raw.copypartyUploadUrl === "string" && raw.copypartyUploadUrl.trim())
+          ? raw.copypartyUploadUrl.trim()
+          : ""),
+      ""
+    );
+    let mode = normalizeMode(
+      (typeof raw.mode === "string" && raw.mode.trim())
+        ? raw.mode
+        : raw.catboxOverrideMode
+    );
     if (mode === "copyparty" && !copypartyUrl) {
       mode = "auto";
     }
     return {
       raw,
       mode,
-      directUrl: DIRECT_URL,
-      proxyUrl: sanitizeUploadUrl((typeof raw.catboxUploadUrl === "string" && raw.catboxUploadUrl.trim())
-        ? raw.catboxUploadUrl.trim()
-        : "", DEFAULT_PROXY_URL),
+      directUrl: sanitizeUploadUrl(
+        (typeof raw.directUrl === "string" && raw.directUrl.trim()) ? raw.directUrl.trim() : "",
+        DIRECT_URL
+      ),
+      proxyUrl: sanitizeUploadUrl(
+        (typeof raw.proxyUrl === "string" && raw.proxyUrl.trim())
+          ? raw.proxyUrl.trim()
+          : ((typeof raw.catboxUploadUrl === "string" && raw.catboxUploadUrl.trim())
+            ? raw.catboxUploadUrl.trim()
+            : ""),
+        DEFAULT_PROXY_URL
+      ),
       copypartyUrl,
       copypartyPw: (typeof raw.copypartyPw === "string") ? raw.copypartyPw : "",
-      copypartyThresholdMb: normalizeThresholdMb(raw.copypartyThresholdMb),
+      copypartyThresholdMb: normalizeThresholdMb(
+        Object.prototype.hasOwnProperty.call(raw, "copypartyThresholdMb")
+          ? raw.copypartyThresholdMb
+          : raw.copypartyThreshold
+      ),
       forceProxyUnderThreshold: raw.catboxForceProxyUnder100Mb === true
+        || raw.forceProxyUnderThreshold === true
     };
   }
 
@@ -152,7 +179,7 @@
   }
 
   function getActiveRoute(settings) {
-    const current = settings || getSettings();
+    const current = settings ? normalizeSettingsShape(settings) : getSettings();
     if (current.mode === "copyparty" && current.copypartyUrl) {
       return { kind: "copyparty", url: current.copypartyUrl };
     }
@@ -289,7 +316,7 @@
   }
 
   function shouldUseCopyparty(settings, fileSizeBytes, mode) {
-    const current = settings || getSettings();
+    const current = settings ? normalizeSettingsShape(settings) : getSettings();
     if (!current.copypartyUrl) return false;
     if (normalizeMode(mode || current.mode) === "copyparty") return true;
     const thresholdBytes = current.copypartyThresholdMb * 1024 * 1024;
@@ -297,7 +324,7 @@
   }
 
   function shouldForceProxy(settings, fileSizeBytes, mode) {
-    const current = settings || getSettings();
+    const current = settings ? normalizeSettingsShape(settings) : getSettings();
     if (!current.forceProxyUnderThreshold) return false;
     if (normalizeMode(mode || current.mode) !== "auto") return false;
     if (!Number.isFinite(fileSizeBytes)) return false;
@@ -306,7 +333,7 @@
   }
 
   function resolveTarget(options = {}) {
-    const current = options.settings || getSettings();
+    const current = options.settings ? normalizeSettingsShape(options.settings) : getSettings();
     const mode = normalizeMode(options.mode || current.mode);
     const fileSizeBytes = options.fileSizeBytes;
     const allowProxy = options.allowProxy !== false;

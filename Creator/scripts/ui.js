@@ -583,6 +583,17 @@ function clearOutputLink() {
   outputLink.href = '#';
 }
 
+function isCatboxFileUrl(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return false;
+  try {
+    const parsed = new URL(raw);
+    return (parsed.hostname || '').toLowerCase() === 'files.catbox.moe';
+  } catch {
+    return false;
+  }
+}
+
 function isMeaningfulDirectoryPayload(payload) {
   const data = (payload && typeof payload === 'object') ? payload : {};
   const title = typeof data.title === 'string' ? data.title.trim() : '';
@@ -2948,7 +2959,14 @@ function updateOutput() {
   clearOutputStatus();
 }
 const outputContainer = document.getElementById('outputContainer');
-outputContainer.addEventListener('contextmenu', (e) => { e.preventDefault(); isFullUrl = !isFullUrl; updateOutput(); });
+outputContainer.addEventListener('contextmenu', (e) => {
+  if (!directoryCode && !isCatboxFileUrl(githubUploadUrl)) {
+    return;
+  }
+  e.preventDefault();
+  isFullUrl = !isFullUrl;
+  updateOutput();
+});
 
 createTabBtn.addEventListener('click', () => {
   createTabBtn.classList.add('active');
