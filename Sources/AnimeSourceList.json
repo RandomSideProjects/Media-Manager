@@ -525,6 +525,18 @@
       "LatestTime": "2025-08-11T12:36:00"
     },
     {
+      "file": "Science_Fell_in_Love,_So_I_Tried_to_Prove_it.json",
+      "path": "./Files/Anime/Science_Fell_in_Love,_So_I_Tried_to_Prove_it.json",
+      "title": "Science Fell in Love, So I Tried to Prove it",
+      "poster": "./Posters/Anime/Science_Fell_in_Love,_So_I_Tried_to_Prove_it.webp",
+      "categoryCount": 2,
+      "episodeCount": 24,
+      "itemCount": 24,
+      "totalFileSizeBytes": 5097343718,
+      "totalDurationSeconds": 32660,
+      "LatestTime": "2026-05-13T05:59:45.383Z"
+    },
+    {
       "file": "Shikimori.json",
       "path": "./Files/Anime/Shikimori.json",
       "title": "Shikimori's Not Just a Cutie",
