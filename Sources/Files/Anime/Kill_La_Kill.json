@@ -7,23 +7,10 @@
       "episodes": [
         {
           "title": "Episode 1",
-          "src": "https://files.catbox.moe/ypnylk.mp4",
+          "src": "Sources/Files/Playlists/Kill_La_Kill_Season_1_Episode_1_1.m3u8",
           "fileSizeBytes": 248546410,
           "durationSeconds": 1469,
-          "sources": [
-            {
-              "title": "Part 1",
-              "src": "https://files.catbox.moe/ypnylk.mp4",
-              "fileSizeBytes": 119085879,
-              "durationSeconds": 737
-            },
-            {
-              "title": "Part 2",
-              "src": "https://files.catbox.moe/pncbm4.mp4",
-              "fileSizeBytes": 129460531,
-              "durationSeconds": 732
-            }
-          ]
+          "progressKey": "sepitem:19dlkns"
         },
         {
           "title": "Episode 2",
@@ -33,43 +20,17 @@
         },
         {
           "title": "Episode 3",
-          "src": "https://files.catbox.moe/1da1dh.mp4",
+          "src": "Sources/Files/Playlists/Kill_La_Kill_Season_1_Episode_3_3.m3u8",
           "fileSizeBytes": 237103243,
           "durationSeconds": 1469,
-          "sources": [
-            {
-              "title": "Part 1",
-              "src": "https://files.catbox.moe/1da1dh.mp4",
-              "fileSizeBytes": 97805842,
-              "durationSeconds": 738
-            },
-            {
-              "title": "Part 2",
-              "src": "https://files.catbox.moe/g8lzda.mp4",
-              "fileSizeBytes": 139297401,
-              "durationSeconds": 731
-            }
-          ]
+          "progressKey": "sepitem:19dmumw"
         },
         {
           "title": "Episode 4",
-          "src": "https://files.catbox.moe/0g4rrp.mp4",
+          "src": "Sources/Files/Playlists/Kill_La_Kill_Season_1_Episode_4_4.m3u8",
           "fileSizeBytes": 205187997,
           "durationSeconds": 1476,
-          "sources": [
-            {
-              "title": "Part 1",
-              "src": "https://files.catbox.moe/0g4rrp.mp4",
-              "fileSizeBytes": 105935581,
-              "durationSeconds": 740
-            },
-            {
-              "title": "Part 2",
-              "src": "https://files.catbox.moe/n7o1fj.mp4",
-              "fileSizeBytes": 99252416,
-              "durationSeconds": 736
-            }
-          ]
+          "progressKey": "sepitem:19dnhmg"
         },
         {
           "title": "Episode 5",
@@ -79,23 +40,10 @@
         },
         {
           "title": "Episode 6",
-          "src": "https://files.catbox.moe/yhay73.mp4",
+          "src": "Sources/Files/Playlists/Kill_La_Kill_Season_1_Episode_6_6.m3u8",
           "fileSizeBytes": 249302536,
           "durationSeconds": 1469,
-          "sources": [
-            {
-              "title": "Part 1",
-              "src": "https://files.catbox.moe/yhay73.mp4",
-              "fileSizeBytes": 109150616,
-              "durationSeconds": 735
-            },
-            {
-              "title": "Part 2",
-              "src": "https://files.catbox.moe/8t754x.mp4",
-              "fileSizeBytes": 140151920,
-              "durationSeconds": 734
-            }
-          ]
+          "progressKey": "sepitem:19dorlk"
         },
         {
           "title": "Episode 7",
@@ -111,83 +59,31 @@
         },
         {
           "title": "Episode 9",
-          "src": "https://files.catbox.moe/jzzhyj.mp4",
+          "src": "Sources/Files/Playlists/Kill_La_Kill_Season_1_Episode_9_9.m3u8",
           "fileSizeBytes": 237741679,
           "durationSeconds": 1476,
-          "sources": [
-            {
-              "title": "Part 1",
-              "src": "https://files.catbox.moe/jzzhyj.mp4",
-              "fileSizeBytes": 112119073,
-              "durationSeconds": 741
-            },
-            {
-              "title": "Part 2",
-              "src": "https://files.catbox.moe/hgele2.mp4",
-              "fileSizeBytes": 125622606,
-              "durationSeconds": 735
-            }
-          ]
+          "progressKey": "sepitem:19dqok8"
         },
         {
           "title": "Episode 10",
-          "src": "https://files.catbox.moe/6bdhxm.mp4",
+          "src": "Sources/Files/Playlists/Kill_La_Kill_Season_1_Episode_10_10.m3u8",
           "fileSizeBytes": 240241160,
           "durationSeconds": 1469,
-          "sources": [
-            {
-              "title": "Part 1",
-              "src": "https://files.catbox.moe/6bdhxm.mp4",
-              "fileSizeBytes": 117701217,
-              "durationSeconds": 735
-            },
-            {
-              "title": "Part 2",
-              "src": "https://files.catbox.moe/j4kcla.mp4",
-              "fileSizeBytes": 122539943,
-              "durationSeconds": 734
-            }
-          ]
+          "progressKey": "sepitem:1l49dcx"
         },
         {
           "title": "Episode 11",
-          "src": "https://files.catbox.moe/k9f1ly.mp4",
+          "src": "Sources/Files/Playlists/Kill_La_Kill_Season_1_Episode_11_11.m3u8",
           "fileSizeBytes": 236454072,
           "durationSeconds": 1469,
-          "sources": [
-            {
-              "title": "Part 1",
-              "src": "https://files.catbox.moe/k9f1ly.mp4",
-              "fileSizeBytes": 147600801,
-              "durationSeconds": 736
-            },
-            {
-              "title": "Part 2",
-              "src": "https://files.catbox.moe/r1u3lj.mp4",
-              "fileSizeBytes": 88853271,
-              "durationSeconds": 733
-            }
-          ]
+          "progressKey": "sepitem:1txwz5k"
         },
         {
           "title": "Episode 12",
-          "src": "https://files.catbox.moe/r1xt3e.mp4",
+          "src": "Sources/Files/Playlists/Kill_La_Kill_Season_1_Episode_12_12.m3u8",
           "fileSizeBytes": 259113836,
           "durationSeconds": 1469,
-          "sources": [
-            {
-              "title": "Part 1",
-              "src": "https://files.catbox.moe/r1xt3e.mp4",
-              "fileSizeBytes": 149871335,
-              "durationSeconds": 736
-            },
-            {
-              "title": "Part 2",
-              "src": "https://files.catbox.moe/mil2gy.mp4",
-              "fileSizeBytes": 109242501,
-              "durationSeconds": 733
-            }
-          ]
+          "progressKey": "sepitem:1tygrqy"
         },
         {
           "title": "Episode 13",
@@ -197,43 +93,17 @@
         },
         {
           "title": "Episode 14",
-          "src": "https://files.catbox.moe/dbhki8.mp4",
+          "src": "Sources/Files/Playlists/Kill_La_Kill_Season_1_Episode_14_14.m3u8",
           "fileSizeBytes": 232147525,
           "durationSeconds": 1476,
-          "sources": [
-            {
-              "title": "Part 1",
-              "src": "https://files.catbox.moe/dbhki8.mp4",
-              "fileSizeBytes": 112917253,
-              "durationSeconds": 745
-            },
-            {
-              "title": "Part 2",
-              "src": "https://files.catbox.moe/vilnaa.mp4",
-              "fileSizeBytes": 119230272,
-              "durationSeconds": 731
-            }
-          ]
+          "progressKey": "sepitem:1tzkcxq"
         },
         {
           "title": "Episode 15",
-          "src": "https://files.catbox.moe/m589jp.mp4",
+          "src": "Sources/Files/Playlists/Kill_La_Kill_Season_1_Episode_15_15.m3u8",
           "fileSizeBytes": 244350701,
           "durationSeconds": 1469,
-          "sources": [
-            {
-              "title": "Part 1",
-              "src": "https://files.catbox.moe/m589jp.mp4",
-              "fileSizeBytes": 118114526,
-              "durationSeconds": 737
-            },
-            {
-              "title": "Part 2",
-              "src": "https://files.catbox.moe/o8my6q.mp4",
-              "fileSizeBytes": 126236175,
-              "durationSeconds": 732
-            }
-          ]
+          "progressKey": "sepitem:1u045j4"
         },
         {
           "title": "Episode 16",
@@ -249,43 +119,17 @@
         },
         {
           "title": "Episode 18",
-          "src": "https://files.catbox.moe/ftyz8q.mp4",
+          "src": "Sources/Files/Playlists/Kill_La_Kill_Season_1_Episode_18_18.m3u8",
           "fileSizeBytes": 247639848,
           "durationSeconds": 1470,
-          "sources": [
-            {
-              "title": "Part 1",
-              "src": "https://files.catbox.moe/ftyz8q.mp4",
-              "fileSizeBytes": 116564238,
-              "durationSeconds": 738
-            },
-            {
-              "title": "Part 2",
-              "src": "https://files.catbox.moe/k4r4kz.mp4",
-              "fileSizeBytes": 131075610,
-              "durationSeconds": 732
-            }
-          ]
+          "progressKey": "sepitem:1u1rjba"
         },
         {
           "title": "Episode 19",
-          "src": "https://files.catbox.moe/33o6fk.mp4",
+          "src": "Sources/Files/Playlists/Kill_La_Kill_Season_1_Episode_19_19.m3u8",
           "fileSizeBytes": 213841610,
           "durationSeconds": 1476,
-          "sources": [
-            {
-              "title": "Part 1",
-              "src": "https://files.catbox.moe/33o6fk.mp4",
-              "fileSizeBytes": 124490264,
-              "durationSeconds": 740
-            },
-            {
-              "title": "Part 2",
-              "src": "https://files.catbox.moe/pcin8a.mp4",
-              "fileSizeBytes": 89351346,
-              "durationSeconds": 736
-            }
-          ]
+          "progressKey": "sepitem:1u2bbwo"
         },
         {
           "title": "Episode 20",
@@ -295,23 +139,10 @@
         },
         {
           "title": "Episode 21",
-          "src": "https://files.catbox.moe/pxb88z.mp4",
+          "src": "Sources/Files/Playlists/Kill_La_Kill_Season_1_Episode_21_21.m3u8",
           "fileSizeBytes": 218390286,
           "durationSeconds": 1469,
-          "sources": [
-            {
-              "title": "Part 1",
-              "src": "https://files.catbox.moe/pxb88z.mp4",
-              "fileSizeBytes": 116500858,
-              "durationSeconds": 741
-            },
-            {
-              "title": "Part 2",
-              "src": "https://files.catbox.moe/x8lhma.mp4",
-              "fileSizeBytes": 101889428,
-              "durationSeconds": 728
-            }
-          ]
+          "progressKey": "sepitem:1ueylkm"
         },
         {
           "title": "Episode 22",
@@ -321,43 +152,17 @@
         },
         {
           "title": "Episode 23",
-          "src": "https://files.catbox.moe/kh2d2o.mp4",
+          "src": "Sources/Files/Playlists/Kill_La_Kill_Season_1_Episode_23_23.m3u8",
           "fileSizeBytes": 253814466,
           "durationSeconds": 1469,
-          "sources": [
-            {
-              "title": "Part 1",
-              "src": "https://files.catbox.moe/kh2d2o.mp4",
-              "fileSizeBytes": 148877660,
-              "durationSeconds": 735
-            },
-            {
-              "title": "Part 2",
-              "src": "https://files.catbox.moe/0rca4a.mp4",
-              "fileSizeBytes": 104936806,
-              "durationSeconds": 734
-            }
-          ]
+          "progressKey": "sepitem:1ug26re"
         },
         {
           "title": "Episode 24",
-          "src": "https://files.catbox.moe/uy6dcq.mp4",
+          "src": "Sources/Files/Playlists/Kill_La_Kill_Season_1_Episode_24_24.m3u8",
           "fileSizeBytes": 287878892,
           "durationSeconds": 1475,
-          "sources": [
-            {
-              "title": "Part 1",
-              "src": "https://files.catbox.moe/uy6dcq.mp4",
-              "fileSizeBytes": 145445367,
-              "durationSeconds": 739
-            },
-            {
-              "title": "Part 2",
-              "src": "https://files.catbox.moe/jcoar6.mp4",
-              "fileSizeBytes": 142433525,
-              "durationSeconds": 736
-            }
-          ]
+          "progressKey": "sepitem:1uglzcs"
         }
       ]
     }

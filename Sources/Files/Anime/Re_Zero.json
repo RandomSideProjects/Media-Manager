@@ -317,29 +317,10 @@
       "episodes": [
         {
           "title": "Episode 1",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/Re_Zero.json/Re_%20Zero/S03_E01__ABS0051.mp4",
+          "src": "Sources/Files/Playlists/Re_Zero_Season_3_Episode_1_1.m3u8",
           "fileSizeBytes": 434130390,
           "durationSeconds": 5430,
-          "sources": [
-            {
-              "title": "Part 1",
-              "src": "https://files.catbox.moe/bblfjb.mp4",
-              "fileSizeBytes": 167622953,
-              "durationSeconds": 1812
-            },
-            {
-              "title": "Part 2",
-              "src": "https://files.catbox.moe/06iyxi.mp4",
-              "fileSizeBytes": 138383023,
-              "durationSeconds": 1814
-            },
-            {
-              "title": "Part 3",
-              "src": "https://files.catbox.moe/yjplof.mp4",
-              "fileSizeBytes": 128124414,
-              "durationSeconds": 1804
-            }
-          ]
+          "progressKey": "sepitem:o7lniy"
         },
         {
           "title": "Episode 2",

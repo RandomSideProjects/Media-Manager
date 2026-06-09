@@ -94,6 +94,16 @@ function inferExtensionFromUrl(url, fallback = '') {
   return fallback;
 }
 
+function isHlsSourceUrl(url) {
+  try {
+    if (!url) return false;
+    const full = new URL(url, window.location && window.location.href ? window.location.href : 'http://localhost');
+    return /\.m3u8$/i.test(full.pathname || '');
+  } catch {
+    return /\.m3u8(?:$|[?#])/i.test(String(url || ''));
+  }
+}
+
 function extractSeparatedParts(entry) {
   if (!entry || typeof entry !== 'object') return [];
   const candidates = [
@@ -589,6 +599,7 @@ async function downloadSourceFolder(options = {}) {
       }
       ext = (ext || '').toLowerCase();
       if (!ext || ext.length > 8 || /[^a-z0-9.]/i.test(ext)) ext = '.mp4';
+      const isHlsPlaylist = isHlsSourceUrl(rawSrc) || ext === '.m3u8';
       const isJsonVolume = ext === '.json';
       const isCbz = ext === '.cbz';
       const prefix = (isCbz || isJsonVolume) ? 'V' : 'E';
@@ -631,7 +642,7 @@ async function downloadSourceFolder(options = {}) {
       const hasDirectSrc = !treatAsSeparatedItem && typeof rawSrc === 'string' && rawSrc.length > 0;
       const isJsonCandidate = isJsonVolume && typeof rawSrc === 'string' && rawSrc.length > 0;
       const lacksSource = treatAsSeparatedItem ? !hasSeparatedSources : !hasDirectSrc;
-      const invalidSource = !treatAsSeparatedItem && !isJsonVolume && hasDirectSrc && !rawSrc.startsWith('http');
+      const invalidSource = !treatAsSeparatedItem && !isJsonVolume && !isHlsPlaylist && hasDirectSrc && !rawSrc.startsWith('http');
 
       let catEntryFolder = catFolder;
       let plannedTask = null;

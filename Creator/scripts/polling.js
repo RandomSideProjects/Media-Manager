@@ -126,6 +126,7 @@ function buildAutoUploadPayload() {
 }
 
 async function autoUploadFromContent(contentObj) {
+  if (isSplitDownloadModeEnabled()) return;
   const payload = { ...contentObj, LatestTime: new Date().toISOString() };
   const jsonString = JSON.stringify(payload, null, 2);
   try {
@@ -162,11 +163,22 @@ if (typeof window !== 'undefined') {
   window.mm_autoUploadFromContent = autoUploadFromContent;
 }
 
+function isSplitDownloadModeEnabled() {
+  try {
+    const raw = localStorage.getItem('mm_upload_settings') || '{}';
+    const parsed = JSON.parse(raw);
+    return parsed && parsed.downloadSplitPartsAfterSplit === true;
+  } catch {
+    return false;
+  }
+}
+
 function startAutoUploadPolling() {
   if (window.MM_POLL_TIMER) return; // already started
   if (window.MM_BLOCKED) return;    // don't start when blocked
   window.MM_POLL_TIMER = setInterval(async () => {
     if (window.MM_BLOCKED) return; // hard stop while blocked
+    if (isSplitDownloadModeEnabled()) return;
     const folderUploading = (
       typeof isFolderUploading !== 'undefined' && isFolderUploading
     ) || (typeof window !== 'undefined' && window.isFolderUploading);

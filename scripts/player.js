@@ -135,6 +135,293 @@ let separatedSwapPreload = {
 };
 
 let activeVideoListenersAttachedTo = null;
+let activeHlsInstance = null;
+let activeHlsSource = '';
+const hlsPlaylistFallbackCache = new Map();
+
+function isHlsSource(src) {
+  const value = String(src || '').trim();
+  if (!value) return false;
+  try {
+    const pathname = new URL(value, window.location && window.location.href ? window.location.href : document.baseURI).pathname;
+    return /\.m3u8$/i.test(pathname);
+  } catch {
+    return /\.m3u8(?:$|[?#])/i.test(value);
+  }
+}
+
+function isManagedPlaylistSource(src) {
+  if (!isHlsSource(src)) return false;
+  try {
+    const pathname = new URL(String(src || ''), window.location && window.location.href ? window.location.href : document.baseURI).pathname;
+    return /\/Sources\/Files\/Playlists\//i.test(pathname);
+  } catch {
+    return /(^|\/)Sources\/Files\/Playlists\//i.test(String(src || ''));
+  }
+}
+
+function isHttpUrl(src) {
+  try {
+    const parsed = new URL(String(src || ''));
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+function unwrapVideoProxyUrl(src) {
+  const source = String(src || '').trim();
+  if (!source || !isHttpUrl(source)) return source;
+  try {
+    const parsed = new URL(source);
+    if (/\/proxy\/?$/i.test(parsed.pathname) && parsed.searchParams.has('url')) {
+      return parsed.searchParams.get('url') || source;
+    }
+  } catch {}
+  return source;
+}
+
+function resolveHlsMediaUrl(src) {
+  return unwrapVideoProxyUrl(src);
+}
+
+function canPlayNativeHls(el) {
+  if (!el || typeof el.canPlayType !== 'function') return false;
+  try {
+    return !!(
+      el.canPlayType('application/vnd.apple.mpegurl') ||
+      el.canPlayType('application/x-mpegURL')
+    );
+  } catch {
+    return false;
+  }
+}
+
+function canUseHlsJs() {
+  try {
+    return !!(window.Hls && typeof window.Hls.isSupported === 'function' && window.Hls.isSupported());
+  } catch {
+    return false;
+  }
+}
+
+function destroyHlsInstance(instance) {
+  if (!instance || typeof instance.destroy !== 'function') return;
+  try { instance.destroy(); } catch {}
+}
+
+function detachActiveHls() {
+  destroyHlsInstance(activeHlsInstance);
+  activeHlsInstance = null;
+  activeHlsSource = '';
+}
+
+function getMediaElementOriginalSource(el, item) {
+  if (item && item.__hlsPlaylistFallbackActive && typeof item.src === 'string' && item.src.trim()) {
+    return item.src.trim();
+  }
+  try {
+    const datasetSrc = el && el.dataset && typeof el.dataset.mmSourceSrc === 'string' ? el.dataset.mmSourceSrc.trim() : '';
+    if (datasetSrc) return datasetSrc;
+  } catch {}
+  if (item && typeof item.src === 'string' && item.src.trim()) return item.src.trim();
+  try {
+    const current = el && typeof el.currentSrc === 'string' ? el.currentSrc.trim() : '';
+    if (current) return current;
+  } catch {}
+  try {
+    const src = el && typeof el.src === 'string' ? el.src.trim() : '';
+    if (src) return src;
+  } catch {}
+  return '';
+}
+
+function attachMediaSourceToElement(el, src, options) {
+  const opts = options || {};
+  const source = String(src || '').trim();
+  if (!el || !source) return null;
+  try { el.dataset.mmSourceSrc = source; } catch {}
+
+  const trackActive = opts.trackActive !== false && typeof video !== 'undefined' && el === video;
+  if (trackActive) detachActiveHls();
+
+  if (!isHlsSource(source)) {
+    el.src = source;
+    return null;
+  }
+
+  if (canPlayNativeHls(el)) {
+    el.src = source;
+    return null;
+  }
+
+  if (canUseHlsJs()) {
+    const hlsConfig = {
+      enableWorker: true,
+      backBufferLength: 90
+    };
+    const hls = new window.Hls(hlsConfig);
+    if (trackActive) {
+      activeHlsInstance = hls;
+      activeHlsSource = source;
+    }
+    try {
+      hls.on(window.Hls.Events.ERROR, (_event, data) => {
+        if (!data || !data.fatal) return;
+        if (typeof opts.onFatalError === 'function') {
+          try { opts.onFatalError(data, hls); } catch {}
+        }
+      });
+      hls.on(window.Hls.Events.MEDIA_ATTACHED, () => {
+        try { hls.loadSource(source); } catch {}
+      });
+      hls.attachMedia(el);
+      return hls;
+    } catch {
+      destroyHlsInstance(hls);
+      if (trackActive && activeHlsInstance === hls) {
+        activeHlsInstance = null;
+        activeHlsSource = '';
+      }
+    }
+  }
+
+  if (typeof opts.onUnsupported === 'function') {
+    setTimeout(() => {
+      try { opts.onUnsupported(); } catch {}
+    }, 0);
+  }
+  return null;
+}
+
+function resolvePlaylistUrl(src) {
+  try {
+    return new URL(String(src || ''), window.location && window.location.href ? window.location.href : document.baseURI).href;
+  } catch {
+    return String(src || '');
+  }
+}
+
+function parseHlsPlaylistParts(text, baseUrl) {
+  const parts = [];
+  let pendingDuration = null;
+  let pendingTitle = '';
+  let pendingFileSize = null;
+  String(text || '').split(/\r?\n/).forEach((rawLine) => {
+    const line = String(rawLine || '').trim();
+    if (!line) return;
+    const extInf = line.match(/^#EXTINF:([^,]*)(?:,(.*))?$/i);
+    if (extInf) {
+      const duration = Number.parseFloat(extInf[1]);
+      pendingDuration = Number.isFinite(duration) && duration > 0 ? duration : null;
+      pendingTitle = String(extInf[2] || '').trim();
+      pendingFileSize = null;
+      return;
+    }
+    const sizeTag = line.match(/^#EXT-X-MM-FILE-SIZE:(\d+)$/i);
+    if (sizeTag) {
+      const size = Number.parseInt(sizeTag[1], 10);
+      pendingFileSize = Number.isFinite(size) && size > 0 ? size : null;
+      return;
+    }
+    if (line[0] === '#') return;
+
+    let partSrc = line;
+    try { partSrc = new URL(line, baseUrl).href; } catch {}
+    const part = {
+      title: pendingTitle || `Part ${parts.length + 1}`,
+      src: resolveHlsMediaUrl(partSrc),
+      originalSrc: partSrc
+    };
+    if (pendingDuration !== null) part.durationSeconds = pendingDuration;
+    if (pendingFileSize !== null) part.fileSizeBytes = pendingFileSize;
+    parts.push(part);
+    pendingDuration = null;
+    pendingTitle = '';
+    pendingFileSize = null;
+  });
+  return parts;
+}
+
+async function loadPlaylistPartsForFallback(src) {
+  const playlistUrl = resolvePlaylistUrl(src);
+  if (!playlistUrl) return [];
+  const cacheKey = playlistUrl;
+  if (hlsPlaylistFallbackCache.has(cacheKey)) {
+    return hlsPlaylistFallbackCache.get(cacheKey).map(part => ({ ...part }));
+  }
+  const response = await fetch(playlistUrl, { cache: 'no-store' });
+  if (!response || !response.ok) throw new Error(`Playlist request failed: ${response && response.status}`);
+  const text = await response.text();
+  const parts = parseHlsPlaylistParts(text, playlistUrl).filter(part => part && part.src);
+  hlsPlaylistFallbackCache.set(cacheKey, parts.map(part => ({ ...part })));
+  return parts;
+}
+
+async function switchHlsPlaylistToSeparatedPlayback(item, src, options) {
+  if (!item || !isHlsSource(src)) return false;
+  if (item.__hlsPlaylistFallbackLoading) return true;
+  item.__hlsPlaylistFallbackLoading = true;
+  try {
+    const parts = await loadPlaylistPartsForFallback(src);
+    if (!parts.length) return false;
+    if (getCurrentMediaItem() !== item) return false;
+
+    const offsets = [];
+    let runningDuration = 0;
+    parts.forEach((part) => {
+      offsets.push(runningDuration);
+      const duration = Number(part.durationSeconds);
+      if (Number.isFinite(duration) && duration > 0) runningDuration += duration;
+    });
+
+    item.__separatedParts = parts;
+    item.__separatedOffsets = offsets;
+    item.__separatedDurations = parts.map(part => {
+      const duration = Number(part.durationSeconds);
+      return Number.isFinite(duration) && duration > 0 ? duration : null;
+    });
+    item.__separatedTotalDuration = runningDuration > 0 ? runningDuration : (Number(item.durationSeconds) || null);
+    item.__separatedPartCount = parts.length;
+    item.__hlsPlaylistFallbackActive = true;
+    item.__separatedBaseKey = item.progressKey ? String(item.progressKey) : (resolveResumeKeyForItem(item) || src);
+
+    let targetTime = Number(options && options.combinedTime);
+    if (!Number.isFinite(targetTime) || targetTime < 0) {
+      try {
+        const stored = parseFloat(localStorage.getItem(item.__separatedBaseKey));
+        if (Number.isFinite(stored) && stored >= 0) targetTime = stored;
+      } catch {}
+    }
+    if (!Number.isFinite(targetTime) || targetTime < 0) targetTime = 0;
+
+    detachActiveHls();
+    const position = resolveCombinedPosition(item, targetTime);
+    setSeparatedPartSource(item, position.partIndex, {
+      resumeTime: position.partTime,
+      combinedTime: targetTime,
+      suppressPlay: options && options.shouldPlay === false
+    });
+    if (video) attachActiveVideoListeners(video);
+    return true;
+  } catch (err) {
+    console.warn('[HLS] Playlist fallback failed', err);
+    return false;
+  } finally {
+    item.__hlsPlaylistFallbackLoading = false;
+  }
+}
+
+if (typeof window !== 'undefined') {
+  window.MM_isHlsSource = isHlsSource;
+  window.MM_attachMediaSourceToElement = attachMediaSourceToElement;
+  window.addEventListener('mm:hls-request-proxy-setting-changed', () => {
+    try { hlsPlaylistFallbackCache.clear(); } catch {}
+  });
+  window.MM_getOriginalVideoSource = function (el) {
+    return getMediaElementOriginalSource(el || video, getCurrentMediaItem());
+  };
+}
 
 function clampNumber(value, min, max) {
   const num = Number(value);
@@ -895,7 +1182,8 @@ function setSeparatedPartSource(item, partIndex, options) {
     video.dataset.separatedBaseKey = resumeKey || '';
     const onMeta = () => {
       try {
-        localStorage.setItem(video.src + ':duration', video.duration);
+        const partSrc = part && part.src ? String(part.src) : getMediaElementOriginalSource(video, item);
+        if (partSrc) localStorage.setItem(partSrc + ':duration', video.duration);
         if (resumeKey && Number.isFinite(item.__separatedTotalDuration) && item.__separatedTotalDuration > 0) {
           localStorage.setItem(`${resumeKey}:duration`, item.__separatedTotalDuration);
         }
@@ -911,8 +1199,8 @@ function setSeparatedPartSource(item, partIndex, options) {
     };
     video.addEventListener('loadedmetadata', onMeta);
     try {
-      video.src = part.src;
-      video.load();
+      const hls = attachMediaSourceToElement(video, part.src);
+      if (!hls) video.load();
     } catch {}
   }
   if (resumeKey) {
@@ -934,6 +1222,7 @@ function updateChaptersSelection(item) {
   separatedPartsBar.setAttribute('aria-hidden', 'true');
 
   if (!item || !hasSeparatedParts(item)) return;
+  if (item.__hlsPlaylistFallbackActive) return;
   const meta = getSeparatedMeta(item);
   if (!meta || !Array.isArray(meta.parts) || meta.parts.length === 0) return;
 
@@ -1697,6 +1986,7 @@ function loadVideo(index) {
   if (item && item.isPlaceholder) {
     updateEpisodeTimeOverlay(null, 0);
     if (video) {
+      detachActiveHls();
       video.pause();
       video.removeAttribute('src');
       try { video.load(); } catch {}
@@ -1705,6 +1995,7 @@ function loadVideo(index) {
       video.dataset.separatedPartIndex = '';
       video.dataset.separatedPartCount = '';
       video.dataset.separatedBaseKey = '';
+      video.dataset.mmSourceSrc = '';
     }
     if (theaterBtn) theaterBtn.style.display = 'none';
     unloadCbz();
@@ -1717,10 +2008,12 @@ function loadVideo(index) {
     unloadCbz();
     loadMangaVolume(item);
     if (video) {
+      detachActiveHls();
       video.dataset.separatedItem = '';
       video.dataset.separatedPartIndex = '';
       video.dataset.separatedPartCount = '';
       video.dataset.separatedBaseKey = '';
+      video.dataset.mmSourceSrc = '';
       video.style.display = 'none';
     }
     updateEpisodeTimeOverlay(null, 0);
@@ -1737,9 +2030,11 @@ function loadVideo(index) {
     video.dataset.separatedPartIndex = '';
     video.dataset.separatedPartCount = '';
     video.dataset.separatedBaseKey = '';
+    video.dataset.mmSourceSrc = item && typeof item.src === 'string' ? item.src : '';
   }
 
   const isSeparatedItem = hasSeparatedParts(item);
+  let autoPlayHandled = false;
   if (isSeparatedItem && video) {
     const baseKey = resumeKey || item.__separatedBaseKey || '';
     item.__separatedBaseKey = baseKey || item.__separatedBaseKey || '';
@@ -1768,25 +2063,57 @@ function loadVideo(index) {
       setSeparatedPartSource(item, fallbackIndex, { resumeTime: fallbackTime, combinedTime: combinedGuess });
     }
   } else if (video) {
-    video.src = item.src;
-    video.addEventListener('loadedmetadata', function onMeta() {
-      try { localStorage.setItem(video.src + ':duration', video.duration); } catch {}
-      try {
-        const pk = (item && item.progressKey) ? String(item.progressKey) : '';
-        if (pk) localStorage.setItem(pk + ':duration', video.duration);
-      } catch {}
-      updateEpisodeTimeOverlay(item, video.currentTime);
-      video.removeEventListener('loadedmetadata', onMeta);
-    });
-    let savedTime = localStorage.getItem(video.src);
+    const sourceSrc = item && typeof item.src === 'string' ? item.src.trim() : '';
+    const storageKey = resumeKey || sourceSrc;
+    let savedTime = storageKey ? localStorage.getItem(storageKey) : null;
+    if (!savedTime && sourceSrc) savedTime = localStorage.getItem(sourceSrc);
     if (!savedTime && item && item.progressKey) savedTime = localStorage.getItem(String(item.progressKey));
-    if (savedTime) {
-      const targetTime = parseFloat(savedTime);
-      if (Number.isFinite(targetTime) && targetTime >= 0) {
-        try { video.currentTime = targetTime; } catch {}
-      }
+    const savedTarget = savedTime ? parseFloat(savedTime) : NaN;
+    if (isManagedPlaylistSource(sourceSrc)) {
+      autoPlayHandled = true;
+      detachActiveHls();
+      try {
+        video.removeAttribute('src');
+        video.dataset.mmSourceSrc = sourceSrc;
+        video.load();
+      } catch {}
+      void switchHlsPlaylistToSeparatedPlayback(item, sourceSrc, {
+        combinedTime: savedTarget,
+        shouldPlay: true
+      });
+    } else {
+      video.addEventListener('loadedmetadata', function onMeta() {
+        try {
+          if (storageKey) localStorage.setItem(storageKey + ':duration', video.duration);
+          if (sourceSrc && sourceSrc !== storageKey) localStorage.setItem(sourceSrc + ':duration', video.duration);
+        } catch {}
+        try {
+          const pk = (item && item.progressKey) ? String(item.progressKey) : '';
+          if (pk) localStorage.setItem(pk + ':duration', video.duration);
+        } catch {}
+        if (Number.isFinite(savedTarget) && savedTarget >= 0) {
+          try { video.currentTime = savedTarget; } catch {}
+        }
+        updateEpisodeTimeOverlay(item, video.currentTime);
+        video.removeEventListener('loadedmetadata', onMeta);
+      });
+      const hls = attachMediaSourceToElement(video, sourceSrc, {
+        onFatalError: () => {
+          const currentTime = Number(video.currentTime);
+          void switchHlsPlaylistToSeparatedPlayback(item, sourceSrc, {
+            combinedTime: Number.isFinite(currentTime) && currentTime > 0 ? currentTime : savedTarget,
+            shouldPlay: true
+          });
+        },
+        onUnsupported: () => {
+          void switchHlsPlaylistToSeparatedPlayback(item, sourceSrc, {
+            combinedTime: savedTarget,
+            shouldPlay: true
+          });
+        }
+      });
+      if (!hls) video.load();
     }
-    video.load();
   }
 
   if (video) attachActiveVideoListeners(video);
@@ -1795,7 +2122,7 @@ function loadVideo(index) {
   title.textContent = item.title;
   updateEpisodeTimeOverlay(item, getAggregatedCurrentTime(item));
   nextBtn.style.display = "none";
-  if (!isSeparatedItem && video) {
+  if (!isSeparatedItem && video && !autoPlayHandled) {
     const playPromise = video.play();
     if (playPromise && typeof playPromise.catch === 'function') {
       playPromise.catch(() => {});
@@ -1856,6 +2183,20 @@ function showPlayerAlert(message) {
 function handleActiveVideoError(event) {
   const el = event && event.currentTarget ? event.currentTarget : video;
   if (!el) return;
+  const curItem = getCurrentMediaItem();
+  const sourceSrc = getMediaElementOriginalSource(el, curItem);
+  if (curItem && isHlsSource(sourceSrc) && !hasSeparatedParts(curItem)) {
+    void switchHlsPlaylistToSeparatedPlayback(curItem, sourceSrc, {
+      combinedTime: Number(el.currentTime) || 0,
+      shouldPlay: true
+    }).then((handled) => {
+      if (handled) return;
+      try { el.pause(); } catch {}
+      try { el.style.display = 'none'; } catch {}
+      showPlayerAlert("Unfortunatly, this file in unavalible at this moment, please try again later.\n If this is a local source, please download the remaining files to continue");
+    });
+    return;
+  }
   try { el.pause(); } catch {}
   try { el.style.display = 'none'; } catch {}
   showPlayerAlert("Unfortunatly, this file in unavalible at this moment, please try again later.\n If this is a local source, please download the remaining files to continue");
@@ -1967,6 +2308,20 @@ function generateThumbFromSrcOnce(idx, src, durationHintSeconds) {
   const durHint = Number(durationHintSeconds);
   if (!Number.isFinite(durHint) || durHint <= 1) return;
 
+  if (isManagedPlaylistSource(src)) {
+    __mmThumbGenInFlight.add(key);
+    loadPlaylistPartsForFallback(src)
+      .then((parts) => {
+        const firstPart = Array.isArray(parts) ? parts.find(part => part && part.src) : null;
+        if (!firstPart) return;
+        __mmThumbGenInFlight.delete(key);
+        generateThumbFromSrcOnce(idx, firstPart.src, Number(firstPart.durationSeconds) || durHint);
+      })
+      .catch(() => {})
+      .finally(() => { __mmThumbGenInFlight.delete(key); });
+    return;
+  }
+
   __mmThumbGenInFlight.add(key);
 
   try {
@@ -1984,10 +2339,13 @@ function generateThumbFromSrcOnce(idx, src, durationHintSeconds) {
     document.body.appendChild(el);
 
     let done = false;
+    let thumbHls = null;
     const cleanup = () => {
       try { el.removeEventListener('error', onError); } catch {}
       try { el.removeEventListener('loadedmetadata', onMeta); } catch {}
       try { el.removeEventListener('seeked', onSeeked); } catch {}
+      destroyHlsInstance(thumbHls);
+      thumbHls = null;
       try { el.pause(); } catch {}
       try { el.removeAttribute('src'); } catch {}
       try { el.load(); } catch {}
@@ -2020,8 +2378,8 @@ function generateThumbFromSrcOnce(idx, src, durationHintSeconds) {
     el.addEventListener('seeked', onSeeked);
 
     try {
-      el.src = src;
-      el.load();
+      thumbHls = attachMediaSourceToElement(el, src, { trackActive: false });
+      if (!thumbHls) el.load();
     } catch {
       finish();
       return;
@@ -2121,7 +2479,8 @@ function handleActiveVideoTimeUpdate(event) {
         }
       }
       const pk = curItem && curItem.progressKey ? String(curItem.progressKey) : '';
-      if (pk) localStorage.setItem(pk, el.currentTime);
+      const sourceStorageKey = pk || getMediaElementOriginalSource(el, curItem);
+      if (sourceStorageKey) localStorage.setItem(sourceStorageKey, el.currentTime);
       try {
         writeSourceScopedValue && writeSourceScopedValue('SavedItemTime', String(el.currentTime));
       } catch {}
@@ -2162,15 +2521,21 @@ function handleActiveVideoTimeUpdate(event) {
   } catch {}
   updateEpisodeTimeOverlay(curItem, aggregatedTime);
   if (!handledSeparated) {
-    try { localStorage.setItem(el.src, el.currentTime); } catch {}
+    try {
+      const sourceStorageKey = getMediaElementOriginalSource(el, curItem);
+      if (sourceStorageKey) localStorage.setItem(sourceStorageKey, el.currentTime);
+    } catch {}
   }
 }
 
 function handleActiveVideoEnded(event) {
   const el = event && event.currentTarget ? event.currentTarget : video;
   if (!el) return;
-  try { localStorage.removeItem(el.src); } catch {}
   const curItem = (typeof currentIndex === 'number' && flatList && flatList[currentIndex]) ? flatList[currentIndex] : null;
+  try {
+    const finishedKey = (curItem && curItem.progressKey) ? String(curItem.progressKey) : getMediaElementOriginalSource(el, curItem);
+    if (finishedKey) localStorage.removeItem(finishedKey);
+  } catch {}
   if (hasSeparatedParts(curItem)) {
     const meta = getSeparatedMeta(curItem);
     const baseKey = curItem.__separatedBaseKey || resolveResumeKeyForItem(curItem);

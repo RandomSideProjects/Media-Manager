@@ -543,6 +543,7 @@ let posterPreviewObjectUrl = '';
 const UI_GITHUB_WORKER_ROOT = 'https://mm.littlehacker303.workers.dev/gh';
 const UI_DEFAULT_GITHUB_WORKER_URL = (typeof window !== 'undefined' && typeof window.MM_DEFAULT_GITHUB_WORKER_URL === 'string') ? window.MM_DEFAULT_GITHUB_WORKER_URL : UI_GITHUB_WORKER_ROOT;
 const LEGACY_GITHUB_WORKER_ROOT = 'https://mmback.littlehacker303.workers.dev/gh';
+const CREATOR_PLAYLIST_DIR = 'Sources/Files/Playlists';
 const githubUploadComboKeys = new Set(['g', 'h']);
 let githubUploadSequence = [];
 const resetGithubUploadSequence = () => { githubUploadSequence = []; };
@@ -661,6 +662,209 @@ function sanitizeWorkerFileName(input) {
     return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
   }).filter(Boolean);
   return words.length ? words.join('_') : 'Untitled_Directory';
+}
+
+function sanitizePlaylistFileSegment(input, fallback = 'Item') {
+  const value = typeof input === 'string' ? input : String(input || '');
+  const normalized = typeof value.normalize === 'function' ? value.normalize('NFKD') : value;
+  const filtered = normalized
+    .replace(/[\u0000-\u001f\u007f]/g, ' ')
+    .replace(/[\\/:*?"<>|]/g, ' ')
+    .replace(/[^A-Za-z0-9 _.-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  const collapsed = filtered.replace(/\s+/g, '_').replace(/_+/g, '_').replace(/^_+|_+$/g, '');
+  return collapsed || fallback;
+}
+
+function escapeM3uCommentValue(value) {
+  return String(value == null ? '' : value).replace(/[\r\n]/g, ' ').trim();
+}
+
+function unwrapCreatorProxyUrl(src) {
+  const raw = String(src || '').trim();
+  if (!/^https?:\/\//i.test(raw)) return raw;
+  try {
+    const parsed = new URL(raw);
+    if (/\/proxy\/?$/i.test(parsed.pathname) && parsed.searchParams.has('url')) {
+      return parsed.searchParams.get('url') || raw;
+    }
+  } catch {}
+  return raw;
+}
+
+function buildCreatorPlaylistMediaUrl(src) {
+  return unwrapCreatorProxyUrl(src);
+}
+
+function buildCreatorPlaylistFilename({ directoryTitle, categoryTitle, episodeTitle, categoryIndex, episodeIndex }) {
+  const titlePart = sanitizePlaylistFileSegment(directoryTitle, 'Directory');
+  const categoryPart = sanitizePlaylistFileSegment(categoryTitle, `Category_${categoryIndex || 1}`);
+  const episodePart = sanitizePlaylistFileSegment(episodeTitle, `Episode_${episodeIndex || 1}`);
+  const catSuffix = Number.isFinite(Number(categoryIndex)) ? Number(categoryIndex) : 1;
+  const epSuffix = Number.isFinite(Number(episodeIndex)) ? Number(episodeIndex) : 1;
+  return `${titlePart}_${categoryPart}_${episodePart}_${catSuffix}_${epSuffix}.m3u8`;
+}
+
+function buildCreatorM3u8({ title, parts }) {
+  const safeParts = Array.isArray(parts) ? parts.filter(part => part && part.src) : [];
+  const durations = safeParts
+    .map(part => Number(part.durationSeconds))
+    .filter(value => Number.isFinite(value) && value > 0);
+  const targetDuration = durations.length ? Math.max(1, Math.ceil(Math.max(...durations))) : 1;
+  const lines = [
+    '#EXTM3U',
+    '#EXT-X-VERSION:3',
+    '#EXT-X-PLAYLIST-TYPE:VOD',
+    '#EXT-X-INDEPENDENT-SEGMENTS',
+    `#EXT-X-TARGETDURATION:${targetDuration}`,
+    '#EXT-X-MEDIA-SEQUENCE:0',
+    `#EXT-X-MM-TITLE:${escapeM3uCommentValue(title)}`
+  ];
+  safeParts.forEach((part, idx) => {
+    const duration = Number(part.durationSeconds);
+    const extinf = Number.isFinite(duration) && duration > 0 ? duration.toFixed(3) : '0.000';
+    lines.push(`#EXTINF:${extinf},${escapeM3uCommentValue(part.title || `Part ${idx + 1}`)}`);
+    const fileSize = Number(part.fileSizeBytes);
+    if (Number.isFinite(fileSize) && fileSize > 0) {
+      lines.push(`#EXT-X-MM-FILE-SIZE:${Math.round(fileSize)}`);
+    }
+    lines.push(buildCreatorPlaylistMediaUrl(part.src));
+    if (idx < safeParts.length - 1) lines.push('#EXT-X-DISCONTINUITY');
+  });
+  lines.push('#EXT-X-ENDLIST');
+  return `${lines.join('\n')}\n`;
+}
+
+function createCreatorPlaylistArtifact({ directoryTitle, categoryTitle, episodeTitle, categoryIndex, episodeIndex, parts }) {
+  const filename = buildCreatorPlaylistFilename({ directoryTitle, categoryTitle, episodeTitle, categoryIndex, episodeIndex });
+  const path = `${CREATOR_PLAYLIST_DIR}/${filename}`;
+  const text = buildCreatorM3u8({ title: `${directoryTitle || 'Directory'} - ${episodeTitle || `Episode ${episodeIndex || 1}`}`, parts });
+  return { filename, path, text };
+}
+
+function isCopypartyOverrideEnabledForCreator() {
+  try {
+    const settings = getUploadSettingsSafe();
+    const url = settings && typeof settings.copypartyUploadUrl === 'string' ? settings.copypartyUploadUrl.trim() : '';
+    return !!url;
+  } catch {
+    return false;
+  }
+}
+
+function shouldUseCreatorOversizePlaylistUpload(file) {
+  if (isCopypartyOverrideEnabledForCreator()) return false;
+  if (typeof window !== 'undefined' && typeof window.mmShouldSplitVideoFile === 'function') {
+    try { return window.mmShouldSplitVideoFile(file) === true; } catch {}
+  }
+  if (!file || typeof file.size !== 'number' || file.size <= 200 * 1024 * 1024) return false;
+  const name = String(file.name || '');
+  const type = String(file.type || '');
+  return /^video\//i.test(type) || /\.(mp4|m4v|mov|webm|mkv)$/i.test(name);
+}
+
+function getDirectoryTitleForPlaylist() {
+  try {
+    const input = document.getElementById('dirTitle');
+    return input && typeof input.value === 'string' ? input.value.trim() : '';
+  } catch {
+    return '';
+  }
+}
+
+async function uploadOversizeVideoAsCatboxPlaylist(file, options = {}) {
+  const opts = options && typeof options === 'object' ? options : {};
+  if (!shouldUseCreatorOversizePlaylistUpload(file)) return null;
+  if (typeof window === 'undefined' || typeof window.mmSplitVideoFileWithFfmpeg !== 'function') {
+    throw new Error('Browser video splitter is not available.');
+  }
+
+  const onProgress = typeof opts.onProgress === 'function' ? opts.onProgress : null;
+  const emitProgress = (percent, detail) => {
+    if (!onProgress) return;
+    try { onProgress(Math.max(0, Math.min(100, Number(percent) || 0)), detail || {}); } catch {}
+  };
+
+  const result = await window.mmSplitVideoFileWithFfmpeg(file, {
+    onProgress: (info) => {
+      const ratio = Math.max(0, Math.min(1, Number(info && info.ratio) || 0));
+      emitProgress(Math.round(ratio * 20), { phase: 'prepare' });
+    }
+  });
+  if (!result || !result.didSplit || !Array.isArray(result.parts) || result.parts.length < 2) {
+    return null;
+  }
+
+  const playlistMeta = opts.playlistMeta && typeof opts.playlistMeta === 'object' ? opts.playlistMeta : {};
+  const uploadedParts = [];
+  const parts = result.parts;
+  for (let index = 0; index < parts.length; index += 1) {
+    const part = parts[index];
+    const sourceTitle = `Part ${index + 1}`;
+    const url = await uploadToCatboxWithProgress(part.file, (pct) => {
+      const localProgress = Math.max(0, Math.min(100, Number(pct) || 0));
+      emitProgress(20 + (((index + (localProgress / 100)) / parts.length) * 75), { phase: 'upload-video' });
+    }, {
+      context: opts.context || 'manual',
+      allowProxy: true,
+      forceProxy: true,
+      signal: opts.signal,
+      creatorItem: Object.assign({}, opts.creatorItem || {}, { sourceTitle })
+    });
+    uploadedParts.push({
+      title: sourceTitle,
+      src: url,
+      fileSizeBytes: part.file && Number.isFinite(Number(part.file.size)) ? Math.round(Number(part.file.size)) : undefined,
+      durationSeconds: Number.isFinite(Number(part.durationSeconds)) && Number(part.durationSeconds) > 0
+        ? Math.round(Number(part.durationSeconds))
+        : undefined
+    });
+  }
+
+  const artifact = createCreatorPlaylistArtifact({
+    directoryTitle: playlistMeta.directoryTitle || getDirectoryTitleForPlaylist(),
+    categoryTitle: playlistMeta.categoryTitle || '',
+    episodeTitle: playlistMeta.episodeTitle || (file && file.name ? file.name : 'Episode'),
+    categoryIndex: playlistMeta.categoryIndex || 1,
+    episodeIndex: playlistMeta.episodeIndex || 1,
+    parts: uploadedParts
+  });
+  if (!artifact || !artifact.text || !artifact.filename) {
+    throw new Error('Could not build playlist for uploaded video parts.');
+  }
+
+  const playlistFile = new File(
+    [new Blob([artifact.text], { type: 'application/vnd.apple.mpegurl' })],
+    artifact.filename,
+    { type: 'application/vnd.apple.mpegurl', lastModified: Date.now() }
+  );
+  const playlistUrl = await uploadToCatboxWithProgress(playlistFile, (pct) => {
+    const localProgress = Math.max(0, Math.min(100, Number(pct) || 0));
+    emitProgress(95 + (localProgress * 0.05), { phase: 'upload-playlist' });
+  }, {
+    context: opts.context || 'manual',
+    allowProxy: true,
+    forceProxy: true,
+    signal: opts.signal,
+    creatorItem: opts.creatorItem || null
+  });
+
+  const totalFileSize = uploadedParts.reduce((sum, part) => sum + (Number(part.fileSizeBytes) || 0), 0);
+  const totalDuration = uploadedParts.reduce((sum, part) => sum + (Number(part.durationSeconds) || 0), 0);
+  emitProgress(100, { phase: 'complete' });
+  return {
+    url: playlistUrl,
+    parts: uploadedParts,
+    artifact,
+    totalFileSize: totalFileSize > 0 ? Math.round(totalFileSize) : 0,
+    totalDuration: totalDuration > 0 ? Math.round(totalDuration) : 0
+  };
+}
+
+if (typeof window !== 'undefined') {
+  window.mmShouldUseCreatorOversizePlaylistUpload = shouldUseCreatorOversizePlaylistUpload;
+  window.mmUploadOversizeVideoAsCatboxPlaylist = uploadOversizeVideoAsCatboxPlaylist;
 }
 
 const CREATOR_HIDDEN_CONTROL_KEY = 'mm_creator_hidden_control';
@@ -1244,14 +1448,39 @@ folderInput.addEventListener('change', async (e) => {
 	            rowCtx.setProgress(0, { state: 'active', loadedBytes: 0, totalBytes });
 	            try {
                 const categoryTitle = titleInput && typeof titleInput.value === 'string' ? titleInput.value : '';
-	              const url = await uploadToCatboxWithProgress(
+                const sourceTitle = label || labelForUnit(num);
+                const categoryIndex = categoryDiv && categoryDiv.parentElement
+                  ? Array.from(categoryDiv.parentElement.querySelectorAll('.category')).indexOf(categoryDiv) + 1
+                  : 1;
+                const splitUpload = await uploadOversizeVideoAsCatboxPlaylist(file, {
+                  context: 'batch',
+                  creatorItem: { categoryTitle, itemIndex: num || 1, sourceTitle },
+                  playlistMeta: {
+                    directoryTitle: getDirectoryTitleForPlaylist(),
+                    categoryTitle,
+                    episodeTitle: sourceTitle,
+                    categoryIndex,
+                    episodeIndex: num || 1
+                  },
+                  onProgress: (pct) => {
+                    const loaded = Number.isFinite(totalBytes) ? (pct / 100) * totalBytes : undefined;
+                    rowCtx.setProgress(pct, { loadedBytes: loaded });
+                  }
+                });
+                const url = splitUpload ? splitUpload.url : await uploadToCatboxWithProgress(
 	                file,
 	                (pct) => {
 	                  const loaded = Number.isFinite(totalBytes) ? (pct / 100) * totalBytes : undefined;
 	                  rowCtx.setProgress(pct, { loadedBytes: loaded });
 	                },
-	                { context: 'batch', allowProxy: false, creatorItem: { categoryTitle, itemIndex: num || 1, sourceTitle: label || labelForUnit(num) } }
+	                { context: 'batch', allowProxy: false, creatorItem: { categoryTitle, itemIndex: num || 1, sourceTitle } }
 	              );
+                if (splitUpload) {
+                  epDiv._hiddenSplitParts = splitUpload.parts || [];
+                  epDiv._hiddenSplitPlaylistUrl = splitUpload.url || '';
+                  if (splitUpload.totalFileSize > 0) epDiv.dataset.fileSizeBytes = String(splitUpload.totalFileSize);
+                  if (splitUpload.totalDuration > 0) epDiv.dataset.durationSeconds = String(splitUpload.totalDuration);
+                }
 	              epSrcInput.value = url;
 	              if (epError) epError.textContent = '';
 	              rowCtx.setStatus('Done', { color: '#6ec1e4' });
@@ -1479,14 +1708,39 @@ folderInput.addEventListener('change', async (e) => {
 	              } catch {}
 	            }
               const categoryTitle = titleInput && typeof titleInput.value === 'string' ? titleInput.value : '';
-	            const url = await uploadToCatboxWithProgress(
+              const itemIndex = entry && entry.num ? entry.num : 1;
+              const categoryIndex = categoryDiv && categoryDiv.parentElement
+                ? Array.from(categoryDiv.parentElement.querySelectorAll('.category')).indexOf(categoryDiv) + 1
+                : 1;
+              const splitUpload = await uploadOversizeVideoAsCatboxPlaylist(fileForUpload, {
+                context: 'batch',
+                creatorItem: { categoryTitle, itemIndex, sourceTitle: title },
+                playlistMeta: {
+                  directoryTitle: getDirectoryTitleForPlaylist(),
+                  categoryTitle,
+                  episodeTitle: title,
+                  categoryIndex,
+                  episodeIndex: itemIndex
+                },
+                onProgress: (pct) => {
+                  const loaded = Number.isFinite(fileSizeBytes) ? (pct / 100) * fileSizeBytes : undefined;
+                  rowCtx.setProgress(pct, { loadedBytes: loaded });
+                }
+              });
+	            const url = splitUpload ? splitUpload.url : await uploadToCatboxWithProgress(
 	              fileForUpload,
 	              (pct) => {
 	                const loaded = Number.isFinite(fileSizeBytes) ? (pct / 100) * fileSizeBytes : undefined;
 	                rowCtx.setProgress(pct, { loadedBytes: loaded });
 	              },
-	              { context: 'batch', allowProxy: false, creatorItem: { categoryTitle, itemIndex: entry && entry.num ? entry.num : 1, sourceTitle: title } }
+	              { context: 'batch', allowProxy: false, creatorItem: { categoryTitle, itemIndex, sourceTitle: title } }
 	            );
+              if (splitUpload) {
+                epDiv._hiddenSplitParts = splitUpload.parts || [];
+                epDiv._hiddenSplitPlaylistUrl = splitUpload.url || '';
+                if (splitUpload.totalFileSize > 0) epDiv.dataset.fileSizeBytes = String(splitUpload.totalFileSize);
+                if (splitUpload.totalDuration > 0) epDiv.dataset.durationSeconds = String(splitUpload.totalDuration);
+              }
 	            if (epSrcInput) epSrcInput.value = url;
 	            if (epError) epError.textContent = '';
 	            rowCtx.setStatus('Done', { color: '#6ec1e4' });
@@ -1670,7 +1924,7 @@ function addEpisode(container, data) {
 
   const epFile = document.createElement('input');
   epFile.type = 'file';
-  epFile.accept = isMangaMode() ? '.cbz' : '.mp4, .webm';
+  epFile.accept = isMangaMode() ? '.cbz' : 'video/*,.mp4,.m4v,.mov,.webm,.mkv,.avi,.flv,.wmv,.mpg,.mpeg,.ts,.mts,.m2ts,.3gp,.ogv';
 
   const epError = document.createElement('div');
   epError.className = 'ep-error';
@@ -1978,7 +2232,33 @@ function addEpisode(container, data) {
       } catch {}
     }
 	    try {
-	      const url = await uploadToCatboxWithProgress(file, pct => {
+        const splitUpload = await uploadOversizeVideoAsCatboxPlaylist(file, {
+          context: 'manual',
+          signal,
+          creatorItem: { categoryTitle, itemIndex: episodeIndex, sourceTitle },
+          playlistMeta: {
+            directoryTitle: getDirectoryTitleForPlaylist(),
+            categoryTitle,
+            episodeTitle: sourceTitle,
+            categoryIndex: (() => {
+              try {
+                const cat = epDiv && typeof epDiv.closest === 'function' ? epDiv.closest('.category') : null;
+                return cat && cat.parentElement ? Array.from(cat.parentElement.querySelectorAll('.category')).indexOf(cat) + 1 : 1;
+              } catch { return 1; }
+            })(),
+            episodeIndex
+          },
+          onProgress: (pct) => {
+            progress.value = pct;
+            if (row._statusEl) {
+              row._statusEl.style.color = '#9ecbff';
+              row._statusEl.textContent = `Uploading ${Math.round(pct)}%`;
+              row._statusEl.appendChild(progress);
+            }
+            if (typeof opts.onProgress === 'function') opts.onProgress(pct);
+          }
+        });
+	      const url = splitUpload ? splitUpload.url : await uploadToCatboxWithProgress(file, pct => {
 	        progress.value = pct;
 	        if (row._statusEl) {
 	          row._statusEl.style.color = '#9ecbff';
@@ -1988,11 +2268,19 @@ function addEpisode(container, data) {
 	        if (typeof opts.onProgress === 'function') {
 	          opts.onProgress(pct);
 	        }
-	      }, { context: 'manual', allowProxy: false, signal, creatorItem: { categoryTitle, itemIndex: episodeIndex, sourceTitle } });
+	      }, {
+          context: 'manual',
+          allowProxy: opts.allowProxy !== undefined ? opts.allowProxy !== false : false,
+          forceProxy: opts.forceProxy === true,
+          signal,
+          creatorItem: { categoryTitle, itemIndex: episodeIndex, sourceTitle }
+        });
 	      if (row._srcInput) row._srcInput.value = url;
-	      applyPartMetadata(row, { fileSize: file.size });
-	      if (Number.isFinite(durationEstimate) && durationEstimate > 0) {
-	        applyPartMetadata(row, { duration: durationEstimate });
+	      applyPartMetadata(row, { fileSize: splitUpload && splitUpload.totalFileSize > 0 ? splitUpload.totalFileSize : file.size });
+	      if (splitUpload && splitUpload.totalDuration > 0) {
+	        applyPartMetadata(row, { duration: splitUpload.totalDuration });
+	      } else if (Number.isFinite(durationEstimate) && durationEstimate > 0) {
+          applyPartMetadata(row, { duration: durationEstimate });
 	      }
       if (row._statusEl) row._statusEl.textContent = '';
       syncEpisodeMainSrc();
@@ -2064,7 +2352,7 @@ function addEpisode(container, data) {
     orSpan.textContent = 'or';
     const fileInput = document.createElement('input');
     fileInput.type = 'file';
-    fileInput.accept = '.mp4,.webm,.mkv,.mov';
+    fileInput.accept = 'video/*,.mp4,.m4v,.mov,.webm,.mkv,.avi,.flv,.wmv,.mpg,.mpeg,.ts,.mts,.m2ts,.3gp,.ogv';
     partInputGroup.append(srcInput, orSpan, fileInput);
 
     const statusEl = document.createElement('div');
@@ -2147,10 +2435,215 @@ function addEpisode(container, data) {
     return measureLocalFileDuration(file);
   }
 
+  function shouldDownloadSplitPartsAfterSplit() {
+    try {
+      const settings = getUploadSettingsSafe();
+      return !!(settings && settings.downloadSplitPartsAfterSplit === true);
+    } catch {
+      return false;
+    }
+  }
+
+  async function downloadSplitPartFiles(parts, onProgress) {
+    const downloadable = Array.isArray(parts)
+      ? parts.map((part) => part && part.file).filter((file) => file instanceof File || file instanceof Blob)
+      : [];
+    if (!downloadable.length) return 0;
+
+    for (let index = 0; index < downloadable.length; index += 1) {
+      const file = downloadable[index];
+      if (typeof onProgress === 'function') {
+        onProgress(index, downloadable.length, file);
+      }
+      const url = URL.createObjectURL(file);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = file.name || `split_part_${String(index + 1).padStart(2, '0')}.mp4`;
+      anchor.rel = 'noopener';
+      anchor.style.display = 'none';
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      setTimeout(() => {
+        try { URL.revokeObjectURL(url); } catch {}
+      }, 60000);
+      await new Promise((resolve) => setTimeout(resolve, 250));
+    }
+
+    return downloadable.length;
+  }
+
+  function getEpisodeUploadContext(sourceTitle) {
+    const categoryTitle = (() => {
+      try {
+        const cat = epDiv && typeof epDiv.closest === 'function' ? epDiv.closest('.category') : null;
+        const input = cat && typeof cat.querySelector === 'function'
+          ? cat.querySelector('.category-header input[type="text"]')
+          : null;
+        return input && typeof input.value === 'string' ? input.value : '';
+      } catch { return ''; }
+    })();
+    const episodeIndex = (() => {
+      try {
+        const container = epDiv && epDiv.parentElement ? epDiv.parentElement : null;
+        if (!container || typeof container.querySelectorAll !== 'function') return 1;
+        const episodes = Array.from(container.querySelectorAll('.episode'));
+        const idx = episodes.indexOf(epDiv);
+        return idx >= 0 ? idx + 1 : 1;
+      } catch { return 1; }
+    })();
+    return {
+      categoryTitle,
+      itemIndex: episodeIndex,
+      sourceTitle: sourceTitle || (epTitle && typeof epTitle.value === 'string' ? epTitle.value : 'Episode')
+    };
+  }
+
+  function createCurrentEpisodePlaylistArtifact(parts) {
+    try {
+      const cat = epDiv && typeof epDiv.closest === 'function' ? epDiv.closest('.category') : null;
+      const titleInput = cat && typeof cat.querySelector === 'function'
+        ? cat.querySelector('.category-header input[type="text"]')
+        : null;
+      const container = epDiv && epDiv.parentElement ? epDiv.parentElement : null;
+      const episodes = container && typeof container.querySelectorAll === 'function'
+        ? Array.from(container.querySelectorAll('.episode'))
+        : [];
+      return createCreatorPlaylistArtifact({
+        directoryTitle: (() => {
+          const input = document.getElementById('dirTitle');
+          return input && typeof input.value === 'string' ? input.value.trim() : '';
+        })(),
+        categoryTitle: titleInput && typeof titleInput.value === 'string' ? titleInput.value.trim() : '',
+        episodeTitle: epTitle && typeof epTitle.value === 'string' ? epTitle.value.trim() : '',
+        categoryIndex: cat && cat.parentElement ? Array.from(cat.parentElement.querySelectorAll('.category')).indexOf(cat) + 1 : 1,
+        episodeIndex: episodes.indexOf(epDiv) >= 0 ? episodes.indexOf(epDiv) + 1 : 1,
+        parts
+      });
+    } catch {
+      return null;
+    }
+  }
+
+  async function splitAndUploadOversizeEpisodeVideo(file) {
+    if (!file || isMangaMode()) return false;
+    if (typeof window === 'undefined' || typeof window.mmShouldSplitVideoFile !== 'function' || typeof window.mmSplitVideoFileWithFfmpeg !== 'function') {
+      return false;
+    }
+    if (!window.mmShouldSplitVideoFile(file)) return false;
+    const downloadOnly = shouldDownloadSplitPartsAfterSplit();
+    if (!downloadOnly && !shouldUseCreatorOversizePlaylistUpload(file)) return false;
+
+    epSrc.value = '';
+    epSrc.dataset.manualEntry = '0';
+    epError.innerHTML = '';
+    epError.style.color = '#9ecbff';
+    const statusText = document.createElement('span');
+    statusText.textContent = 'Uploading';
+    const progress = document.createElement('progress');
+    progress.max = 100;
+    progress.value = 0;
+    progress.style.marginLeft = '0.5em';
+    epError.append(statusText, progress);
+
+    epDiv.dataset.uploadingParts = '1';
+
+    try {
+      const result = await window.mmSplitVideoFileWithFfmpeg(file, {
+        onProgress: (info) => {
+          const ratio = Math.max(0, Math.min(1, Number(info && info.ratio) || 0));
+          statusText.textContent = downloadOnly ? 'Preparing download' : 'Uploading';
+          progress.value = Math.min(25, Math.round(ratio * 25));
+        }
+      });
+      if (!result || !result.didSplit || !Array.isArray(result.parts) || result.parts.length < 2) return false;
+
+      const parts = result.parts;
+      if (downloadOnly) {
+        const downloaded = await downloadSplitPartFiles(parts, (index, total) => {
+          statusText.textContent = 'Downloading';
+          progress.value = Math.round(25 + ((index / total) * 75));
+        });
+        progress.value = 100;
+        epError.style.color = '#9ecbff';
+        epError.textContent = `Downloaded ${downloaded} file${downloaded === 1 ? '' : 's'}.`;
+        return true;
+      }
+
+      const uploadedParts = [];
+      for (let index = 0; index < parts.length; index += 1) {
+        const part = parts[index];
+        const sourceTitle = `Part ${index + 1}`;
+        statusText.textContent = 'Uploading';
+        const url = await uploadToCatboxWithProgress(part.file, (pct) => {
+          const localProgress = Math.max(0, Math.min(100, Number(pct) || 0));
+          progress.value = Math.round(25 + (((index + (localProgress / 100)) / parts.length) * 75));
+        }, {
+          context: 'manual',
+          allowProxy: true,
+          forceProxy: true,
+          creatorItem: getEpisodeUploadContext(sourceTitle)
+        });
+        uploadedParts.push({
+          title: sourceTitle,
+          src: url,
+          fileSizeBytes: part.file && Number.isFinite(Number(part.file.size)) ? Math.round(Number(part.file.size)) : undefined,
+          durationSeconds: Number.isFinite(Number(part.durationSeconds)) && Number(part.durationSeconds) > 0
+            ? Math.round(Number(part.durationSeconds))
+            : undefined
+        });
+      }
+
+      epDiv._hiddenSplitParts = uploadedParts;
+      const totalSize = uploadedParts.reduce((sum, part) => sum + (Number(part.fileSizeBytes) || 0), 0);
+      const totalDuration = uploadedParts.reduce((sum, part) => sum + (Number(part.durationSeconds) || 0), 0);
+      if (totalSize > 0) epDiv.dataset.fileSizeBytes = String(Math.round(totalSize));
+      if (totalDuration > 0) epDiv.dataset.durationSeconds = String(Math.round(totalDuration));
+      const playlistArtifact = createCurrentEpisodePlaylistArtifact(uploadedParts);
+      if (!playlistArtifact || !playlistArtifact.text || !playlistArtifact.filename) {
+        throw new Error('Could not build playlist for uploaded video parts.');
+      }
+      statusText.textContent = 'Uploading';
+      progress.value = 99;
+      const playlistFile = new File(
+        [new Blob([playlistArtifact.text], { type: 'application/vnd.apple.mpegurl' })],
+        playlistArtifact.filename,
+        { type: 'application/vnd.apple.mpegurl', lastModified: Date.now() }
+      );
+      const playlistUrl = await uploadToCatboxWithProgress(playlistFile, () => {
+        progress.value = 99;
+      }, {
+        context: 'manual',
+        allowProxy: true,
+        forceProxy: true,
+        creatorItem: getEpisodeUploadContext(epTitle && typeof epTitle.value === 'string' ? epTitle.value : 'Playlist')
+      });
+      if (playlistUrl) {
+        epDiv._hiddenSplitPlaylistUrl = playlistUrl;
+        epSrc.value = playlistUrl;
+        epSrc.dataset.manualEntry = '0';
+      }
+      progress.value = 100;
+      epError.textContent = '';
+      return true;
+    } catch (err) {
+      console.error('[Creator] Oversize video upload failed', err);
+      epError.style.color = '#ff6b6b';
+      epError.textContent = 'Upload failed';
+      return true;
+    } finally {
+      delete epDiv.dataset.uploadingParts;
+    }
+  }
+
   epFile.addEventListener('change', async (e) => {
     const file = e.target.files[0];
     if (!file) return;
     epError.textContent = '';
+    if (!isMangaMode() && await splitAndUploadOversizeEpisodeVideo(file)) {
+      try { epFile.value = ''; } catch {}
+      return;
+    }
     if (isMangaMode()) {
       if (!/\.cbz$/i.test(file.name||'')) { epError.innerHTML = '<span style="color:red">Please select a .cbz file in Manga mode.</span>'; return; }
       try { epDiv.dataset.fileSizeBytes = String(file.size); } catch {}
@@ -2598,7 +3091,16 @@ function extractEpisodeDataFromElement(epDiv, { isManga } = {}) {
   const isMangaModeLocal = !!isManga;
   const separatedToggle = epDiv._separatedToggle;
   const partRows = Array.isArray(epDiv._partRows) ? epDiv._partRows : [];
-  const separatedEnabled = !isMangaModeLocal && separatedToggle && separatedToggle.checked && partRows.length > 0;
+  const hiddenSplitParts = !isMangaModeLocal && Array.isArray(epDiv._hiddenSplitParts)
+    ? epDiv._hiddenSplitParts.filter(part => part && part.src)
+    : [];
+  const hiddenSplitPlaylistUrl = !isMangaModeLocal && typeof epDiv._hiddenSplitPlaylistUrl === 'string'
+    ? epDiv._hiddenSplitPlaylistUrl.trim()
+    : '';
+  const separatedEnabled = !isMangaModeLocal && (
+    (separatedToggle && separatedToggle.checked && partRows.length > 0)
+    || (hiddenSplitParts.length > 0 && !hiddenSplitPlaylistUrl)
+  );
 
   const toNumber = (value) => {
     const n = Number(value);
@@ -2624,13 +3126,52 @@ function extractEpisodeDataFromElement(epDiv, { isManga } = {}) {
     };
   }
 
+  if (hiddenSplitParts.length > 0 && hiddenSplitPlaylistUrl) {
+    let partsTotalSize = 0;
+    let partsTotalDuration = 0;
+    let partSizeCount = 0;
+    let partDurationCount = 0;
+    hiddenSplitParts.forEach((part) => {
+      const partSize = toNumber(part.fileSizeBytes);
+      const partDuration = toNumber(part.durationSeconds);
+      if (partSize > 0) { partsTotalSize += partSize; partSizeCount += 1; }
+      if (partDuration > 0) { partsTotalDuration += partDuration; partDurationCount += 1; }
+    });
+    const aggregatedSize = partSizeCount > 0 ? partsTotalSize : totalFileSize;
+    const aggregatedDuration = partDurationCount > 0 ? partsTotalDuration : totalDuration;
+    episode.src = hiddenSplitPlaylistUrl;
+    if (aggregatedSize > 0) {
+      episode.fileSizeBytes = Math.round(aggregatedSize);
+      episode.ItemfileSizeBytes = Math.round(aggregatedSize);
+      totalFileSize = aggregatedSize;
+    }
+    if (aggregatedDuration > 0) {
+      episode.durationSeconds = Math.round(aggregatedDuration);
+      totalDuration = aggregatedDuration;
+    }
+    if (!episode.title || !episode.src) return null;
+    return {
+      episode,
+      totalFileSize: totalFileSize > 0 ? Math.round(totalFileSize) : 0,
+      totalDuration: totalDuration > 0 ? Math.round(totalDuration) : 0,
+      totalPages: 0
+    };
+  }
+
   let separatedParts = [];
   if (separatedEnabled) {
     let partsTotalSize = 0;
     let partsTotalDuration = 0;
     let partSizeCount = 0;
     let partDurationCount = 0;
-    separatedParts = partRows.map((row, idx) => {
+    const sourceParts = hiddenSplitParts.length
+      ? hiddenSplitParts.map((part, idx) => ({
+          title: part.title || `Part ${idx + 1}`,
+          src: part.src,
+          fileSizeBytes: part.fileSizeBytes,
+          durationSeconds: part.durationSeconds
+        }))
+      : partRows.map((row, idx) => {
       if (!row || !row._srcInput) return null;
       const partSrc = row._srcInput.value.trim();
       if (!partSrc) return null;
@@ -2638,9 +3179,19 @@ function extractEpisodeDataFromElement(epDiv, { isManga } = {}) {
       const partTitle = partTitleInput ? partTitleInput.value.trim() : `Part ${idx + 1}`;
       const partSize = toNumber(row.dataset ? row.dataset.fileSizeBytes : 0);
       const partDuration = toNumber(row.dataset ? row.dataset.durationSeconds : 0);
+      const partEntry = { title: partTitle || `Part ${idx + 1}`, src: partSrc };
+      if (partSize > 0) partEntry.fileSizeBytes = Math.round(partSize);
+      if (partDuration > 0) partEntry.durationSeconds = Math.round(partDuration);
+      return partEntry;
+    });
+
+    separatedParts = sourceParts.map((part, idx) => {
+      if (!part || !part.src) return null;
+      const partSize = toNumber(part.fileSizeBytes);
+      const partDuration = toNumber(part.durationSeconds);
       if (partSize > 0) { partsTotalSize += partSize; partSizeCount += 1; }
       if (partDuration > 0) { partsTotalDuration += partDuration; partDurationCount += 1; }
-      const partEntry = { title: partTitle || `Part ${idx + 1}`, src: partSrc };
+      const partEntry = { title: part.title || `Part ${idx + 1}`, src: part.src };
       if (partSize > 0) partEntry.fileSizeBytes = Math.round(partSize);
       if (partDuration > 0) partEntry.durationSeconds = Math.round(partDuration);
       return partEntry;
@@ -3010,19 +3561,35 @@ function buildLocalDirectoryJSON(options = {}) {
   const includeLatestTime = (options && options.includeLatestTime !== false);
   const title = document.getElementById('dirTitle').value.trim();
   const categories = [];
+  const playlistArtifacts = [];
   let totalBytes = 0;
   let totalSecs = 0;
   let totalPages = 0;
   let separatedCategoryCount = 0;
   let separatedItemCount = 0;
   const isMangaLibrary = isMangaMode();
-  document.querySelectorAll('.category').forEach(cat => {
+  document.querySelectorAll('.category').forEach((cat, catIndex) => {
     const titleInput = cat.querySelector('.category-header input[type="text"]') || cat.querySelector('input[type="text"]');
     const catTitle = titleInput ? titleInput.value.trim() : '';
     const episodes = [];
     cat.querySelectorAll('.episode').forEach(epDiv => {
       const info = extractEpisodeDataFromElement(epDiv, { isManga: isMangaLibrary });
       if (!info || !info.episode) return;
+      if (!isMangaLibrary && Array.isArray(info.episode.sources) && info.episode.sources.length > 0) {
+        const artifact = createCreatorPlaylistArtifact({
+          directoryTitle: title,
+          categoryTitle: catTitle,
+          episodeTitle: info.episode.title,
+          categoryIndex: catIndex + 1,
+          episodeIndex: episodes.length + 1,
+          parts: info.episode.sources
+        });
+        playlistArtifacts.push(artifact);
+        info.episode.src = artifact.path;
+        delete info.episode.sources;
+        delete info.episode.separated;
+        delete info.episode.seperated;
+      }
       episodes.push(info.episode);
       totalBytes += info.totalFileSize || 0;
       if (isMangaLibrary) totalPages += info.totalPages || 0;
@@ -3057,6 +3624,7 @@ function buildLocalDirectoryJSON(options = {}) {
   if (maintainerHidden === true) {
     base.hidden = true;
   }
+  try { window.mm_lastCreatorPlaylistArtifacts = playlistArtifacts.slice(); } catch {}
   return base;
 }
 
@@ -3086,6 +3654,15 @@ async function uploadDirectoryToGithub() {
   }
 
   const directoryJson = buildLocalDirectoryJSON();
+  const playlistArtifacts = (() => {
+    try {
+      return Array.isArray(window.mm_lastCreatorPlaylistArtifacts)
+        ? window.mm_lastCreatorPlaylistArtifacts.filter(item => item && item.filename && item.text)
+        : [];
+    } catch {
+      return [];
+    }
+  })();
   const title = directoryJson.title || '';
   const fileName = sanitizeWorkerFileName(title || `directory-${Date.now()}`);
   const jsonString = JSON.stringify(directoryJson, null, 2);
@@ -3099,6 +3676,10 @@ async function uploadDirectoryToGithub() {
   if (webhookOverride) formData.append('webhookUrl', webhookOverride);
   const jsonBlob = new Blob([jsonString], { type: 'application/json' });
   formData.append('upload', jsonBlob, `${fileName}.json`);
+  playlistArtifacts.forEach((artifact) => {
+    const playlistBlob = new Blob([artifact.text], { type: 'application/vnd.apple.mpegurl' });
+    formData.append('playlist', playlistBlob, artifact.filename);
+  });
 
   isGithubUploadInFlight = true;
   try {

@@ -1,0 +1,23 @@
+#EXTM3U
+#EXT-X-VERSION:3
+#EXT-X-PLAYLIST-TYPE:VOD
+#EXT-X-INDEPENDENT-SEGMENTS
+#EXT-X-TARGETDURATION:721
+#EXT-X-MEDIA-SEQUENCE:0
+#EXT-X-MM-TITLE:Bloom Into You - Episode 11
+#EXTINF:721.000,Part 1
+#EXT-X-MM-FILE-SIZE:128676672
+https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/48.mp4
+#EXT-X-DISCONTINUITY
+#EXTINF:356.000,Part 2
+#EXT-X-MM-FILE-SIZE:126677562
+https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/49.mp4
+#EXT-X-DISCONTINUITY
+#EXTINF:616.000,Part 3
+#EXT-X-MM-FILE-SIZE:128110093
+https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/50.mp4
+#EXT-X-DISCONTINUITY
+#EXTINF:348.000,Part 4
+#EXT-X-MM-FILE-SIZE:133874012
+https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/51.mp4
+#EXT-X-ENDLIST

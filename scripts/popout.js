@@ -93,7 +93,9 @@
     if (!v) return;
 
     try { v.pause(); } catch {}
-    const src = v.src;
+    const src = (typeof window.MM_getOriginalVideoSource === "function")
+      ? (window.MM_getOriginalVideoSource(v) || v.currentSrc || v.src || "")
+      : (v.currentSrc || v.src || "");
     const currentTime = v.currentTime || 0;
     const { popWidth, popHeight } = computePopupSize(v);
 
@@ -186,14 +188,17 @@
       </head>
       <body>
         <div id="popSpinner" class="spinner"></div>
-        <video id="popVideo" src="${src}" autoplay></video>
+        <video id="popVideo" autoplay playsinline></video>
         <div id="popToolbar" class="pop-toolbar placement-left" aria-hidden="true">
           <button id="popBackBtn" type="button">↩ Back 5s</button>
           <button id="popNextItemBtn" type="button">Next</button>
           <button id="popForwardBtn" type="button">Forward 5s ↪</button>
           <button id="popExitBtn" type="button">Exit</button>
         </div>
+        <script src="https://cdn.jsdelivr.net/npm/hls.js@1/dist/hls.min.js"><\/script>
         <script>
+          const popSource = ${JSON.stringify(src)};
+          const popStartTime = ${JSON.stringify(Number.isFinite(currentTime) ? currentTime : 0)};
           const v = document.getElementById("popVideo");
           const popSpinner = document.getElementById("popSpinner");
           const activityEvents = ["mousemove","mousedown","keydown","touchstart","touchmove"];
@@ -210,6 +215,11 @@
 
           let toolbarHideTimer = null;
           let nextButtonPoll = null;
+          let popHls = null;
+          let fallbackParts = null;
+          let fallbackLoading = false;
+          let fallbackOffsets = [];
+          let fallbackIndex = 0;
 
           function setToolbarVisible(visible) {
             if (!popToolbar) return;
@@ -234,7 +244,216 @@
           }
 
           function seekBy(delta) {
+            if (fallbackParts && fallbackParts.length) {
+              setFallbackCombinedTime(getFallbackCombinedTime() + delta);
+              return;
+            }
             try { v.currentTime = Math.max(0, (v.currentTime || 0) + delta); } catch {}
+          }
+
+          function isHlsSource(source) {
+            try { return /\\.m3u8$/i.test(new URL(source, window.location.href).pathname); }
+            catch { return /\\.m3u8(?:$|[?#])/i.test(String(source || "")); }
+          }
+
+          function isManagedPlaylistSource(source) {
+            if (!isHlsSource(source)) return false;
+            try { return /\\/Sources\\/Files\\/Playlists\\//i.test(new URL(source, window.location.href).pathname); }
+            catch { return /(^|\\/)Sources\\/Files\\/Playlists\\//i.test(String(source || "")); }
+          }
+
+          function isPrivatePlaybackHost(hostname) {
+            const host = String(hostname || "").trim().toLowerCase();
+            if (!host) return false;
+            if (host === "localhost" || host.endsWith(".localhost") || host.endsWith(".local")) return true;
+            if (host === "127.0.0.1" || host === "::1" || host === "[::1]") return true;
+            if (!/^\\d{1,3}(?:\\.\\d{1,3}){3}$/.test(host)) return false;
+            const parts = host.split(".").map(Number);
+            if (parts.some(part => !Number.isInteger(part) || part < 0 || part > 255)) return false;
+            const a = parts[0];
+            const b = parts[1];
+            return a === 10 || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168);
+          }
+
+          function isHttpUrl(source) {
+            try {
+              const parsed = new URL(String(source || ""));
+              return parsed.protocol === "http:" || parsed.protocol === "https:";
+            } catch {
+              return false;
+            }
+          }
+
+          function unwrapVideoProxyUrl(source) {
+            const src = String(source || "").trim();
+            if (!src || !isHttpUrl(src)) return src;
+            try {
+              const parsed = new URL(src);
+              if (/\\/proxy\\/?$/i.test(parsed.pathname) && parsed.searchParams.has("url")) {
+                return parsed.searchParams.get("url") || src;
+              }
+            } catch {}
+            return src;
+          }
+
+          function resolveHlsMediaUrl(source) {
+            return unwrapVideoProxyUrl(source);
+          }
+
+          function canPlayNativeHls(el) {
+            try {
+              return !!(el && (el.canPlayType("application/vnd.apple.mpegurl") || el.canPlayType("application/x-mpegURL")));
+            } catch { return false; }
+          }
+
+          function setStartTimeWhenReady(seconds) {
+            const target = Number(seconds);
+            if (!Number.isFinite(target) || target < 0) return;
+            const apply = () => { try { v.currentTime = target; } catch {} };
+            if (v && v.readyState >= 1) apply();
+            else if (v) v.addEventListener("loadedmetadata", apply, { once: true });
+          }
+
+          function destroyPopHls() {
+            if (popHls && typeof popHls.destroy === "function") {
+              try { popHls.destroy(); } catch {}
+            }
+            popHls = null;
+          }
+
+          function parsePlaylist(text, baseUrl) {
+            const parts = [];
+            let pendingDuration = null;
+            let pendingTitle = "";
+            String(text || "").split(/\\r?\\n/).forEach((rawLine) => {
+              const line = String(rawLine || "").trim();
+              if (!line) return;
+              const extInf = line.match(/^#EXTINF:([^,]*)(?:,(.*))?$/i);
+              if (extInf) {
+                const duration = Number.parseFloat(extInf[1]);
+                pendingDuration = Number.isFinite(duration) && duration > 0 ? duration : null;
+                pendingTitle = String(extInf[2] || "").trim();
+                return;
+              }
+              if (line[0] === "#") return;
+              let partSrc = line;
+              try { partSrc = new URL(line, baseUrl).href; } catch {}
+              const part = {
+                title: pendingTitle || ("Part " + (parts.length + 1)),
+                src: resolveHlsMediaUrl(partSrc),
+                originalSrc: partSrc
+              };
+              if (pendingDuration !== null) part.durationSeconds = pendingDuration;
+              parts.push(part);
+              pendingDuration = null;
+              pendingTitle = "";
+            });
+            return parts;
+          }
+
+          function computeFallbackOffsets(parts) {
+            const offsets = [];
+            let running = 0;
+            parts.forEach((part) => {
+              offsets.push(running);
+              const duration = Number(part && part.durationSeconds);
+              if (Number.isFinite(duration) && duration > 0) running += duration;
+            });
+            return offsets;
+          }
+
+          function resolveFallbackPosition(seconds) {
+            const target = Math.max(0, Number(seconds) || 0);
+            if (!fallbackParts || !fallbackParts.length) return { index: 0, time: target };
+            let index = 0;
+            for (let i = 0; i < fallbackParts.length; i += 1) {
+              const start = fallbackOffsets[i] || 0;
+              const next = (i + 1 < fallbackParts.length) ? fallbackOffsets[i + 1] : Infinity;
+              if (target >= start && target < next) {
+                index = i;
+                break;
+              }
+              if (target >= start) index = i;
+            }
+            return { index, time: Math.max(0, target - (fallbackOffsets[index] || 0)) };
+          }
+
+          function getFallbackCombinedTime() {
+            if (!fallbackParts || !fallbackParts.length) return Number(v && v.currentTime) || 0;
+            return (fallbackOffsets[fallbackIndex] || 0) + (Number(v && v.currentTime) || 0);
+          }
+
+          function setFallbackPart(index, time) {
+            if (!fallbackParts || !fallbackParts.length || !v) return;
+            fallbackIndex = Math.max(0, Math.min(index, fallbackParts.length - 1));
+            const part = fallbackParts[fallbackIndex];
+            if (!part || !part.src) return;
+            v.src = part.src;
+            setStartTimeWhenReady(time || 0);
+            try { v.load(); } catch {}
+            const playPromise = v.play();
+            if (playPromise && typeof playPromise.catch === "function") playPromise.catch(() => {});
+          }
+
+          function setFallbackCombinedTime(seconds) {
+            const position = resolveFallbackPosition(seconds);
+            setFallbackPart(position.index, position.time);
+          }
+
+          async function startPlaylistFallback(source, startTime) {
+            if (!isHlsSource(source) || fallbackParts || fallbackLoading) return;
+            fallbackLoading = true;
+            try {
+              destroyPopHls();
+              const playlistUrl = new URL(source, window.location.href).href;
+              const response = await fetch(playlistUrl, { cache: "no-store" });
+              if (!response || !response.ok) return;
+              fallbackParts = parsePlaylist(await response.text(), playlistUrl).filter(part => part && part.src);
+              fallbackOffsets = computeFallbackOffsets(fallbackParts);
+              if (fallbackParts.length) setFallbackCombinedTime(startTime || 0);
+            } catch {
+            } finally {
+              fallbackLoading = false;
+            }
+          }
+
+          function attachPopSource(source, startTime) {
+            if (!v || !source) return;
+            if (isManagedPlaylistSource(source)) {
+              startPlaylistFallback(source, startTime);
+              return;
+            }
+            if (!isHlsSource(source)) {
+              v.src = source;
+              setStartTimeWhenReady(startTime);
+              try { v.load(); } catch {}
+              return;
+            }
+            if (canPlayNativeHls(v)) {
+              v.src = source;
+              setStartTimeWhenReady(startTime);
+              v.addEventListener("error", () => startPlaylistFallback(source, startTime), { once: true });
+              try { v.load(); } catch {}
+              return;
+            }
+            if (window.Hls && typeof window.Hls.isSupported === "function" && window.Hls.isSupported()) {
+              const hlsConfig = { enableWorker: true, backBufferLength: 90 };
+              popHls = new window.Hls(hlsConfig);
+              popHls.on(window.Hls.Events.ERROR, (_event, data) => {
+                if (data && data.fatal) startPlaylistFallback(source, Number(v.currentTime) || startTime || 0);
+              });
+              popHls.on(window.Hls.Events.MEDIA_ATTACHED, () => {
+                try { popHls.loadSource(source); } catch {}
+              });
+              popHls.on(window.Hls.Events.MANIFEST_PARSED, () => {
+                setStartTimeWhenReady(startTime);
+                const playPromise = v.play();
+                if (playPromise && typeof playPromise.catch === "function") playPromise.catch(() => {});
+              });
+              try { popHls.attachMedia(v); } catch { startPlaylistFallback(source, startTime); }
+              return;
+            }
+            startPlaylistFallback(source, startTime);
           }
 
           function pollNextButton() {
@@ -259,7 +478,14 @@
             v.addEventListener("waiting", () => { if (popSpinner) popSpinner.style.display = "block"; });
             v.addEventListener("canplay", () => { if (popSpinner) popSpinner.style.display = "none"; });
             v.addEventListener("playing", () => { if (popSpinner) popSpinner.style.display = "none"; });
+            v.addEventListener("ended", () => {
+              if (fallbackParts && fallbackIndex < fallbackParts.length - 1) {
+                setFallbackPart(fallbackIndex + 1, 0);
+              }
+            });
           }
+
+          attachPopSource(popSource, popStartTime);
 
           activityEvents.forEach(evt => window.addEventListener(evt, handleSurfaceMove, { passive: true }));
           handleSurfaceMove({ clientX: 0 });
@@ -276,7 +502,7 @@
             try { if (nextButtonPoll) clearInterval(nextButtonPoll); } catch {}
             try {
               if (window.opener && !window.opener.closed) {
-                window.opener.postMessage({ type: "popoutTime", currentTime: v.currentTime }, "*");
+                window.opener.postMessage({ type: "popoutTime", currentTime: fallbackParts ? getFallbackCombinedTime() : v.currentTime }, "*");
               }
             } catch {}
           }
@@ -312,4 +538,3 @@
     window.MM_openPopout = openPopout;
   }
 })();
-

@@ -728,14 +728,46 @@
                   return input && typeof input.value === 'string' ? input.value : '';
                 } catch { return ''; }
               })();
-	              const url = await uploadToCatboxWithProgress(
+              const splitUploader = typeof window !== 'undefined' && typeof window.mmUploadOversizeVideoAsCatboxPlaylist === 'function'
+                ? window.mmUploadOversizeVideoAsCatboxPlaylist
+                : null;
+              const itemIndex = num || 1;
+              const categoryIndex = catDiv && catDiv.parentElement
+                ? Array.from(catDiv.parentElement.querySelectorAll('.category')).indexOf(catDiv) + 1
+                : 1;
+              const splitUpload = splitUploader ? await splitUploader(file, {
+                context: 'batch',
+                signal: uploadAbortController.signal,
+                creatorItem: { categoryTitle, itemIndex, sourceTitle: title },
+                playlistMeta: {
+                  directoryTitle: (() => {
+                    const input = document.getElementById('dirTitle');
+                    return input && typeof input.value === 'string' ? input.value.trim() : '';
+                  })(),
+                  categoryTitle,
+                  episodeTitle: title,
+                  categoryIndex,
+                  episodeIndex: itemIndex
+                },
+                onProgress: (pct) => {
+                  const loaded = Number.isFinite(fileSizeBytes) ? (pct / 100) * fileSizeBytes : undefined;
+                  rowCtx.setProgress(pct, { loadedBytes: loaded });
+                }
+              }) : null;
+	              const url = splitUpload ? splitUpload.url : await uploadToCatboxWithProgress(
 	                file,
 	                pct => {
 	                  const loaded = Number.isFinite(fileSizeBytes) ? (pct / 100) * fileSizeBytes : undefined;
 	                  rowCtx.setProgress(pct, { loadedBytes: loaded });
 	                },
-	                { context: 'batch', signal: uploadAbortController.signal, allowProxy: false, creatorItem: { categoryTitle, itemIndex: num || 1, sourceTitle: title } }
+	                { context: 'batch', signal: uploadAbortController.signal, allowProxy: false, creatorItem: { categoryTitle, itemIndex, sourceTitle: title } }
 	              );
+              if (splitUpload && epDiv) {
+                epDiv._hiddenSplitParts = splitUpload.parts || [];
+                epDiv._hiddenSplitPlaylistUrl = splitUpload.url || '';
+                if (splitUpload.totalFileSize > 0) epDiv.dataset.fileSizeBytes = String(splitUpload.totalFileSize);
+                if (splitUpload.totalDuration > 0) epDiv.dataset.durationSeconds = String(splitUpload.totalDuration);
+              }
 	              if (epSrcInput) epSrcInput.value = url;
 	              if (epError) epError.textContent = '';
 	              rowCtx.setStatus('Done', { color: '#6ec1e4' });
@@ -968,14 +1000,46 @@
                   return input && typeof input.value === 'string' ? input.value : '';
                 } catch { return ''; }
               })();
-	              const url = await uploadToCatboxWithProgress(
+              const splitUploader = typeof window !== 'undefined' && typeof window.mmUploadOversizeVideoAsCatboxPlaylist === 'function'
+                ? window.mmUploadOversizeVideoAsCatboxPlaylist
+                : null;
+              const itemIndex = rawNum || 1;
+              const categoryIndex = catDiv && catDiv.parentElement
+                ? Array.from(catDiv.parentElement.querySelectorAll('.category')).indexOf(catDiv) + 1
+                : 1;
+              const splitUpload = splitUploader ? await splitUploader(fileForUpload, {
+                context: 'batch',
+                signal: uploadAbortController.signal,
+                creatorItem: { categoryTitle, itemIndex, sourceTitle: title },
+                playlistMeta: {
+                  directoryTitle: (() => {
+                    const input = document.getElementById('dirTitle');
+                    return input && typeof input.value === 'string' ? input.value.trim() : '';
+                  })(),
+                  categoryTitle,
+                  episodeTitle: title,
+                  categoryIndex,
+                  episodeIndex: itemIndex
+                },
+                onProgress: (pct) => {
+                  const loaded = Number.isFinite(fileSizeBytes) ? (pct / 100) * fileSizeBytes : undefined;
+                  rowCtx.setProgress(pct, { loadedBytes: loaded });
+                }
+              }) : null;
+	              const url = splitUpload ? splitUpload.url : await uploadToCatboxWithProgress(
 	                fileForUpload,
 	                (pct) => {
 	                  const loaded = Number.isFinite(fileSizeBytes) ? (pct / 100) * fileSizeBytes : undefined;
 	                  rowCtx.setProgress(pct, { loadedBytes: loaded });
 	                },
-	                { context: 'batch', signal: uploadAbortController.signal, allowProxy: false, creatorItem: { categoryTitle, itemIndex: rawNum || 1, sourceTitle: title } }
+	                { context: 'batch', signal: uploadAbortController.signal, allowProxy: false, creatorItem: { categoryTitle, itemIndex, sourceTitle: title } }
 	              );
+              if (splitUpload && epDiv) {
+                epDiv._hiddenSplitParts = splitUpload.parts || [];
+                epDiv._hiddenSplitPlaylistUrl = splitUpload.url || '';
+                if (splitUpload.totalFileSize > 0) epDiv.dataset.fileSizeBytes = String(splitUpload.totalFileSize);
+                if (splitUpload.totalDuration > 0) epDiv.dataset.durationSeconds = String(splitUpload.totalDuration);
+              }
 	              if (epSrcInput) epSrcInput.value = url;
 	              if (epError) epError.textContent = '';
 	              rowCtx.setStatus('Done', { color: '#6ec1e4' });

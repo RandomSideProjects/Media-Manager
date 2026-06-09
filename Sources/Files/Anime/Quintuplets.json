@@ -159,49 +159,12 @@
       "category": "Movie",
       "episodes": [
         {
-          "title": "Part 1",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Quintuplets/25.webm",
-          "fileSizeBytes": 176476939,
-          "durationSeconds": 1474
-        },
-        {
-          "title": "Part 2",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Quintuplets/26.webm",
-          "fileSizeBytes": 168053549,
-          "durationSeconds": 1471
-        },
-        {
-          "title": "Part 3",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Quintuplets/27.webm",
-          "fileSizeBytes": 94498730,
-          "durationSeconds": 948
-        },
-        {
-          "title": "Part 4",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Quintuplets/28.webm",
-          "fileSizeBytes": 111483793,
-          "durationSeconds": 1262
-        },
-        {
-          "title": "Part 5",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Quintuplets/29.webm",
-          "fileSizeBytes": 110122495,
-          "durationSeconds": 1247
-        },
-        {
-          "title": "Part 6",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Quintuplets/30.webm",
-          "fileSizeBytes": 137667564,
-          "durationSeconds": 1340
-        },
-        {
-          "title": "Part 7",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Quintuplets/31.webm",
-          "fileSizeBytes": 59984029,
-          "durationSeconds": 424
+          "title": "Movie",
+          "src": "Sources/Files/Playlists/Quintuplets_Movie_category_3.m3u8",
+          "fileSizeBytes": 858287099,
+          "durationSeconds": 8166
         }
-      ],
-      "separated": 1
+      ]
     }
   ],
   "LatestTime": "2025-08-15T00:53:37.020Z",

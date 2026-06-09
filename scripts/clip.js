@@ -245,7 +245,9 @@ async function tryRemoteClipCapture(start, end, durationSeconds, overlay, msg, b
   if (typeof fetch !== 'function') return false;
   const remoteAvailable = await isRemoteClipApiReachable();
   if (!remoteAvailable) return false;
-  const videoUrl = video && (video.currentSrc || video.src || '');
+  const videoUrl = (typeof window !== 'undefined' && typeof window.MM_getOriginalVideoSource === 'function')
+    ? window.MM_getOriginalVideoSource(video)
+    : (video && (video.currentSrc || video.src || ''));
   if (!videoUrl) return false;
   const allowed = await isRemoteSizeAllowed(videoUrl);
   if (!allowed) return false;
@@ -801,6 +803,7 @@ async function executeClipCapture(start, end, durationSeconds) {
   };
 
   let hiddenVideo = null;
+  let hiddenHls = null;
   try {
     if (clipButtonsRow) clipButtonsRow.style.display = 'none';
     if (video) video.pause();
@@ -824,7 +827,16 @@ async function executeClipCapture(start, end, durationSeconds) {
     hiddenVideo.setAttribute('playsinline', '');
     document.body.appendChild(hiddenVideo);
 
-    hiddenVideo.src = video.src;
+    const hiddenSource = (typeof window !== 'undefined' && typeof window.MM_getOriginalVideoSource === 'function')
+      ? window.MM_getOriginalVideoSource(video)
+      : (video && (video.currentSrc || video.src || ''));
+    if (typeof window !== 'undefined' && typeof window.MM_attachMediaSourceToElement === 'function') {
+      hiddenHls = window.MM_attachMediaSourceToElement(hiddenVideo, hiddenSource, { trackActive: false });
+      if (!hiddenHls) hiddenVideo.load();
+    } else {
+      hiddenVideo.src = hiddenSource;
+      hiddenVideo.load();
+    }
     await new Promise(resolve => {
       const onMeta = () => { hiddenVideo.removeEventListener('loadedmetadata', onMeta); resolve(); };
       hiddenVideo.addEventListener('loadedmetadata', onMeta);
@@ -970,6 +982,9 @@ async function executeClipCapture(start, end, durationSeconds) {
       ensureClipDownloadButton();
     }
   } finally {
+    if (hiddenHls && typeof hiddenHls.destroy === 'function') {
+      try { hiddenHls.destroy(); } catch {}
+    }
     if (hiddenVideo && hiddenVideo.parentElement) hiddenVideo.remove();
     currentClipContext = null;
   }

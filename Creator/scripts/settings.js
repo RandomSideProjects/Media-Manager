@@ -10,6 +10,7 @@ const LS_SETTINGS_KEY = 'mm_upload_settings';
 const SETTINGS_CURRENT_GITHUB_WORKER_ROOT = 'https://mm.littlehacker303.workers.dev/gh';
 const SETTINGS_DEFAULT_GITHUB_WORKER_URL = (typeof window !== 'undefined' && typeof window.MM_DEFAULT_GITHUB_WORKER_URL === 'string') ? window.MM_DEFAULT_GITHUB_WORKER_URL : SETTINGS_CURRENT_GITHUB_WORKER_ROOT;
 const SETTINGS_LEGACY_GITHUB_WORKER_ROOT = 'https://mmback.littlehacker303.workers.dev/gh';
+const SETTINGS_CATBOX_DIRECT_URL = 'https://catbox.moe/user/api.php';
 const SETTINGS_CATBOX_BACKEND_URL = 'https://mm.littlehacker303.workers.dev/catbox/user/api.php';
 const SETTINGS_CATBOX_MODE_KEY = 'catboxOverrideMode';
 const SETTINGS_DEFAULT_COPYPARTY_HOST = 'cpr.xpbliss.fyi';
@@ -55,22 +56,35 @@ function normalizeCopypartyUploadUrlValue(raw) {
 
 function normalizeCatboxMode(value) {
   const trimmed = (typeof value === 'string') ? value.trim().toLowerCase() : 'default';
-  return trimmed === 'proxy' ? 'proxy' : 'default';
+  if (trimmed === 'direct' || trimmed === 'proxy') return trimmed;
+  return 'default';
 }
 
 function applyCatboxOverride(mode, proxyUrl) {
   const normalizedMode = normalizeCatboxMode(mode);
   if (typeof window === 'undefined') return;
   window.MM_CATBOX_OVERRIDE_MODE = normalizedMode;
+  if (normalizedMode === 'direct') {
+    const previous = (typeof window.MM_ACTIVE_CATBOX_UPLOAD_URL === 'string') ? window.MM_ACTIVE_CATBOX_UPLOAD_URL : '';
+    window.MM_ACTIVE_CATBOX_UPLOAD_URL = SETTINGS_CATBOX_DIRECT_URL;
+    if (previous !== SETTINGS_CATBOX_DIRECT_URL) {
+      try {
+        window.dispatchEvent(new CustomEvent('rsp:catbox-default-updated', { detail: { url: SETTINGS_CATBOX_DIRECT_URL, previous, meta: { source: 'direct', override: 'direct' } } }));
+      } catch {}
+    }
+    return;
+  }
   if (normalizedMode !== 'proxy') return;
 
   const candidate = (typeof proxyUrl === 'string' && proxyUrl.trim()) ? proxyUrl.trim() : defaultCatboxUploadUrl();
   const previous = (typeof window.MM_DEFAULT_CATBOX_UPLOAD_URL === 'string') ? window.MM_DEFAULT_CATBOX_UPLOAD_URL : '';
   window.MM_DEFAULT_CATBOX_UPLOAD_URL = candidate;
   window.MM_ACTIVE_CATBOX_UPLOAD_URL = candidate;
-  try {
-    window.dispatchEvent(new CustomEvent('rsp:catbox-default-updated', { detail: { url: candidate, previous, meta: { source: 'overwrite' } } }));
-  } catch {}
+  if (previous !== candidate) {
+    try {
+      window.dispatchEvent(new CustomEvent('rsp:catbox-default-updated', { detail: { url: candidate, previous, meta: { source: 'overwrite' } } }));
+    } catch {}
+  }
 }
 
 function applyCatboxBackendUrl(url) {
@@ -96,14 +110,14 @@ function loadUploadSettings(){
         copypartyUploadUrl: '',
         copypartyPw: '',
         catboxForceProxyUnder100Mb: false,
+        downloadSplitPartsAfterSplit: false,
         paheAnimeApiBase: DEFAULT_PAHE_ANIME_API_BASE,
         paheKwikApiBase: DEFAULT_PAHE_KWIK_API_BASE,
         paheKwikAuthToken: DEFAULT_PAHE_KWIK_AUTH_TOKEN,
         paheImportEnabled: DEFAULT_PAHE_IMPORT_ENABLED,
         webhookUrl: '',
         separationTag: false,
-        folderUploadYellWhenHidden: true,
-        autoArchiveOversize: false
+        folderUploadYellWhenHidden: true
       };
       return initial;
     }
@@ -122,7 +136,6 @@ function loadUploadSettings(){
       compressPosters: compress,
       separationTag: !!p.separationTag,
       folderUploadYellWhenHidden: (typeof p.folderUploadYellWhenHidden === 'boolean') ? p.folderUploadYellWhenHidden : true,
-      autoArchiveOversize: (typeof p.autoArchiveOversize === 'boolean') ? p.autoArchiveOversize : false,
       githubWorkerUrl: normalizedGithubUrl,
       githubToken: (typeof p.githubToken === 'string') ? p.githubToken : '',
       catboxUploadUrl: (typeof p.catboxUploadUrl === 'string' && p.catboxUploadUrl.trim()) ? p.catboxUploadUrl.trim() : defaultCatboxUploadUrl(),
@@ -131,6 +144,7 @@ function loadUploadSettings(){
       copypartyUploadUrl: normalizeCopypartyUploadUrlValue((typeof p.copypartyUploadUrl === 'string') ? p.copypartyUploadUrl : ((typeof p.copypartyUrl === 'string') ? p.copypartyUrl : '')),
       copypartyPw: (typeof p.copypartyPw === 'string') ? p.copypartyPw : '',
       catboxForceProxyUnder100Mb: (typeof p.catboxForceProxyUnder100Mb === 'boolean') ? p.catboxForceProxyUnder100Mb : false,
+      downloadSplitPartsAfterSplit: (typeof p.downloadSplitPartsAfterSplit === 'boolean') ? p.downloadSplitPartsAfterSplit : false,
       paheAnimeApiBase: (typeof p.paheAnimeApiBase === 'string' && p.paheAnimeApiBase.trim()) ? p.paheAnimeApiBase.trim() : DEFAULT_PAHE_ANIME_API_BASE,
       paheKwikApiBase: (typeof p.paheKwikApiBase === 'string' && p.paheKwikApiBase.trim()) ? p.paheKwikApiBase.trim() : DEFAULT_PAHE_KWIK_API_BASE,
       paheKwikAuthToken: (typeof p.paheKwikAuthToken === 'string' && p.paheKwikAuthToken.trim()) ? p.paheKwikAuthToken.trim() : DEFAULT_PAHE_KWIK_AUTH_TOKEN,
@@ -154,14 +168,14 @@ function loadUploadSettings(){
     copypartyUploadUrl: '',
     copypartyPw: '',
     catboxForceProxyUnder100Mb: false,
+    downloadSplitPartsAfterSplit: false,
     paheAnimeApiBase: DEFAULT_PAHE_ANIME_API_BASE,
     paheKwikApiBase: DEFAULT_PAHE_KWIK_API_BASE,
     paheKwikAuthToken: DEFAULT_PAHE_KWIK_AUTH_TOKEN,
     paheImportEnabled: DEFAULT_PAHE_IMPORT_ENABLED,
     webhookUrl: '',
     separationTag: false,
-    folderUploadYellWhenHidden: true,
-    autoArchiveOversize: false
+    folderUploadYellWhenHidden: true
   };
   return fallback;
 }
@@ -178,7 +192,6 @@ function saveUploadSettings(s){
     compressPosters: (typeof s.compressPosters === 'boolean') ? s.compressPosters : true,
     separationTag: !!s.separationTag,
     folderUploadYellWhenHidden: (typeof s.folderUploadYellWhenHidden === 'boolean') ? s.folderUploadYellWhenHidden : true,
-    autoArchiveOversize: (typeof s.autoArchiveOversize === 'boolean') ? s.autoArchiveOversize : false,
     githubWorkerUrl: normalizeGithubWorkerUrlValue((typeof s.githubWorkerUrl === 'string') ? s.githubWorkerUrl.trim() : ''),
     githubToken: (typeof s.githubToken === 'string') ? s.githubToken.trim() : '',
     catboxUploadUrl: (typeof s.catboxUploadUrl === 'string') ? s.catboxUploadUrl.trim() : '',
@@ -187,6 +200,7 @@ function saveUploadSettings(s){
     copypartyUploadUrl: normalizeCopypartyUploadUrlValue((typeof s.copypartyUploadUrl === 'string') ? s.copypartyUploadUrl : ((typeof s.copypartyUrl === 'string') ? s.copypartyUrl : '')),
     copypartyPw: (typeof s.copypartyPw === 'string') ? s.copypartyPw : '',
     catboxForceProxyUnder100Mb: !!s.catboxForceProxyUnder100Mb,
+    downloadSplitPartsAfterSplit: !!s.downloadSplitPartsAfterSplit,
     paheAnimeApiBase: (typeof s.paheAnimeApiBase === 'string') ? s.paheAnimeApiBase.trim() : '',
     paheKwikApiBase: (typeof s.paheKwikApiBase === 'string') ? s.paheKwikApiBase.trim() : '',
     paheKwikAuthToken: (typeof s.paheKwikAuthToken === 'string') ? s.paheKwikAuthToken.trim() : '',
@@ -237,7 +251,6 @@ let mmPosterCompressToggle = null;
 let mmSeparationToggle = null;
 let mmPaheImportToggle = null;
 let mmFolderUploadYellToggle = null;
-let mmAutoArchiveOversizeToggle = null;
 let mmCatboxUrlInput = null;
 let devMenuRow = null;
 let devMenuStatus = null;
@@ -267,7 +280,6 @@ function ensureUploadSettingsPanel() {
       mmSeparationToggle = document.getElementById('mmSeparationToggle');
       mmPaheImportToggle = document.getElementById('mmPaheImportToggle');
       mmFolderUploadYellToggle = document.getElementById('mmFolderUploadYellToggle');
-      mmAutoArchiveOversizeToggle = document.getElementById('mmAutoArchiveOversizeToggle');
       devMenuRow = document.getElementById('devMenuRow');
       devMenuStatus = document.getElementById('devMenuStatus');
       
@@ -382,7 +394,6 @@ function initializeUploadSettingsPanel() {
   if (mmSeparationToggle) mmSeparationToggle.checked = !!st.separationTag;
   if (mmPaheImportToggle) mmPaheImportToggle.checked = (typeof st.paheImportEnabled === 'boolean') ? st.paheImportEnabled : DEFAULT_PAHE_IMPORT_ENABLED;
   if (mmFolderUploadYellToggle) mmFolderUploadYellToggle.checked = (typeof st.folderUploadYellWhenHidden === 'boolean') ? st.folderUploadYellWhenHidden : true;
-  if (mmAutoArchiveOversizeToggle) mmAutoArchiveOversizeToggle.checked = (typeof st.autoArchiveOversize === 'boolean') ? st.autoArchiveOversize : false;
   if (mmUploadConcRange) {
     mmUploadConcRange.value = String(st.uploadConcurrency || 2);
     if (mmUploadConcValue) mmUploadConcValue.textContent = String(st.uploadConcurrency || 2);
@@ -448,7 +459,6 @@ function initializeUploadSettingsPanel() {
       separationTag: mmSeparationToggle ? !!mmSeparationToggle.checked : false,
       paheImportEnabled: mmPaheImportToggle ? !!mmPaheImportToggle.checked : DEFAULT_PAHE_IMPORT_ENABLED,
       folderUploadYellWhenHidden: mmFolderUploadYellToggle ? !!mmFolderUploadYellToggle.checked : true,
-      autoArchiveOversize: mmAutoArchiveOversizeToggle ? !!mmAutoArchiveOversizeToggle.checked : false,
       paheAnimeApiBase: current.paheAnimeApiBase || DEFAULT_PAHE_ANIME_API_BASE,
       paheKwikApiBase: current.paheKwikApiBase || DEFAULT_PAHE_KWIK_API_BASE,
       paheKwikAuthToken: current.paheKwikAuthToken || DEFAULT_PAHE_KWIK_AUTH_TOKEN

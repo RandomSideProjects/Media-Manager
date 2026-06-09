@@ -129,31 +129,12 @@
       "category": "Movie",
       "episodes": [
         {
-          "title": "Part 1",
-          "src": "https://files.catbox.moe/xzri7a.mp4",
-          "fileSizeBytes": 180514647,
-          "durationSeconds": 1256
-        },
-        {
-          "title": "Part 2",
-          "src": "https://files.catbox.moe/6k0zgh.mp4",
-          "fileSizeBytes": 173289297,
-          "durationSeconds": 1282
-        },
-        {
-          "title": "Part 3",
-          "src": "https://files.catbox.moe/waolks.mp4",
-          "fileSizeBytes": 149122051,
-          "durationSeconds": 1100
-        },
-        {
-          "title": "Part 4",
-          "src": "https://files.catbox.moe/755c5x.mp4",
-          "fileSizeBytes": 197215105,
-          "durationSeconds": 1762
+          "title": "Movie",
+          "src": "Sources/Files/Playlists/Konosuba_God_S_Blessing_On_This_Wonderful_World_Movie_category_3.m3u8",
+          "fileSizeBytes": 700141100,
+          "durationSeconds": 5400
         }
-      ],
-      "separated": 1
+      ]
     },
     {
       "category": "Season 3",
@@ -229,7 +210,5 @@
   ],
   "totalFileSizeBytes": 5070684574,
   "totalDurationSeconds": 48579,
-  "separatedCategoryCount": 1,
-  "separatedItemCount": 4,
   "Image": "./Sources/Posters/Anime/KONOSUBA.webp"
 }

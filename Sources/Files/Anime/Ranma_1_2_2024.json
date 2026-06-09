@@ -10,240 +10,85 @@
           "title": "Episode 1",
           "fileSizeBytes": 205692149,
           "durationSeconds": 1462,
-          "sources": [
-            {
-              "title": "Part 1",
-              "src": "https://files.catbox.moe/h0vet0.mp4",
-              "fileSizeBytes": 103392115,
-              "durationSeconds": 732
-            },
-            {
-              "title": "Part 2",
-              "src": "https://files.catbox.moe/ehvf9i.mp4",
-              "fileSizeBytes": 102300034,
-              "durationSeconds": 730
-            }
-          ],
-          "separated": 1
+          "src": "Sources/Files/Playlists/Ranma_1_2_2024_Season_1_Episode_1_1.m3u8",
+          "progressKey": "sepitem:19dlkns"
         },
         {
           "title": "Episode 2",
           "fileSizeBytes": 238248837,
           "durationSeconds": 1462,
-          "sources": [
-            {
-              "title": "Part 1",
-              "src": "https://files.catbox.moe/4blgx7.mp4",
-              "fileSizeBytes": 127279093,
-              "durationSeconds": 734
-            },
-            {
-              "title": "Part 2",
-              "src": "https://files.catbox.moe/4ydl4g.mp4",
-              "fileSizeBytes": 110969744,
-              "durationSeconds": 728
-            }
-          ],
-          "separated": 1
+          "src": "Sources/Files/Playlists/Ranma_1_2_2024_Season_1_Episode_2_2.m3u8",
+          "progressKey": "sepitem:19dm7nc"
         },
         {
           "title": "Episode 3",
           "fileSizeBytes": 213571805,
           "durationSeconds": 1463,
-          "sources": [
-            {
-              "title": "Part 1",
-              "src": "https://files.catbox.moe/i3zhf2.mp4",
-              "fileSizeBytes": 114776523,
-              "durationSeconds": 734
-            },
-            {
-              "title": "Part 2",
-              "src": "https://files.catbox.moe/6g3gyl.mp4",
-              "fileSizeBytes": 98795282,
-              "durationSeconds": 729
-            }
-          ],
-          "separated": 1
+          "src": "Sources/Files/Playlists/Ranma_1_2_2024_Season_1_Episode_3_3.m3u8",
+          "progressKey": "sepitem:19dmumw"
         },
         {
           "title": "Episode 4",
           "fileSizeBytes": 245846516,
           "durationSeconds": 1466,
-          "sources": [
-            {
-              "title": "Part 1",
-              "src": "https://files.catbox.moe/hhz2hx.mp4",
-              "fileSizeBytes": 118732923,
-              "durationSeconds": 736
-            },
-            {
-              "title": "Part 2",
-              "src": "https://files.catbox.moe/182dnt.mp4",
-              "fileSizeBytes": 127113593,
-              "durationSeconds": 730
-            }
-          ],
-          "separated": 1
+          "src": "Sources/Files/Playlists/Ranma_1_2_2024_Season_1_Episode_4_4.m3u8",
+          "progressKey": "sepitem:19dnhmg"
         },
         {
           "title": "Episode 5",
           "fileSizeBytes": 208258973,
           "durationSeconds": 1470,
-          "sources": [
-            {
-              "title": "Part 1",
-              "src": "https://files.catbox.moe/xf44v8.mp4",
-              "fileSizeBytes": 104623120,
-              "durationSeconds": 740
-            },
-            {
-              "title": "Part 2",
-              "src": "https://files.catbox.moe/64zjsq.mp4",
-              "fileSizeBytes": 103635853,
-              "durationSeconds": 730
-            }
-          ],
-          "separated": 1
+          "src": "Sources/Files/Playlists/Ranma_1_2_2024_Season_1_Episode_5_5.m3u8",
+          "progressKey": "sepitem:19do4m0"
         },
         {
           "title": "Episode 6",
           "fileSizeBytes": 218767719,
           "durationSeconds": 1462,
-          "sources": [
-            {
-              "title": "Part 1",
-              "src": "https://files.catbox.moe/4zyk66.mp4",
-              "fileSizeBytes": 116068293,
-              "durationSeconds": 734
-            },
-            {
-              "title": "Part 2",
-              "src": "https://files.catbox.moe/5d20jp.mp4",
-              "fileSizeBytes": 102699426,
-              "durationSeconds": 728
-            }
-          ],
-          "separated": 1
+          "src": "Sources/Files/Playlists/Ranma_1_2_2024_Season_1_Episode_6_6.m3u8",
+          "progressKey": "sepitem:19dorlk"
         },
         {
           "title": "Episode 7",
           "fileSizeBytes": 240355810,
           "durationSeconds": 1469,
-          "sources": [
-            {
-              "title": "Part 1",
-              "src": "https://files.catbox.moe/m1eyp6.mp4",
-              "fileSizeBytes": 110686685,
-              "durationSeconds": 737
-            },
-            {
-              "title": "Part 2",
-              "src": "https://files.catbox.moe/kigaoj.mp4",
-              "fileSizeBytes": 129669125,
-              "durationSeconds": 732
-            }
-          ],
-          "separated": 1
+          "src": "Sources/Files/Playlists/Ranma_1_2_2024_Season_1_Episode_7_7.m3u8",
+          "progressKey": "sepitem:19dpel4"
         },
         {
           "title": "Episode 8",
           "fileSizeBytes": 229205668,
           "durationSeconds": 1472,
-          "sources": [
-            {
-              "title": "Part 1",
-              "src": "https://files.catbox.moe/jx9u44.mp4",
-              "fileSizeBytes": 119890584,
-              "durationSeconds": 744
-            },
-            {
-              "title": "Part 2",
-              "src": "https://files.catbox.moe/6nxha1.mp4",
-              "fileSizeBytes": 109315084,
-              "durationSeconds": 728
-            }
-          ],
-          "separated": 1
+          "src": "Sources/Files/Playlists/Ranma_1_2_2024_Season_1_Episode_8_8.m3u8",
+          "progressKey": "sepitem:19dq1ko"
         },
         {
           "title": "Episode 9",
           "fileSizeBytes": 248702157,
           "durationSeconds": 1466,
-          "sources": [
-            {
-              "title": "Part 1",
-              "src": "https://files.catbox.moe/6dvf16.mp4",
-              "fileSizeBytes": 146835504,
-              "durationSeconds": 736
-            },
-            {
-              "title": "Part 2",
-              "src": "https://files.catbox.moe/bhhlsf.mp4",
-              "fileSizeBytes": 101866653,
-              "durationSeconds": 730
-            }
-          ],
-          "separated": 1
+          "src": "Sources/Files/Playlists/Ranma_1_2_2024_Season_1_Episode_9_9.m3u8",
+          "progressKey": "sepitem:19dqok8"
         },
         {
           "title": "Episode 10",
           "fileSizeBytes": 243888809,
           "durationSeconds": 1470,
-          "sources": [
-            {
-              "title": "Part 1",
-              "src": "https://files.catbox.moe/yzq9vp.mp4",
-              "fileSizeBytes": 134829748,
-              "durationSeconds": 740
-            },
-            {
-              "title": "Part 2",
-              "src": "https://files.catbox.moe/a9z074.mp4",
-              "fileSizeBytes": 109059061,
-              "durationSeconds": 730
-            }
-          ],
-          "separated": 1
+          "src": "Sources/Files/Playlists/Ranma_1_2_2024_Season_1_Episode_10_10.m3u8",
+          "progressKey": "sepitem:1l49dcx"
         },
         {
           "title": "Episode 11",
           "fileSizeBytes": 192175251,
           "durationSeconds": 1466,
-          "sources": [
-            {
-              "title": "Part 1",
-              "src": "https://files.catbox.moe/4l8ziy.mp4",
-              "fileSizeBytes": 103644317,
-              "durationSeconds": 737
-            },
-            {
-              "title": "Part 2",
-              "src": "https://files.catbox.moe/m9m903.mp4",
-              "fileSizeBytes": 88530934,
-              "durationSeconds": 729
-            }
-          ],
-          "separated": 1
+          "src": "Sources/Files/Playlists/Ranma_1_2_2024_Season_1_Episode_11_11.m3u8",
+          "progressKey": "sepitem:1txwz5k"
         },
         {
           "title": "Episode 12",
           "fileSizeBytes": 191553101,
           "durationSeconds": 1466,
-          "sources": [
-            {
-              "title": "Part 1",
-              "src": "https://files.catbox.moe/1u2pk2.mp4",
-              "fileSizeBytes": 96253548,
-              "durationSeconds": 734
-            },
-            {
-              "title": "Part 2",
-              "src": "https://files.catbox.moe/6myaa0.mp4",
-              "fileSizeBytes": 95299553,
-              "durationSeconds": 732
-            }
-          ]
+          "src": "Sources/Files/Playlists/Ranma_1_2_2024_Season_1_Episode_12_12.m3u8",
+          "progressKey": "sepitem:1tygrqy"
         }
       ]
     },
@@ -266,115 +111,43 @@
           "title": "Episode 3",
           "fileSizeBytes": 241337578,
           "durationSeconds": 1462,
-          "sources": [
-            {
-              "title": "Part 1",
-              "src": "https://files.catbox.moe/qcyu8u.mp4",
-              "fileSizeBytes": 137560180,
-              "durationSeconds": 733
-            },
-            {
-              "title": "Part 2",
-              "src": "https://files.catbox.moe/6aek5t.mp4",
-              "fileSizeBytes": 103777398,
-              "durationSeconds": 729
-            }
-          ]
+          "src": "Sources/Files/Playlists/Ranma_1_2_2024_Season_2_Episode_3_3.m3u8",
+          "progressKey": "sepitem:1yb6x21"
         },
         {
           "title": "Episode 4",
           "fileSizeBytes": 259033709,
           "durationSeconds": 1454,
-          "sources": [
-            {
-              "title": "Part 1",
-              "src": "https://files.catbox.moe/prxmkc.mp4",
-              "fileSizeBytes": 140263186,
-              "durationSeconds": 733
-            },
-            {
-              "title": "Part 2",
-              "src": "https://files.catbox.moe/9sc0e3.mp4",
-              "fileSizeBytes": 118770523,
-              "durationSeconds": 721
-            }
-          ]
+          "src": "Sources/Files/Playlists/Ranma_1_2_2024_Season_2_Episode_4_4.m3u8",
+          "progressKey": "sepitem:1yb7k1l"
         },
         {
           "title": "Episode 5",
           "fileSizeBytes": 212714168,
           "durationSeconds": 1461,
-          "sources": [
-            {
-              "title": "Part 1",
-              "src": "https://files.catbox.moe/uqq5cn.mp4",
-              "fileSizeBytes": 118684707,
-              "durationSeconds": 732
-            },
-            {
-              "title": "Part 2",
-              "src": "https://files.catbox.moe/e4oe9b.mp4",
-              "fileSizeBytes": 94029461,
-              "durationSeconds": 729
-            }
-          ]
+          "src": "Sources/Files/Playlists/Ranma_1_2_2024_Season_2_Episode_5_5.m3u8",
+          "progressKey": "sepitem:1yb8715"
         },
         {
           "title": "Episode 6",
           "fileSizeBytes": 208896498,
           "durationSeconds": 1461,
-          "sources": [
-            {
-              "title": "Part 1",
-              "src": "https://files.catbox.moe/elo021.mp4",
-              "fileSizeBytes": 121553071,
-              "durationSeconds": 733
-            },
-            {
-              "title": "Part 2",
-              "src": "https://files.catbox.moe/ege2jm.mp4",
-              "fileSizeBytes": 87343427,
-              "durationSeconds": 728
-            }
-          ]
+          "src": "Sources/Files/Playlists/Ranma_1_2_2024_Season_2_Episode_6_6.m3u8",
+          "progressKey": "sepitem:1yb8u0p"
         },
         {
           "title": "Episode 7",
           "fileSizeBytes": 203466365,
           "durationSeconds": 1456,
-          "sources": [
-            {
-              "title": "Part 1",
-              "src": "https://files.catbox.moe/95we8n.mp4",
-              "fileSizeBytes": 111398498,
-              "durationSeconds": 730
-            },
-            {
-              "title": "Part 2",
-              "src": "https://files.catbox.moe/hmv7no.mp4",
-              "fileSizeBytes": 92067867,
-              "durationSeconds": 726
-            }
-          ]
+          "src": "Sources/Files/Playlists/Ranma_1_2_2024_Season_2_Episode_7_7.m3u8",
+          "progressKey": "sepitem:1yb9h09"
         },
         {
           "title": "Episode 8",
           "fileSizeBytes": 210903844,
           "durationSeconds": 1461,
-          "sources": [
-            {
-              "title": "Part 1",
-              "src": "https://files.catbox.moe/sumo7t.mp4",
-              "fileSizeBytes": 114405875,
-              "durationSeconds": 732
-            },
-            {
-              "title": "Part 2",
-              "src": "https://files.catbox.moe/e0zb98.mp4",
-              "fileSizeBytes": 96497969,
-              "durationSeconds": 729
-            }
-          ]
+          "src": "Sources/Files/Playlists/Ranma_1_2_2024_Season_2_Episode_8_8.m3u8",
+          "progressKey": "sepitem:1yba3zt"
         },
         {
           "title": "Episode 9",
@@ -386,20 +159,8 @@
           "title": "Episode 10",
           "fileSizeBytes": 216988089,
           "durationSeconds": 1466,
-          "sources": [
-            {
-              "title": "Part 1",
-              "src": "https://files.catbox.moe/719zlq.mp4",
-              "fileSizeBytes": 120076043,
-              "durationSeconds": 739
-            },
-            {
-              "title": "Part 2",
-              "src": "https://files.catbox.moe/e5f6lk.mp4",
-              "fileSizeBytes": 96912046,
-              "durationSeconds": 727
-            }
-          ]
+          "src": "Sources/Files/Playlists/Ranma_1_2_2024_Season_2_Episode_10_10.m3u8",
+          "progressKey": "sepitem:1coauo0"
         },
         {
           "title": "Episode 11",

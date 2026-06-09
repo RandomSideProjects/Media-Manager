@@ -778,12 +778,6 @@ window.OverlayFactory = (function() {
             createElement('span', {}, ['Folder upload: yell when tab is hidden'])
           ])
         ]),
-        createElement('div', { className: 'mm-settings-row' }, [
-          createElement('label', { className: 'mm-toggle', style: { gap: '.4em', alignItems: 'center' } }, [
-            createElement('input', { type: 'checkbox', id: 'mmAutoArchiveOversizeToggle' }),
-            createElement('span', {}, ['Auto-accept Archive.org uploads for files over 200MB'])
-          ])
-        ]),
         createElement('div', { 
           className: 'mm-settings-row dev-menu-row', 
           id: 'devMenuRow', 
@@ -871,9 +865,10 @@ window.OverlayFactory = (function() {
               createElement('label', { for: 'devCatboxMode' }, ['Mode']),
               createElement('select', { id: 'devCatboxMode', className: 'dev-field-input' }, [
                 createElement('option', { value: 'default' }, ['Default']),
+                createElement('option', { value: 'direct' }, ['Direct']),
                 createElement('option', { value: 'proxy' }, ['Proxy'])
               ]),
-              createElement('p', { className: 'dev-menu-hint select' }, ['Choose Default (worker) or Proxy (custom URL).'])
+              createElement('p', { className: 'dev-menu-hint select' }, ['Default auto-detects direct Catbox API support, then falls back to the upload proxy.'])
             ])
 	          ]),
 
@@ -1040,15 +1035,25 @@ window.OverlayFactory = (function() {
               createElement('label', { for: 'devCatboxMode' }, ['Mode']),
               createElement('select', { id: 'devCatboxMode', className: 'dev-field-input' }, [
                 createElement('option', { value: 'default' }, ['Default']),
+                createElement('option', { value: 'direct' }, ['Direct']),
                 createElement('option', { value: 'proxy' }, ['Proxy'])
               ]),
-              createElement('p', { className: 'dev-menu-hint select' }, ['Choose Default (worker) or Proxy (custom URL).'])
+              createElement('p', { className: 'dev-menu-hint select' }, ['Default auto-detects direct Catbox API support, then falls back to the upload proxy.'])
             ]),
             createElement('label', { className: 'dev-menu-toggle' }, [
               createElement('input', { type: 'checkbox', id: 'devCatboxForceProxyUnder100Mb' }),
               createElement('span', {}, ['Force Catbox proxy for files under 100MB'])
             ]),
             createElement('p', { className: 'dev-menu-hint' }, ['When enabled, small uploads always use the Catbox worker/proxy (even if allowProxy=false).'])
+          ]),
+
+          createElement('div', { className: 'dev-menu-section' }, [
+            createElement('h4', {}, ['Video Splitting']),
+            createElement('label', { className: 'dev-menu-toggle' }, [
+              createElement('input', { type: 'checkbox', id: 'devDownloadSplitPartsAfterSplit' }),
+              createElement('span', {}, ['Download split parts after splitting'])
+            ]),
+            createElement('p', { className: 'dev-menu-hint' }, ['When enabled, oversized episode videos are split in-browser and downloaded locally instead of being uploaded as separated parts.'])
           ]),
 
           createElement('div', { className: 'dev-menu-section' }, [

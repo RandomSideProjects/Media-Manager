@@ -73,23 +73,10 @@
         },
         {
           "title": "Episode 12",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/So_I_M_A_Spider_So_What/12.mp4",
+          "src": "Sources/Files/Playlists/So_I_M_A_Spider_So_What_Season_1_Episode_12_12.m3u8",
           "fileSizeBytes": 214288880,
           "durationSeconds": 1423,
-          "sources": [
-            {
-              "title": "Part 1",
-              "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/So_I_M_A_Spider_So_What/13.mp4",
-              "fileSizeBytes": 130647496,
-              "durationSeconds": 713
-            },
-            {
-              "title": "Part 2",
-              "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/So_I_M_A_Spider_So_What/14.mp4",
-              "fileSizeBytes": 83641384,
-              "durationSeconds": 710
-            }
-          ]
+          "progressKey": "sepitem:1tygrqy"
         },
         {
           "title": "Episode 13",

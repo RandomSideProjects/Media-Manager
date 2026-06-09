@@ -7,383 +7,94 @@
       "episodes": [
         {
           "title": "Episode 1",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/1.mp4",
+          "src": "Sources/Files/Playlists/Bloom_Into_You_Season_1_Episode_1_1.m3u8",
           "fileSizeBytes": 499354757,
           "durationSeconds": 2044,
-          "sources": [
-            {
-              "title": "Part 1",
-              "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/2.mp4",
-              "fileSizeBytes": 127119675,
-              "durationSeconds": 586
-            },
-            {
-              "title": "Part 2",
-              "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/3.mp4",
-              "fileSizeBytes": 127008060,
-              "durationSeconds": 754
-            },
-            {
-              "title": "Part 3",
-              "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/4.mp4",
-              "fileSizeBytes": 129056458,
-              "durationSeconds": 356
-            },
-            {
-              "title": "Part 4",
-              "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/5.mp4",
-              "fileSizeBytes": 116170564,
-              "durationSeconds": 348
-            }
-          ]
+          "progressKey": "sepitem:19dlkns"
         },
         {
           "title": "Episode 2",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/6.mp4",
+          "src": "Sources/Files/Playlists/Bloom_Into_You_Season_1_Episode_2_2.m3u8",
           "fileSizeBytes": 510812277,
           "durationSeconds": 1670,
-          "sources": [
-            {
-              "title": "Part 1",
-              "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/7.mp4",
-              "fileSizeBytes": 121545838,
-              "durationSeconds": 499
-            },
-            {
-              "title": "Part 2",
-              "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/8.mp4",
-              "fileSizeBytes": 125050933,
-              "durationSeconds": 386
-            },
-            {
-              "title": "Part 3",
-              "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/9.mp4",
-              "fileSizeBytes": 129345493,
-              "durationSeconds": 437
-            },
-            {
-              "title": "Part 4",
-              "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/10.mp4",
-              "fileSizeBytes": 134870013,
-              "durationSeconds": 348
-            }
-          ]
+          "progressKey": "sepitem:19dm7nc"
         },
         {
           "title": "Episode 3",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/11.mp4",
+          "src": "Sources/Files/Playlists/Bloom_Into_You_Season_1_Episode_3_3.m3u8",
           "fileSizeBytes": 437643740,
           "durationSeconds": 1571,
-          "sources": [
-            {
-              "title": "Part 1",
-              "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/12.mp4",
-              "fileSizeBytes": 145967785,
-              "durationSeconds": 537
-            },
-            {
-              "title": "Part 2",
-              "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/13.mp4",
-              "fileSizeBytes": 149970286,
-              "durationSeconds": 560
-            },
-            {
-              "title": "Part 3",
-              "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/14.mp4",
-              "fileSizeBytes": 141705669,
-              "durationSeconds": 474
-            }
-          ]
+          "progressKey": "sepitem:19dmumw"
         },
         {
           "title": "Episode 4",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/15.mp4",
+          "src": "Sources/Files/Playlists/Bloom_Into_You_Season_1_Episode_4_4.m3u8",
           "fileSizeBytes": 521075733,
           "durationSeconds": 1742,
-          "sources": [
-            {
-              "title": "Part 1",
-              "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/16.mp4",
-              "fileSizeBytes": 126702042,
-              "durationSeconds": 367
-            },
-            {
-              "title": "Part 2",
-              "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/17.mp4",
-              "fileSizeBytes": 124911010,
-              "durationSeconds": 411
-            },
-            {
-              "title": "Part 3",
-              "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/18.mp4",
-              "fileSizeBytes": 134673396,
-              "durationSeconds": 616
-            },
-            {
-              "title": "Part 4",
-              "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/19.mp4",
-              "fileSizeBytes": 134789285,
-              "durationSeconds": 348
-            }
-          ]
+          "progressKey": "sepitem:19dnhmg"
         },
         {
           "title": "Episode 5",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/20.mp4",
+          "src": "Sources/Files/Playlists/Bloom_Into_You_Season_1_Episode_5_5.m3u8",
           "fileSizeBytes": 444165361,
           "durationSeconds": 1956,
-          "sources": [
-            {
-              "title": "Part 1",
-              "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/21.mp4",
-              "fileSizeBytes": 142827710,
-              "durationSeconds": 719
-            },
-            {
-              "title": "Part 2",
-              "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/22.mp4",
-              "fileSizeBytes": 137533131,
-              "durationSeconds": 763
-            },
-            {
-              "title": "Part 3",
-              "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/23.mp4",
-              "fileSizeBytes": 163804520,
-              "durationSeconds": 474
-            }
-          ]
+          "progressKey": "sepitem:19do4m0"
         },
         {
           "title": "Episode 6",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/24.mp4",
+          "src": "Sources/Files/Playlists/Bloom_Into_You_Season_1_Episode_6_6.m3u8",
           "fileSizeBytes": 520741828,
           "durationSeconds": 1620,
-          "sources": [
-            {
-              "title": "Part 1",
-              "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/25.mp4",
-              "fileSizeBytes": 127731709,
-              "durationSeconds": 411
-            },
-            {
-              "title": "Part 2",
-              "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/26.mp4",
-              "fileSizeBytes": 123302136,
-              "durationSeconds": 381
-            },
-            {
-              "title": "Part 3",
-              "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/27.mp4",
-              "fileSizeBytes": 132443498,
-              "durationSeconds": 480
-            },
-            {
-              "title": "Part 4",
-              "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/28.mp4",
-              "fileSizeBytes": 137264485,
-              "durationSeconds": 348
-            }
-          ]
+          "progressKey": "sepitem:19dorlk"
         },
         {
           "title": "Episode 7",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/29.mp4",
+          "src": "Sources/Files/Playlists/Bloom_Into_You_Season_1_Episode_7_7.m3u8",
           "fileSizeBytes": 469875256,
           "durationSeconds": 2262,
-          "sources": [
-            {
-              "title": "Part 1",
-              "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/30.mp4",
-              "fileSizeBytes": 156404155,
-              "durationSeconds": 933
-            },
-            {
-              "title": "Part 2",
-              "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/31.mp4",
-              "fileSizeBytes": 152320036,
-              "durationSeconds": 855
-            },
-            {
-              "title": "Part 3",
-              "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/32.mp4",
-              "fileSizeBytes": 161151065,
-              "durationSeconds": 474
-            }
-          ]
+          "progressKey": "sepitem:19dpel4"
         },
         {
           "title": "Episode 8",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/33.mp4",
+          "src": "Sources/Files/Playlists/Bloom_Into_You_Season_1_Episode_8_8.m3u8",
           "fileSizeBytes": 506058711,
           "durationSeconds": 1777,
-          "sources": [
-            {
-              "title": "Part 1",
-              "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/34.mp4",
-              "fileSizeBytes": 127654046,
-              "durationSeconds": 571
-            },
-            {
-              "title": "Part 2",
-              "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/35.mp4",
-              "fileSizeBytes": 121185541,
-              "durationSeconds": 421
-            },
-            {
-              "title": "Part 3",
-              "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/36.mp4",
-              "fileSizeBytes": 126297733,
-              "durationSeconds": 437
-            },
-            {
-              "title": "Part 4",
-              "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/37.mp4",
-              "fileSizeBytes": 130921391,
-              "durationSeconds": 348
-            }
-          ]
+          "progressKey": "sepitem:19dq1ko"
         },
         {
           "title": "Episode 9",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/38.mp4",
+          "src": "Sources/Files/Playlists/Bloom_Into_You_Season_1_Episode_9_9.m3u8",
           "fileSizeBytes": 516772011,
           "durationSeconds": 1927,
-          "sources": [
-            {
-              "title": "Part 1",
-              "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/39.mp4",
-              "fileSizeBytes": 126244647,
-              "durationSeconds": 666
-            },
-            {
-              "title": "Part 2",
-              "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/40.mp4",
-              "fileSizeBytes": 129995623,
-              "durationSeconds": 519
-            },
-            {
-              "title": "Part 3",
-              "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/41.mp4",
-              "fileSizeBytes": 134036682,
-              "durationSeconds": 394
-            },
-            {
-              "title": "Part 4",
-              "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/42.mp4",
-              "fileSizeBytes": 126495059,
-              "durationSeconds": 348
-            }
-          ]
+          "progressKey": "sepitem:19dqok8"
         },
         {
           "title": "Episode 10",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/43.mp4",
+          "src": "Sources/Files/Playlists/Bloom_Into_You_Season_1_Episode_10_10.m3u8",
           "fileSizeBytes": 436592238,
           "durationSeconds": 1882,
-          "sources": [
-            {
-              "title": "Part 1",
-              "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/44.mp4",
-              "fileSizeBytes": 140401809,
-              "durationSeconds": 789
-            },
-            {
-              "title": "Part 2",
-              "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/45.mp4",
-              "fileSizeBytes": 154724519,
-              "durationSeconds": 619
-            },
-            {
-              "title": "Part 3",
-              "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/46.mp4",
-              "fileSizeBytes": 141465910,
-              "durationSeconds": 474
-            }
-          ]
+          "progressKey": "sepitem:1l49dcx"
         },
         {
           "title": "Episode 11",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/47.mp4",
+          "src": "Sources/Files/Playlists/Bloom_Into_You_Season_1_Episode_11_11.m3u8",
           "fileSizeBytes": 517338339,
           "durationSeconds": 2041,
-          "sources": [
-            {
-              "title": "Part 1",
-              "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/48.mp4",
-              "fileSizeBytes": 128676672,
-              "durationSeconds": 721
-            },
-            {
-              "title": "Part 2",
-              "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/49.mp4",
-              "fileSizeBytes": 126677562,
-              "durationSeconds": 356
-            },
-            {
-              "title": "Part 3",
-              "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/50.mp4",
-              "fileSizeBytes": 128110093,
-              "durationSeconds": 616
-            },
-            {
-              "title": "Part 4",
-              "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/51.mp4",
-              "fileSizeBytes": 133874012,
-              "durationSeconds": 348
-            }
-          ]
+          "progressKey": "sepitem:1txwz5k"
         },
         {
           "title": "Episode 12",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/52.mp4",
+          "src": "Sources/Files/Playlists/Bloom_Into_You_Season_1_Episode_12_12.m3u8",
           "fileSizeBytes": 417408102,
           "durationSeconds": 1917,
-          "sources": [
-            {
-              "title": "Part 1",
-              "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/53.mp4",
-              "fileSizeBytes": 136317576,
-              "durationSeconds": 784
-            },
-            {
-              "title": "Part 2",
-              "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/54.mp4",
-              "fileSizeBytes": 139696177,
-              "durationSeconds": 659
-            },
-            {
-              "title": "Part 3",
-              "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/55.mp4",
-              "fileSizeBytes": 141394349,
-              "durationSeconds": 474
-            }
-          ]
+          "progressKey": "sepitem:1tygrqy"
         },
         {
           "title": "Episode 13",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/56.mp4",
+          "src": "Sources/Files/Playlists/Bloom_Into_You_Season_1_Episode_13_13.m3u8",
           "fileSizeBytes": 452078800,
           "durationSeconds": 1610,
-          "sources": [
-            {
-              "title": "Part 1",
-              "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/57.mp4",
-              "fileSizeBytes": 153267493,
-              "durationSeconds": 481
-            },
-            {
-              "title": "Part 2",
-              "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/58.mp4",
-              "fileSizeBytes": 152777893,
-              "durationSeconds": 655
-            },
-            {
-              "title": "Part 3",
-              "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Bloom_Into_You/59.mp4",
-              "fileSizeBytes": 146033414,
-              "durationSeconds": 474
-            }
-          ]
+          "progressKey": "sepitem:1tz0kcc"
         }
       ]
     }

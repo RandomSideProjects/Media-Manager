@@ -101,32 +101,10 @@
         },
         {
           "title": "Episode 8",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Hazbin_Hotel/16.mp4",
+          "src": "Sources/Files/Playlists/Hazbin_Hotel_Season_2_Episode_8_8.m3u8",
           "fileSizeBytes": 265621973,
-          "ItemfileSizeBytes": 265621973,
           "durationSeconds": 2269,
-          "separated": 1,
-          "seperated": 1,
-          "sources": [
-            {
-              "title": "Part 1",
-              "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Hazbin_Hotel/17.mp4",
-              "fileSizeBytes": 84844591,
-              "durationSeconds": 757
-            },
-            {
-              "title": "Part 2",
-              "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Hazbin_Hotel/18.mp4",
-              "fileSizeBytes": 108968879,
-              "durationSeconds": 756
-            },
-            {
-              "title": "Part 3",
-              "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Hazbin_Hotel/19.mp4",
-              "fileSizeBytes": 71808503,
-              "durationSeconds": 756
-            }
-          ]
+          "progressKey": "sepitem:1yba3zt"
         }
       ]
     }

@@ -1186,9 +1186,32 @@
               return input && typeof input.value === "string" ? input.value : "";
             } catch { return ""; }
           })();
-          const catboxUrl = await uploadFileToCatbox(file, {
+          const itemIndex = Number(ep.episode) || (idx + 1);
+          const splitUploader = typeof window !== "undefined" && typeof window.mmUploadOversizeVideoAsCatboxPlaylist === "function"
+            ? window.mmUploadOversizeVideoAsCatboxPlaylist
+            : null;
+          const splitUpload = splitUploader ? await splitUploader(file, {
+            context: "batch",
             signal: abortController.signal,
-            creatorItem: { categoryTitle, itemIndex: Number(ep.episode) || (idx + 1), sourceTitle: label },
+            creatorItem: { categoryTitle, itemIndex, sourceTitle: label },
+            playlistMeta: {
+              directoryTitle: (() => {
+                const input = document.getElementById("dirTitle");
+                return input && typeof input.value === "string" ? input.value.trim() : "";
+              })(),
+              categoryTitle,
+              episodeTitle: label,
+              categoryIndex: 1,
+              episodeIndex: itemIndex
+            },
+            onProgress: (pct) => {
+              const safe = Number.isFinite(pct) ? Math.max(0, Math.min(100, pct)) : 0;
+              setEpStatus(`Uploading ${Math.round(safe)}%`, "#9ecbff", { value: safe, max: 100 });
+            }
+          }) : null;
+          const catboxUrl = splitUpload ? splitUpload.url : await uploadFileToCatbox(file, {
+            signal: abortController.signal,
+            creatorItem: { categoryTitle, itemIndex, sourceTitle: label },
             onProgress: (pct, info) => {
               const safe = Number.isFinite(pct) ? Math.max(0, Math.min(100, pct)) : 0;
               const stage = info && typeof info.stage === "string" ? info.stage : "";
@@ -1200,6 +1223,12 @@
           });
 
           if (epDiv && epDiv._srcInput) {
+            if (splitUpload) {
+              epDiv._hiddenSplitParts = splitUpload.parts || [];
+              epDiv._hiddenSplitPlaylistUrl = splitUpload.url || "";
+              if (splitUpload.totalFileSize > 0) epDiv.dataset.fileSizeBytes = String(splitUpload.totalFileSize);
+              if (splitUpload.totalDuration > 0) epDiv.dataset.durationSeconds = String(splitUpload.totalDuration);
+            }
             epDiv._srcInput.value = catboxUrl;
             epDiv._srcInput.dataset.manualEntry = "0";
           }

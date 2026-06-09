@@ -1,0 +1,35 @@
+#EXTM3U
+#EXT-X-VERSION:3
+#EXT-X-PLAYLIST-TYPE:VOD
+#EXT-X-INDEPENDENT-SEGMENTS
+#EXT-X-TARGETDURATION:1474
+#EXT-X-MEDIA-SEQUENCE:0
+#EXT-X-MM-TITLE:Quintessential Quintuplets - Movie
+#EXTINF:1474.000,Part 1
+#EXT-X-MM-FILE-SIZE:176476939
+https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Quintuplets/25.webm
+#EXT-X-DISCONTINUITY
+#EXTINF:1471.000,Part 2
+#EXT-X-MM-FILE-SIZE:168053549
+https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Quintuplets/26.webm
+#EXT-X-DISCONTINUITY
+#EXTINF:948.000,Part 3
+#EXT-X-MM-FILE-SIZE:94498730
+https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Quintuplets/27.webm
+#EXT-X-DISCONTINUITY
+#EXTINF:1262.000,Part 4
+#EXT-X-MM-FILE-SIZE:111483793
+https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Quintuplets/28.webm
+#EXT-X-DISCONTINUITY
+#EXTINF:1247.000,Part 5
+#EXT-X-MM-FILE-SIZE:110122495
+https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Quintuplets/29.webm
+#EXT-X-DISCONTINUITY
+#EXTINF:1340.000,Part 6
+#EXT-X-MM-FILE-SIZE:137667564
+https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Quintuplets/30.webm
+#EXT-X-DISCONTINUITY
+#EXTINF:424.000,Part 7
+#EXT-X-MM-FILE-SIZE:59984029
+https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Quintuplets/31.webm
+#EXT-X-ENDLIST

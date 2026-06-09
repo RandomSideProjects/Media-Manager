@@ -89,73 +89,34 @@
       "category": "Rascal Does Not Dream of a Dreaming Girl",
       "episodes": [
         {
-          "title": "Part 1",
-          "src": "https://files.catbox.moe/896sth.mp4",
-          "fileSizeBytes": 141567020,
-          "durationSeconds": 1507
-        },
-        {
-          "title": "Part 2",
-          "src": "https://files.catbox.moe/hrto3x.mp4",
-          "fileSizeBytes": 144454826,
-          "durationSeconds": 1382
-        },
-        {
-          "title": "Part 3",
-          "src": "https://files.catbox.moe/f1v7du.mp4",
-          "fileSizeBytes": 137001142,
-          "durationSeconds": 1235
-        },
-        {
-          "title": "Part 4",
-          "src": "https://files.catbox.moe/mor8e0.mp4",
-          "fileSizeBytes": 150396499,
-          "durationSeconds": 1134
-        },
-        {
-          "title": "Part 5",
-          "src": "https://files.catbox.moe/995r9g.mp4",
-          "fileSizeBytes": 166032147,
-          "durationSeconds": 1077
+          "title": "Rascal Does Not Dream of a Dreaming Girl",
+          "src": "Sources/Files/Playlists/Rascal_Does_Not_Dream_Of_A_Bunny_Girl_Senpai_Rascal_Does_Not_Dream_of_a_Dreaming_Girl_category_2.m3u8",
+          "fileSizeBytes": 739451634,
+          "durationSeconds": 6335
         }
-      ],
-      "separated": 1
+      ]
     },
     {
       "category": "Rascal Does Not Dream of a Sister Venturing Out",
       "episodes": [
         {
-          "title": "Part 1",
-          "src": "https://files.catbox.moe/wqdssb.mp4",
-          "fileSizeBytes": 117223341,
-          "durationSeconds": 2222
-        },
-        {
-          "title": "Part 2",
-          "src": "https://files.catbox.moe/4fcimv.mp4",
-          "fileSizeBytes": 135600790,
-          "durationSeconds": 2211
+          "title": "Rascal Does Not Dream of a Sister Venturing Out",
+          "src": "Sources/Files/Playlists/Rascal_Does_Not_Dream_Of_A_Bunny_Girl_Senpai_Rascal_Does_Not_Dream_of_a_Sister_Venturing_Out_category_3.m3u8",
+          "fileSizeBytes": 252824131,
+          "durationSeconds": 4433
         }
-      ],
-      "separated": 1
+      ]
     },
     {
       "category": "Rascal Does Not Dream of a Knapsack Kid",
       "episodes": [
         {
-          "title": "Part 1",
-          "src": "https://files.catbox.moe/db6e6v.mp4",
-          "fileSizeBytes": 120100207,
-          "durationSeconds": 2248
-        },
-        {
-          "title": "Part 2",
-          "src": "https://files.catbox.moe/gnnea9.mp4",
-          "fileSizeBytes": 98555897,
-          "durationSeconds": 2246
+          "title": "Rascal Does Not Dream of a Knapsack Kid",
+          "src": "Sources/Files/Playlists/Rascal_Does_Not_Dream_Of_A_Bunny_Girl_Senpai_Rascal_Does_Not_Dream_of_a_Knapsack_Kid_category_4.m3u8",
+          "fileSizeBytes": 218656104,
+          "durationSeconds": 4494
         }
-      ],
-      "separated": 1
+      ]
     },
     {
       "category": "Season 2",
@@ -243,7 +204,5 @@
   ],
   "totalFileSizeBytes": 4045025043,
   "totalDurationSeconds": 53625,
-  "separatedCategoryCount": 3,
-  "separatedItemCount": 9,
   "Image": "./Sources/Posters/Anime/Rascal_Does_Not_Dream_Of_A_Bunny_Girl_Senpai.webp"
 }

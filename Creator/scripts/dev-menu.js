@@ -21,7 +21,9 @@
   let githubTokenInput = null;
   let webhookUrlInput = null;
   let catboxUrlInput = null;
+  let catboxModeSelect = null;
   let catboxForceProxyUnder100MbToggle = null;
+  let downloadSplitPartsToggle = null;
   let copypartyUploadUrlInput = null;
   let copypartyPwInput = null;
   let copypartyThresholdInput = null;
@@ -48,7 +50,9 @@
     githubTokenInput = document.getElementById("devGithubToken");
     webhookUrlInput = document.getElementById("devWebhookUrl");
     catboxUrlInput = document.getElementById("devCatboxUploadUrl");
+    catboxModeSelect = document.getElementById("devCatboxMode");
     catboxForceProxyUnder100MbToggle = document.getElementById("devCatboxForceProxyUnder100Mb");
+    downloadSplitPartsToggle = document.getElementById("devDownloadSplitPartsAfterSplit");
     copypartyUploadUrlInput = document.getElementById("devCopypartyUploadUrl");
     copypartyPwInput = document.getElementById("devCopypartyPw");
     copypartyThresholdInput = document.getElementById("devCopypartyThresholdMb");
@@ -157,7 +161,7 @@
     }
     if (catboxStateLabel) catboxStateLabel.textContent = "Detecting…";
     try {
-      await window.MM_catbox.ensure();
+      await window.MM_catbox.ensure({ force: true });
       refreshDiagnostics();
       showNotice("success", "Catbox detection complete.");
     } catch (err) {
@@ -328,8 +332,14 @@
         if (catboxUrlInput && settings.catboxUploadUrl !== undefined) {
           catboxUrlInput.value = settings.catboxUploadUrl || '';
         }
+        if (catboxModeSelect && settings.catboxOverrideMode !== undefined) {
+          catboxModeSelect.value = settings.catboxOverrideMode || 'default';
+        }
         if (catboxForceProxyUnder100MbToggle && settings.catboxForceProxyUnder100Mb !== undefined) {
           catboxForceProxyUnder100MbToggle.checked = !!settings.catboxForceProxyUnder100Mb;
+        }
+        if (downloadSplitPartsToggle && settings.downloadSplitPartsAfterSplit !== undefined) {
+          downloadSplitPartsToggle.checked = !!settings.downloadSplitPartsAfterSplit;
         }
         if (copypartyUploadUrlInput && settings.copypartyUploadUrl !== undefined) {
           copypartyUploadUrlInput.value = settings.copypartyUploadUrl || '';
@@ -464,14 +474,15 @@
     }
     
     if (catboxUrlInput) {
+      catboxUrlInput.addEventListener('focus', () => {
+        if (catboxModeSelect) catboxModeSelect.value = 'proxy';
+      });
       const commitCatboxUrl = () => {
         if (typeof saveSettingsPartial === 'function') {
           try {
             const value = catboxUrlInput.value.trim();
-            saveSettingsPartial({ catboxUploadUrl: value });
-            if (typeof window !== 'undefined' && window.mm_uploadSettings && typeof window.mm_uploadSettings.save === 'function') {
-              window.mm_uploadSettings.save({ catboxUploadUrl: value });
-            }
+            saveSettingsPartial({ catboxUploadUrl: value, catboxOverrideMode: value ? 'proxy' : 'default' });
+            if (catboxModeSelect) catboxModeSelect.value = value ? 'proxy' : 'default';
           } catch (err) {
             console.warn('[CreatorDevMenu] Failed to save Catbox URL', err);
           }
@@ -481,6 +492,19 @@
       catboxUrlInput.addEventListener('blur', commitCatboxUrl);
     }
 
+    if (catboxModeSelect) {
+      catboxModeSelect.addEventListener('change', () => {
+        const raw = (catboxModeSelect.value || 'default').trim().toLowerCase();
+        const mode = (raw === 'direct' || raw === 'proxy') ? raw : 'default';
+        try {
+          saveSettingsPartial({ catboxOverrideMode: mode });
+        } catch (err) {
+          console.warn('[CreatorDevMenu] Failed to save Catbox mode', err);
+        }
+        refreshDiagnostics();
+      });
+    }
+
     if (catboxForceProxyUnder100MbToggle) {
       const commit = () => {
         if (typeof saveSettingsPartial !== 'function') return;
@@ -488,6 +512,15 @@
         catch (err) { console.warn('[CreatorDevMenu] Failed to save Catbox force-proxy toggle', err); }
       };
       catboxForceProxyUnder100MbToggle.addEventListener('change', commit);
+    }
+
+    if (downloadSplitPartsToggle) {
+      const commit = () => {
+        if (typeof saveSettingsPartial !== 'function') return;
+        try { saveSettingsPartial({ downloadSplitPartsAfterSplit: !!downloadSplitPartsToggle.checked }); }
+        catch (err) { console.warn('[CreatorDevMenu] Failed to save split-parts download toggle', err); }
+      };
+      downloadSplitPartsToggle.addEventListener('change', commit);
     }
 
     if (copypartyUploadUrlInput) {

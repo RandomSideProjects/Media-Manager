@@ -1,0 +1,766 @@
+{
+  "checkedAt": "2026-05-20T23:10:08.834Z",
+  "total": 146,
+  "summary": {
+    "206": 62,
+    "404": 84
+  },
+  "bad": [
+    {
+      "file": "Sources/Files/Playlists/Kill_La_Kill_Season_1_Episode_1_1.m3u8",
+      "line": 10,
+      "url": "https://files.catbox.moe/ypnylk.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/ypnylk.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Kill_La_Kill_Season_1_Episode_1_1.m3u8",
+      "line": 14,
+      "url": "https://files.catbox.moe/pncbm4.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/pncbm4.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Kill_La_Kill_Season_1_Episode_10_10.m3u8",
+      "line": 10,
+      "url": "https://files.catbox.moe/6bdhxm.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/6bdhxm.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Kill_La_Kill_Season_1_Episode_10_10.m3u8",
+      "line": 14,
+      "url": "https://files.catbox.moe/j4kcla.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/j4kcla.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Kill_La_Kill_Season_1_Episode_11_11.m3u8",
+      "line": 10,
+      "url": "https://files.catbox.moe/k9f1ly.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/k9f1ly.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Kill_La_Kill_Season_1_Episode_11_11.m3u8",
+      "line": 14,
+      "url": "https://files.catbox.moe/r1u3lj.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/r1u3lj.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Kill_La_Kill_Season_1_Episode_12_12.m3u8",
+      "line": 10,
+      "url": "https://files.catbox.moe/r1xt3e.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/r1xt3e.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Kill_La_Kill_Season_1_Episode_12_12.m3u8",
+      "line": 14,
+      "url": "https://files.catbox.moe/mil2gy.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/mil2gy.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Kill_La_Kill_Season_1_Episode_14_14.m3u8",
+      "line": 10,
+      "url": "https://files.catbox.moe/dbhki8.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/dbhki8.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Kill_La_Kill_Season_1_Episode_14_14.m3u8",
+      "line": 14,
+      "url": "https://files.catbox.moe/vilnaa.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/vilnaa.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Kill_La_Kill_Season_1_Episode_15_15.m3u8",
+      "line": 10,
+      "url": "https://files.catbox.moe/m589jp.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/m589jp.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Kill_La_Kill_Season_1_Episode_15_15.m3u8",
+      "line": 14,
+      "url": "https://files.catbox.moe/o8my6q.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/o8my6q.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Kill_La_Kill_Season_1_Episode_18_18.m3u8",
+      "line": 10,
+      "url": "https://files.catbox.moe/ftyz8q.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/ftyz8q.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Kill_La_Kill_Season_1_Episode_18_18.m3u8",
+      "line": 14,
+      "url": "https://files.catbox.moe/k4r4kz.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/k4r4kz.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Kill_La_Kill_Season_1_Episode_19_19.m3u8",
+      "line": 10,
+      "url": "https://files.catbox.moe/33o6fk.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/33o6fk.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Kill_La_Kill_Season_1_Episode_19_19.m3u8",
+      "line": 14,
+      "url": "https://files.catbox.moe/pcin8a.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/pcin8a.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Kill_La_Kill_Season_1_Episode_21_21.m3u8",
+      "line": 10,
+      "url": "https://files.catbox.moe/pxb88z.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/pxb88z.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Kill_La_Kill_Season_1_Episode_21_21.m3u8",
+      "line": 14,
+      "url": "https://files.catbox.moe/x8lhma.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/x8lhma.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Kill_La_Kill_Season_1_Episode_23_23.m3u8",
+      "line": 10,
+      "url": "https://files.catbox.moe/kh2d2o.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/kh2d2o.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Kill_La_Kill_Season_1_Episode_23_23.m3u8",
+      "line": 14,
+      "url": "https://files.catbox.moe/0rca4a.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/0rca4a.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Kill_La_Kill_Season_1_Episode_24_24.m3u8",
+      "line": 10,
+      "url": "https://files.catbox.moe/uy6dcq.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/uy6dcq.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Kill_La_Kill_Season_1_Episode_24_24.m3u8",
+      "line": 14,
+      "url": "https://files.catbox.moe/jcoar6.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/jcoar6.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Kill_La_Kill_Season_1_Episode_3_3.m3u8",
+      "line": 10,
+      "url": "https://files.catbox.moe/1da1dh.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/1da1dh.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Kill_La_Kill_Season_1_Episode_3_3.m3u8",
+      "line": 14,
+      "url": "https://files.catbox.moe/g8lzda.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/g8lzda.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Kill_La_Kill_Season_1_Episode_4_4.m3u8",
+      "line": 10,
+      "url": "https://files.catbox.moe/0g4rrp.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/0g4rrp.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Kill_La_Kill_Season_1_Episode_4_4.m3u8",
+      "line": 14,
+      "url": "https://files.catbox.moe/n7o1fj.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/n7o1fj.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Kill_La_Kill_Season_1_Episode_6_6.m3u8",
+      "line": 10,
+      "url": "https://files.catbox.moe/yhay73.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/yhay73.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Kill_La_Kill_Season_1_Episode_6_6.m3u8",
+      "line": 14,
+      "url": "https://files.catbox.moe/8t754x.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/8t754x.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Kill_La_Kill_Season_1_Episode_9_9.m3u8",
+      "line": 10,
+      "url": "https://files.catbox.moe/jzzhyj.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/jzzhyj.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Kill_La_Kill_Season_1_Episode_9_9.m3u8",
+      "line": 14,
+      "url": "https://files.catbox.moe/hgele2.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/hgele2.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Konosuba_God_S_Blessing_On_This_Wonderful_World_Movie_category_3.m3u8",
+      "line": 10,
+      "url": "https://files.catbox.moe/xzri7a.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/xzri7a.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Konosuba_God_S_Blessing_On_This_Wonderful_World_Movie_category_3.m3u8",
+      "line": 14,
+      "url": "https://files.catbox.moe/6k0zgh.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/6k0zgh.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Konosuba_God_S_Blessing_On_This_Wonderful_World_Movie_category_3.m3u8",
+      "line": 18,
+      "url": "https://files.catbox.moe/waolks.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/waolks.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Konosuba_God_S_Blessing_On_This_Wonderful_World_Movie_category_3.m3u8",
+      "line": 22,
+      "url": "https://files.catbox.moe/755c5x.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/755c5x.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Ranma_1_2_2024_Season_1_Episode_1_1.m3u8",
+      "line": 10,
+      "url": "https://files.catbox.moe/h0vet0.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/h0vet0.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Ranma_1_2_2024_Season_1_Episode_1_1.m3u8",
+      "line": 14,
+      "url": "https://files.catbox.moe/ehvf9i.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/ehvf9i.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Ranma_1_2_2024_Season_1_Episode_10_10.m3u8",
+      "line": 10,
+      "url": "https://files.catbox.moe/yzq9vp.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/yzq9vp.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Ranma_1_2_2024_Season_1_Episode_10_10.m3u8",
+      "line": 14,
+      "url": "https://files.catbox.moe/a9z074.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/a9z074.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Ranma_1_2_2024_Season_1_Episode_11_11.m3u8",
+      "line": 10,
+      "url": "https://files.catbox.moe/4l8ziy.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/4l8ziy.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Ranma_1_2_2024_Season_1_Episode_11_11.m3u8",
+      "line": 14,
+      "url": "https://files.catbox.moe/m9m903.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/m9m903.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Ranma_1_2_2024_Season_1_Episode_12_12.m3u8",
+      "line": 10,
+      "url": "https://files.catbox.moe/1u2pk2.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/1u2pk2.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Ranma_1_2_2024_Season_1_Episode_12_12.m3u8",
+      "line": 14,
+      "url": "https://files.catbox.moe/6myaa0.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/6myaa0.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Ranma_1_2_2024_Season_1_Episode_2_2.m3u8",
+      "line": 10,
+      "url": "https://files.catbox.moe/4blgx7.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/4blgx7.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Ranma_1_2_2024_Season_1_Episode_2_2.m3u8",
+      "line": 14,
+      "url": "https://files.catbox.moe/4ydl4g.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/4ydl4g.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Ranma_1_2_2024_Season_1_Episode_3_3.m3u8",
+      "line": 10,
+      "url": "https://files.catbox.moe/i3zhf2.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/i3zhf2.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Ranma_1_2_2024_Season_1_Episode_3_3.m3u8",
+      "line": 14,
+      "url": "https://files.catbox.moe/6g3gyl.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/6g3gyl.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Ranma_1_2_2024_Season_1_Episode_4_4.m3u8",
+      "line": 10,
+      "url": "https://files.catbox.moe/hhz2hx.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/hhz2hx.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Ranma_1_2_2024_Season_1_Episode_4_4.m3u8",
+      "line": 14,
+      "url": "https://files.catbox.moe/182dnt.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/182dnt.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Ranma_1_2_2024_Season_1_Episode_5_5.m3u8",
+      "line": 10,
+      "url": "https://files.catbox.moe/xf44v8.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/xf44v8.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Ranma_1_2_2024_Season_1_Episode_5_5.m3u8",
+      "line": 14,
+      "url": "https://files.catbox.moe/64zjsq.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/64zjsq.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Ranma_1_2_2024_Season_1_Episode_6_6.m3u8",
+      "line": 10,
+      "url": "https://files.catbox.moe/4zyk66.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/4zyk66.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Ranma_1_2_2024_Season_1_Episode_6_6.m3u8",
+      "line": 14,
+      "url": "https://files.catbox.moe/5d20jp.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/5d20jp.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Ranma_1_2_2024_Season_1_Episode_7_7.m3u8",
+      "line": 10,
+      "url": "https://files.catbox.moe/m1eyp6.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/m1eyp6.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Ranma_1_2_2024_Season_1_Episode_7_7.m3u8",
+      "line": 14,
+      "url": "https://files.catbox.moe/kigaoj.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/kigaoj.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Ranma_1_2_2024_Season_1_Episode_8_8.m3u8",
+      "line": 10,
+      "url": "https://files.catbox.moe/jx9u44.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/jx9u44.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Ranma_1_2_2024_Season_1_Episode_8_8.m3u8",
+      "line": 14,
+      "url": "https://files.catbox.moe/6nxha1.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/6nxha1.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Ranma_1_2_2024_Season_1_Episode_9_9.m3u8",
+      "line": 10,
+      "url": "https://files.catbox.moe/6dvf16.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/6dvf16.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Ranma_1_2_2024_Season_1_Episode_9_9.m3u8",
+      "line": 14,
+      "url": "https://files.catbox.moe/bhhlsf.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/bhhlsf.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Ranma_1_2_2024_Season_2_Episode_10_10.m3u8",
+      "line": 10,
+      "url": "https://files.catbox.moe/719zlq.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/719zlq.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Ranma_1_2_2024_Season_2_Episode_10_10.m3u8",
+      "line": 14,
+      "url": "https://files.catbox.moe/e5f6lk.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/e5f6lk.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Ranma_1_2_2024_Season_2_Episode_3_3.m3u8",
+      "line": 10,
+      "url": "https://files.catbox.moe/qcyu8u.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/qcyu8u.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Ranma_1_2_2024_Season_2_Episode_3_3.m3u8",
+      "line": 14,
+      "url": "https://files.catbox.moe/6aek5t.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/6aek5t.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Ranma_1_2_2024_Season_2_Episode_4_4.m3u8",
+      "line": 10,
+      "url": "https://files.catbox.moe/prxmkc.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/prxmkc.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Ranma_1_2_2024_Season_2_Episode_4_4.m3u8",
+      "line": 14,
+      "url": "https://files.catbox.moe/9sc0e3.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/9sc0e3.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Ranma_1_2_2024_Season_2_Episode_5_5.m3u8",
+      "line": 10,
+      "url": "https://files.catbox.moe/uqq5cn.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/uqq5cn.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Ranma_1_2_2024_Season_2_Episode_5_5.m3u8",
+      "line": 14,
+      "url": "https://files.catbox.moe/e4oe9b.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/e4oe9b.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Ranma_1_2_2024_Season_2_Episode_6_6.m3u8",
+      "line": 10,
+      "url": "https://files.catbox.moe/elo021.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/elo021.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Ranma_1_2_2024_Season_2_Episode_6_6.m3u8",
+      "line": 14,
+      "url": "https://files.catbox.moe/ege2jm.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/ege2jm.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Ranma_1_2_2024_Season_2_Episode_7_7.m3u8",
+      "line": 10,
+      "url": "https://files.catbox.moe/95we8n.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/95we8n.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Ranma_1_2_2024_Season_2_Episode_7_7.m3u8",
+      "line": 14,
+      "url": "https://files.catbox.moe/hmv7no.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/hmv7no.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Ranma_1_2_2024_Season_2_Episode_8_8.m3u8",
+      "line": 10,
+      "url": "https://files.catbox.moe/sumo7t.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/sumo7t.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Ranma_1_2_2024_Season_2_Episode_8_8.m3u8",
+      "line": 14,
+      "url": "https://files.catbox.moe/e0zb98.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/e0zb98.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Rascal_Does_Not_Dream_Of_A_Bunny_Girl_Senpai_Rascal_Does_Not_Dream_of_a_Dreaming_Girl_category_2.m3u8",
+      "line": 10,
+      "url": "https://files.catbox.moe/896sth.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/896sth.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Rascal_Does_Not_Dream_Of_A_Bunny_Girl_Senpai_Rascal_Does_Not_Dream_of_a_Dreaming_Girl_category_2.m3u8",
+      "line": 14,
+      "url": "https://files.catbox.moe/hrto3x.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/hrto3x.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Rascal_Does_Not_Dream_Of_A_Bunny_Girl_Senpai_Rascal_Does_Not_Dream_of_a_Dreaming_Girl_category_2.m3u8",
+      "line": 18,
+      "url": "https://files.catbox.moe/f1v7du.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/f1v7du.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Rascal_Does_Not_Dream_Of_A_Bunny_Girl_Senpai_Rascal_Does_Not_Dream_of_a_Dreaming_Girl_category_2.m3u8",
+      "line": 22,
+      "url": "https://files.catbox.moe/mor8e0.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/mor8e0.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Rascal_Does_Not_Dream_Of_A_Bunny_Girl_Senpai_Rascal_Does_Not_Dream_of_a_Dreaming_Girl_category_2.m3u8",
+      "line": 26,
+      "url": "https://files.catbox.moe/995r9g.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/995r9g.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Rascal_Does_Not_Dream_Of_A_Bunny_Girl_Senpai_Rascal_Does_Not_Dream_of_a_Knapsack_Kid_category_4.m3u8",
+      "line": 10,
+      "url": "https://files.catbox.moe/db6e6v.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/db6e6v.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Rascal_Does_Not_Dream_Of_A_Bunny_Girl_Senpai_Rascal_Does_Not_Dream_of_a_Knapsack_Kid_category_4.m3u8",
+      "line": 14,
+      "url": "https://files.catbox.moe/gnnea9.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/gnnea9.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Rascal_Does_Not_Dream_Of_A_Bunny_Girl_Senpai_Rascal_Does_Not_Dream_of_a_Sister_Venturing_Out_category_3.m3u8",
+      "line": 10,
+      "url": "https://files.catbox.moe/wqdssb.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/wqdssb.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Rascal_Does_Not_Dream_Of_A_Bunny_Girl_Senpai_Rascal_Does_Not_Dream_of_a_Sister_Venturing_Out_category_3.m3u8",
+      "line": 14,
+      "url": "https://files.catbox.moe/4fcimv.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/4fcimv.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Re_Zero_Season_3_Episode_1_1.m3u8",
+      "line": 10,
+      "url": "https://files.catbox.moe/bblfjb.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/bblfjb.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Re_Zero_Season_3_Episode_1_1.m3u8",
+      "line": 14,
+      "url": "https://files.catbox.moe/06iyxi.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/06iyxi.mp4"
+    },
+    {
+      "file": "Sources/Files/Playlists/Re_Zero_Season_3_Episode_1_1.m3u8",
+      "line": 18,
+      "url": "https://files.catbox.moe/yjplof.mp4",
+      "status": 404,
+      "statusText": "Not Found",
+      "ok": false,
+      "finalUrl": "https://files.catbox.moe/yjplof.mp4"
+    }
+  ]
+}

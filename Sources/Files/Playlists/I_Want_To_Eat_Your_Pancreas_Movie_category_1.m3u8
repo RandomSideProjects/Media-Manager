@@ -1,0 +1,23 @@
+#EXTM3U
+#EXT-X-VERSION:3
+#EXT-X-PLAYLIST-TYPE:VOD
+#EXT-X-INDEPENDENT-SEGMENTS
+#EXT-X-TARGETDURATION:1638
+#EXT-X-MEDIA-SEQUENCE:0
+#EXT-X-MM-TITLE:I Want To Eat Your Pancreas - Movie
+#EXTINF:1632.000,Part 1
+#EXT-X-MM-FILE-SIZE:151326926
+https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/I_Want_To_Eat_Your_Pancreas/1.mp4
+#EXT-X-DISCONTINUITY
+#EXTINF:1638.000,Part 2
+#EXT-X-MM-FILE-SIZE:117279341
+https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/I_Want_To_Eat_Your_Pancreas/2.mp4
+#EXT-X-DISCONTINUITY
+#EXTINF:1625.000,Part 3
+#EXT-X-MM-FILE-SIZE:141357508
+https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/I_Want_To_Eat_Your_Pancreas/3.mp4
+#EXT-X-DISCONTINUITY
+#EXTINF:1628.000,Part 4
+#EXT-X-MM-FILE-SIZE:196070313
+https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/I_Want_To_Eat_Your_Pancreas/4.mp4
+#EXT-X-ENDLIST
