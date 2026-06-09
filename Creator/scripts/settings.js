@@ -11,10 +11,12 @@ const SETTINGS_CURRENT_GITHUB_WORKER_ROOT = 'https://mm.littlehacker303.workers.
 const SETTINGS_DEFAULT_GITHUB_WORKER_URL = (typeof window !== 'undefined' && typeof window.MM_DEFAULT_GITHUB_WORKER_URL === 'string') ? window.MM_DEFAULT_GITHUB_WORKER_URL : SETTINGS_CURRENT_GITHUB_WORKER_ROOT;
 const SETTINGS_LEGACY_GITHUB_WORKER_ROOT = 'https://mmback.littlehacker303.workers.dev/gh';
 const SETTINGS_CATBOX_DIRECT_URL = 'https://catbox.moe/user/api.php';
-const SETTINGS_CATBOX_BACKEND_URL = 'https://mm.littlehacker303.workers.dev/catbox/user/api.php';
-const SETTINGS_CATBOX_MODE_KEY = 'catboxOverrideMode';
 const SETTINGS_DEFAULT_COPYPARTY_HOST = 'cpr.xpbliss.fyi';
 const SETTINGS_DEFAULT_COPYPARTY_UPLOAD_PATH = '/pub/MM/';
+
+function getUploadServerApi() {
+  return (typeof window !== 'undefined' && window.MMUploadServer) ? window.MMUploadServer : null;
+}
 
 function normalizeGithubWorkerUrlValue(raw) {
   const trimmed = (typeof raw === 'string') ? raw.trim() : '';
@@ -33,7 +35,9 @@ function normalizeGithubWorkerUrlValue(raw) {
 }
 
 function defaultCatboxUploadUrl() {
-  return SETTINGS_CATBOX_BACKEND_URL;
+  const api = getUploadServerApi();
+  if (api && api.directUrl) return api.directUrl;
+  return SETTINGS_CATBOX_DIRECT_URL;
 }
 
 function normalizeCopypartyUploadUrlValue(raw) {
@@ -55,46 +59,23 @@ function normalizeCopypartyUploadUrlValue(raw) {
 }
 
 function normalizeCatboxMode(value) {
-  const trimmed = (typeof value === 'string') ? value.trim().toLowerCase() : 'default';
-  if (trimmed === 'direct' || trimmed === 'proxy') return trimmed;
-  return 'default';
+  const api = getUploadServerApi();
+  if (api && typeof api.normalizeMode === 'function') {
+    return api.normalizeMode(value);
+  }
+  const trimmed = (typeof value === 'string') ? value.trim().toLowerCase() : 'auto';
+  if (trimmed === 'direct') return 'direct';
+  if (trimmed === 'proxy') return 'proxy';
+  if (trimmed === 'copyparty') return 'copyparty';
+  return 'auto';
 }
 
-function applyCatboxOverride(mode, proxyUrl) {
-  const normalizedMode = normalizeCatboxMode(mode);
-  if (typeof window === 'undefined') return;
-  window.MM_CATBOX_OVERRIDE_MODE = normalizedMode;
-  if (normalizedMode === 'direct') {
-    const previous = (typeof window.MM_ACTIVE_CATBOX_UPLOAD_URL === 'string') ? window.MM_ACTIVE_CATBOX_UPLOAD_URL : '';
-    window.MM_ACTIVE_CATBOX_UPLOAD_URL = SETTINGS_CATBOX_DIRECT_URL;
-    if (previous !== SETTINGS_CATBOX_DIRECT_URL) {
-      try {
-        window.dispatchEvent(new CustomEvent('rsp:catbox-default-updated', { detail: { url: SETTINGS_CATBOX_DIRECT_URL, previous, meta: { source: 'direct', override: 'direct' } } }));
-      } catch {}
-    }
+function applyCatboxOverride(mode) {
+  const api = getUploadServerApi();
+  if (api && typeof api.applyRuntime === 'function') {
+    api.applyRuntime({ source: 'settings-override', mode: normalizeCatboxMode(mode) });
     return;
   }
-  if (normalizedMode !== 'proxy') return;
-
-  const candidate = (typeof proxyUrl === 'string' && proxyUrl.trim()) ? proxyUrl.trim() : defaultCatboxUploadUrl();
-  const previous = (typeof window.MM_DEFAULT_CATBOX_UPLOAD_URL === 'string') ? window.MM_DEFAULT_CATBOX_UPLOAD_URL : '';
-  window.MM_DEFAULT_CATBOX_UPLOAD_URL = candidate;
-  window.MM_ACTIVE_CATBOX_UPLOAD_URL = candidate;
-  if (previous !== candidate) {
-    try {
-      window.dispatchEvent(new CustomEvent('rsp:catbox-default-updated', { detail: { url: candidate, previous, meta: { source: 'overwrite' } } }));
-    } catch {}
-  }
-}
-
-function applyCatboxBackendUrl(url) {
-  if (typeof window === 'undefined') return;
-  const normalized = (typeof url === 'string' && url.trim()) ? url.trim() : defaultCatboxUploadUrl();
-  window.MM_DEFAULT_CATBOX_UPLOAD_URL = normalized;
-  window.MM_ACTIVE_CATBOX_UPLOAD_URL = normalized;
-  try {
-    window.dispatchEvent(new CustomEvent('rsp:catbox-default-updated', { detail: { url: normalized, previous: '', meta: { source: 'dev-override' } } }));
-  } catch {}
 }
 
 function loadUploadSettings(){
@@ -105,7 +86,8 @@ function loadUploadSettings(){
         anonymous: true,
         userhash: '',
         githubWorkerUrl: normalizeGithubWorkerUrlValue(SETTINGS_DEFAULT_GITHUB_WORKER_URL),
-        catboxUploadUrl: defaultCatboxUploadUrl(),
+        catboxUploadUrl: '',
+        catboxOverrideMode: 'auto',
         copypartyThresholdMb: 100,
         copypartyUploadUrl: '',
         copypartyPw: '',
@@ -117,7 +99,8 @@ function loadUploadSettings(){
         paheImportEnabled: DEFAULT_PAHE_IMPORT_ENABLED,
         webhookUrl: '',
         separationTag: false,
-        folderUploadYellWhenHidden: true
+        folderUploadYellWhenHidden: true,
+        autoArchiveOversize: false
       };
       return initial;
     }
@@ -136,9 +119,10 @@ function loadUploadSettings(){
       compressPosters: compress,
       separationTag: !!p.separationTag,
       folderUploadYellWhenHidden: (typeof p.folderUploadYellWhenHidden === 'boolean') ? p.folderUploadYellWhenHidden : true,
+      autoArchiveOversize: (typeof p.autoArchiveOversize === 'boolean') ? p.autoArchiveOversize : false,
       githubWorkerUrl: normalizedGithubUrl,
       githubToken: (typeof p.githubToken === 'string') ? p.githubToken : '',
-      catboxUploadUrl: (typeof p.catboxUploadUrl === 'string' && p.catboxUploadUrl.trim()) ? p.catboxUploadUrl.trim() : defaultCatboxUploadUrl(),
+      catboxUploadUrl: (typeof p.catboxUploadUrl === 'string' && p.catboxUploadUrl.trim()) ? p.catboxUploadUrl.trim() : '',
       catboxOverrideMode: normalizeCatboxMode(p.catboxOverrideMode),
       copypartyThresholdMb: Number.isFinite(parseFloat(p.copypartyThresholdMb)) ? Math.max(6, Math.min(100, parseFloat(p.copypartyThresholdMb))) : 100,
       copypartyUploadUrl: normalizeCopypartyUploadUrlValue((typeof p.copypartyUploadUrl === 'string') ? p.copypartyUploadUrl : ((typeof p.copypartyUrl === 'string') ? p.copypartyUrl : '')),
@@ -151,7 +135,6 @@ function loadUploadSettings(){
       paheImportEnabled: (typeof p.paheImportEnabled === 'boolean') ? p.paheImportEnabled : DEFAULT_PAHE_IMPORT_ENABLED,
       webhookUrl: (typeof p.webhookUrl === 'string') ? p.webhookUrl.trim() : ''
     };
-    applyCatboxOverride(result.catboxOverrideMode, result.catboxUploadUrl);
     if (storedGithubRaw && normalizedGithubUrl && normalizedGithubUrl !== storedGithubRaw) {
       saveUploadSettings(result);
     }
@@ -162,8 +145,8 @@ function loadUploadSettings(){
     userhash: '',
     githubWorkerUrl: normalizeGithubWorkerUrlValue(SETTINGS_DEFAULT_GITHUB_WORKER_URL),
     githubToken: '',
-    catboxUploadUrl: defaultCatboxUploadUrl(),
-    catboxOverrideMode: 'default',
+    catboxUploadUrl: '',
+    catboxOverrideMode: 'auto',
     copypartyThresholdMb: 100,
     copypartyUploadUrl: '',
     copypartyPw: '',
@@ -175,7 +158,8 @@ function loadUploadSettings(){
     paheImportEnabled: DEFAULT_PAHE_IMPORT_ENABLED,
     webhookUrl: '',
     separationTag: false,
-    folderUploadYellWhenHidden: true
+    folderUploadYellWhenHidden: true,
+    autoArchiveOversize: false
   };
   return fallback;
 }
@@ -192,6 +176,7 @@ function saveUploadSettings(s){
     compressPosters: (typeof s.compressPosters === 'boolean') ? s.compressPosters : true,
     separationTag: !!s.separationTag,
     folderUploadYellWhenHidden: (typeof s.folderUploadYellWhenHidden === 'boolean') ? s.folderUploadYellWhenHidden : true,
+    autoArchiveOversize: (typeof s.autoArchiveOversize === 'boolean') ? s.autoArchiveOversize : false,
     githubWorkerUrl: normalizeGithubWorkerUrlValue((typeof s.githubWorkerUrl === 'string') ? s.githubWorkerUrl.trim() : ''),
     githubToken: (typeof s.githubToken === 'string') ? s.githubToken.trim() : '',
     catboxUploadUrl: (typeof s.catboxUploadUrl === 'string') ? s.catboxUploadUrl.trim() : '',
@@ -207,7 +192,7 @@ function saveUploadSettings(s){
     paheImportEnabled: !!s.paheImportEnabled,
     webhookUrl: (typeof s.webhookUrl === 'string') ? s.webhookUrl.trim() : ''
   }));
-  applyCatboxOverride(s.catboxOverrideMode, s.catboxUploadUrl);
+  applyCatboxOverride(s.catboxOverrideMode);
 }
 
 function saveSettingsPartial(partial) {
@@ -218,13 +203,30 @@ function saveSettingsPartial(partial) {
 }
 
 function getCatboxUploadUrl() {
-  const settings = loadUploadSettings();
-  const raw = settings && typeof settings.catboxUploadUrl === 'string' ? settings.catboxUploadUrl.trim() : '';
-  return raw || defaultCatboxUploadUrl();
+  const api = getUploadServerApi();
+  if (api && typeof api.getCatboxUploadUrl === 'function') {
+    return api.getCatboxUploadUrl();
+  }
+  return defaultCatboxUploadUrl();
 }
 
 if (typeof window !== 'undefined') {
   window.mm_getCatboxUploadUrl = getCatboxUploadUrl;
+  window.mm_getCatboxMode = () => {
+    const api = getUploadServerApi();
+    if (api && typeof api.getState === 'function') return api.getState().mode;
+    return normalizeCatboxMode(loadUploadSettings().catboxOverrideMode);
+  };
+  window.mm_setCatboxMode = (mode) => {
+    const api = getUploadServerApi();
+    if (api && typeof api.setMode === 'function') {
+      return api.setMode(mode);
+    }
+    const current = loadUploadSettings();
+    const next = normalizeCatboxMode(mode);
+    saveUploadSettings(Object.assign({}, current, { catboxOverrideMode: next }));
+    return next;
+  };
 }
 
 // Expose globals
@@ -250,8 +252,10 @@ let mmCbzExpandManual = null;
 let mmPosterCompressToggle = null;
 let mmSeparationToggle = null;
 let mmPaheImportToggle = null;
+let mmUploadServerSummary = null;
+let mmUploadServerManageBtn = null;
 let mmFolderUploadYellToggle = null;
-let mmCatboxUrlInput = null;
+let mmAutoArchiveOversizeToggle = null;
 let devMenuRow = null;
 let devMenuStatus = null;
 let settingsPanelInitialized = false;
@@ -279,7 +283,10 @@ function ensureUploadSettingsPanel() {
       mmPosterCompressToggle = document.getElementById('mmPosterCompressToggle');
       mmSeparationToggle = document.getElementById('mmSeparationToggle');
       mmPaheImportToggle = document.getElementById('mmPaheImportToggle');
+      mmUploadServerSummary = document.getElementById('mmUploadServerSummary');
+      mmUploadServerManageBtn = document.getElementById('mmUploadServerManageBtn');
       mmFolderUploadYellToggle = document.getElementById('mmFolderUploadYellToggle');
+      mmAutoArchiveOversizeToggle = document.getElementById('mmAutoArchiveOversizeToggle');
       devMenuRow = document.getElementById('devMenuRow');
       devMenuStatus = document.getElementById('devMenuStatus');
       
@@ -310,31 +317,6 @@ if (typeof window !== 'undefined') {
     const enabled = event && event.detail && event.detail.enabled === true;
     updateDevModeRowsVisibility(enabled);
   });
-
-  window.addEventListener('rsp:catbox-default-updated', (event) => {
-    try {
-      const detail = event && event.detail ? event.detail : {};
-      const previous = (typeof detail.previous === 'string') ? detail.previous.trim() : '';
-      const nextDefault = defaultCatboxUploadUrl();
-
-      if (mmCatboxUrlInput) {
-        const currentVal = (mmCatboxUrlInput.value || '').trim();
-        if (!currentVal || (previous && currentVal === previous)) {
-          mmCatboxUrlInput.value = nextDefault;
-        }
-      }
-
-      const currentSettings = loadUploadSettings();
-      const storedUrl = (currentSettings.catboxUploadUrl || '').trim();
-      const useProxy = detail && detail.meta && detail.meta.source === 'proxy';
-
-      if (useProxy && (!storedUrl || (previous && storedUrl === previous))) {
-        saveSettingsPartial({ catboxUploadUrl: '' });
-      }
-    } catch (err) {
-      console.error('[Creator] Failed to react to Catbox default update', err);
-    }
-  });
 }
 
 function updateCbzRelated() {
@@ -350,6 +332,24 @@ function updateCbzRelated() {
   }
 }
 
+function refreshUploadServerSummary() {
+  const api = getUploadServerApi();
+  if (!mmUploadServerSummary) {
+    mmUploadServerSummary = document.getElementById('mmUploadServerSummary');
+  }
+  if (!mmUploadServerSummary) return;
+  if (api && typeof api.getState === 'function') {
+    const state = api.getState();
+    const summary = state && state.summary ? state.summary : 'Auto using direct Catbox';
+    const detail = state && state.detailText ? state.detailText : '';
+    mmUploadServerSummary.textContent = summary;
+    mmUploadServerSummary.title = detail || summary;
+    return;
+  }
+  mmUploadServerSummary.textContent = 'Auto using direct Catbox';
+  mmUploadServerSummary.title = 'Direct Catbox will be tried first, with proxy fallback if needed.';
+}
+
 mmBtn = document.getElementById('mmUploadSettingsBtn');
 function openUploadSettingsPanel(event) {
   try {
@@ -359,6 +359,7 @@ function openUploadSettingsPanel(event) {
   if (mmPanel) {
     mmPanel.style.display = 'flex';
     updateCbzRelated();
+    refreshUploadServerSummary();
   }
 }
 if (typeof window !== 'undefined') {
@@ -393,7 +394,9 @@ function initializeUploadSettingsPanel() {
   if (mmPosterCompressToggle) mmPosterCompressToggle.checked = (typeof st.compressPosters === 'boolean') ? st.compressPosters : true;
   if (mmSeparationToggle) mmSeparationToggle.checked = !!st.separationTag;
   if (mmPaheImportToggle) mmPaheImportToggle.checked = (typeof st.paheImportEnabled === 'boolean') ? st.paheImportEnabled : DEFAULT_PAHE_IMPORT_ENABLED;
+  refreshUploadServerSummary();
   if (mmFolderUploadYellToggle) mmFolderUploadYellToggle.checked = (typeof st.folderUploadYellWhenHidden === 'boolean') ? st.folderUploadYellWhenHidden : true;
+  if (mmAutoArchiveOversizeToggle) mmAutoArchiveOversizeToggle.checked = (typeof st.autoArchiveOversize === 'boolean') ? st.autoArchiveOversize : false;
   if (mmUploadConcRange) {
     mmUploadConcRange.value = String(st.uploadConcurrency || 2);
     if (mmUploadConcValue) mmUploadConcValue.textContent = String(st.uploadConcurrency || 2);
@@ -444,10 +447,17 @@ function initializeUploadSettingsPanel() {
   }
   updateAnonFields();
   mmAnonToggle.addEventListener('change', updateAnonFields);
+  if (mmUploadServerManageBtn) {
+    mmUploadServerManageBtn.addEventListener('click', () => {
+      if (typeof openUploadServerOverrideOverlay === 'function') {
+        openUploadServerOverrideOverlay(document.getElementById('serverStatusBox'));
+      }
+    });
+  }
   mmSaveBtn.addEventListener('click', () => {
     const current = loadUploadSettings();
     const mode = (mmModeManga && mmModeManga.checked) ? 'manga' : 'anime';
-    const saved = {
+    const saved = Object.assign({}, current, {
       anonymous: mmAnonToggle.checked,
       userhash: mmUserhashInput.value.trim(),
       uploadConcurrency: mmUploadConcRange ? parseInt(mmUploadConcRange.value,10) : 2,
@@ -459,45 +469,41 @@ function initializeUploadSettingsPanel() {
       separationTag: mmSeparationToggle ? !!mmSeparationToggle.checked : false,
       paheImportEnabled: mmPaheImportToggle ? !!mmPaheImportToggle.checked : DEFAULT_PAHE_IMPORT_ENABLED,
       folderUploadYellWhenHidden: mmFolderUploadYellToggle ? !!mmFolderUploadYellToggle.checked : true,
+      autoArchiveOversize: mmAutoArchiveOversizeToggle ? !!mmAutoArchiveOversizeToggle.checked : false,
       paheAnimeApiBase: current.paheAnimeApiBase || DEFAULT_PAHE_ANIME_API_BASE,
       paheKwikApiBase: current.paheKwikApiBase || DEFAULT_PAHE_KWIK_API_BASE,
       paheKwikAuthToken: current.paheKwikAuthToken || DEFAULT_PAHE_KWIK_AUTH_TOKEN
-    };
+    });
     saveUploadSettings(saved);
     try { window.dispatchEvent(new CustomEvent('mm_settings_saved', { detail: saved })); } catch {}
     mmPanel.style.display = 'none';
   });
 }
 
-// Test JSON sender (dev-only)
+// Test upload helper (dev-only)
 async function mm_sendTestJson() {
   try {
     const st = loadUploadSettings();
-    const effectiveUserhash = (st.userhash || '').trim() || DEFAULT_USERHASH;
-    let titleVal = '';
-    try { const t = document.getElementById('dirTitle'); titleVal = t ? (t.value || '').trim() : ''; } catch {}
-    let categoryCount = 0;
-    try { categoryCount = document.querySelectorAll('.category').length; } catch {}
+    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 ';
+    const bytes = new Uint8Array(100);
+    if (typeof crypto !== 'undefined' && crypto && typeof crypto.getRandomValues === 'function') {
+      crypto.getRandomValues(bytes);
+    } else {
+      for (let i = 0; i < bytes.length; i += 1) bytes[i] = Math.floor(Math.random() * 256);
+    }
+    let text = '';
+    for (let i = 0; i < bytes.length; i += 1) {
+      text += alphabet.charAt(bytes[i] % alphabet.length);
+    }
 
-    const payload = {
-      _type: 'media-manager-test',
-      page: 'Creator/index.html',
-      at: new Date().toISOString(),
-      settings: { anonymous: !!st.anonymous, userhash: st.anonymous ? '(ignored: anonymous=true)' : effectiveUserhash },
-      state: { title: titleVal, categories: categoryCount },
-      ua: navigator.userAgent || ''
-    };
-
-    const json = JSON.stringify(payload, null, 2);
-    const blob = new Blob([json], { type: 'application/json' });
-    const file = new File([blob], `mm_test_${Date.now()}.json`, { type: 'application/json' });
-
-    const catboxUrl = (typeof st.catboxUploadUrl === 'string' && st.catboxUploadUrl.trim()) ? st.catboxUploadUrl.trim() : defaultCatboxUploadUrl();
+    const blob = new Blob([text], { type: 'text/plain' });
+    const file = new File([blob], `mm_test_${Date.now()}_100B.txt`, { type: 'text/plain' });
 
     const url = await (window.uploadToCatboxWithProgress ? uploadToCatboxWithProgress(file) : (async () => {
       const fd = new FormData();
       fd.append('reqtype', 'fileupload');
       fd.append('fileToUpload', file);
+      const catboxUrl = (typeof st.catboxUploadUrl === 'string' && st.catboxUploadUrl.trim()) ? st.catboxUploadUrl.trim() : defaultCatboxUploadUrl();
       const res = await fetch(catboxUrl, { method: 'POST', body: fd });
       if (!res.ok) throw new Error('Upload error: ' + res.status);
       return (await res.text()).trim();
@@ -509,11 +515,84 @@ async function mm_sendTestJson() {
     } catch {}
     return url;
   } catch (err) {
-    console.error('[MM][TestJSON] ❌ Failed:', err);
+    console.error('[MM][TestUpload] ❌ Failed:', err);
     throw err;
   }
 }
 window.mm_sendTestJson = mm_sendTestJson;
+
+function mm_shouldAutoRunUploadTest() {
+  try {
+    const params = new URLSearchParams((typeof location !== 'undefined' && location && location.search) ? location.search : '');
+    const raw = (params.get('mmAutoUploadTest') || '').trim().toLowerCase();
+    return raw === '1' || raw === 'true' || raw === 'yes';
+  } catch {
+    return false;
+  }
+}
+
+function mm_ensureAutoUploadTestBanner() {
+  try {
+    let el = document.getElementById('mmAutoUploadTestStatus');
+    if (el) return el;
+    el = document.createElement('div');
+    el.id = 'mmAutoUploadTestStatus';
+    Object.assign(el.style, {
+      position: 'fixed',
+      top: '12px',
+      right: '12px',
+      maxWidth: '420px',
+      padding: '10px 12px',
+      borderRadius: '10px',
+      background: 'rgba(20, 20, 20, 0.95)',
+      color: '#f1f1f1',
+      border: '1px solid rgba(255,255,255,0.12)',
+      boxShadow: '0 12px 28px rgba(0,0,0,0.35)',
+      zIndex: '10040',
+      fontSize: '14px',
+      lineHeight: '1.45',
+      whiteSpace: 'pre-wrap'
+    });
+    document.body.appendChild(el);
+    return el;
+  } catch {
+    return null;
+  }
+}
+
+async function mm_autoRunUploadTestIfRequested() {
+  if (!mm_shouldAutoRunUploadTest()) return;
+  if (typeof window === 'undefined' || window.__mmAutoUploadTestStarted) return;
+  window.__mmAutoUploadTestStarted = true;
+
+  const banner = mm_ensureAutoUploadTestBanner();
+  if (banner) banner.textContent = 'Running Creator 100B upload test...';
+
+  try {
+    const url = await mm_sendTestJson();
+    const message = url
+      ? `Creator 100B upload test: success\n${url}`
+      : 'Creator 100B upload test: success';
+    if (banner) {
+      banner.textContent = message;
+      banner.style.borderColor = 'rgba(110, 193, 228, 0.55)';
+    }
+    try { window.mmAutoUploadTestResult = { ok: true, url: url || '' }; } catch {}
+  } catch (err) {
+    const message = `Creator 100B upload test: failed\n${err && err.message ? err.message : String(err)}`;
+    if (banner) {
+      banner.textContent = message;
+      banner.style.borderColor = 'rgba(255, 107, 107, 0.6)';
+    }
+    try { window.mmAutoUploadTestResult = { ok: false, error: err && err.message ? err.message : String(err) }; } catch {}
+  }
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('load', () => {
+    void mm_autoRunUploadTestIfRequested();
+  });
+}
 
 async function mm_manualUploadSource() {
   try {
@@ -523,6 +602,9 @@ async function mm_manualUploadSource() {
     if (!builder) throw new Error('Creator payload builder unavailable');
     const payload = builder({ includeLatestTime: false });
     if (!payload || typeof payload !== 'object') throw new Error('Could not build source payload');
+    if (typeof window !== 'undefined' && typeof window.mm_isMeaningfulDirectoryPayload === 'function' && !window.mm_isMeaningfulDirectoryPayload(payload)) {
+      throw new Error('Creator is empty');
+    }
     const uploader = (typeof window !== 'undefined' && typeof window.mm_autoUploadFromContent === 'function')
       ? window.mm_autoUploadFromContent
       : (typeof autoUploadFromContent === 'function' ? autoUploadFromContent : null);
@@ -546,6 +628,12 @@ window.mm_manualUploadSource = mm_manualUploadSource;
 
 // Create settings panel immediately so dev-menu.js can access its elements
 ensureUploadSettingsPanel();
+refreshUploadServerSummary();
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('mm:upload-server-state', refreshUploadServerSummary);
+  window.addEventListener('mm_settings_saved', refreshUploadServerSummary);
+}
 
 document.addEventListener('keydown', (e) => {
   try {

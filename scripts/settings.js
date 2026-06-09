@@ -1,7 +1,5 @@
 "use strict";
 
-console.log('[Settings] Script loaded');
-
 // Create overlay immediately on load
 let settingsOverlay = null;
 let settingsCloseBtn = null;
@@ -67,8 +65,6 @@ function updateClippingDependentControls() {
 ensureSettingsOverlay();
 
 const settingsBtn = document.getElementById('settingsBtn');
-console.log('[Settings] settingsBtn found:', !!settingsBtn);
-console.log('[Settings] OverlayFactory available:', !!window.OverlayFactory);
 if (settingsBtn) {
   settingsBtn.addEventListener('click', (e) => {
     e.stopPropagation();

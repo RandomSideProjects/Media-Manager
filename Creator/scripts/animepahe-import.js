@@ -53,32 +53,110 @@
     }
   }
 
+  function getSharedPaheProbeState() {
+    try {
+      if (typeof window === "undefined" || !window) return {};
+      const state = window.MM_PAHE_API_PROBE_STATE;
+      return state && typeof state === "object" ? state : {};
+    } catch {
+      return {};
+    }
+  }
+
+  function setSharedPaheProbeState(partial) {
+    try {
+      if (typeof window === "undefined" || !window) return {};
+      const prev = getSharedPaheProbeState();
+      const next = Object.assign({}, prev, partial && typeof partial === "object" ? partial : {});
+      window.MM_PAHE_API_PROBE_STATE = next;
+      return next;
+    } catch {
+      return {};
+    }
+  }
+
   let paheReachabilityPromise = null;
-  let paheReachabilityOk = (typeof window !== "undefined" && window.MM_PAHE_API_OK === true) ? true : null;
+  let paheReachabilityOk = (() => {
+    const shared = getSharedPaheProbeState();
+    if (shared && typeof shared.ok === "boolean") return shared.ok;
+    return (typeof window !== "undefined" && window.MM_PAHE_API_OK === true) ? true : null;
+  })();
   let paheUnreachableNotified = false;
-  let paheProbeAttempted = false;
+  let paheProbeAttempted = (() => {
+    const shared = getSharedPaheProbeState();
+    return shared.status === "running" || shared.status === "done" || shared.status === "disabled";
+  })();
   let lastImportEnabled = false;
 
   async function probePaheReachable() {
     const { animeApiBase } = getConfig();
+    const shared = getSharedPaheProbeState();
+    if (shared.base === animeApiBase) {
+      if (shared.status === "running" && shared.promise && typeof shared.promise.then === "function") {
+        try {
+          const result = await shared.promise;
+          return !!(result && result.ok);
+        } catch {}
+      }
+      if (shared.status === "done") {
+        return shared.ok === true;
+      }
+    }
     const controller = new AbortController();
     const timeout = setTimeout(() => {
       try { controller.abort(); } catch {}
     }, 6000);
+    const promise = (async () => {
+      try {
+        const res = await fetch(`${animeApiBase}/?method=search&query=naruto`, { cache: "no-store", signal: controller.signal });
+        const ok = !!(res && res.ok);
+        setSharedPaheProbeState({
+          status: "done",
+          base: animeApiBase,
+          ok,
+          line: res ? `${res.status} ${res.statusText || ""}`.trim() : "Network error",
+          result: { ok, status: res ? res.status : 0, statusText: res ? (res.statusText || "") : "Network error" },
+          promise: null
+        });
+        return { ok };
+      } catch {
+        setSharedPaheProbeState({
+          status: "done",
+          base: animeApiBase,
+          ok: false,
+          result: { ok: false, status: 0, statusText: "Network error" },
+          promise: null
+        });
+        return { ok: false };
+      } finally {
+        clearTimeout(timeout);
+      }
+    })();
+    setSharedPaheProbeState({ status: "running", base: animeApiBase, promise });
     try {
-      const res = await fetch(`${animeApiBase}/?method=search&query=naruto`, { cache: "no-store", signal: controller.signal });
-      return !!(res && res.ok);
+      const result = await promise;
+      return !!(result && result.ok);
     } catch {
       return false;
-    } finally {
-      clearTimeout(timeout);
     }
   }
 
   async function ensurePaheReachableIfEnabled() {
     if (!isImportEnabled()) return false;
     if (paheReachabilityOk === true) return true;
-    if (paheProbeAttempted) return false;
+    if (paheProbeAttempted) {
+      const shared = getSharedPaheProbeState();
+      if (shared.status === "running" && shared.promise && typeof shared.promise.then === "function") {
+        try {
+          const result = await shared.promise;
+          paheReachabilityOk = !!(result && result.ok);
+          return paheReachabilityOk;
+        } catch {
+          return false;
+        }
+      }
+      return false;
+    }
     if (paheReachabilityPromise) return await paheReachabilityPromise;
     paheReachabilityPromise = (async () => {
       paheProbeAttempted = true;
@@ -155,6 +233,10 @@
       paheReachabilityPromise = null;
       paheUnreachableNotified = false;
       paheProbeAttempted = false;
+      try {
+        const { animeApiBase } = getConfig();
+        setSharedPaheProbeState({ status: "idle", base: animeApiBase, ok: null, line: "", result: null, promise: null });
+      } catch {}
     }
     lastImportEnabled = nowEnabled;
     updateVisibility();
@@ -164,6 +246,7 @@
     try {
       const ok = !!(event && event.detail && event.detail.ok === true);
       paheReachabilityOk = ok;
+      paheProbeAttempted = true;
       try { window.MM_PAHE_API_OK = ok; } catch {}
     } catch {}
     updateVisibility();
@@ -396,45 +479,7 @@
     return String(payload.content.url);
   }
 
-  function getCatboxUploadEndpoint() {
-    try {
-      const active = (typeof window !== "undefined" && typeof window.MM_ACTIVE_CATBOX_UPLOAD_URL === "string")
-        ? window.MM_ACTIVE_CATBOX_UPLOAD_URL.trim()
-        : "";
-      if (active) return active;
-    } catch {}
-    try {
-      if (typeof window !== "undefined" && typeof window.mm_getCatboxUploadUrl === "function") {
-        const candidate = String(window.mm_getCatboxUploadUrl() || "").trim();
-        if (candidate) return candidate;
-      }
-    } catch {}
-    const st = readUploadSettings();
-    const fromSettings = st && typeof st.catboxUploadUrl === "string" ? st.catboxUploadUrl.trim() : "";
-    return fromSettings || "https://mm.littlehacker303.workers.dev/catbox/user/api.php";
-  }
-
-  function isCatboxProxyActive() {
-    const endpoint = String(getCatboxUploadEndpoint() || "").trim();
-    if (!endpoint) return false;
-    try {
-      const parsed = new URL(endpoint);
-      const host = (parsed.hostname || "").toLowerCase();
-      return host !== "catbox.moe";
-    } catch {
-      return true;
-    }
-  }
-
   async function fetchRemoteContentLength(url) {
-    try {
-      const head = await fetch(url, { method: "HEAD", cache: "no-store" });
-      if (head.ok) {
-        const cl = head.headers.get("content-length") || head.headers.get("Content-Length");
-        const n = cl ? parseInt(cl, 10) : NaN;
-        if (Number.isFinite(n) && n >= 0) return n;
-      }
-    } catch {}
     try {
       const resp = await fetch(url, { method: "GET", headers: { Range: "bytes=0-0" }, cache: "no-store" });
       if (resp.ok || resp.status === 206) {

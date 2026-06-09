@@ -590,7 +590,8 @@ function showResumeMessage() {
     : (item.title || item.__categoryTitle || 'Item');
   const startIndex = group ? group.startIndex : idx;
   const nextIdx = findNextDistinctIndex(startIndex);
-  let message = `You left off on <a id="resumeLink">${displayTitle}</a>`;
+  let promptText = 'You left off on ';
+  let promptTitle = displayTitle;
   let targetIndex = startIndex;
   if (!group) {
     const savedTime = parseFloat(localStorage.getItem(lastKey));
@@ -603,7 +604,8 @@ function showResumeMessage() {
         const nextTitle = nextGroup
           ? (nextGroup.categoryTitle || nextItem.__categoryTitle || nextItem.title || `Item ${nextIdx + 1}`)
           : (nextItem.title || nextItem.__categoryTitle || `Item ${nextIdx + 1}`);
-        message = `Next up, <a id="resumeLink">${nextTitle}</a>`;
+        promptText = 'Next up, ';
+        promptTitle = nextTitle;
         targetIndex = nextGroup ? nextGroup.startIndex : nextIdx;
       }
     }
@@ -612,19 +614,22 @@ function showResumeMessage() {
     targetIndex = startIndex;
   }
   resumeEl.style.display = 'block';
-  resumeEl.innerHTML = message;
-  const link = document.getElementById('resumeLink');
-  if (link) {
-    link.addEventListener('click', (e) => {
-      e.preventDefault();
-      currentIndex = targetIndex;
-      selectorScreen.style.display = 'none';
-      playerScreen.style.display = 'block';
-      backBtn.style.display = 'inline-block';
-      theaterBtn.style.display = 'inline-block';
-      loadVideo(currentIndex);
-    });
-  }
+  resumeEl.textContent = '';
+  resumeEl.appendChild(document.createTextNode(promptText));
+  const link = document.createElement('a');
+  link.id = 'resumeLink';
+  link.href = '#';
+  link.textContent = promptTitle;
+  link.addEventListener('click', (e) => {
+    e.preventDefault();
+    currentIndex = targetIndex;
+    selectorScreen.style.display = 'none';
+    playerScreen.style.display = 'block';
+    backBtn.style.display = 'inline-block';
+    theaterBtn.style.display = 'inline-block';
+    loadVideo(currentIndex);
+  });
+  resumeEl.appendChild(link);
 }
 
 function mmIsVisible(el) {

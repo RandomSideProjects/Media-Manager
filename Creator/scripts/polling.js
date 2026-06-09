@@ -125,6 +125,19 @@ function buildAutoUploadPayload() {
   return contentOnly;
 }
 
+function isMeaningfulAutoUploadPayload(payload) {
+  try {
+    if (typeof window !== 'undefined' && typeof window.mm_isMeaningfulDirectoryPayload === 'function') {
+      return window.mm_isMeaningfulDirectoryPayload(payload);
+    }
+  } catch {}
+  const data = (payload && typeof payload === 'object') ? payload : {};
+  const title = typeof data.title === 'string' ? data.title.trim() : '';
+  const image = typeof data.Image === 'string' ? data.Image.trim() : '';
+  const categories = Array.isArray(data.categories) ? data.categories : [];
+  return !!title || (!!image && image !== 'N/A') || categories.length > 0;
+}
+
 async function autoUploadFromContent(contentObj) {
   if (isSplitDownloadModeEnabled()) return;
   const payload = { ...contentObj, LatestTime: new Date().toISOString() };
@@ -150,13 +163,11 @@ async function autoUploadFromContent(contentObj) {
     }
   } catch (err) {
     try {
-      if (typeof outputEl !== 'undefined') {
-        outputEl.textContent = 'Failed to auto-upload: ' + err.message;
-      } else if (typeof window !== 'undefined') {
-        const el = window.document && window.document.getElementById('output');
-        if (el) el.textContent = 'Failed to auto-upload: ' + err.message;
+      if (typeof window !== 'undefined' && typeof window.mm_setCreatorOutputStatus === 'function') {
+        window.mm_setCreatorOutputStatus('Failed to auto-upload: ' + err.message, 'error');
       }
     } catch {}
+    throw err;
   }
 }
 if (typeof window !== 'undefined') {
@@ -185,6 +196,20 @@ function startAutoUploadPolling() {
     if (folderUploading) return;
     const contentOnly = buildAutoUploadPayload();
     if (!contentOnly) return;
+    if (!isMeaningfulAutoUploadPayload(contentOnly)) {
+      lastUploadedContent = null;
+      lastAttemptedContent = null;
+      inflightContentStr = null;
+      lastAutoUploadFailedAt = 0;
+      try {
+        if (typeof window !== 'undefined' && typeof window.mm_clearCreatorOutputBox === 'function') {
+          window.mm_clearCreatorOutputBox();
+        } else if (typeof window !== 'undefined' && typeof window.mm_clearCreatorOutputStatus === 'function') {
+          window.mm_clearCreatorOutputStatus();
+        }
+      } catch {}
+      return;
+    }
     const contentStr = JSON.stringify(contentOnly);
     if (contentStr === lastUploadedContent) return;
 

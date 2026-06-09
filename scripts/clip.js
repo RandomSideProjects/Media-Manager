@@ -155,7 +155,25 @@ async function resolveClipUploadEndpoint() {
       console.warn('[Clip] Falling back to direct Catbox endpoint', err);
     }
   }
-  return 'https://mm.littlehacker303.workers.dev/catbox/user/api.php';
+  return 'https://catbox.moe/user/api.php';
+}
+
+function isValidClipUploadUrl(value) {
+  return /^https?:\/\//i.test(String(value || '').trim());
+}
+
+function getClipUploadFallbackEndpoint(primary) {
+  if (typeof window === 'undefined' || !window.MM_catbox || typeof window.MM_catbox.getUploadPlan !== 'function') {
+    return '';
+  }
+  try {
+    const plan = window.MM_catbox.getUploadPlan();
+    const current = (typeof primary === 'string') ? primary.trim() : '';
+    if (plan && typeof plan.fallbackUrl === 'string' && plan.fallbackUrl.trim() && plan.fallbackUrl.trim() !== current) {
+      return plan.fallbackUrl.trim();
+    }
+  } catch {}
+  return '';
 }
 
 function showClipNotice(message, tone = 'warning') {
@@ -181,6 +199,20 @@ function isClipLocalOnlyEnabled() {
   return isLocalStorageFlagEnabled(CLIP_LOCAL_MODE_KEY);
 }
 
+function escapeClipHtml(value) {
+  return String(value == null ? '' : value).replace(/[&<>"']/g, (ch) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  }[ch]));
+}
+
+function escapeClipAttribute(value) {
+  return escapeClipHtml(value).replace(/`/g, '&#96;');
+}
+
 function buildClipPreviewHTML(blob) {
   if (!blob || !isLocalStorageFlagEnabled('clipPreviewEnabled')) return '';
   try {
@@ -189,7 +221,7 @@ function buildClipPreviewHTML(blob) {
       lastPreviewObjectURL = null;
     }
     lastPreviewObjectURL = URL.createObjectURL(blob);
-    return `<video class="clip-preview-video" src="${lastPreviewObjectURL}" controls playsinline></video>`;
+    return `<video class="clip-preview-video" src="${escapeClipAttribute(lastPreviewObjectURL)}" controls playsinline></video>`;
   } catch {
     return '';
   }
@@ -285,8 +317,8 @@ async function tryRemoteClipCapture(start, end, durationSeconds, overlay, msg, b
     overlay.style.display = 'none';
     const durationLabel = formatTimeForInput(durationSeconds);
     const fragments = [
-      `<div class="clip-result__title">Clip ready via clip API</div>${previewHTML}<p class="clip-result__detail clip-result__detail--muted">Length: ${durationLabel}</p>`,
-      `<p class="clip-result__detail clip-result__detail--link"><a class="clip-result__link" href="${endpoint}" target="_blank" rel="noopener noreferrer">Download clip from API</a></p>`
+      `<div class="clip-result__title">Clip ready via clip API</div>${previewHTML}<p class="clip-result__detail clip-result__detail--muted">Length: ${escapeClipHtml(durationLabel)}</p>`,
+      `<p class="clip-result__detail clip-result__detail--link"><a class="clip-result__link" href="${escapeClipAttribute(endpoint)}" target="_blank" rel="noopener noreferrer">Download clip from API</a></p>`
     ];
     displayClipResult(fragments);
     recordClipHistory({ ...currentClipContext, url: endpoint });
@@ -503,22 +535,43 @@ function ensureClipDownloadButton() {
   }
 }
 
-function buildHistoryPreviewHtml() {
+function buildHistoryPreviewElement() {
   const history = loadClipHistory();
-  if (!history.length) return '';
-  const items = history.slice(0, 3).map(entry => {
+  if (!history.length) return null;
+  const wrap = document.createElement('div');
+  wrap.className = 'clip-history-preview';
+  const titleEl = document.createElement('div');
+  titleEl.className = 'clip-history-preview__title';
+  titleEl.textContent = 'Recent clips';
+  const list = document.createElement('ul');
+  history.slice(0, 3).forEach(entry => {
     const time = entry.createdAt ? new Date(entry.createdAt).toLocaleString() : '';
     const length = Number.isFinite(entry.lengthSeconds) ? `${entry.lengthSeconds}s` : '';
     const title = entry.itemTitle || 'Clip';
     const meta = [length, time].filter(Boolean).join(' • ');
-    return `<li><a href="${entry.url}" target="_blank" rel="noopener noreferrer">${title}</a>${meta ? ` <span class="clip-history-preview__meta">(${meta})</span>` : ''}</li>`;
-  }).join('');
-  return `<div class="clip-history-preview"><div class="clip-history-preview__title">Recent clips</div><ul>${items}</ul></div>`;
+    const item = document.createElement('li');
+    const link = document.createElement('a');
+    link.href = entry.url || '#';
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.textContent = title;
+    item.appendChild(link);
+    if (meta) {
+      item.appendChild(document.createTextNode(' '));
+      const metaEl = document.createElement('span');
+      metaEl.className = 'clip-history-preview__meta';
+      metaEl.textContent = `(${meta})`;
+      item.appendChild(metaEl);
+    }
+    list.appendChild(item);
+  });
+  wrap.append(titleEl, list);
+  return wrap;
 }
 
 function displayClipResult(html, isError = false) {
   ensureClipOverlays();
-  const historyHtml = buildHistoryPreviewHtml();
+  const historyEl = buildHistoryPreviewElement();
   if (clipMessage) {
     clipMessage.innerHTML = '';
     if (Array.isArray(html)) {
@@ -534,8 +587,8 @@ function displayClipResult(html, isError = false) {
       wrapper.innerHTML = html;
       clipMessage.appendChild(wrapper);
     }
-    if (historyHtml) {
-      clipMessage.insertAdjacentHTML('beforeend', historyHtml);
+    if (historyEl) {
+      clipMessage.appendChild(historyEl);
     }
     if (clipButtonsRow) clipButtonsRow.style.display = 'flex';
     if (clipOverlay) { clipOverlay.style.display = 'flex'; }
@@ -546,7 +599,11 @@ function displayClipResult(html, isError = false) {
     });
     const box = document.createElement('div');
     Object.assign(box.style, { background: isError ? 'rgba(80,0,0,0.95)' : 'rgba(20,20,20,0.95)', padding: '1em 1.25em', borderRadius: '12px', maxWidth: '540px', boxShadow: '0 20px 40px -10px rgba(0,0,0,0.6)' });
-    box.innerHTML = `<div class="clip-result${isError ? ' clip-result--error' : ''}">${html}</div>${historyHtml}`;
+    const result = document.createElement('div');
+    result.className = `clip-result${isError ? ' clip-result--error' : ''}`;
+    result.innerHTML = html;
+    box.appendChild(result);
+    if (historyEl) box.appendChild(historyEl);
     const done = document.createElement('button'); done.textContent = 'Done'; Object.assign(done.style, { marginTop: '1em', padding: '0.5em 1em', cursor: 'pointer' });
     done.addEventListener('click', () => tmp.remove()); box.appendChild(done); tmp.appendChild(box); document.body.appendChild(tmp);
   }
@@ -566,18 +623,42 @@ function hideClipOverlay() {
 
 async function uploadClipToCatboxWithProgress(blob, onProgress, fileName) {
   const endpoint = await resolveClipUploadEndpoint();
-  return new Promise((resolve, reject) => {
+  const attemptUpload = (targetUrl) => new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
-    xhr.open('POST', endpoint);
+    xhr.open('POST', targetUrl);
     const form = new FormData();
     form.append('reqtype', 'fileupload');
     const uploadName = (typeof fileName === 'string' && fileName.trim()) ? fileName.trim() : 'clip.webm';
     form.append('fileToUpload', blob, uploadName);
     xhr.upload.onprogress = e => { if (e.lengthComputable && typeof onProgress === 'function') { onProgress(e.loaded / e.total * 100); } };
-    xhr.onload = () => { if (xhr.status >= 200 && xhr.status < 300) { resolve((xhr.responseText || '').trim()); } else { reject(new Error('Upload failed: ' + xhr.status)); } };
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        const uploadedUrl = (xhr.responseText || '').trim();
+        if (!isValidClipUploadUrl(uploadedUrl)) {
+          reject(new Error('Catbox did not return a valid URL.'));
+          return;
+        }
+        if (typeof window !== 'undefined' && window.MM_catbox && typeof window.MM_catbox.markResult === 'function') {
+          window.MM_catbox.markResult({ endpoint: targetUrl, ok: true });
+        }
+        resolve(uploadedUrl);
+      } else {
+        reject(new Error('Upload failed: ' + xhr.status));
+      }
+    };
     xhr.onerror = () => reject(new Error('Network error'));
     xhr.send(form);
   });
+  try {
+    return await attemptUpload(endpoint);
+  } catch (error) {
+    if (typeof window !== 'undefined' && window.MM_catbox && typeof window.MM_catbox.markResult === 'function') {
+      window.MM_catbox.markResult({ endpoint, ok: false, error: String(error && error.message ? error.message : error) });
+    }
+    const fallback = getClipUploadFallbackEndpoint(endpoint);
+    if (!fallback) throw error;
+    return await attemptUpload(fallback);
+  }
 }
 
 function getCurrentMediaItem() {
@@ -957,11 +1038,11 @@ async function executeClipCapture(start, end, durationSeconds) {
         `
         <div class="clip-result__title">Clip uploaded!</div>
         ${previewHTML}
-        <p class="clip-result__detail clip-result__detail--muted">Saved as ${lastClipFileName || 'clip.webm'}</p>
+        <p class="clip-result__detail clip-result__detail--muted">Saved as ${escapeClipHtml(lastClipFileName || 'clip.webm')}</p>
         <p class="clip-result__detail clip-result__detail--muted">URL copied below:</p>
       `,
       `<div class="clip-result__detail clip-result__detail--link">` +
-        `<a class="clip-result__link" href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>` +
+        `<a class="clip-result__link" href="${escapeClipAttribute(url)}" target="_blank" rel="noopener noreferrer">${escapeClipHtml(url)}</a>` +
       `</div>`];
       displayClipResult(fragments);
       recordClipHistory({ ...currentClipContext, url });
@@ -972,11 +1053,11 @@ async function executeClipCapture(start, end, durationSeconds) {
       const fragments = [
         `
         <div class="clip-result__title">Upload failed</div>
-        <p class="clip-result__detail">${err.message}</p>
+        <p class="clip-result__detail">${escapeClipHtml(err && err.message ? err.message : err)}</p>
         ${previewHTML}
       `,
       `<p class="clip-result__detail clip-result__detail--muted">` +
-        `Would you like to <a class="clip-result__link" href="${localUrl}" download="${lastClipFileName || 'clip.webm'}">download</a> the clip instead?` +
+        `Would you like to <a class="clip-result__link" href="${escapeClipAttribute(localUrl)}" download="${escapeClipAttribute(lastClipFileName || 'clip.webm')}">download</a> the clip instead?` +
       `</p>`];
       displayClipResult(fragments, true);
       ensureClipDownloadButton();

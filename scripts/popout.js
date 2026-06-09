@@ -71,6 +71,14 @@
     try { if (typeof window.alert === "function") window.alert(msg); } catch {}
   }
 
+  function escapeHtmlAttribute(value) {
+    return String(value || "")
+      .replace(/&/g, "&amp;")
+      .replace(/"/g, "&quot;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+
   function computePopupSize(v) {
     const naturalWidth = (v && v.videoWidth) ? v.videoWidth : 16;
     const naturalHeight = (v && v.videoHeight) ? v.videoHeight : 9;

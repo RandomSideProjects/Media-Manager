@@ -349,6 +349,18 @@
       "LatestTime": "2026-03-25T17:33:38.176Z"
     },
     {
+      "file": "Makine__Too_Many_Losing_Heroines.json",
+      "path": "./Files/Anime/Makine__Too_Many_Losing_Heroines.json",
+      "title": "Makine: Too Many Losing Heroines",
+      "poster": null,
+      "categoryCount": 1,
+      "episodeCount": 12,
+      "itemCount": 12,
+      "totalFileSizeBytes": 1772382732,
+      "totalDurationSeconds": 17340,
+      "LatestTime": "2026-05-12T01:27:25.810Z"
+    },
+    {
       "file": "MarriedNotLovers.json",
       "path": "./Files/Anime/MarriedNotLovers.json",
       "title": "More Than a Married Couple, But Not Lovers",
@@ -503,6 +515,18 @@
       "totalFileSizeBytes": 2062491393,
       "totalDurationSeconds": 17640,
       "LatestTime": "2025-08-11T12:36:00"
+    },
+    {
+      "file": "Science_Fell_in_Love,_So_I_Tried_to_Prove_it.json",
+      "path": "./Files/Anime/Science_Fell_in_Love,_So_I_Tried_to_Prove_it.json",
+      "title": "Science Fell in Love, So I Tried to Prove it",
+      "poster": "./Posters/Anime/Science_Fell_in_Love,_So_I_Tried_to_Prove_it.webp",
+      "categoryCount": 2,
+      "episodeCount": 24,
+      "itemCount": 24,
+      "totalFileSizeBytes": 5097343718,
+      "totalDurationSeconds": 32660,
+      "LatestTime": "2026-05-13T05:59:45.383Z"
     },
     {
       "file": "Shikimori.json",

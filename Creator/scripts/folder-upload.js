@@ -575,10 +575,25 @@
         const url = URL.createObjectURL(file);
         const v = document.createElement('video');
         v.preload = 'metadata';
-        const cleanup = () => { try { URL.revokeObjectURL(url); } catch {} };
-        const finalize = (value) => { cleanup(); resolve(value); };
-        v.onloadedmetadata = () => finalize(isFinite(v.duration) ? v.duration : NaN);
-        v.onerror = () => finalize(NaN);
+        let settled = false;
+        const finalize = (value) => {
+          if (settled) return;
+          settled = true;
+          try { v.pause(); } catch {}
+          try { v.removeAttribute('src'); v.load(); } catch {}
+          try { URL.revokeObjectURL(url); } catch {}
+          try { v.remove(); } catch {}
+          resolve(value);
+        };
+        const timer = setTimeout(() => finalize(NaN), 10000);
+        v.onerror = () => {
+          clearTimeout(timer);
+          finalize(NaN);
+        };
+        v.onloadedmetadata = () => {
+          clearTimeout(timer);
+          finalize(isFinite(v.duration) ? v.duration : NaN);
+        };
         v.src = url;
       } catch { resolve(NaN); }
     });

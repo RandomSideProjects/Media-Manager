@@ -15,7 +15,7 @@ Browser-only player for video libraries and CBZ manga archives. Point it at a JS
 ## Quick start
 1) Clone: `git clone https://github.com/RandomSideProjects/Media-Manager.git && cd Media-Manager`  
 2) Open `index.html` directly, or serve the folder:  
-   - `python Tools/serve_parent.py --port 8000` (rooted at the repo)  
+   - `python Tools/HostServer.py` (rooted at the repo; defaults to port 8000)  
    - or `python -m http.server 8000`  
 3) Load a source (URL, Catbox ID, inline JSON, or a folder with `index.json`). The app works offline after the first load because all logic runs in the browser.
 
@@ -73,7 +73,7 @@ Recommended: `Image`/`image`, `LatestTime`, `fileSizeBytes` + `totalFileSizeByte
 - `Sources/index.html` lists curated example sources.
 - `Tools/CBZcompress.py` converts `.cbr` to `.cbz` and re-zips pages for cleaner uploads.
 - `Tools/MediaTool.py` splits large videos into size-capped chunks using FFmpeg (CLI prompt + optional Tk GUI).
-- `Tools/serve_parent.py` starts a threaded HTTP server rooted at the repo for quick local testing.
+- `Tools/HostServer.py` starts a threaded HTTP server rooted at the repo for quick local testing.
 
 ## Requirements & notes
 - Modern Chromium, Firefox, or Safari. Clipping relies on MediaRecorder + captureStream (best in Chromium-based browsers).
@@ -85,4 +85,4 @@ Apache 2.0, see `LICENSE`.
 
 ---
 
-Last updated: 2025-12-08
+Last updated: 2026-04-27

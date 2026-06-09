@@ -814,6 +814,26 @@ pre {
   margin-top: 1em;
   justify-content: center;
 }
+#output {
+  margin: 0;
+  width: 100%;
+  text-align: center;
+  white-space: pre-wrap;
+}
+#outputLink,
+#outputStatus {
+  display: inline-block;
+  min-height: 1.2em;
+}
+#outputStatus {
+  color: #9ecbff;
+}
+#outputStatus.output-status-error {
+  color: #ff8d8d;
+}
+#outputStatus.output-status-warning {
+  color: #ffd36e;
+}
 /* Hide URL loader by default; shown only in Edit tab via JS */
 #loadUrlContainer {
   display: none;
@@ -863,6 +883,45 @@ pre {
   z-index: 9999;
   white-space: pre-line;
   display: none; /* default hidden until success */
+}
+.mm-upload-server-summary {
+  color: #9ecbff;
+  line-height: 1.3;
+}
+body.upload-server-override-open {
+  overflow: hidden;
+}
+.upload-server-override-card {
+  max-width: 560px;
+}
+.upload-server-override-current {
+  margin: 0 0 0.9rem 0;
+  color: #9ecbff;
+  font-size: 0.92rem;
+}
+.upload-server-override-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+.upload-server-override-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.85rem 0.95rem;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  background: rgba(255,255,255,0.03);
+  cursor: pointer;
+}
+.upload-server-override-option input {
+  margin-top: 0.2rem;
+}
+.upload-server-override-help {
+  margin-top: 0.2rem;
+  color: rgba(241,241,241,0.72);
+  font-size: 0.84rem;
+  line-height: 1.35;
 }
 /* Server check loading box */
 #serverCheckBox {

@@ -1,7 +1,7 @@
 "use strict";
 
 // Variables (top)
-// None; relies on global STATUS_URL, SOURCES_* and render/utils.
+// None; relies on global SOURCES_* and render/utils.
 
 const HIDDEN_ENTRY_KEYS = ["hidden", "Hidden", "maintainerHidden"];
 
@@ -14,89 +14,6 @@ function withPosterFallbacks(entry) {
 function shouldSkipManifestEntry(entry) {
   if (!entry || typeof entry !== "object") return false;
   return HIDDEN_ENTRY_KEYS.some((key) => entry[key] === true);
-}
-
-function showHostFailure(container, codeText) {
-  container.innerHTML = `
-    <div style="
-      padding: 3em 1.5em;
-      text-align: center;
-      font-weight: 800;
-      color: #ffffff;
-      font-size: 1.6rem;
-      white-space: pre-line;
-    ">
-      Unfortunately, our public source host is currently unavailable.
-      \nPlease try again.
-      \n<code style="background:#000; display:inline-block; padding:0.6em 0.8em; border-radius:8px; margin-top:0.9em; color:#fff;">HTTP Code : ${codeText}</code>
-    </div>
-  `;
-}
-
-async function checkHostAndLoad() {
-  const container = document.getElementById('sourcesContainer');
-  // Create status box (hidden until success)
-  let statusBox = document.getElementById('serverStatusBox');
-  if (!statusBox) {
-    statusBox = document.createElement('div');
-    statusBox.id = 'serverStatusBox';
-    statusBox.style.display = 'none';
-    document.body.appendChild(statusBox);
-  }
-
-  // Create loading box
-  let checkBox = document.getElementById('serverCheckBox');
-  if (!checkBox) {
-    checkBox = document.createElement('div');
-    checkBox.id = 'serverCheckBox';
-    checkBox.innerHTML = `
-      <div class="spinner" aria-hidden="true"></div>
-      <div class="serverCheckText" id="serverCheckText">Checking if server is responsive\nTime Elapsed : 00:00</div>
-    `;
-    document.body.appendChild(checkBox);
-  }
-  const checkText = document.getElementById('serverCheckText');
-  checkBox.style.display = 'flex';
-
-  const started = Date.now();
-  const fmt = (ms) => {
-    const s = Math.floor(ms / 1000);
-    const m = Math.floor(s / 60);
-    const sec = s % 60;
-    return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
-  };
-  const tick = () => {
-    if (checkText) checkText.textContent = `Checking if server is responsive\nTime Elapsed : ${fmt(Date.now() - started)}`;
-  };
-  tick();
-  const timer = setInterval(tick, 250);
-
-  const stop = () => {
-    clearInterval(timer);
-    if (checkBox) checkBox.remove();
-  };
-
-  let resp;
-  try {
-    resp = await fetch(STATUS_URL, { cache: 'no-store' });
-  } catch (err) {
-    stop();
-    showHostFailure(container, err && err.message ? err.message : 'Network error');
-    return;
-  }
-
-  if (!resp || !resp.ok) {
-    const codeText = resp ? `${resp.status} ${resp.statusText || ''}`.trim() : 'Unknown error';
-    stop();
-    showHostFailure(container, codeText);
-    return;
-  }
-
-  // Success path: show status code box and continue to load sources
-  stop();
-  statusBox.textContent = `Server status code\n${resp.status}`;
-  statusBox.style.display = 'block';
-  await loadSources();
 }
 
 async function loadSources() {
@@ -154,4 +71,4 @@ async function loadSources() {
 }
 
 // Kick off on load
-checkHostAndLoad();
+loadSources();

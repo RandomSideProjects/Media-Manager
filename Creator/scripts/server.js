@@ -3,459 +3,288 @@
 // Variables (top)
 // none
 
-function showHostFailure(container, codeText) {
-  const codeDisplay = typeof codeText === 'undefined' || codeText === null ? 'Unknown' : String(codeText);
-  const resume = () => {
-    window.MM_BLOCKED = false;
-    if (typeof startAutoUploadPolling === 'function' && !window.MM_POLL_TIMER) {
-      startAutoUploadPolling();
-    }
-    const ov = document.getElementById('serverFailOverlay');
-    if (ov) ov.remove();
-  };
+const SERVER_DEFAULT_PAHE_ANIME_API_BASE = "https://anime.apex-cloud.workers.dev";
+let lastPaheStatusLine = "pending";
 
-  window.MM_BLOCKED = true;
-
-  if (typeof window.showStorageNotice === 'function') {
-    window.showStorageNotice({
-      title: 'Source Host Offline',
-      message: `Unfortunately, our public source host is currently unavailable.\nPlease try again.\nHTTP Code: ${codeDisplay}`,
-      tone: 'error',
-      autoCloseMs: null,
-      copyText: codeDisplay,
-      copyLabel: 'Copy code',
-      dismissLabel: 'Continue',
-      onClose: resume
-    });
-    return;
-  }
-
-  let overlay = document.getElementById('serverFailOverlay');
-  if (!overlay) {
-    overlay = document.createElement('div');
-    overlay.id = 'serverFailOverlay';
-    overlay.style.position = 'fixed';
-    overlay.style.inset = '0';
-    overlay.style.background = 'rgba(0,0,0,0.85)';
-    overlay.style.zIndex = '10050';
-    overlay.style.display = 'flex';
-    overlay.style.alignItems = 'center';
-    overlay.style.justifyContent = 'center';
-    overlay.innerHTML = `
-      <div style="background:#1a1a1a; color:#f1f1f1; border:1px solid #333; border-radius:12px; padding:18px 22px; max-width:720px; width:92%; text-align:center; box-shadow:0 16px 40px rgba(0,0,0,.6);">
-        <div style="font-weight:800; font-size:1.25rem; line-height:1.35; white-space:pre-line;">
-          Unfortunately, our public source host is currently unavailable.\nPlease try again.
-        </div>
-        <div style="margin-top:10px;">
-          <code style="background:#000; display:inline-block; padding:0.6em 0.8em; border-radius:8px; color:#fff;">HTTP Code : ${codeDisplay}</code>
-        </div>
-        <div style="margin-top:14px; display:flex; gap:10px; justify-content:center;">
-          <button id="serverContinueBtn" style="padding:8px 14px; border:none; border-radius:8px; background:#007bff; color:#fff; cursor:pointer;">Continue</button>
-        </div>
-      </div>`;
-    document.body.appendChild(overlay);
-  } else {
-    const codeEl = overlay.querySelector('code');
-    if (codeEl) codeEl.textContent = `HTTP Code : ${codeDisplay}`;
-  }
-
-  const btn = document.getElementById('serverContinueBtn');
-  if (btn && !btn.dataset.bound) {
-    btn.dataset.bound = '1';
-    btn.addEventListener('click', resume);
-  }
-}
-
-const CATBOX_DIRECT_UPLOAD_URL = 'https://catbox.moe/user/api.php';
-const CATBOX_PROXY_UPLOAD_URL = 'https://mm.littlehacker303.workers.dev/catbox/user/api.php';
-const SERVER_DEFAULT_PAHE_ANIME_API_BASE = 'https://anime.apex-cloud.workers.dev';
-let catboxEndpointProbePromise = null;
-let catboxLastEndpointResult = null;
-
-function getCurrentCatboxActiveUrl(fallback) {
-  if (typeof window !== 'undefined' && typeof window.MM_ACTIVE_CATBOX_UPLOAD_URL === 'string') {
-    const active = window.MM_ACTIVE_CATBOX_UPLOAD_URL.trim();
-    if (active) return active;
-  }
-  return fallback || CATBOX_PROXY_UPLOAD_URL;
-}
-
-if (typeof window !== 'undefined') {
-  window.MM_DIRECT_CATBOX_UPLOAD_URL = CATBOX_DIRECT_UPLOAD_URL;
-  window.MM_PROXY_CATBOX_UPLOAD_URL = CATBOX_PROXY_UPLOAD_URL;
-}
-
-(function bootstrapCatboxOverride() {
-  if (typeof window === 'undefined') return;
-  if (typeof window.MM_CATBOX_OVERRIDE_MODE === 'string' && window.MM_CATBOX_OVERRIDE_MODE.trim()) return;
+function getSharedPaheProbeState() {
   try {
-    const raw = localStorage.getItem('mm_upload_settings');
-    if (!raw) return;
+    if (typeof window === "undefined" || !window) return {};
+    const state = window.MM_PAHE_API_PROBE_STATE;
+    return state && typeof state === "object" ? state : {};
+  } catch {
+    return {};
+  }
+}
+
+function setSharedPaheProbeState(partial) {
+  try {
+    if (typeof window === "undefined" || !window) return {};
+    const prev = getSharedPaheProbeState();
+    const next = Object.assign({}, prev, partial && typeof partial === "object" ? partial : {});
+    window.MM_PAHE_API_PROBE_STATE = next;
+    return next;
+  } catch {
+    return {};
+  }
+}
+
+function getUploadServerApi() {
+  return (typeof window !== "undefined" && window.MMUploadServer) ? window.MMUploadServer : null;
+}
+
+function readCreatorSettings() {
+  const api = getUploadServerApi();
+  if (api && typeof api.readRawSettings === "function") {
+    return api.readRawSettings();
+  }
+  try {
+    const raw = localStorage.getItem("mm_upload_settings");
+    if (!raw) return {};
     const parsed = JSON.parse(raw);
-    const mode = parsed && typeof parsed.catboxOverrideMode === 'string' ? parsed.catboxOverrideMode.trim().toLowerCase() : '';
-    if (mode === 'direct') {
-      window.MM_CATBOX_OVERRIDE_MODE = 'direct';
-      window.MM_ACTIVE_CATBOX_UPLOAD_URL = CATBOX_DIRECT_UPLOAD_URL;
-    } else if (mode === 'proxy') {
-      window.MM_CATBOX_OVERRIDE_MODE = 'proxy';
-      window.MM_ACTIVE_CATBOX_UPLOAD_URL = CATBOX_PROXY_UPLOAD_URL;
-    }
-  } catch {}
-})();
-
-function getCatboxOverrideMode() {
-  if (typeof window === 'undefined') return 'auto';
-  const raw = (window.MM_CATBOX_OVERRIDE_MODE || '').toString().trim().toLowerCase();
-  return raw === 'direct' || raw === 'proxy' ? raw : 'auto';
-}
-
-async function performUploadProbe(targetUrl, options = {}) {
-  try {
-    const blob = new Blob(['Upload Test'], { type: 'text/plain' });
-    const file = new File([blob], 'UploadTestFile.txt', { type: 'text/plain' });
-    const form = new FormData();
-    form.append('reqtype', 'fileupload');
-    form.append('fileToUpload', file);
-
-    const response = await fetch(targetUrl, {
-      method: 'POST',
-      body: form,
-      credentials: 'omit'
-    });
-
-    if (!response || !response.ok) {
-      console.warn('[Creator] Upload probe received non-OK response', { targetUrl, status: response ? response.status : 'no-response' });
-      return false;
-    }
-
-    const text = await response.text();
-    const trimmed = typeof text === 'string' ? text.trim() : '';
-    const ok = /^https:\/\/files\.catbox\.moe\/\S+/i.test(trimmed);
-
-    console.info('[Creator] Upload probe result', { targetUrl, ok, status: response.status, body: trimmed.slice(0, 120) });
-
-    if (!ok && options.onSoftFail) {
-      options.onSoftFail(trimmed);
-    }
-    return ok;
-  } catch (err) {
-    if (options.onError) options.onError(err);
-    console.error('[Creator] Upload probe error', { targetUrl, error: err });
-    return false;
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
   }
 }
 
-async function probeCatboxUpload() {
-  let lastError = null;
-  let lastResponse = '';
-  const directOk = await performUploadProbe(CATBOX_DIRECT_UPLOAD_URL, {
-    onSoftFail: (body) => { lastResponse = body; },
-    onError: (err) => { lastError = err; }
-  });
-  return { ok: directOk, error: lastError, body: lastResponse };
-}
-
-function applyCatboxDefault(url, meta) {
+function readPaheEnabled() {
   try {
-    let clean = (typeof url === 'string' && url.trim()) ? url.trim() : CATBOX_DIRECT_UPLOAD_URL;
-    const previous = (typeof window !== 'undefined' && typeof window.MM_DEFAULT_CATBOX_UPLOAD_URL === 'string')
-      ? window.MM_DEFAULT_CATBOX_UPLOAD_URL
-      : undefined;
-    const overrideMode = getCatboxOverrideMode();
-    const detailMeta = (meta && typeof meta === 'object') ? { ...meta } : {};
-
-    if (overrideMode === 'direct') {
-      clean = CATBOX_DIRECT_UPLOAD_URL;
-      detailMeta.override = 'direct';
-    } else if (overrideMode === 'proxy') {
-      clean = CATBOX_PROXY_UPLOAD_URL;
-      detailMeta.override = 'proxy';
-    }
-
-    window.MM_DEFAULT_CATBOX_UPLOAD_URL = clean;
-    if (typeof window !== 'undefined') {
-      window.MM_ACTIVE_CATBOX_UPLOAD_URL = clean;
-    }
-    window.dispatchEvent(new CustomEvent('rsp:catbox-default-updated', { detail: { url: clean, previous, meta: detailMeta } }));
-  } catch (err) {
-    console.error('[Creator] Failed to apply Catbox default URL', err);
-  }
-}
-
-async function determineCatboxUploadEndpoint({ force = false } = {}) {
-  if (!force && isSplitDownloadModeEnabled()) {
-    const active = getCurrentCatboxActiveUrl(CATBOX_PROXY_UPLOAD_URL) || CATBOX_PROXY_UPLOAD_URL;
-    catboxLastEndpointResult = {
-      endpoint: 'skipped',
-      active,
-      directResult: { ok: false, skipped: true },
-      proxyResult: { ok: false, skipped: true },
-    };
-    return catboxLastEndpointResult;
-  }
-  if (!force && catboxLastEndpointResult) return catboxLastEndpointResult;
-  if (!force && catboxEndpointProbePromise) return catboxEndpointProbePromise;
-
-  catboxEndpointProbePromise = (async () => {
-    let directResult = null;
-    let proxyError = null;
-    let proxyBody = '';
-
-    try {
-      directResult = await probeCatboxUpload();
-      if (directResult && directResult.ok) {
-        applyCatboxDefault(CATBOX_DIRECT_UPLOAD_URL, { source: 'direct' });
-        return {
-          endpoint: 'direct',
-          active: getCurrentCatboxActiveUrl(CATBOX_DIRECT_UPLOAD_URL),
-          directResult,
-        };
-      }
-
-      const proxyOk = await performUploadProbe(CATBOX_PROXY_UPLOAD_URL, {
-        onSoftFail: (body) => { proxyBody = body; },
-        onError: (err) => { proxyError = err; }
-      });
-
-      if (proxyOk) {
-        applyCatboxDefault(CATBOX_PROXY_UPLOAD_URL, { source: 'proxy', directResult });
-        return {
-          endpoint: 'proxy',
-          active: getCurrentCatboxActiveUrl(CATBOX_PROXY_UPLOAD_URL),
-          directResult,
-          proxyResult: { ok: true },
-        };
-      }
-
-      return {
-        endpoint: 'unavailable',
-        active: getCurrentCatboxActiveUrl(CATBOX_PROXY_UPLOAD_URL),
-        directResult,
-        proxyResult: { ok: false, error: proxyError, body: proxyBody },
-      };
-    } catch (err) {
-      console.warn('[Creator] Catbox endpoint probe failed', err);
-      return {
-        endpoint: 'unavailable',
-        active: getCurrentCatboxActiveUrl(CATBOX_PROXY_UPLOAD_URL),
-        directResult,
-        proxyResult: { ok: false, error: err },
-      };
-    }
-  })();
-
-  try {
-    catboxLastEndpointResult = await catboxEndpointProbePromise;
-    if (catboxLastEndpointResult.endpoint === 'unavailable') {
-      applyCatboxDefault(CATBOX_PROXY_UPLOAD_URL, {
-        source: 'unavailable',
-        directResult: catboxLastEndpointResult.directResult,
-        proxyResult: catboxLastEndpointResult.proxyResult,
-      });
-    }
-    return catboxLastEndpointResult;
-  } finally {
-    catboxEndpointProbePromise = null;
-  }
-}
-
-function isSplitDownloadModeEnabled() {
-  try {
-    const raw = localStorage.getItem('mm_upload_settings') || '{}';
-    const parsed = JSON.parse(raw);
-    return parsed && parsed.downloadSplitPartsAfterSplit === true;
+    const parsed = readCreatorSettings();
+    return parsed && parsed.paheImportEnabled === true;
   } catch {
     return false;
   }
 }
 
-if (typeof window !== 'undefined') {
-  window.MM_catbox = {
-    ensure: (options) => determineCatboxUploadEndpoint(options),
-    getUploadUrl: async () => {
-      const result = await determineCatboxUploadEndpoint();
-      const active = getCurrentCatboxActiveUrl(result && result.active);
-      return active || CATBOX_PROXY_UPLOAD_URL;
-    },
-    directUrl: CATBOX_DIRECT_UPLOAD_URL,
-    proxyUrl: CATBOX_PROXY_UPLOAD_URL,
-    getLastResult: () => {
-      const active = getCurrentCatboxActiveUrl('');
-      return catboxLastEndpointResult ? Object.assign({}, catboxLastEndpointResult, { active }) : null;
-    },
-  };
+function readPaheApiBase() {
+  try {
+    const parsed = readCreatorSettings();
+    const candidate = parsed && typeof parsed.paheAnimeApiBase === "string" ? parsed.paheAnimeApiBase.trim() : "";
+    return (candidate || SERVER_DEFAULT_PAHE_ANIME_API_BASE).replace(/\/+$/, "");
+  } catch {
+    return SERVER_DEFAULT_PAHE_ANIME_API_BASE;
+  }
 }
 
-function logCatboxUnavailable(info) {
-  const parts = ['[Creator] Catbox uploads unavailable.'];
-  try {
-    const directErr = info && info.directResult && (info.directResult.error || info.directResult.body);
-    const proxyErr = info && info.proxyResult && (info.proxyResult.error || info.proxyResult.body);
-    if (directErr) parts.push(`Direct: ${directErr instanceof Error ? directErr.message : String(directErr)}`);
-    if (proxyErr) parts.push(`Proxy: ${proxyErr instanceof Error ? proxyErr.message : String(proxyErr)}`);
-  } catch {}
-  console.error(parts.join(' '));
+function getPaheStatusLine() {
+  if (!readPaheEnabled()) return "disabled";
+  if (!lastPaheStatusLine || lastPaheStatusLine === "disabled") return "pending";
+  return lastPaheStatusLine || "pending";
+}
+
+function getStatusBoxText() {
+  const api = getUploadServerApi();
+  const state = api && typeof api.getState === "function" ? api.getState() : null;
+  const label = state && state.summary ? state.summary : "Auto using direct Catbox";
+  return `Pahe API: ${getPaheStatusLine()}\nCatbox uploads via: ${label}`;
+}
+
+function refreshStatusBox(statusBox) {
+  if (!statusBox) return;
+  statusBox.textContent = getStatusBoxText();
+  statusBox.style.display = "block";
+  statusBox.title = "Click to override upload server";
+  statusBox.setAttribute("role", "button");
+  statusBox.setAttribute("tabindex", "0");
+}
+
+function ensureUploadServerOverrideOverlay() {
+  let overlay = document.getElementById("uploadServerOverrideOverlay");
+  if (!overlay && window.OverlayFactory && typeof window.OverlayFactory.createUploadServerOverrideOverlay === "function") {
+    overlay = window.OverlayFactory.createUploadServerOverrideOverlay();
+  }
+  return overlay;
+}
+
+function closeUploadServerOverrideOverlay() {
+  const overlay = document.getElementById("uploadServerOverrideOverlay");
+  if (!overlay) return;
+  overlay.style.display = "none";
+  overlay.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("upload-server-override-open");
+}
+
+function openUploadServerOverrideOverlay(statusBox) {
+  const overlay = ensureUploadServerOverrideOverlay();
+  const api = getUploadServerApi();
+  if (!overlay || !api || typeof api.getState !== "function") return;
+
+  const state = api.getState();
+  const currentLabel = document.getElementById("uploadServerOverrideCurrent");
+  const auto = document.getElementById("uploadServerModeAuto");
+  const direct = document.getElementById("uploadServerModeDirect");
+  const proxy = document.getElementById("uploadServerModeProxy");
+  const copyparty = document.getElementById("uploadServerModeCopyparty");
+  const copypartyRow = document.getElementById("uploadServerModeCopypartyRow");
+  const saveBtn = document.getElementById("uploadServerOverrideSave");
+  const closeBtn = document.getElementById("uploadServerOverrideClose");
+
+  if (currentLabel) {
+    currentLabel.textContent = `Current: ${state.summary}`;
+  }
+  if (auto) auto.checked = state.mode === "auto";
+  if (direct) direct.checked = state.mode === "direct";
+  if (proxy) proxy.checked = state.mode === "proxy";
+  if (copyparty) copyparty.checked = state.mode === "copyparty";
+  if (copypartyRow) copypartyRow.style.display = state.copypartyUrl ? "" : "none";
+  if (copyparty) copyparty.disabled = !state.copypartyUrl;
+
+  if (!overlay.dataset.bound) {
+    overlay.dataset.bound = "true";
+
+    overlay.addEventListener("click", (event) => {
+      if (event.target === overlay) {
+        closeUploadServerOverrideOverlay();
+      }
+    });
+
+    overlay.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeUploadServerOverrideOverlay();
+      }
+    });
+
+    if (closeBtn) {
+      closeBtn.addEventListener("click", closeUploadServerOverrideOverlay);
+    }
+
+    if (saveBtn) {
+      saveBtn.addEventListener("click", async () => {
+        const selected = overlay.querySelector('input[name="uploadServerOverrideMode"]:checked');
+        const nextMode = selected ? String(selected.value || "auto") : "auto";
+        if (typeof api.setMode === "function") {
+          api.setMode(nextMode);
+        }
+        if (nextMode === "auto" && typeof api.ensure === "function") {
+          try { await api.ensure({ force: true }); } catch {}
+        }
+        refreshStatusBox(statusBox);
+        closeUploadServerOverrideOverlay();
+      });
+    }
+  }
+
+  overlay.style.display = "flex";
+  overlay.setAttribute("aria-hidden", "false");
+  document.body.classList.add("upload-server-override-open");
+  try { overlay.focus(); } catch {}
+}
+
+async function probePaheSearchApi() {
+  const base = readPaheApiBase();
+  const shared = getSharedPaheProbeState();
+  if (shared.base === base) {
+    if (shared.status === "running" && shared.promise && typeof shared.promise.then === "function") {
+      try {
+        return await shared.promise;
+      } catch {}
+    }
+    if (shared.status === "done" && shared.result) {
+      return shared.result;
+    }
+  }
+  const url = `${base}/?method=search&query=naruto`;
+  const promise = (async () => {
+    try {
+      const res = await fetch(url, { cache: "no-store" });
+      if (res && res.ok) {
+        const result = { ok: true, status: res.status, statusText: res.statusText || "OK" };
+        setSharedPaheProbeState({ status: "done", base, ok: true, result, promise: null });
+        return result;
+      }
+      const result = { ok: false, status: res ? res.status : 0, statusText: res ? (res.statusText || "Error") : "Network error" };
+      setSharedPaheProbeState({ status: "done", base, ok: false, result, promise: null });
+      return result;
+    } catch (err) {
+      const result = { ok: false, status: 0, statusText: (err && err.message) ? err.message : "Network error" };
+      setSharedPaheProbeState({ status: "done", base, ok: false, result, promise: null });
+      return result;
+    }
+  })();
+  setSharedPaheProbeState({ status: "running", base, promise });
+  return await promise;
 }
 
 async function checkHostAndLoadCreator() {
-  const container = document.querySelector('.container') || document.body;
-  // Create status box (hidden until success)
-  let statusBox = document.getElementById('serverStatusBox');
+  let statusBox = document.getElementById("serverStatusBox");
   if (!statusBox) {
-    statusBox = document.createElement('div');
-    statusBox.id = 'serverStatusBox';
+    statusBox = document.createElement("div");
+    statusBox.id = "serverStatusBox";
     document.body.appendChild(statusBox);
   }
 
-  // Create loading box
-  let checkBox = document.getElementById('serverCheckBox');
-  if (!checkBox) {
-    checkBox = document.createElement('div');
-    checkBox.id = 'serverCheckBox';
-    checkBox.innerHTML = `
-      <div class="spinner" aria-hidden="true"></div>
-      <div class="serverCheckText" id="serverCheckText">Checking if server is responsive\nTime Elapsed : 00:00</div>
-    `;
-    document.body.appendChild(checkBox);
-  }
-  const checkText = document.getElementById('serverCheckText');
-  checkBox.style.display = 'flex';
-
-  const started = Date.now();
-  const fmt = (ms) => {
-    const s = Math.floor(ms / 1000);
-    const m = Math.floor(s / 60);
-    const sec = s % 60;
-    return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
-  };
-  const readPaheEnabled = () => {
-    try {
-      const raw = localStorage.getItem('mm_upload_settings') || '{}';
-      const parsed = JSON.parse(raw);
-      return parsed && parsed.paheImportEnabled === true;
-    } catch {
-      return false;
-    }
-  };
-
   const paheEnabled = readPaheEnabled();
-  const tick = () => {
-    if (checkText) {
-      const mainLine = mainStatusLine ? `Main: ${mainStatusLine}` : 'Main: pending';
-      const paheLine = paheEnabled
-        ? (paheStatusLine ? `Pahe API: ${paheStatusLine}` : 'Pahe API: pending')
-        : 'Pahe API: disabled';
-      checkText.textContent = `Checking if server is responsive\n${mainLine}\n${paheLine}\nTime Elapsed : ${fmt(Date.now() - started)}`;
-    }
-  };
-  let mainStatusLine = '';
-  let paheStatusLine = '';
-  tick();
-  const timer = setInterval(tick, 250);
-
-  const stop = () => {
-    clearInterval(timer);
-    if (checkBox) checkBox.remove();
-  };
-
-  let resp;
-  try {
-    resp = await fetch(STATUS_URL, { cache: 'no-store' });
-  } catch (err) {
-    stop();
-    showHostFailure(container, err && err.message ? err.message : 'Network error');
-    return;
-  }
-
-  if (!resp || !resp.ok) {
-    const codeText = resp ? `${resp.status} ${resp.statusText || ''}`.trim() : 'Unknown error';
-    stop();
-    showHostFailure(container, codeText);
-    return;
-  }
-  mainStatusLine = `${resp.status} ${resp.statusText || 'OK'}`.trim();
-  tick();
-
-  const readPaheApiBase = () => {
-    try {
-      const raw = localStorage.getItem('mm_upload_settings') || '{}';
-      const parsed = JSON.parse(raw);
-      const candidate = parsed && typeof parsed.paheAnimeApiBase === 'string' ? parsed.paheAnimeApiBase.trim() : '';
-      return (candidate || SERVER_DEFAULT_PAHE_ANIME_API_BASE).replace(/\/+$/, '');
-    } catch {
-      return SERVER_DEFAULT_PAHE_ANIME_API_BASE;
-    }
-  };
-
-  const probePaheSearchApi = async () => {
-    const base = readPaheApiBase();
-    const url = `${base}/?method=search&query=naruto`;
-    try {
-      const res = await fetch(url, { cache: 'no-store' });
-      if (res && res.ok) {
-        return { ok: true, status: res.status, statusText: res.statusText || 'OK' };
-      }
-      return { ok: false, status: res ? res.status : 0, statusText: res ? (res.statusText || 'Error') : 'Network error' };
-    } catch (err) {
-      return { ok: false, status: 0, statusText: (err && err.message) ? err.message : 'Network error' };
-    }
-  };
-
   if (paheEnabled) {
     const paheProbe = await probePaheSearchApi();
     const ok = !!(paheProbe && paheProbe.ok);
     if (paheProbe && paheProbe.ok) {
-      paheStatusLine = `${paheProbe.status} ${paheProbe.statusText}`.trim();
+      lastPaheStatusLine = `${paheProbe.status} ${paheProbe.statusText}`.trim();
     } else if (paheProbe) {
-      paheStatusLine = `${paheProbe.status || 'ERR'} ${paheProbe.statusText || 'Error'}`.trim();
+      lastPaheStatusLine = `${paheProbe.status || "ERR"} ${paheProbe.statusText || "Error"}`.trim();
     } else {
-      paheStatusLine = 'ERR';
+      lastPaheStatusLine = "ERR";
     }
     try {
       window.MM_PAHE_API_OK = ok;
-      window.dispatchEvent(new CustomEvent('mm:pahe-api-status', { detail: { ok, line: paheStatusLine } }));
+      setSharedPaheProbeState({ status: "done", base: readPaheApiBase(), ok, line: lastPaheStatusLine, result: paheProbe, promise: null });
+      window.dispatchEvent(new CustomEvent("mm:pahe-api-status", { detail: { ok, line: lastPaheStatusLine } }));
     } catch {}
-    tick();
   } else {
+    lastPaheStatusLine = "disabled";
     try {
       window.MM_PAHE_API_OK = false;
-      window.dispatchEvent(new CustomEvent('mm:pahe-api-status', { detail: { ok: false, line: 'disabled' } }));
+      setSharedPaheProbeState({ status: "disabled", base: readPaheApiBase(), ok: false, line: "disabled", result: { ok: false, status: 0, statusText: "disabled" }, promise: null });
+      window.dispatchEvent(new CustomEvent("mm:pahe-api-status", { detail: { ok: false, line: "disabled" } }));
     } catch {}
   }
 
-  const endpointInfo = await determineCatboxUploadEndpoint();
-
-  // Success path: show status code box and continue
-  stop();
-  if (endpointInfo.endpoint === 'unavailable') {
-    stop();
-    logCatboxUnavailable(endpointInfo);
-    showHostFailure(container, 'both upload methods failed, creator may not work as intended');
-    return;
+  const api = getUploadServerApi();
+  if (api && typeof api.applyRuntime === "function") {
+    api.applyRuntime({ source: "creator-startup" });
   }
 
-  const overrideMode = getCatboxOverrideMode();
-  let endpointLabel = endpointInfo.endpoint;
-  if (overrideMode === 'direct') {
-    endpointLabel = 'direct (override)';
-  } else if (overrideMode === 'proxy') {
-    endpointLabel = 'proxy (override)';
+  refreshStatusBox(statusBox);
+  if (api && typeof api.ensure === "function") {
+    api.ensure().then(() => {
+      refreshStatusBox(statusBox);
+    }).catch(() => {
+      refreshStatusBox(statusBox);
+    });
   }
 
-  stop();
-  const paheLineFinal = paheEnabled ? (paheStatusLine || 'pending') : 'disabled';
-  statusBox.textContent = `Main: ${mainStatusLine || `${resp.status} ${resp.statusText || 'OK'}`.trim()}\nPahe API: ${paheLineFinal}\nCatbox uploads via: ${endpointLabel}`;
-  statusBox.style.display = 'block';
+  if (!statusBox.dataset.bound) {
+    statusBox.dataset.bound = "true";
+    statusBox.addEventListener("click", () => openUploadServerOverrideOverlay(statusBox));
+    statusBox.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        openUploadServerOverrideOverlay(statusBox);
+      }
+    });
+  }
+
+  window.addEventListener("mm_settings_saved", () => {
+    refreshStatusBox(statusBox);
+    const latest = getUploadServerApi();
+    const state = latest && typeof latest.getState === "function" ? latest.getState() : null;
+    if (latest && typeof latest.ensure === "function" && state && state.mode === "auto" && state.detection && state.detection.status === "idle") {
+      latest.ensure().then(() => refreshStatusBox(statusBox)).catch(() => refreshStatusBox(statusBox));
+    }
+  });
+
+  window.addEventListener("mm:upload-server-state", () => {
+    refreshStatusBox(statusBox);
+  });
 
   try {
     window.MM_BLOCKED = false;
-    if (typeof startAutoUploadPolling === 'function') {
+    if (typeof startAutoUploadPolling === "function") {
       startAutoUploadPolling();
     }
   } catch (err) {
-    console.warn('[Creator] Failed to enable auto-upload polling', err);
+    console.warn("[Creator] Failed to enable auto-upload polling", err);
   }
 }
 
-// Run on load
 checkHostAndLoadCreator();
