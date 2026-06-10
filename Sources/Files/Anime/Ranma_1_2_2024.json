@@ -60,7 +60,10 @@
           "fileSizeBytes": 229205668,
           "durationSeconds": 1472,
           "src": "Sources/Files/Playlists/Ranma_1_2_2024_Season_1_Episode_8_8.m3u8",
-          "progressKey": "sepitem:19dq1ko"
+          "progressKey": "sepitem:19dq1ko",
+          "isPlaceholder": true,
+          "unavailableReason": "Confirmed broken playlist segment URL (404) as of 2026-06-10.",
+          "unavailableCheckedAt": "2026-06-10"
         },
         {
           "title": "Episode 9",

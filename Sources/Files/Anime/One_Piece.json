@@ -46,7 +46,10 @@
           "title": "Episode 07",
           "src": "https://files.catbox.moe/jv6mby.mp4",
           "fileSizeBytes": 147846241,
-          "durationSeconds": 1500
+          "durationSeconds": 1500,
+          "isPlaceholder": true,
+          "unavailableReason": "Confirmed dead source URL (404) as of 2026-06-10.",
+          "unavailableCheckedAt": "2026-06-10"
         },
         {
           "title": "Episode 08",
@@ -166,7 +169,10 @@
           "title": "Episode 27",
           "src": "https://files.catbox.moe/j4jry5.mp4",
           "fileSizeBytes": 123057788,
-          "durationSeconds": 1500
+          "durationSeconds": 1500,
+          "isPlaceholder": true,
+          "unavailableReason": "Confirmed dead source URL (404) as of 2026-06-10.",
+          "unavailableCheckedAt": "2026-06-10"
         },
         {
           "title": "Episode 28",
@@ -190,7 +196,10 @@
           "title": "Episode 31",
           "src": "https://files.catbox.moe/qkd2d4.mp4",
           "fileSizeBytes": 115163091,
-          "durationSeconds": 1495
+          "durationSeconds": 1495,
+          "isPlaceholder": true,
+          "unavailableReason": "Confirmed unavailable on 2026-06-10: source URL returns HTTP 404.",
+          "unavailableCheckedAt": "2026-06-10"
         },
         {
           "title": "Episode 32",
@@ -1162,7 +1171,10 @@
           "title": "Episode 193",
           "src": "https://files.catbox.moe/jun0ab.mp4",
           "fileSizeBytes": 144511237,
-          "durationSeconds": 1431
+          "durationSeconds": 1431,
+          "isPlaceholder": true,
+          "unavailableReason": "Confirmed dead source URL (404) as of 2026-06-10.",
+          "unavailableCheckedAt": "2026-06-10"
         },
         {
           "title": "Episode 194",
@@ -1888,7 +1900,10 @@
           "title": "Episode 315",
           "src": "https://files.catbox.moe/jw1211.mp4",
           "fileSizeBytes": 120834051,
-          "durationSeconds": 1440
+          "durationSeconds": 1440,
+          "isPlaceholder": true,
+          "unavailableReason": "Confirmed dead source URL (404) as of 2026-06-10.",
+          "unavailableCheckedAt": "2026-06-10"
         },
         {
           "title": "Episode 316",
@@ -3682,13 +3697,19 @@
           "title": "Episode 614",
           "src": "https://files.catbox.moe/on587s.mp4",
           "fileSizeBytes": 111999600,
-          "durationSeconds": 1440
+          "durationSeconds": 1440,
+          "isPlaceholder": true,
+          "unavailableReason": "Confirmed unavailable on 2026-06-10: source URL returns HTTP 404.",
+          "unavailableCheckedAt": "2026-06-10"
         },
         {
           "title": "Episode 615",
           "src": "https://files.catbox.moe/j3e6mq.mp4",
           "fileSizeBytes": 102264964,
-          "durationSeconds": 1440
+          "durationSeconds": 1440,
+          "isPlaceholder": true,
+          "unavailableReason": "Confirmed unavailable on 2026-06-10: source URL returns HTTP 404.",
+          "unavailableCheckedAt": "2026-06-10"
         },
         {
           "title": "Episode 616",
@@ -3838,7 +3859,10 @@
           "title": "Episode 640",
           "src": "https://files.catbox.moe/jx89yz.mp4",
           "fileSizeBytes": 100150315,
-          "durationSeconds": 1440
+          "durationSeconds": 1440,
+          "isPlaceholder": true,
+          "unavailableReason": "Confirmed dead source URL (404) as of 2026-06-10.",
+          "unavailableCheckedAt": "2026-06-10"
         },
         {
           "title": "Episode 641",

@@ -82,11 +82,19 @@
           try { listener(message); } catch {}
         });
       });
-      await ffmpeg.load({
+      // Optimize for multithreading if the browser supports SharedArrayBuffer
+      const coreOptions = {
         classWorkerURL,
         coreURL: FFMPEG_CORE_URL,
         wasmURL: FFMPEG_WASM_URL
-      });
+      };
+      
+      // If the browser supports it, this is significantly faster
+      if (typeof SharedArrayBuffer !== 'undefined') {
+        try { coreOptions.workerLoadURL = FFMPEG_WORKER_URL; } catch {}
+      }
+
+      await ffmpeg.load(coreOptions);
       ffmpegApi = { ffmpeg };
       if (typeof onProgress === 'function') onProgress({ phase: 'load', ratio: 1, message: 'FFmpeg loaded' });
       return ffmpegApi;
@@ -237,40 +245,87 @@
     return /^(ass|ssa|subrip|srt|text|webvtt|mov_text)$/i.test(String(codecName || ''));
   }
 
+  function normalizeRemuxMode(mode) {
+    return String(mode || '').trim().toLowerCase() === 'compatible' ? 'compatible' : 'fast';
+  }
+
+  function isMp4CopySafeVideoCodec(codecName) {
+    return /^(h264|avc1|hevc|h265|av1|mpeg4)$/i.test(String(codecName || ''));
+  }
+
+  function isCompatibleCopyVideoCodec(codecName) {
+    return /^(h264|avc1)$/i.test(String(codecName || ''));
+  }
+
+  function isMp4CopySafeAudioCodec(codecName) {
+    return /^(aac|alac|ac3|eac3|mp3)$/i.test(String(codecName || ''));
+  }
+
   async function inspectInputStreams(ffmpeg, inputName) {
-    const outputName = `probe_${Date.now()}_${Math.random().toString(16).slice(2)}.json`;
     try {
-      await ffmpeg.ffprobe([
-        '-v', 'error',
-        '-show_entries', 'stream=index,codec_type,codec_name',
-        '-of', 'json',
-        inputName,
-        '-o', outputName
-      ]);
-      const text = await ffmpeg.readFile(outputName, 'utf8');
-      const parsed = JSON.parse(String(text || '{}'));
-      const streams = Array.isArray(parsed.streams) ? parsed.streams : [];
-      const video = streams.find((stream) => stream && stream.codec_type === 'video');
-      const audio = streams.filter((stream) => stream && stream.codec_type === 'audio');
-      const subtitles = streams.filter((stream) => {
-        return stream && stream.codec_type === 'subtitle' && isTextSubtitleCodec(stream.codec_name);
-      });
-      const result = {
-        videoIndex: video && Number.isFinite(Number(video.index)) ? Number(video.index) : null,
-        audioIndexes: audio
-          .map((stream) => Number(stream.index))
-          .filter((index) => Number.isFinite(index)),
-        subtitleIndexes: subtitles
-          .map((stream) => Number(stream.index))
-          .filter((index) => Number.isFinite(index))
+      if (typeof ffmpeg.ffprobe === 'function') {
+        const outputName = `probe_${Date.now()}.json`;
+        try {
+          await ffmpeg.ffprobe([
+            '-v', 'error',
+            '-show_entries', 'stream=index,codec_type,codec_name,bit_rate:stream_tags=language',
+            '-of', 'json',
+            inputName,
+            '-o', outputName
+          ]);
+          const text = await ffmpeg.readFile(outputName, 'utf8');
+          const parsed = JSON.parse(String(text || '{}'));
+          const streams = Array.isArray(parsed.streams) ? parsed.streams : [];
+          const video = streams.find((s) => s && s.codec_type === 'video');
+          const audio = streams.filter((s) => s && s.codec_type === 'audio');
+          const subtitles = streams.filter((s) => s && s.codec_type === 'subtitle');
+          return {
+            videoIndex: video && Number.isFinite(Number(video.index)) ? Number(video.index) : null,
+            videoCodec: video ? String(video.codec_name).toLowerCase() : null,
+            videoBitrate: video && Number.isFinite(Number(video.bit_rate)) ? Math.round(Number(video.bit_rate)) : null,
+            audioStreams: audio.map((a) => ({
+              index: Number(a.index),
+              codec: String(a.codec_name).toLowerCase(),
+              bitrate: Number.isFinite(Number(a.bit_rate)) ? Math.round(Number(a.bit_rate)) : null,
+              lang: (a.tags && (a.tags.language || a.tags.LANGUAGE)) || null
+            })),
+            subtitleStreams: subtitles.map((s) => ({
+              index: Number(s.index),
+              codec: String(s.codec_name).toLowerCase(),
+              isText: isTextSubtitleCodec(s.codec_name),
+              lang: (s.tags && (s.tags.language || s.tags.LANGUAGE)) || null
+            }))
+          };
+        } finally {
+          try { await ffmpeg.deleteFile(outputName); } catch {}
+        }
+      }
+
+      // Fallback: Parse ffmpeg -i output
+      let output = '';
+      const listener = (msg) => { output += msg + '\n'; };
+      ffmpegLogListeners.add(listener);
+      try {
+        await ffmpeg.exec(['-i', inputName]);
+      } catch {
+        // -i exits with error generally
+      } finally {
+        ffmpegLogListeners.delete(listener);
+      }
+
+      const videoMatch = output.match(/Stream #\d+:(\d+).*?Video: ([a-z0-9]+)/i);
+      const bitrateMatch = output.match(/bitrate: (\d+) kb\/s/i);
+      
+      return {
+        videoIndex: videoMatch ? Number(videoMatch[1]) : 0,
+        videoCodec: videoMatch ? videoMatch[2].toLowerCase() : null,
+        videoBitrate: bitrateMatch ? Number(bitrateMatch[1]) * 1000 : null,
+        audioStreams: [], 
+        subtitleStreams: [] 
       };
-      try { console.debug('[Creator] FFmpeg stream plan:', result); } catch {}
-      return result;
     } catch (err) {
-      try { console.warn('[Creator] FFmpeg stream probe failed, using default MP4 stream map:', err); } catch {}
+      try { console.warn('[Creator] FFmpeg stream probe failed:', err); } catch {}
       return null;
-    } finally {
-      try { await ffmpeg.deleteFile(outputName); } catch {}
     }
   }
 
@@ -293,35 +348,117 @@
       return ['-map', '0:v:0', '-map', '0:a?'];
     }
     const args = ['-map', `0:${Number(streams.videoIndex)}`];
-    const audioIndexes = Array.isArray(streams.audioIndexes) ? streams.audioIndexes : [];
-    audioIndexes.forEach((index) => {
-      if (Number.isFinite(Number(index))) args.push('-map', `0:${Number(index)}`);
+
+    const audioStreams = Array.isArray(streams.audioStreams) ? streams.audioStreams : [];
+    const engAudio = audioStreams.find(s => {
+      const l = String(s.lang || '').toLowerCase();
+      return l === 'eng' || l === 'en' || l === 'english';
     });
-    const subtitleIndexes = Array.isArray(streams.subtitleIndexes) ? streams.subtitleIndexes : [];
-    subtitleIndexes.forEach((index) => {
-      if (Number.isFinite(Number(index))) args.push('-map', `0:${Number(index)}`);
+    
+    if (engAudio) {
+      // If English audio is found, map it first
+      args.push('-map', `0:${Number(engAudio.index)}`);
+      audioStreams.forEach((s) => {
+        if (s && s.index !== engAudio.index && Number.isFinite(Number(s.index))) {
+          args.push('-map', `0:${Number(s.index)}`);
+        }
+      });
+    } else {
+      audioStreams.forEach((s) => {
+        if (s && Number.isFinite(Number(s.index))) args.push('-map', `0:${Number(s.index)}`);
+      });
+    }
+
+    const subtitleStreams = Array.isArray(streams.subtitleStreams) ? streams.subtitleStreams : [];
+    const textSubtitles = subtitleStreams.filter(s => s.isText);
+    const engSub = textSubtitles.find(s => {
+      const l = String(s.lang || '').toLowerCase();
+      return l === 'eng' || l === 'en' || l === 'english';
     });
+
+    if (engSub) {
+      // Map English text subtitle first
+      args.push('-map', `0:${Number(engSub.index)}`);
+      textSubtitles.forEach((s) => {
+        if (s && s.index !== engSub.index && Number.isFinite(Number(s.index))) {
+          args.push('-map', `0:${Number(s.index)}`);
+        }
+      });
+    } else {
+      textSubtitles.forEach((s) => {
+        if (s && Number.isFinite(Number(s.index))) args.push('-map', `0:${Number(s.index)}`);
+      });
+    }
+
     return args;
   }
 
-  function mp4StreamArgs(videoCodec, streams) {
-    const hasTextSubtitles = streams && Array.isArray(streams.subtitleIndexes) && streams.subtitleIndexes.length > 0;
+  function mp4StreamArgs(streams, options = {}) {
+    const forceReencode = options.forceReencode === true;
+    const remuxMode = normalizeRemuxMode(options.remuxMode);
+    const videoCodec = streams && streams.videoCodec;
+    const videoBitrate = streams && streams.videoBitrate;
+    const isSupportedVideo = !forceReencode && (
+      remuxMode === 'fast'
+        ? isMp4CopySafeVideoCodec(videoCodec)
+        : isCompatibleCopyVideoCodec(videoCodec)
+    );
+    const vCodecArg = isSupportedVideo ? 'copy' : 'libx264';
+
     const args = [
       ...streamMapArgs(streams),
       '-dn',
       '-map_chapters', '-1',
       '-map_metadata', '-1',
-      '-c:v', videoCodec,
-      '-c:a', 'aac',
-      '-b:a', '160k',
-      '-movflags', '+faststart',
-      '-avoid_negative_ts', 'make_zero'
+      '-c:v', vCodecArg
     ];
-    if (hasTextSubtitles) {
-      args.push('-c:s', 'mov_text');
+
+    if (vCodecArg === 'copy' && /^(hevc|h265)$/i.test(String(videoCodec || ''))) {
+      args.push('-tag:v', 'hvc1');
+    }
+
+    if (vCodecArg === 'libx264') {
+      // ultrafast + zerolatency for maximum speed in WASM environment
+      args.push('-preset', 'ultrafast', '-tune', 'zerolatency');
+      if (videoBitrate && videoBitrate > 0) {
+        // Use a slightly more aggressive buffer for WASM stability
+        args.push('-b:v', `${Math.round(videoBitrate)}`, '-maxrate', `${Math.round(videoBitrate * 2)}`, '-bufsize', `${Math.round(videoBitrate * 4)}`);
+      } else {
+        args.push('-crf', '24'); // Slightly lower quality for significantly faster encode
+      }
+      // Threads 0 allows FFmpeg to use all available WebWorker cores
+      args.push('-pix_fmt', 'yuv420p', '-threads', '0');
+    }
+
+    // Audio handling: re-encode to aac unless already aac/mp3
+    const audioStreams = (streams && Array.isArray(streams.audioStreams)) ? streams.audioStreams : [];
+    if (audioStreams.length > 0) {
+      audioStreams.forEach((s, idx) => {
+        const isSupportedAudio = !forceReencode && isMp4CopySafeAudioCodec(s.codec);
+        args.push(`-c:a:${idx}`, isSupportedAudio ? 'copy' : 'aac');
+        if (!isSupportedAudio) {
+          if (s.bitrate && s.bitrate > 0) {
+            args.push(`-b:a:${idx}`, `${Math.round(s.bitrate)}`);
+          } else {
+            args.push(`-b:a:${idx}`, '128k');
+          }
+        }
+      });
+    } else {
+      args.push('-an');
+    }
+
+    // Subtitle handling: only keep text subtitles, convert to mov_text
+    const textSubtitles = (streams && Array.isArray(streams.subtitleStreams)) ? streams.subtitleStreams.filter(s => s.isText) : [];
+    if (textSubtitles.length > 0) {
+      textSubtitles.forEach((s, idx) => {
+        args.push(`-c:s:${idx}`, 'mov_text');
+      });
     } else {
       args.push('-sn');
     }
+
+    args.push('-movflags', '+faststart', '-avoid_negative_ts', 'make_zero');
     return args;
   }
 
@@ -364,24 +501,23 @@
             message: `Splitting part ${index + 1} of ${splitCount}`
           });
         }
-        const copyArgs = [
+        const procArgs = [
           '-ss', String(Math.max(0, start)),
           '-t', String(Math.max(0.1, length)),
           '-i', inputName,
-          ...mp4StreamArgs('copy', streams),
+          ...mp4StreamArgs(streams, { remuxMode: options.remuxMode }),
           outputName
         ];
         try {
-          await ffmpeg.exec(copyArgs);
+          await ffmpeg.exec(procArgs);
         } catch (err) {
+          try { console.warn('[Creator] FFmpeg partial split failed, retrying with force re-encode:', err); } catch {}
           try { await ffmpeg.deleteFile(outputName); } catch {}
           await ffmpeg.exec([
             '-ss', String(Math.max(0, start)),
             '-t', String(Math.max(0.1, length)),
             '-i', inputName,
-            ...mp4StreamArgs('libx264', streams),
-            '-preset', 'veryfast',
-            '-crf', '23',
+            ...mp4StreamArgs(streams, { remuxMode: options.remuxMode, forceReencode: true }),
             outputName
           ]);
         }
@@ -402,10 +538,10 @@
   }
 
   async function remuxVideoFileToMp4(file, options = {}) {
-    if (!shouldRemuxToMp4(file)) return { didRemux: false, file, durationSeconds: await measureDuration(file) };
-
+    if (!shouldRemuxToMp4(file) && options.forceRemux !== true) {
+      return { didRemux: false, file, durationSeconds: await measureDuration(file) };
+    }
     const onProgress = typeof options.onProgress === 'function' ? options.onProgress : null;
-    let duration = await measureDuration(file);
     const ext = getExtension(file);
     const baseName = trimName(file.name);
     const fallbackInputName = `input.${ext}`;
@@ -418,23 +554,23 @@
     if (onProgress) onProgress({ phase: 'write', ratio: 1, message: 'Video prepared' });
 
     try {
+      let duration = await measureDuration(file);
       if (!duration) duration = await measureDurationFromFfmpegInput(ffmpeg, inputName);
       const streams = await inspectInputStreams(ffmpeg, inputName);
       if (onProgress) onProgress({ phase: 'remux', ratio: 0, message: 'Remuxing video' });
       try {
         await ffmpeg.exec([
           '-i', inputName,
-          ...mp4StreamArgs('copy', streams),
+          ...mp4StreamArgs(streams, { remuxMode: options.remuxMode }),
           outputName
         ]);
       } catch (err) {
+        try { console.warn('[Creator] FFmpeg remux failed, retrying with force re-encode:', err); } catch {}
         try { await ffmpeg.deleteFile(outputName); } catch {}
         await ffmpeg.exec([
-        '-i', inputName,
-        ...mp4StreamArgs('libx264', streams),
-        '-preset', 'veryfast',
-        '-crf', '23',
-        outputName
+          '-i', inputName,
+          ...mp4StreamArgs(streams, { remuxMode: options.remuxMode, forceReencode: true }),
+          outputName
         ]);
       }
       const data = await ffmpeg.readFile(outputName);

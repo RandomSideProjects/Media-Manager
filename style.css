@@ -498,6 +498,22 @@ body.light-mode .episode-button.episode--complete .episode-progress-fill {
 .episode-button.separated-category {
   font-weight: 600;
 }
+.episode-button.episode--unavailable {
+  border-color: rgba(255, 140, 140, 0.45);
+  background:
+    linear-gradient(180deg, rgba(120, 35, 35, 0.52), rgba(70, 18, 18, 0.72)),
+    repeating-linear-gradient(-45deg, rgba(255,255,255,0.04) 0 12px, rgba(0,0,0,0.05) 12px 24px);
+}
+.episode-button.episode--unavailable:hover {
+  border-color: rgba(255, 170, 170, 0.75);
+  background:
+    linear-gradient(180deg, rgba(145, 38, 38, 0.62), rgba(86, 20, 20, 0.82)),
+    repeating-linear-gradient(-45deg, rgba(255,255,255,0.05) 0 12px, rgba(0,0,0,0.06) 12px 24px);
+}
+.episode-button.episode--unavailable .episode-meta {
+  color: #ffd7d7;
+  font-weight: 700;
+}
 .episode-title {
   font-size: calc(0.98em * var(--tile-scale));
   line-height: 1.25;

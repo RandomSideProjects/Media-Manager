@@ -385,7 +385,10 @@
           "title": "Chapter 187",
           "src": "https://files.catbox.moe/jw3ym7.json",
           "fileSizeBytes": 2608577,
-          "VolumePageCount": 32
+          "VolumePageCount": 32,
+          "isPlaceholder": true,
+          "unavailableReason": "Confirmed dead source URL (404) as of 2026-06-10.",
+          "unavailableCheckedAt": "2026-06-10"
         },
         {
           "title": "Chapter 188",

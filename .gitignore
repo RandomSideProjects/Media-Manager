@@ -4,3 +4,7 @@
 /Tools/__pycache__
 mm-src-url-report.summary.txt
 mm-src-url-report.json
+reports/curl-source-url-scan-*.json
+reports/curl-source-url-scan-*.summary.txt
+reports/mm-src-url-report-*.json
+reports/mm-src-url-report-*.summary.txt

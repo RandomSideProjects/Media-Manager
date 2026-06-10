@@ -1,6 +1,6 @@
 {
   "title": "Science Fell in Love, So I Tried to Prove it",
-  "Image": "./Sources/Posters/Anime/Science_Fell_in_Love,_So_I_Tried_to_Prove_it.webp",
+  "Image": "https://files.catbox.moe/ls3oo7.webp",
   "categories": [
     {
       "category": "Season 1",
@@ -74,7 +74,8 @@
         {
           "title": "Episode 12",
           "src": "https://cpr.xpbliss.fyi/pub/MM/5-13-26/ScienceFellInLoveSoITriedToProveIt/S01E12_Episode_12.mp4",
-          "fileSizeBytes": 121879006
+          "fileSizeBytes": 121879006,
+          "durationSeconds": 1420
         }
       ]
     },
@@ -157,6 +158,6 @@
     }
   ],
   "totalFileSizeBytes": 5097343718,
-  "LatestTime": "2026-05-13T05:59:45.383Z",
+  "LatestTime": "2026-06-10T15:44:22.141Z",
   "totalDurationSeconds": 32660
 }

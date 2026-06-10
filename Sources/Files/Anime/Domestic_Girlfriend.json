@@ -1,87 +1,87 @@
 {
   "title": "Domestic Girlfriend",
   "Image": "./Sources/Posters/Anime/Domestic_Girlfriend.webp",
-  "LatestTime": "2026-01-12T22:57:18.834Z",
   "categories": [
     {
       "category": "Season 1",
       "episodes": [
         {
           "title": "Episode 1",
-          "src": "https://files.catbox.moe/q1id5k.mp4",
-          "fileSizeBytes": 107240226,
-          "durationSeconds": 1630
+          "src": "https://files.catbox.moe/h3lv6q.mp4",
+          "fileSizeBytes": 146111631,
+          "durationSeconds": 1485
         },
         {
           "title": "Episode 2",
-          "src": "https://files.catbox.moe/yf0b5q.mp4",
-          "fileSizeBytes": 85907088,
-          "durationSeconds": 1499
+          "src": "https://files.catbox.moe/8w095p.mp4",
+          "fileSizeBytes": 159054179,
+          "durationSeconds": 1485
         },
         {
           "title": "Episode 3",
-          "src": "https://files.catbox.moe/e0g38l.mp4",
-          "fileSizeBytes": 96837633,
-          "durationSeconds": 1499
+          "src": "https://files.catbox.moe/s5b2wx.mp4",
+          "fileSizeBytes": 165030324,
+          "durationSeconds": 1500
         },
         {
           "title": "Episode 4",
-          "src": "https://files.catbox.moe/pzzyp3.mp4",
-          "fileSizeBytes": 103553115,
-          "durationSeconds": 1499
+          "src": "https://files.catbox.moe/7fqw3n.mp4",
+          "fileSizeBytes": 129659908,
+          "durationSeconds": 1485
         },
         {
           "title": "Episode 5",
-          "src": "https://files.catbox.moe/558x2d.mp4",
-          "fileSizeBytes": 94841111,
-          "durationSeconds": 1578
+          "src": "https://files.catbox.moe/gblq77.mp4",
+          "fileSizeBytes": 157932451,
+          "durationSeconds": 1485
         },
         {
           "title": "Episode 6",
-          "src": "https://files.catbox.moe/z7jk6b.mp4",
-          "fileSizeBytes": 100828419,
-          "durationSeconds": 1499
+          "src": "https://files.catbox.moe/9ojhr2.mp4",
+          "fileSizeBytes": 198585566,
+          "durationSeconds": 1632
         },
         {
           "title": "Episode 7",
-          "src": "https://files.catbox.moe/bpcyz6.mp4",
-          "fileSizeBytes": 98499204,
-          "durationSeconds": 1484
+          "src": "https://files.catbox.moe/hof5fj.mp4",
+          "fileSizeBytes": 157107301,
+          "durationSeconds": 1578
         },
         {
           "title": "Episode 8",
-          "src": "https://files.catbox.moe/5g0bap.mp4",
-          "fileSizeBytes": 89122457,
-          "durationSeconds": 1484
+          "src": "https://files.catbox.moe/cqufgy.mp4",
+          "fileSizeBytes": 170669160,
+          "durationSeconds": 1500
         },
         {
           "title": "Episode 9",
-          "src": "https://files.catbox.moe/r3up5c.mp4",
-          "fileSizeBytes": 89282551,
+          "src": "https://files.catbox.moe/37g4x4.mp4",
+          "fileSizeBytes": 140112768,
           "durationSeconds": 1484
         },
         {
           "title": "Episode 10",
-          "src": "https://files.catbox.moe/zk264w.mp4",
-          "fileSizeBytes": 83382560,
-          "durationSeconds": 1483
+          "src": "https://files.catbox.moe/i0pzjp.mp4",
+          "fileSizeBytes": 181429315,
+          "durationSeconds": 1630
         },
         {
           "title": "Episode 11",
-          "src": "https://files.catbox.moe/zgm73v.mp4",
-          "fileSizeBytes": 117213943,
-          "durationSeconds": 1632
+          "src": "https://files.catbox.moe/idbll7.mp4",
+          "fileSizeBytes": 168864023,
+          "durationSeconds": 1500
         },
         {
           "title": "Episode 12",
-          "src": "https://files.catbox.moe/g8d18c.mp4",
-          "fileSizeBytes": 76563869,
-          "durationSeconds": 1484
+          "src": "https://files.catbox.moe/bghuq0.mp4",
+          "fileSizeBytes": 149130304,
+          "durationSeconds": 1500
         }
       ]
     }
   ],
-  "totalFileSizeBytes": 1143272176,
-  "totalDurationSeconds": 18255,
+  "totalFileSizeBytes": 1923686930,
+  "LatestTime": "2026-06-10T15:32:27.977Z",
+  "totalDurationSeconds": 18264,
   "hidden": true
 }

@@ -97,7 +97,10 @@
           "title": "Episode 5",
           "src": "https://files.catbox.moe/jtn7bv.mp4",
           "fileSizeBytes": 175353456,
-          "durationSeconds": 1603
+          "durationSeconds": 1603,
+          "isPlaceholder": true,
+          "unavailableReason": "Confirmed dead source URL (404) as of 2026-06-10.",
+          "unavailableCheckedAt": "2026-06-10"
         },
         {
           "title": "Episode 6",
@@ -143,7 +146,10 @@
           "title": "Episode 1",
           "src": "https://files.catbox.moe/j74qsb.mp4",
           "fileSizeBytes": 160880924,
-          "durationSeconds": 1423
+          "durationSeconds": 1423,
+          "isPlaceholder": true,
+          "unavailableReason": "Confirmed dead source URL (404) as of 2026-06-10.",
+          "unavailableCheckedAt": "2026-06-10"
         },
         {
           "title": "Episode 2",

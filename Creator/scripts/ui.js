@@ -824,13 +824,18 @@ function isCopypartyOverrideEnabledForCreator() {
 
 function shouldUseCreatorOversizePlaylistUpload(file) {
   if (isCopypartyOverrideEnabledForCreator()) return false;
+  if (!file) return false;
+  let needsSplit = false;
   if (typeof window !== 'undefined' && typeof window.mmShouldSplitVideoFile === 'function') {
-    try { return window.mmShouldSplitVideoFile(file) === true; } catch {}
+    try { needsSplit = window.mmShouldSplitVideoFile(file) === true; } catch {}
+  } else if (file.size > 200 * 1024 * 1024) {
+    needsSplit = true;
   }
-  if (!file || typeof file.size !== 'number' || file.size <= 200 * 1024 * 1024) return false;
+  if (!needsSplit) return false;
+
   const name = String(file.name || '');
   const type = String(file.type || '');
-  return /^video\//i.test(type) || /\.(mp4|m4v|mov|webm|mkv)$/i.test(name);
+  return /^video\//i.test(type) || /\.(mp4|m4v|mov|webm|mkv|avi|flv|wmv|mpg|mpeg|ts|mts|m2ts|3gp|ogv)$/i.test(name);
 }
 
 function getDirectoryTitleForPlaylist() {
@@ -842,12 +847,28 @@ function getDirectoryTitleForPlaylist() {
   }
 }
 
+function getCreatorRemuxModeForUi(explicitMode) {
+  const direct = String(explicitMode || '').trim().toLowerCase();
+  if (direct === 'compatible') return 'compatible';
+  if (direct === 'fast') return 'fast';
+  try {
+    if (window.mm_uploadSettings && typeof window.mm_uploadSettings.load === 'function') {
+      const settings = window.mm_uploadSettings.load();
+      return String(settings && settings.remuxMode || '').trim().toLowerCase() === 'compatible' ? 'compatible' : 'fast';
+    }
+  } catch {}
+  try {
+    const raw = JSON.parse(localStorage.getItem('mm_upload_settings') || '{}');
+    return String(raw && raw.remuxMode || '').trim().toLowerCase() === 'compatible' ? 'compatible' : 'fast';
+  } catch {}
+  return 'fast';
+}
+
 async function uploadOversizeVideoAsCatboxPlaylist(file, options = {}) {
   const opts = options && typeof options === 'object' ? options : {};
   if (!shouldUseCreatorOversizePlaylistUpload(file)) return null;
-  if (typeof window === 'undefined' || typeof window.mmSplitVideoFileWithFfmpeg !== 'function') {
-    throw new Error('Browser video splitter is not available.');
-  }
+  const hasSplitter = typeof window !== 'undefined' && typeof window.mmSplitVideoFileWithFfmpeg === 'function';
+  if (!hasSplitter) throw new Error('Browser video splitter is not available.');
 
   const onProgress = typeof opts.onProgress === 'function' ? opts.onProgress : null;
   const emitProgress = (percent, detail) => {
@@ -855,80 +876,89 @@ async function uploadOversizeVideoAsCatboxPlaylist(file, options = {}) {
     try { onProgress(Math.max(0, Math.min(100, Number(percent) || 0)), detail || {}); } catch {}
   };
 
-  const result = await window.mmSplitVideoFileWithFfmpeg(file, {
-    onProgress: (info) => {
-      const ratio = Math.max(0, Math.min(1, Number(info && info.ratio) || 0));
-      emitProgress(Math.round(ratio * 20), { phase: 'prepare' });
+  const needsSplit = typeof window.mmShouldSplitVideoFile === 'function' && window.mmShouldSplitVideoFile(file);
+  
+  if (needsSplit) {
+    const result = await window.mmSplitVideoFileWithFfmpeg(file, {
+      remuxMode: getCreatorRemuxModeForUi(opts.remuxMode),
+      onProgress: (info) => {
+        const ratio = Math.max(0, Math.min(1, Number(info && info.ratio) || 0));
+        const subPhase = (info && info.phase) || 'prepare';
+        emitProgress(Math.round(ratio * 20), { phase: subPhase });
+      }
+    });
+
+    if (result && result.didSplit && Array.isArray(result.parts) && result.parts.length >= 2) {
+      const playlistMeta = opts.playlistMeta && typeof opts.playlistMeta === 'object' ? opts.playlistMeta : {};
+      const uploadedParts = [];
+      const parts = result.parts;
+      for (let index = 0; index < parts.length; index += 1) {
+        const part = parts[index];
+        const sourceTitle = `Part ${index + 1}`;
+        const url = await uploadToCatboxWithProgress(part.file, (pct) => {
+          const localProgress = Math.max(0, Math.min(100, Number(pct) || 0));
+          emitProgress(20 + (((index + (localProgress / 100)) / parts.length) * 75), { phase: 'upload-video' });
+        }, {
+          context: opts.context || 'manual',
+          disableAutoSplit: true,
+          allowProxy: true,
+          forceProxy: true,
+          signal: opts.signal,
+          creatorItem: Object.assign({}, opts.creatorItem || {}, { sourceTitle })
+        });
+        uploadedParts.push({
+          title: sourceTitle,
+          src: url,
+          fileSizeBytes: part.file && Number.isFinite(Number(part.file.size)) ? Math.round(Number(part.file.size)) : undefined,
+          durationSeconds: Number.isFinite(Number(part.durationSeconds)) && Number(part.durationSeconds) > 0
+            ? Math.round(Number(part.durationSeconds))
+            : undefined
+        });
+      }
+
+      const artifact = createCreatorPlaylistArtifact({
+        directoryTitle: playlistMeta.directoryTitle || getDirectoryTitleForPlaylist(),
+        categoryTitle: playlistMeta.categoryTitle || '',
+        episodeTitle: playlistMeta.episodeTitle || (file && file.name ? file.name : 'Episode'),
+        categoryIndex: playlistMeta.categoryIndex || 1,
+        episodeIndex: playlistMeta.episodeIndex || 1,
+        parts: uploadedParts
+      });
+      if (!artifact || !artifact.text || !artifact.filename) {
+        throw new Error('Could not build playlist for uploaded video parts.');
+      }
+
+      const playlistFile = new File(
+        [new Blob([artifact.text], { type: 'application/vnd.apple.mpegurl' })],
+        artifact.filename,
+        { type: 'application/vnd.apple.mpegurl', lastModified: Date.now() }
+      );
+      const playlistUrl = await uploadToCatboxWithProgress(playlistFile, (pct) => {
+        const localProgress = Math.max(0, Math.min(100, Number(pct) || 0));
+        emitProgress(95 + (localProgress * 0.05), { phase: 'upload-playlist' });
+      }, {
+        context: opts.context || 'manual',
+        disableAutoSplit: true,
+        allowProxy: true,
+        forceProxy: true,
+        signal: opts.signal,
+        creatorItem: opts.creatorItem || null
+      });
+
+      const totalFileSize = uploadedParts.reduce((sum, part) => sum + (Number(part.fileSizeBytes) || 0), 0);
+      const totalDuration = uploadedParts.reduce((sum, part) => sum + (Number(part.durationSeconds) || 0), 0);
+      emitProgress(100, { phase: 'complete' });
+      return {
+        url: playlistUrl,
+        parts: uploadedParts,
+        artifact,
+        totalFileSize: totalFileSize > 0 ? Math.round(totalFileSize) : 0,
+        totalDuration: totalDuration > 0 ? Math.round(totalDuration) : 0
+      };
     }
-  });
-  if (!result || !result.didSplit || !Array.isArray(result.parts) || result.parts.length < 2) {
-    return null;
   }
 
-  const playlistMeta = opts.playlistMeta && typeof opts.playlistMeta === 'object' ? opts.playlistMeta : {};
-  const uploadedParts = [];
-  const parts = result.parts;
-  for (let index = 0; index < parts.length; index += 1) {
-    const part = parts[index];
-    const sourceTitle = `Part ${index + 1}`;
-    const url = await uploadToCatboxWithProgress(part.file, (pct) => {
-      const localProgress = Math.max(0, Math.min(100, Number(pct) || 0));
-      emitProgress(20 + (((index + (localProgress / 100)) / parts.length) * 75), { phase: 'upload-video' });
-    }, {
-      context: opts.context || 'manual',
-      allowProxy: true,
-      forceProxy: true,
-      signal: opts.signal,
-      creatorItem: Object.assign({}, opts.creatorItem || {}, { sourceTitle })
-    });
-    uploadedParts.push({
-      title: sourceTitle,
-      src: url,
-      fileSizeBytes: part.file && Number.isFinite(Number(part.file.size)) ? Math.round(Number(part.file.size)) : undefined,
-      durationSeconds: Number.isFinite(Number(part.durationSeconds)) && Number(part.durationSeconds) > 0
-        ? Math.round(Number(part.durationSeconds))
-        : undefined
-    });
-  }
-
-  const artifact = createCreatorPlaylistArtifact({
-    directoryTitle: playlistMeta.directoryTitle || getDirectoryTitleForPlaylist(),
-    categoryTitle: playlistMeta.categoryTitle || '',
-    episodeTitle: playlistMeta.episodeTitle || (file && file.name ? file.name : 'Episode'),
-    categoryIndex: playlistMeta.categoryIndex || 1,
-    episodeIndex: playlistMeta.episodeIndex || 1,
-    parts: uploadedParts
-  });
-  if (!artifact || !artifact.text || !artifact.filename) {
-    throw new Error('Could not build playlist for uploaded video parts.');
-  }
-
-  const playlistFile = new File(
-    [new Blob([artifact.text], { type: 'application/vnd.apple.mpegurl' })],
-    artifact.filename,
-    { type: 'application/vnd.apple.mpegurl', lastModified: Date.now() }
-  );
-  const playlistUrl = await uploadToCatboxWithProgress(playlistFile, (pct) => {
-    const localProgress = Math.max(0, Math.min(100, Number(pct) || 0));
-    emitProgress(95 + (localProgress * 0.05), { phase: 'upload-playlist' });
-  }, {
-    context: opts.context || 'manual',
-    allowProxy: true,
-    forceProxy: true,
-    signal: opts.signal,
-    creatorItem: opts.creatorItem || null
-  });
-
-  const totalFileSize = uploadedParts.reduce((sum, part) => sum + (Number(part.fileSizeBytes) || 0), 0);
-  const totalDuration = uploadedParts.reduce((sum, part) => sum + (Number(part.durationSeconds) || 0), 0);
-  emitProgress(100, { phase: 'complete' });
-  return {
-    url: playlistUrl,
-    parts: uploadedParts,
-    artifact,
-    totalFileSize: totalFileSize > 0 ? Math.round(totalFileSize) : 0,
-    totalDuration: totalDuration > 0 ? Math.round(totalDuration) : 0
-  };
+  return null;
 }
 
 if (typeof window !== 'undefined') {
@@ -1538,11 +1568,21 @@ folderInput.addEventListener('change', async (e) => {
                 });
                 const url = splitUpload ? splitUpload.url : await uploadToCatboxWithProgress(
 	                file,
-	                (pct) => {
+	                (pct, info) => {
+                    const phase = (info && (info.phase || info.stage)) || '';
+                    if (phase === 'read' || phase === 'write' || phase === 'prepare') {
+                      rowCtx.setStatus('Preparing', { color: null });
+                    } else if (phase === 'split') {
+                      rowCtx.setStatus('Splitting', { color: null });
+                    } else if (phase === 'remux' || phase === 'remuxing') {
+                      rowCtx.setStatus('Remuxing', { color: null });
+                    } else if (phase === 'upload-video' || phase === 'upload-playlist' || phase === 'upload') {
+                      rowCtx.setStatus('Uploading', { color: null });
+                    }
 	                  const loaded = Number.isFinite(totalBytes) ? (pct / 100) * totalBytes : undefined;
 	                  rowCtx.setProgress(pct, { loadedBytes: loaded });
 	                },
-	                { context: 'batch', allowProxy: false, creatorItem: { categoryTitle, itemIndex: num || 1, sourceTitle } }
+	                { context: 'batch', allowProxy: false, creatorItem: { categoryTitle, itemIndex: num || 1, sourceTitle }, playlistMeta: { directoryTitle: getDirectoryTitleForPlaylist(), categoryTitle, episodeTitle: sourceTitle, categoryIndex, episodeIndex: num || 1 }, targetEpisodeEl: epDiv || null }
 	              );
                 if (splitUpload) {
                   epDiv._hiddenSplitParts = splitUpload.parts || [];
@@ -1798,11 +1838,21 @@ folderInput.addEventListener('change', async (e) => {
               });
 	            const url = splitUpload ? splitUpload.url : await uploadToCatboxWithProgress(
 	              fileForUpload,
-	              (pct) => {
+	              (pct, info) => {
+                  const phase = (info && (info.phase || info.stage)) || '';
+                  if (phase === 'read' || phase === 'write' || phase === 'prepare') {
+                    rowCtx.setStatus('Preparing', { color: null });
+                  } else if (phase === 'split') {
+                    rowCtx.setStatus('Splitting', { color: null });
+                  } else if (phase === 'remux' || phase === 'remuxing') {
+                    rowCtx.setStatus('Remuxing', { color: null });
+                  } else if (phase === 'upload-video' || phase === 'upload-playlist' || phase === 'upload') {
+                    rowCtx.setStatus('Uploading', { color: null });
+                  }
 	                const loaded = Number.isFinite(fileSizeBytes) ? (pct / 100) * fileSizeBytes : undefined;
 	                rowCtx.setProgress(pct, { loadedBytes: loaded });
 	              },
-	              { context: 'batch', allowProxy: false, creatorItem: { categoryTitle, itemIndex, sourceTitle: title } }
+	              { context: 'batch', allowProxy: false, creatorItem: { categoryTitle, itemIndex, sourceTitle: title }, playlistMeta: { directoryTitle: getDirectoryTitleForPlaylist(), categoryTitle, episodeTitle: title, categoryIndex, episodeIndex: itemIndex }, targetEpisodeEl: epDiv || null }
 	            );
               if (splitUpload) {
                 epDiv._hiddenSplitParts = splitUpload.parts || [];
@@ -2336,11 +2386,19 @@ function addEpisode(container, data) {
             if (typeof opts.onProgress === 'function') opts.onProgress(pct);
           }
         });
-	      const url = splitUpload ? splitUpload.url : await uploadToCatboxWithProgress(file, pct => {
+	      const url = splitUpload ? splitUpload.url : await uploadToCatboxWithProgress(file, (pct, info) => {
 	        progress.value = pct;
+          const phase = (info && (info.phase || info.stage)) || 'upload';
+          const label = (phase === 'read' || phase === 'write' || phase === 'prepare')
+            ? 'Preparing'
+            : (phase === 'split'
+              ? 'Splitting'
+              : ((phase === 'remux' || phase === 'remuxing')
+                ? 'Remuxing'
+                : 'Uploading'));
 	        if (row._statusEl) {
 	          row._statusEl.style.color = '#9ecbff';
-	          row._statusEl.textContent = `Uploading ${Math.round(pct)}%`;
+	          row._statusEl.textContent = `${label} ${Math.round(pct)}%`;
 	          row._statusEl.appendChild(progress);
 	        }
 	        if (typeof opts.onProgress === 'function') {
@@ -2351,7 +2409,20 @@ function addEpisode(container, data) {
           allowProxy: opts.allowProxy !== undefined ? opts.allowProxy !== false : false,
           forceProxy: opts.forceProxy === true,
           signal,
-          creatorItem: { categoryTitle, itemIndex: episodeIndex, sourceTitle }
+          creatorItem: { categoryTitle, itemIndex: episodeIndex, sourceTitle },
+          playlistMeta: {
+            directoryTitle: getDirectoryTitleForPlaylist(),
+            categoryTitle,
+            episodeTitle: sourceTitle,
+            categoryIndex: (() => {
+              try {
+                const cat = row && typeof row.closest === 'function' ? row.closest('.category') : null;
+                return cat && cat.parentElement ? Array.from(cat.parentElement.querySelectorAll('.category')).indexOf(cat) + 1 : 1;
+              } catch { return 1; }
+            })(),
+            episodeIndex
+          },
+          targetEpisodeEl: row || null
         });
 	      if (row._srcInput) row._srcInput.value = url;
 	      applyPartMetadata(row, { fileSize: splitUpload && splitUpload.totalFileSize > 0 ? splitUpload.totalFileSize : file.size });
@@ -2628,9 +2699,19 @@ function addEpisode(container, data) {
 
     try {
       const result = await window.mmSplitVideoFileWithFfmpeg(file, {
+        remuxMode: getCreatorRemuxModeForUi(),
         onProgress: (info) => {
           const ratio = Math.max(0, Math.min(1, Number(info && info.ratio) || 0));
-          statusText.textContent = downloadOnly ? 'Preparing download' : 'Uploading';
+          const phase = (info && info.phase) || '';
+          if (phase === 'read' || phase === 'write') {
+            statusText.textContent = 'Preparing';
+          } else if (phase === 'split') {
+            statusText.textContent = 'Splitting';
+          } else if (phase === 'remux') {
+            statusText.textContent = 'Remuxing';
+          } else {
+            statusText.textContent = downloadOnly ? 'Preparing download' : 'Uploading';
+          }
           progress.value = Math.min(25, Math.round(ratio * 25));
         }
       });
@@ -2828,14 +2909,27 @@ function addEpisode(container, data) {
             const imgBlob = await zip.files[name].async('blob');
             const ext = (() => { const m = name.toLowerCase().match(/\.(jpe?g|png|gif|webp|bmp)$/); return m ? m[0] : '.png'; })();
             const pageFile = new File([imgBlob], `${i + 1}${ext}`, { type: imgBlob.type || 'application/octet-stream' });
-            const base = (i / totalSteps) * 100;
-            const url = await uploadToCatboxWithProgress(pageFile, (pct, info) => {
-              const adj = Math.max(0, Math.min(100, base + pct / totalSteps));
-              progressBar.value = adj;
-              try { uploadingMsg.textContent = `Processing ${Math.round(adj)}%`; } catch {}
-              try { if (info && info.bps != null) speedEl.textContent = fmtSpeed(info.bps); } catch {}
-              if (pct >= 100) { try { startHangTimer(); } catch {} }
-            }, { context: 'manual', allowProxy: false });
+    if (totalSteps > 1) {
+              const base = (i / totalSteps) * 100;
+              url = await uploadToCatboxWithProgress(pageFile, (pct, info) => {
+                const adj = Math.max(0, Math.min(100, base + pct / totalSteps));
+                progressBar.value = adj;
+                const stage = (info && info.phase) || 'upload';
+                const label = (stage === 'remux' || stage === 'remuxing') ? 'Remuxing' : 'Processing';
+                try { uploadingMsg.textContent = `${label} ${Math.round(adj)}%`; } catch {}
+                try { if (info && info.bps != null) speedEl.textContent = fmtSpeed(info.bps); } catch {}
+                if (pct >= 100) { try { startHangTimer(); } catch {} }
+              }, { context: 'manual', allowProxy: false });
+            } else {
+              url = await uploadToCatboxWithProgress(pageFile, (pct, info) => {
+                progressBar.value = pct;
+                const stage = (info && info.phase) || 'upload';
+                const label = (stage === 'remux' || stage === 'remuxing') ? 'Remuxing' : 'Processing';
+                try { uploadingMsg.textContent = `${label} ${Math.round(pct)}%`; } catch {}
+                try { if (info && info.bps != null) speedEl.textContent = fmtSpeed(info.bps); } catch {}
+                if (pct >= 100) { try { startHangTimer(); } catch {} }
+              }, { context: 'manual', allowProxy: false });
+            }
             pageUrls.push(url);
           }
           const pagesMap = {};
@@ -2847,10 +2941,19 @@ function addEpisode(container, data) {
           try { const m = (epTitle.value||'').match(/(\d+)/); if (m) volNum = parseInt(m[1], 10) || 1; } catch {}
           const volFile = new File([volBlob], `${volNum}.json`, { type: 'application/json' });
           const url = await uploadToCatboxWithProgress(volFile, (pct, info) => {
-            const base = ((names.length) / totalSteps) * 100;
-            const adj = Math.max(0, Math.min(100, base + pct / totalSteps));
-            progressBar.value = adj;
-            try { uploadingMsg.textContent = `Processing ${Math.round(adj)}%`; } catch {}
+            if (totalSteps > 1) {
+              const base = ((names.length) / totalSteps) * 100;
+              const adj = Math.max(0, Math.min(100, base + pct / totalSteps));
+              progressBar.value = adj;
+              const stage = (info && info.phase) || 'upload';
+              const label = (stage === 'remux' || stage === 'remuxing') ? 'Remuxing' : 'Processing';
+              try { uploadingMsg.textContent = `${label} ${Math.round(adj)}%`; } catch {}
+            } else {
+              progressBar.value = pct;
+              const stage = (info && info.phase) || 'upload';
+              const label = (stage === 'remux' || stage === 'remuxing') ? 'Remuxing' : 'Processing';
+              try { uploadingMsg.textContent = `${label} ${Math.round(pct)}%`; } catch {}
+            }
             try { if (info && info.bps != null) speedEl.textContent = fmtSpeed(info.bps); } catch {}
             if (pct >= 100) { try { startHangTimer(); } catch {} }
           }, { context: 'manual', allowProxy: false });
@@ -2869,11 +2972,17 @@ function addEpisode(container, data) {
             file,
             (percent, info) => {
               progressBar.value = percent;
-              try { uploadingMsg.textContent = `Uploading ${Math.round(percent)}%`; } catch {}
+              const stage = (info && (info.phase || info.stage)) || 'upload';
+              const label = (stage === 'read' || stage === 'write' || stage === 'prepare')
+                ? 'Preparing'
+                : (stage === 'split'
+                  ? 'Splitting'
+                  : ((stage === 'remux' || stage === 'remuxing') ? 'Remuxing' : 'Uploading'));
+              try { uploadingMsg.textContent = `${label} ${Math.round(percent)}%`; } catch {}
               try { if (info && info.bps != null) speedEl.textContent = fmtSpeed(info.bps); } catch {}
               if (percent >= 100) { try { startHangTimer(); } catch {} }
             },
-            { context: 'manual', allowProxy: false }
+            { context: 'manual', allowProxy: false, creatorItem: { categoryTitle: (() => { try { const cat = epDiv && typeof epDiv.closest === 'function' ? epDiv.closest('.category') : null; const input = cat && typeof cat.querySelector === 'function' ? cat.querySelector('.category-header input[type="text"]') : null; return input && typeof input.value === 'string' ? input.value : ''; } catch { return ''; } })(), itemIndex: (() => { try { const container = epDiv && epDiv.parentElement ? epDiv.parentElement : null; if (!container || typeof container.querySelectorAll !== 'function') return 1; const episodes = Array.from(container.querySelectorAll('.episode')); const idx = episodes.indexOf(epDiv); return idx >= 0 ? idx + 1 : 1; } catch { return 1; } })(), sourceTitle: epTitle && typeof epTitle.value === 'string' ? epTitle.value : '' }, playlistMeta: { directoryTitle: getDirectoryTitleForPlaylist() }, targetEpisodeEl: epDiv || null }
           );
           try { stopHangTimer(); } catch {}
           epSrc.value = url;
@@ -2964,9 +3073,17 @@ function addEpisode(container, data) {
         })();
         epSrc.value = await uploadToCatboxWithProgress(file, (percent, info) => {
           progressBar.value = percent;
-          try { uploadingMsg.textContent = `Uploading ${Math.round(percent)}%`; } catch {}
+          const stage = (info && (info.phase || info.stage)) || 'upload';
+          const label = (stage === 'read' || stage === 'write' || stage === 'prepare')
+            ? 'Preparing'
+            : (stage === 'split'
+              ? 'Splitting'
+              : ((stage === 'remux' || stage === 'remuxing')
+                ? 'Remuxing'
+                : 'Uploading'));
+          try { uploadingMsg.textContent = `${label} ${Math.round(percent)}%`; } catch {}
           try { if (info && info.bps != null) speedEl.textContent = fmtSpeed(info.bps); } catch {}
-        }, { context: 'manual', allowProxy: false, creatorItem: { categoryTitle, itemIndex: episodeIndex, sourceTitle: epTitle && typeof epTitle.value === 'string' ? epTitle.value : '' } });
+        }, { context: 'manual', allowProxy: false, creatorItem: { categoryTitle, itemIndex: episodeIndex, sourceTitle: epTitle && typeof epTitle.value === 'string' ? epTitle.value : '' }, playlistMeta: { directoryTitle: getDirectoryTitleForPlaylist(), categoryTitle, episodeTitle: epTitle && typeof epTitle.value === 'string' ? epTitle.value : '', categoryIndex: (() => { try { const cat = epDiv && typeof epDiv.closest === 'function' ? epDiv.closest('.category') : null; return cat && cat.parentElement ? Array.from(cat.parentElement.querySelectorAll('.category')).indexOf(cat) + 1 : 1; } catch { return 1; } })(), episodeIndex }, targetEpisodeEl: epDiv || null });
         epError.textContent = '';
       }
       catch (err) { epError.innerHTML = '<span style="color:red">Upload failed</span>'; epSrc.value = ''; }

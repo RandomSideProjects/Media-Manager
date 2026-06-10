@@ -1,7 +1,6 @@
 "use strict";
 
 // Variables (top)
-const DEFAULT_USERHASH = '2cdcc7754c86c2871ed2bde9d';
 const DEFAULT_PAHE_ANIME_API_BASE = 'https://anime.apex-cloud.workers.dev';
 const DEFAULT_PAHE_KWIK_API_BASE = 'https://access-kwik.apex-cloud.workers.dev';
 const DEFAULT_PAHE_KWIK_AUTH_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.O0FKaqhJjEZgCAVfZoLz6Pjd7Gs9Kv6qi0P8RyATjaE';
@@ -70,6 +69,10 @@ function normalizeCatboxMode(value) {
   return 'auto';
 }
 
+function normalizeRemuxMode(value) {
+  return String(value || '').trim().toLowerCase() === 'compatible' ? 'compatible' : 'fast';
+}
+
 function applyCatboxOverride(mode) {
   const api = getUploadServerApi();
   if (api && typeof api.applyRuntime === 'function') {
@@ -84,7 +87,7 @@ function loadUploadSettings(){
     if (!raw) {
       const initial = {
         anonymous: true,
-        userhash: '',
+        useRandomCatboxUserhash: false,
         githubWorkerUrl: normalizeGithubWorkerUrlValue(SETTINGS_DEFAULT_GITHUB_WORKER_URL),
         catboxUploadUrl: '',
         catboxOverrideMode: 'auto',
@@ -100,7 +103,8 @@ function loadUploadSettings(){
         webhookUrl: '',
         separationTag: false,
         folderUploadYellWhenHidden: true,
-        autoArchiveOversize: false
+        autoArchiveOversize: false,
+        remuxMode: 'fast'
       };
       return initial;
     }
@@ -110,7 +114,7 @@ function loadUploadSettings(){
     const normalizedGithubUrl = normalizeGithubWorkerUrlValue(storedGithubRaw || SETTINGS_DEFAULT_GITHUB_WORKER_URL);
     const result = {
       anonymous: typeof p.anonymous==='boolean' ? p.anonymous : true,
-      userhash: (p.userhash||'').trim(),
+      useRandomCatboxUserhash: typeof p.useRandomCatboxUserhash === 'boolean' ? p.useRandomCatboxUserhash : false,
       uploadConcurrency: Number.isFinite(parseInt(p.uploadConcurrency,10)) ? Math.max(1, Math.min(8, parseInt(p.uploadConcurrency,10))) : 2,
       libraryMode: (p.libraryMode === 'manga') ? 'manga' : 'anime',
       cbzExpand: !!p.cbzExpand,
@@ -120,6 +124,7 @@ function loadUploadSettings(){
       separationTag: !!p.separationTag,
       folderUploadYellWhenHidden: (typeof p.folderUploadYellWhenHidden === 'boolean') ? p.folderUploadYellWhenHidden : true,
       autoArchiveOversize: (typeof p.autoArchiveOversize === 'boolean') ? p.autoArchiveOversize : false,
+      remuxMode: normalizeRemuxMode(p.remuxMode),
       githubWorkerUrl: normalizedGithubUrl,
       githubToken: (typeof p.githubToken === 'string') ? p.githubToken : '',
       catboxUploadUrl: (typeof p.catboxUploadUrl === 'string' && p.catboxUploadUrl.trim()) ? p.catboxUploadUrl.trim() : '',
@@ -142,7 +147,7 @@ function loadUploadSettings(){
   } catch {
   const fallback = {
     anonymous: true,
-    userhash: '',
+    useRandomCatboxUserhash: false,
     githubWorkerUrl: normalizeGithubWorkerUrlValue(SETTINGS_DEFAULT_GITHUB_WORKER_URL),
     githubToken: '',
     catboxUploadUrl: '',
@@ -159,7 +164,8 @@ function loadUploadSettings(){
     webhookUrl: '',
     separationTag: false,
     folderUploadYellWhenHidden: true,
-    autoArchiveOversize: false
+    autoArchiveOversize: false,
+    remuxMode: 'fast'
   };
   return fallback;
 }
@@ -167,7 +173,7 @@ function loadUploadSettings(){
 function saveUploadSettings(s){
   localStorage.setItem(LS_SETTINGS_KEY, JSON.stringify({
     anonymous: !!s.anonymous,
-    userhash: (s.userhash||'').trim(),
+    useRandomCatboxUserhash: !!s.useRandomCatboxUserhash,
     uploadConcurrency: Math.max(1, Math.min(8, parseInt(s.uploadConcurrency||2,10))),
     libraryMode: (s.libraryMode === 'manga') ? 'manga' : 'anime',
     cbzExpand: !!s.cbzExpand,
@@ -177,6 +183,7 @@ function saveUploadSettings(s){
     separationTag: !!s.separationTag,
     folderUploadYellWhenHidden: (typeof s.folderUploadYellWhenHidden === 'boolean') ? s.folderUploadYellWhenHidden : true,
     autoArchiveOversize: (typeof s.autoArchiveOversize === 'boolean') ? s.autoArchiveOversize : false,
+    remuxMode: normalizeRemuxMode(s.remuxMode),
     githubWorkerUrl: normalizeGithubWorkerUrlValue((typeof s.githubWorkerUrl === 'string') ? s.githubWorkerUrl.trim() : ''),
     githubToken: (typeof s.githubToken === 'string') ? s.githubToken.trim() : '',
     catboxUploadUrl: (typeof s.catboxUploadUrl === 'string') ? s.catboxUploadUrl.trim() : '',
@@ -236,8 +243,8 @@ window.mm_uploadSettings = { load: loadUploadSettings, save: saveUploadSettings 
 let mmBtn = null;
 let mmPanel = null;
 let mmAnonToggle = null;
-let mmUserhashRow = null;
-let mmUserhashInput = null;
+let mmRandomUserhashRow = null;
+let mmRandomUserhashToggle = null;
 let mmUploadConcRange = null;
 let mmUploadConcValue = null;
 let mmSaveBtn = null;
@@ -252,6 +259,8 @@ let mmCbzExpandManual = null;
 let mmPosterCompressToggle = null;
 let mmSeparationToggle = null;
 let mmPaheImportToggle = null;
+let mmRemuxModeFast = null;
+let mmRemuxModeCompatible = null;
 let mmUploadServerSummary = null;
 let mmUploadServerManageBtn = null;
 let mmFolderUploadYellToggle = null;
@@ -267,8 +276,8 @@ function ensureUploadSettingsPanel() {
       
       // Re-query all elements
       mmAnonToggle = document.getElementById('mmAnonToggle');
-      mmUserhashRow = document.getElementById('mmUserhashRow');
-      mmUserhashInput = document.getElementById('mmUserhashInput');
+      mmRandomUserhashRow = document.getElementById('mmRandomUserhashRow');
+      mmRandomUserhashToggle = document.getElementById('mmRandomUserhashToggle');
       mmUploadConcRange = document.getElementById('mmUploadConcurrencyRange');
       mmUploadConcValue = document.getElementById('mmUploadConcurrencyValue');
       mmSaveBtn = document.getElementById('mmSaveUploadSettings');
@@ -283,6 +292,8 @@ function ensureUploadSettingsPanel() {
       mmPosterCompressToggle = document.getElementById('mmPosterCompressToggle');
       mmSeparationToggle = document.getElementById('mmSeparationToggle');
       mmPaheImportToggle = document.getElementById('mmPaheImportToggle');
+      mmRemuxModeFast = document.getElementById('mmRemuxModeFast');
+      mmRemuxModeCompatible = document.getElementById('mmRemuxModeCompatible');
       mmUploadServerSummary = document.getElementById('mmUploadServerSummary');
       mmUploadServerManageBtn = document.getElementById('mmUploadServerManageBtn');
       mmFolderUploadYellToggle = document.getElementById('mmFolderUploadYellToggle');
@@ -379,12 +390,12 @@ if (mmBtn) {
 }
 
 function initializeUploadSettingsPanel() {
-  if (!mmAnonToggle || !mmUserhashRow || !mmUserhashInput || !mmSaveBtn || !mmCloseBtn) return;
+  if (!mmAnonToggle || !mmRandomUserhashRow || !mmRandomUserhashToggle || !mmSaveBtn || !mmCloseBtn) return;
   
   const st = loadUploadSettings();
   mmAnonToggle.checked = !!st.anonymous;
-  mmUserhashInput.value = st.userhash || '';
-  mmUserhashRow.style.display = st.anonymous ? 'none' : '';
+  mmRandomUserhashToggle.checked = !!st.useRandomCatboxUserhash;
+  mmRandomUserhashRow.style.display = st.anonymous ? 'none' : '';
   updateDevModeRowsVisibility();
   if (mmModeAnime && mmModeManga) {
     const mode = (st.libraryMode === 'manga') ? 'manga' : 'anime';
@@ -394,6 +405,11 @@ function initializeUploadSettingsPanel() {
   if (mmPosterCompressToggle) mmPosterCompressToggle.checked = (typeof st.compressPosters === 'boolean') ? st.compressPosters : true;
   if (mmSeparationToggle) mmSeparationToggle.checked = !!st.separationTag;
   if (mmPaheImportToggle) mmPaheImportToggle.checked = (typeof st.paheImportEnabled === 'boolean') ? st.paheImportEnabled : DEFAULT_PAHE_IMPORT_ENABLED;
+  if (mmRemuxModeFast && mmRemuxModeCompatible) {
+    const remuxMode = normalizeRemuxMode(st.remuxMode);
+    mmRemuxModeFast.checked = remuxMode === 'fast';
+    mmRemuxModeCompatible.checked = remuxMode === 'compatible';
+  }
   refreshUploadServerSummary();
   if (mmFolderUploadYellToggle) mmFolderUploadYellToggle.checked = (typeof st.folderUploadYellWhenHidden === 'boolean') ? st.folderUploadYellWhenHidden : true;
   if (mmAutoArchiveOversizeToggle) mmAutoArchiveOversizeToggle.checked = (typeof st.autoArchiveOversize === 'boolean') ? st.autoArchiveOversize : false;
@@ -443,7 +459,7 @@ function initializeUploadSettingsPanel() {
   }
   
   function updateAnonFields() {
-    try { mmUserhashRow.style.display = mmAnonToggle.checked ? 'none' : ''; } catch {}
+    try { mmRandomUserhashRow.style.display = mmAnonToggle.checked ? 'none' : ''; } catch {}
   }
   updateAnonFields();
   mmAnonToggle.addEventListener('change', updateAnonFields);
@@ -459,7 +475,7 @@ function initializeUploadSettingsPanel() {
     const mode = (mmModeManga && mmModeManga.checked) ? 'manga' : 'anime';
     const saved = Object.assign({}, current, {
       anonymous: mmAnonToggle.checked,
-      userhash: mmUserhashInput.value.trim(),
+      useRandomCatboxUserhash: mmRandomUserhashToggle ? !!mmRandomUserhashToggle.checked : false,
       uploadConcurrency: mmUploadConcRange ? parseInt(mmUploadConcRange.value,10) : 2,
       libraryMode: mode,
       cbzExpand: mmCbzExpandToggle ? !!mmCbzExpandToggle.checked : false,
@@ -468,6 +484,7 @@ function initializeUploadSettingsPanel() {
       compressPosters: mmPosterCompressToggle ? !!mmPosterCompressToggle.checked : true,
       separationTag: mmSeparationToggle ? !!mmSeparationToggle.checked : false,
       paheImportEnabled: mmPaheImportToggle ? !!mmPaheImportToggle.checked : DEFAULT_PAHE_IMPORT_ENABLED,
+      remuxMode: (mmRemuxModeCompatible && mmRemuxModeCompatible.checked) ? 'compatible' : 'fast',
       folderUploadYellWhenHidden: mmFolderUploadYellToggle ? !!mmFolderUploadYellToggle.checked : true,
       autoArchiveOversize: mmAutoArchiveOversizeToggle ? !!mmAutoArchiveOversizeToggle.checked : false,
       paheAnimeApiBase: current.paheAnimeApiBase || DEFAULT_PAHE_ANIME_API_BASE,

@@ -1999,7 +1999,7 @@ function loadVideo(index) {
     }
     if (theaterBtn) theaterBtn.style.display = 'none';
     unloadCbz();
-    showPlayerAlert("Unfortunatly, this file in unavalible at this moment, please try again later.\n If this is a local source, please download the remaining files to continue");
+    showPlayerAlert(getUnavailableMessage(item));
     return;
   }
 
@@ -2180,6 +2180,18 @@ function showPlayerAlert(message) {
   if (msgEl) msgEl.textContent = text;
 }
 
+function getUnavailableMessage(item) {
+  const defaultMessage = "This item is unavailable right now. Please try again later.";
+  if (!item || typeof item !== "object") return defaultMessage;
+
+  const reason = typeof item.unavailableReason === "string" ? item.unavailableReason.trim() : "";
+  const checkedAt = typeof item.unavailableCheckedAt === "string" ? item.unavailableCheckedAt.trim() : "";
+  if (reason && checkedAt) return `${reason}\nLast checked: ${checkedAt}`;
+  if (reason) return reason;
+  if (checkedAt) return `${defaultMessage}\nLast checked: ${checkedAt}`;
+  return defaultMessage;
+}
+
 function handleActiveVideoError(event) {
   const el = event && event.currentTarget ? event.currentTarget : video;
   if (!el) return;
@@ -2193,13 +2205,13 @@ function handleActiveVideoError(event) {
       if (handled) return;
       try { el.pause(); } catch {}
       try { el.style.display = 'none'; } catch {}
-      showPlayerAlert("Unfortunatly, this file in unavalible at this moment, please try again later.\n If this is a local source, please download the remaining files to continue");
+      showPlayerAlert(getUnavailableMessage(curItem));
     });
     return;
   }
   try { el.pause(); } catch {}
   try { el.style.display = 'none'; } catch {}
-  showPlayerAlert("Unfortunatly, this file in unavalible at this moment, please try again later.\n If this is a local source, please download the remaining files to continue");
+  showPlayerAlert(getUnavailableMessage(curItem));
 }
 
 // Thumbnail capture for the Home "Continue" rail.

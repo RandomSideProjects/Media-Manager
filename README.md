@@ -67,6 +67,7 @@ Launch `Creator/index.html` for a guided editor that can import existing manifes
 ```
 Required: `title`, `categories[].category`, `categories[].episodes[].title`, `categories[].episodes[].src`.  
 Recommended: `Image`/`image`, `LatestTime`, `fileSizeBytes` + `totalFileSizeBytes`, `durationSeconds` + `totalDurationSeconds`, `VolumePageCount` for CBZ, and `progressKey` for locally hosted items.
+Optional unavailable-item fields: `isPlaceholder: true`, `unavailableReason: string`, and `unavailableCheckedAt: "YYYY-MM-DD"` for items that should remain visible but not playable.
 
 ## Tooling
 - `Assets/LastUpdated.txt` feeds the in-app version badge.

@@ -715,6 +715,17 @@ window.OverlayFactory = (function() {
             createElement('span', {}, ['Compress posters to WebP (512px height)'])
           ])
         ]),
+        createElement('div', { className: 'mm-settings-row', style: { alignItems: 'center', gap: '.6em' } }, [
+          createElement('label', { style: { minWidth: '110px' } }, ['MKV remux']),
+          createElement('label', { className: 'mm-toggle', style: { gap: '.4em' } }, [
+            createElement('input', { type: 'radio', name: 'mmRemuxMode', id: 'mmRemuxModeFast', value: 'fast' }),
+            createElement('span', {}, ['Fast'])
+          ]),
+          createElement('label', { className: 'mm-toggle', style: { gap: '.4em' } }, [
+            createElement('input', { type: 'radio', name: 'mmRemuxMode', id: 'mmRemuxModeCompatible', value: 'compatible' }),
+            createElement('span', {}, ['Compatible'])
+          ])
+        ]),
         createElement('div', { className: 'mm-settings-row' }, [
           createElement('label', { className: 'mm-toggle' }, [
             createElement('input', { type: 'checkbox', id: 'mmSeparationToggle' }),
@@ -731,13 +742,15 @@ window.OverlayFactory = (function() {
           ])
         ]),
         createElement('div', { 
-          id: 'mmUserhashRow', 
+          id: 'mmRandomUserhashRow', 
           className: 'mm-settings-row', 
           style: { display: 'none', flexDirection: 'column', alignItems: 'stretch', marginLeft: '1.6em' } 
         }, [
-          createElement('label', { for: 'mmUserhashInput' }, ['Userhash (used when Anonymous is off)']),
-          createElement('input', { id: 'mmUserhashInput', className: 'mm-input', type: 'text', placeholder: 'Leave blank to use default' }),
-          createElement('small', {}, ['Default if blank: ', createElement('code', {}, ['2cdcc7754c86c2871ed2bde9d'])])
+          createElement('label', { className: 'mm-toggle', style: { gap: '.4em', alignItems: 'center' } }, [
+            createElement('input', { type: 'checkbox', id: 'mmRandomUserhashToggle' }),
+            createElement('span', {}, ['Use a random Catbox userhash from the bundled list'])
+          ]),
+          createElement('small', {}, ['When off, uploads use the default Catbox userhash.'])
         ]),
         createElement('div', { 
           id: 'mmCbzSection', 

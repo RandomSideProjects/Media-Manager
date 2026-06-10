@@ -4,6 +4,209 @@
 const UPLOADER_CATBOX_BACKEND_URL = 'https://mm.littlehacker303.workers.dev/catbox/user/api.php';
 const CUSTOM_CATBOX_LIMIT = 104857600;
 const DIRECT_CATBOX_UPLOAD_URL = 'https://catbox.moe/user/api.php';
+const DEFAULT_CATBOX_USERHASH = '2cdcc7754c86c2871ed2bde9d';
+const RANDOM_CATBOX_USERHASHES = `
+b5e8d39aac630a69c00846257
+2865a61a05f4cc4886350c5fd
+279bc1d10cc16a268303bf0fe
+d031f60ef784c33d0bba61e9c
+16c6f7b88b999f7776f8ded71
+aa4902ced4a3fcb0b5957ff17
+9d5de0db7305d06927133adf6
+7e1b01757a1eccb9a49f7a687
+11834bcd2d19cb2b4f71f0b39
+cd63322e49bbaab1c1babd33c
+154b52b72cd304a99316b171b
+e6a99c99ce92f172ba5818926
+3214924ad63f3369efcdb10dd
+0c4383b1c0730b8a80c2e5b32
+1eb945b55a2836dc18a8e0305
+7b0b4f7451bb0f9fb6185ec49
+3b9a792168e206f21b6f480ba
+1b31c012bd0b0b7993c5d1629
+88b96e587c93b3dd3d205f3e4
+e5d70ba45d2f69a9d3dd43ef2
+e505bb573c8cfc018832f9fe7
+8ef3af4e381f09d6a1ee11123
+ea8690534b9a3e332ce143f92
+551e4c5fa4b901d81f9f936ef
+f931ffcaef5db88de20b97a46
+c2d9291dd6b10b4bed7fd7db7
+93b867d51644aa1fda9556db4
+f0388e4f542fd7808090262f1
+be9d09d7f3a67ec7d46d2ce86
+2ee93bb8492b8e8662c8cd153
+d3683393318a520c75c226e6b
+fd850e2e3405330bbd8d52975
+d43ef43272edd7e2370756cdd
+01fdf3d7e4d75b495afefa94a
+e6c949b2bbce0fc60a247b19d
+7888b9fdb50be0dd9ab08fcaa
+26a32491247290d327e1ce04e
+964b38ebc173fef2b2b2c0bc0
+3291dc8d4c37358f7ca8edd9c
+17eacdd507fd3857093433c40
+75bec934cdb621bb13d762799
+a3556791f0ef25f58c7c0df81
+01ea37abc628d36a07f57736a
+9944ff071b053f0491c7b4ed8
+f0376640248783d2a1b967e71
+8efcf8a7ddec2e2197fc74dfe
+6b566583856b0ec9ee9f9b201
+f1ad15335d8c36bf8e1340291
+7c707aac93a4e390f89a41d34
+04c3d12fae49d85045c1aec3a
+91f2a0c64885ff310647f56f0
+72dacf9a0cb4425743e404b8e
+98ed16ca4820f3573e54dcd14
+b579bb48f6047a1e6ed6a05e2
+a3c05d9a6657f26dc8552ecdb
+35f1695d28b08f66c21c955e3
+7bff48e439db706a27cbe1a96
+482b79c0bf5c863ff2475d37b
+141cdb49aec56e9e24b3c6bed
+6c0b49c14e62c2ad1230108c4
+f6f86ac0484947accb93ef4c7
+794bb38dedd6ba0dcd3b09e22
+f6c49e68795b1112038772497
+aaa367d30ab2f2c16871d931c
+3a729b48f57e35c816dddfd8a
+e201f082e84dd453ed556b1c0
+3b8d981562bec1ef9efe0af2a
+f433cee6f5a6d6d13a4963741
+76aa750b32001481f6eba7ee2
+ad2173e6872ada163aa53f069
+dae59a86023c147838579b7da
+2b8a470fa87674e163080d24f
+57785ac5106c06e426d83e95a
+c35e90f6f3147e4fee3f79558
+1a97cf906a67eb1529b25e821
+4e1e96547c3e7789bca474f5f
+4e3987d6c59f5aaa76c3fb5ab
+7338679229afa3573fca86841
+7d63d70f3e68a5222ae421a76
+a5e0e6fd82a25de58a15f0af3
+1aa5ee46c3d4de6734e327609
+0c5b38bb0577814552b1e3cc0
+6bd1f102b75915d466cbc36b7
+97f7a934348ce71d214e12581
+a6bb4f99bdc3fb5e9f3db9417
+caf14a3a9f883c4be7f1ebe6f
+300efd09b6ea87de82547cb4e
+44c0e4ec1d0d7f78562a93b64
+5212171143b8b3e5b801b6289
+76c410bbe1ec7a36f4ff2475f
+f47988a69fa48f9df05e97aa1
+834e17f9464b240937105e5fa
+af77410d4bbd512a2bf022f30
+7b8c5ceeaab9bf12caf7b16bf
+003c919e60d482b908d5b1189
+f5dca62065f37750378809c70
+2454824eb56e848628125240d
+05626bf617c29eaf83a8ce9d8
+5e85f517fa14d9a1c973b950e
+fabf7f33e61c680f72ee8642b
+78e880ece4508adc2657fef04
+103ec5014547c41c7a728ab07
+ff17f38ac80cc46b9e79df2e9
+921a3bd073e5ee47ba8812eb4
+00c9289831bb222d2e82ef991
+b98877abbbaa284a4ce772032
+b6c9df6c1d44d1af66d9fee1a
+062dc63e040883c16e00bd0e1
+70b30237d7c3d2b2404c31c2b
+92ed1a124ce6053f2093bcdea
+ab535f128650efad3cb0a20f8
+5d3334f308f437ae564e10080
+f834aee57994721fa617eb0d8
+dbb6405836ca72a3bb7b6488a
+57ec019798ae9e8920e5684fa
+546dc1c7366b4c0c276f4e57c
+3cd42da41c187a14d6b8a2891
+648610a1082b3c26e5fd7dd56
+73523c5c4cf7719bec76521c7
+aecf8394a7a3fce1c13bedb27
+14cca31ebadfb69e518e846ed
+361d75ec122e7792f2866aead
+4de49460d25392c1f7f07af30
+a8ce3d513d7d0c2b419b1e4e7
+f7d78a0a76428a784330bdf21
+2520555d2452e923d57f8f2e1
+a102b5fc9223b0c02c98152bc
+b0fc4d52be6c10ebe30b825c9
+056f88715f2b3ca3fa08956da
+6296b919cd6d02b994f1f5e92
+5e045be3635eb2e098d2da10d
+29089b7f9b507e00175372b48
+8f9637b939faa8564a3309ca1
+6c2b89831ddc103c9dba2c0ee
+db53d0e9a9c7ffda2c55b08f5
+c0704dee77ee961c404102691
+ea4ee6b59ec70b2ed6abfee25
+4ef55065c8e401cc4c1411dc6
+4a0cb8aeafd495c1b3547d46b
+2b51c089aa5683d0e4c9e2f00
+3f7237876c7a61b1c60e9d78b
+c2d41880809d6ec95b8d92ee4
+36edc70b152bb185810c65e79
+e2874a3780ef4b66a7d7d9cdd
+f3a9f4b160edec30e29109db2
+9facee4f0c9b2b0e0deac71bb
+aae3c1de074f026804d83c897
+acfdf9c240ee05a3a9a6740ac
+7674b7776be958f3857d6f24e
+75784f6801fbc673236b8e7cf
+5434900cee7ede1324c9a2dd5
+babc6cfe4a003e5964765fb89
+725d6564d104fd8673260cd71
+447e09597644a49a733421d38
+c611f71c284dc4df9916f2979
+a206ae604d74f42066b4b3b3f
+d1ab7029a5c52b8d366e53cbb
+bae96c713be4abaf9432cf408
+29f9c9467bf8a4b2107db7a71
+01b5a0dc0472d0af125a8dbc9
+9b72396f94533f3bb2670a52a
+e9f76fd70730ae4432c8ffd03
+02065337cccf72bd35e1879c6
+047a9995d630296479c585b9f
+92f945bead4ccdf0776e0a68b
+ed07c91dbc63dc47bed0ef76d
+f934f9160dfa809365485ba6c
+f69de69a7c4a4f714ab52d476
+2132d9415212b1d8102da0b02
+c60430fc562c6e3d6597ea98c
+ab352dba3b3a985725f776241
+2a139d5898c4245e6298c22a3
+3e4eb23949d26a466133945a3
+d88748560b41265ff5bbaf8f5
+83c4d757fc49fe79b9e8c0fb9
+2e5e7aa8f683642735eb10d3d
+27dd2e47cffeb5dd21fea2dc5
+caec5c30179652e88ad458e6d
+d1455cea9ee1c1ca1ed8f0325
+11c456038c1a39313ec66dbab
+121553f476d05d057befcfe72
+238f6a8cbfee70fb358f1f06e
+ee488c385f7361d82da0c1183
+546f8e8f70e8186d490a5d2c0
+f7a7ca73069c1903fda8cc5b7
+f0e9e67adc14ce469b5307f40
+3dc9d269681a34ac34f23d325
+3bb46378ba093a96f004fc27c
+8df9a3242df0a7c3308caaa45
+e2a83f90970403e57e91f2b8a
+5aaaad23378fbda4da2ea76ae
+a95ffb0c5516b50674b7ae839
+bf64be6e7fc74de04db130f9f
+122fdb75c3037a254227eb171
+f759737af36e430df4992bf5f
+95ec8767c682b8da52838b19b
+97cd815cf7370cda7412ce476
+fe1a062d12ac4fc2af4bceaa3
+f681e9df84e8c951de41ca61c
+c8b69777f415dddcdcdba8439
+`.trim().split(/\s+/).filter(Boolean);
 
 function getUploadServerApi() {
   return (typeof window !== 'undefined' && window.MMUploadServer) ? window.MMUploadServer : null;
@@ -248,6 +451,22 @@ function defaultCatboxUploadUrl() {
   return getActiveCatboxDefault();
 }
 
+function pickRandomCatboxUserhash() {
+  if (!RANDOM_CATBOX_USERHASHES.length) return DEFAULT_CATBOX_USERHASH;
+  const index = Math.floor(Math.random() * RANDOM_CATBOX_USERHASHES.length);
+  return RANDOM_CATBOX_USERHASHES[index] || DEFAULT_CATBOX_USERHASH;
+}
+
+function resolveEffectiveCatboxUserhash(settings) {
+  if (settings && typeof settings._resolvedUserhash === 'string' && settings._resolvedUserhash.trim()) {
+    return settings._resolvedUserhash.trim();
+  }
+  if (settings && settings.useRandomCatboxUserhash === true) {
+    return pickRandomCatboxUserhash();
+  }
+  return DEFAULT_CATBOX_USERHASH;
+}
+
 function normalizeCatboxMode(value) {
   const api = getUploadServerApi();
   if (api && typeof api.normalizeMode === 'function') {
@@ -387,24 +606,147 @@ function isCopypartyConfigured(settings) {
   return !!cp;
 }
 
+function normalizeRemuxMode(value) {
+  return String(value || '').trim().toLowerCase() === 'compatible' ? 'compatible' : 'fast';
+}
+
+function getRemuxMode(settings, options) {
+  if (options && typeof options.remuxMode === 'string') return normalizeRemuxMode(options.remuxMode);
+  return normalizeRemuxMode(settings && settings.remuxMode);
+}
+
+function getVideoSplitThresholdBytes() {
+  if (typeof window !== 'undefined' && Number.isFinite(Number(window.mmVideoSplitThresholdBytes))) {
+    return Number(window.mmVideoSplitThresholdBytes);
+  }
+  return 200 * 1024 * 1024;
+}
+
+function isVideoFileForUpload(file) {
+  if (!file) return false;
+  try {
+    if (typeof window !== 'undefined' && typeof window.mmIsVideoFileForFfmpeg === 'function') {
+      return window.mmIsVideoFileForFfmpeg(file) === true;
+    }
+  } catch {}
+  const name = String(file.name || '');
+  const type = String(file.type || '');
+  return /^video\//i.test(type) || /\.(mp4|m4v|mov|webm|mkv|avi|flv|wmv|mpg|mpeg|ts|mts|m2ts|3gp|ogv)$/i.test(name);
+}
+
+function buildAutoSplitPlaylistMeta(options) {
+  const existing = options && options.playlistMeta && typeof options.playlistMeta === 'object'
+    ? Object.assign({}, options.playlistMeta)
+    : {};
+  const targetEpisodeEl = options && options.targetEpisodeEl ? options.targetEpisodeEl : null;
+  if (!existing.directoryTitle) {
+    try {
+      const input = document.getElementById('dirTitle');
+      if (input && typeof input.value === 'string' && input.value.trim()) existing.directoryTitle = input.value.trim();
+    } catch {}
+  }
+  if (targetEpisodeEl) {
+    try {
+      const category = typeof targetEpisodeEl.closest === 'function' ? targetEpisodeEl.closest('.category') : null;
+      const categoryInput = category && typeof category.querySelector === 'function'
+        ? category.querySelector('.category-header input[type="text"]')
+        : null;
+      if (!existing.categoryTitle && categoryInput && typeof categoryInput.value === 'string' && categoryInput.value.trim()) {
+        existing.categoryTitle = categoryInput.value.trim();
+      }
+      if (!Number.isFinite(Number(existing.categoryIndex)) && category && category.parentElement) {
+        existing.categoryIndex = Array.from(category.parentElement.querySelectorAll('.category')).indexOf(category) + 1;
+      }
+      if (!Number.isFinite(Number(existing.episodeIndex)) && targetEpisodeEl.parentElement) {
+        existing.episodeIndex = Array.from(targetEpisodeEl.parentElement.querySelectorAll('.episode')).indexOf(targetEpisodeEl) + 1;
+      }
+      if (!existing.episodeTitle) {
+        const titleInput = targetEpisodeEl.querySelector('input[type="text"]');
+        if (titleInput && typeof titleInput.value === 'string' && titleInput.value.trim()) {
+          existing.episodeTitle = titleInput.value.trim();
+        }
+      }
+    } catch {}
+  }
+  const creatorItem = options && options.creatorItem && typeof options.creatorItem === 'object' ? options.creatorItem : null;
+  if (!existing.categoryTitle && creatorItem && typeof creatorItem.categoryTitle === 'string') {
+    existing.categoryTitle = creatorItem.categoryTitle;
+  }
+  if (!existing.episodeTitle && creatorItem && typeof creatorItem.sourceTitle === 'string' && creatorItem.sourceTitle.trim()) {
+    existing.episodeTitle = creatorItem.sourceTitle.trim();
+  }
+  if (!Number.isFinite(Number(existing.episodeIndex)) && creatorItem && Number.isFinite(Number(creatorItem.itemIndex))) {
+    existing.episodeIndex = Number(creatorItem.itemIndex);
+  }
+  if (!Number.isFinite(Number(existing.categoryIndex))) existing.categoryIndex = 1;
+  if (!Number.isFinite(Number(existing.episodeIndex))) existing.episodeIndex = 1;
+  return existing;
+}
+
+function applySplitUploadMetadata(targetEpisodeEl, splitUpload) {
+  if (!targetEpisodeEl || !splitUpload || typeof splitUpload !== 'object') return;
+  try { targetEpisodeEl._hiddenSplitParts = splitUpload.parts || []; } catch {}
+  try { targetEpisodeEl._hiddenSplitPlaylistUrl = splitUpload.url || ''; } catch {}
+  try {
+    if (targetEpisodeEl.dataset) {
+      if (splitUpload.totalFileSize > 0) targetEpisodeEl.dataset.fileSizeBytes = String(splitUpload.totalFileSize);
+      if (splitUpload.totalDuration > 0) targetEpisodeEl.dataset.durationSeconds = String(splitUpload.totalDuration);
+    }
+  } catch {}
+}
+
 async function maybeRemuxVideoForCatboxUpload(file, onProgress, options, settings) {
-  if (!file || !options || options.remuxVideo === false) return file;
-  if (isCopypartyConfigured(settings)) return file;
+  if (!file || !options || options.remuxVideo === false) return { file, didRemux: false };
   if (typeof window === 'undefined' || typeof window.mmShouldRemuxVideoFileToMp4 !== 'function' || typeof window.mmRemuxVideoFileToMp4 !== 'function') {
-    return file;
+    return { file, didRemux: false };
   }
   let shouldRemux = false;
   try { shouldRemux = window.mmShouldRemuxVideoFileToMp4(file) === true; } catch {}
-  if (!shouldRemux) return file;
+  if (!shouldRemux) return { file, didRemux: false };
 
   const result = await window.mmRemuxVideoFileToMp4(file, {
+    remuxMode: getRemuxMode(settings, options),
     onProgress: (info) => {
       if (typeof onProgress !== 'function') return;
       const ratio = Math.max(0, Math.min(1, Number(info && info.ratio) || 0));
-      try { onProgress(Math.round(ratio * 100), { stage: 'remuxing' }); } catch {}
+      try { onProgress(Math.round(ratio * 100), { stage: 'remuxing', phase: 'remux' }); } catch {}
     }
   });
-  return result && result.file ? result.file : file;
+  if (result && result.file) {
+    return {
+      file: result.file,
+      didRemux: result.didRemux === true,
+      durationSeconds: result.durationSeconds
+    };
+  }
+  return { file, didRemux: false };
+}
+
+async function maybeAutoSplitPreparedVideoForUpload(file, onProgress, options) {
+  if (!file || options.disableAutoSplit === true) return null;
+  if (!isVideoFileForUpload(file)) return null;
+  if (typeof isCopypartyOverrideEnabledForCreator === 'function') {
+    try { if (isCopypartyOverrideEnabledForCreator()) return null; } catch {}
+  }
+  const thresholdBytes = getVideoSplitThresholdBytes();
+  if (!Number.isFinite(Number(file.size)) || Number(file.size) <= thresholdBytes) return null;
+  if (typeof window === 'undefined' || typeof window.mmUploadOversizeVideoAsCatboxPlaylist !== 'function') return null;
+
+  const splitUpload = await window.mmUploadOversizeVideoAsCatboxPlaylist(file, {
+    context: options.context || 'manual',
+    signal: options.signal,
+    creatorItem: options.creatorItem || null,
+    playlistMeta: buildAutoSplitPlaylistMeta(options),
+    onProgress: (pct, info) => {
+      if (typeof onProgress !== 'function') return;
+      try { onProgress(Number(pct), info || {}); } catch {}
+    }
+  });
+  if (splitUpload && typeof options.onSplitUpload === 'function') {
+    try { options.onSplitUpload(splitUpload); } catch {}
+  }
+  if (splitUpload) applySplitUploadMetadata(options.targetEpisodeEl, splitUpload);
+  return splitUpload;
 }
 
 function assertUploadTargetUrl(uploadUrl) {
@@ -427,7 +769,7 @@ async function uploadCatboxRequest(uploadFile, settings, uploadUrl, options) {
     if (isAnon && ctx === 'batch' && typeof settings.anonymousBatch === 'boolean') isAnon = !!settings.anonymousBatch;
     if (isAnon && ctx === 'manual' && typeof settings.anonymousManual === 'boolean') isAnon = !!settings.anonymousManual;
   } catch {}
-  const effectiveUserhash = ((settings.userhash || '').trim()) || '2cdcc7754c86c2871ed2bde9d';
+  const effectiveUserhash = resolveEffectiveCatboxUserhash(settings);
   if (!isAnon) {
     form.append('userhash', effectiveUserhash);
   }
@@ -474,7 +816,7 @@ function uploadCatboxRequestWithProgress(uploadFile, settings, uploadUrl, option
       if (isAnon && ctx === 'batch' && typeof settings.anonymousBatch === 'boolean') isAnon = !!settings.anonymousBatch;
       if (isAnon && ctx === 'manual' && typeof settings.anonymousManual === 'boolean') isAnon = !!settings.anonymousManual;
     } catch {}
-    const effectiveUserhash = ((settings.userhash || '').trim()) || '2cdcc7754c86c2871ed2bde9d';
+    const effectiveUserhash = resolveEffectiveCatboxUserhash(settings);
     if (!isAnon) {
       form.append('userhash', effectiveUserhash);
     }
@@ -532,7 +874,7 @@ function uploadCatboxRequestWithProgress(uploadFile, settings, uploadUrl, option
           const bps = (dt > 0) ? (dBytes / dt) : 0;
           lastMs = now;
           lastLoaded = e.loaded;
-          onProgress(percent, { loadedBytes: e.loaded, totalBytes: e.total, bps });
+          onProgress(percent, { loadedBytes: e.loaded, totalBytes: e.total, bps, phase: 'upload' });
         }
       };
     }
@@ -569,8 +911,11 @@ async function uploadToCatbox(file, opts) {
   const options = (opts && typeof opts === 'object') ? opts : {};
   const st = readUploadSettings();
   const settings = st && typeof st === 'object' ? st : {};
-  const sourceFile = await maybeRemuxVideoForCatboxUpload(file, null, options, settings);
-  const uploadFile = withUploadFilename(sourceFile, options);
+  const requestSettings = Object.assign({}, settings, { _resolvedUserhash: resolveEffectiveCatboxUserhash(settings) });
+  const prepared = await maybeRemuxVideoForCatboxUpload(file, null, options, settings);
+  const splitUpload = await maybeAutoSplitPreparedVideoForUpload(prepared && prepared.file ? prepared.file : file, null, options);
+  if (splitUpload && splitUpload.url) return splitUpload.url;
+  const uploadFile = withUploadFilename(prepared && prepared.file ? prepared.file : file, options);
   const fileSizeBytes = uploadFile && typeof uploadFile.size === 'number' ? uploadFile.size : undefined;
   await ensureUploadServerReady(settings, { fileSizeBytes, force: options.forceProxy === true });
   const target = resolveCatboxUploadTarget(settings, {
@@ -596,7 +941,7 @@ async function uploadToCatbox(file, opts) {
     return String(url);
   }
   try {
-    return await uploadCatboxRequest(uploadFile, settings, target.url, options);
+    return await uploadCatboxRequest(uploadFile, requestSettings, target.url, options);
   } catch (err) {
     if (api && typeof api.markResult === 'function') {
       api.markResult({ endpoint: target.url, ok: false, error: String(err && err.message ? err.message : err) });
@@ -604,7 +949,7 @@ async function uploadToCatbox(file, opts) {
     if (target.kind === 'auto' && target.fallbackUrl && target.fallbackUrl !== target.url) {
       const fallbackTarget = { kind: 'proxy', url: target.fallbackUrl, fallbackUrl: '' };
       updateCatboxRuntime(fallbackTarget);
-      return await uploadCatboxRequest(uploadFile, settings, fallbackTarget.url, options);
+      return await uploadCatboxRequest(uploadFile, requestSettings, fallbackTarget.url, options);
     }
     throw err;
   }
@@ -616,7 +961,8 @@ async function uploadToCatboxWithProgressPrepared(file, onProgress, opts) {
   const options = (opts && typeof opts === 'object') ? opts : {};
   const uploadFile = withUploadFilename(file, options);
   const st = readUploadSettings();
-  const settings = st && typeof st === 'object' ? st : { anonymous: true, userhash: '' };
+  const settings = st && typeof st === 'object' ? st : { anonymous: true, useRandomCatboxUserhash: false };
+  const requestSettings = Object.assign({}, settings, { _resolvedUserhash: resolveEffectiveCatboxUserhash(settings) });
   const fileSizeBytes = uploadFile && typeof uploadFile.size === 'number' ? uploadFile.size : undefined;
   await ensureUploadServerReady(settings, { fileSizeBytes, force: options.forceProxy === true });
   const target = resolveCatboxUploadTarget(settings, {
@@ -666,7 +1012,7 @@ async function uploadToCatboxWithProgressPrepared(file, onProgress, opts) {
 
       return;
     }
-    uploadCatboxRequestWithProgress(uploadFile, settings, target.url, options, onProgress)
+    uploadCatboxRequestWithProgress(uploadFile, requestSettings, target.url, options, onProgress)
       .then(resolve)
       .catch(async (err) => {
         if (api && typeof api.markResult === 'function') {
@@ -676,7 +1022,7 @@ async function uploadToCatboxWithProgressPrepared(file, onProgress, opts) {
           try {
             const fallbackTarget = { kind: 'proxy', url: target.fallbackUrl, fallbackUrl: '' };
             updateCatboxRuntime(fallbackTarget);
-            const result = await uploadCatboxRequestWithProgress(uploadFile, settings, fallbackTarget.url, options, onProgress);
+            const result = await uploadCatboxRequestWithProgress(uploadFile, requestSettings, fallbackTarget.url, options, onProgress);
             resolve(result);
             return;
           } catch (fallbackErr) {
@@ -691,11 +1037,13 @@ async function uploadToCatboxWithProgressPrepared(file, onProgress, opts) {
 function uploadToCatboxWithProgress(file, onProgress, opts) {
   const options = (opts && typeof opts === 'object') ? opts : {};
   const st = readUploadSettings();
-  const settings = st && typeof st === 'object' ? st : { anonymous: true, userhash: '' };
+  const settings = st && typeof st === 'object' ? st : { anonymous: true, useRandomCatboxUserhash: false };
   return (async () => {
-    const sourceFile = await maybeRemuxVideoForCatboxUpload(file, onProgress, options, settings);
+    const prepared = await maybeRemuxVideoForCatboxUpload(file, onProgress, options, settings);
+    const splitUpload = await maybeAutoSplitPreparedVideoForUpload(prepared && prepared.file ? prepared.file : file, onProgress, options);
+    if (splitUpload && splitUpload.url) return splitUpload.url;
     const nextOptions = Object.assign({}, options, { remuxVideo: false });
-    return uploadToCatboxWithProgressPrepared(sourceFile, onProgress, nextOptions);
+    return uploadToCatboxWithProgressPrepared(prepared && prepared.file ? prepared.file : file, onProgress, nextOptions);
   })();
 }
 

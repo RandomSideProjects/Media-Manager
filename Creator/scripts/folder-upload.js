@@ -764,18 +764,41 @@
                   categoryIndex,
                   episodeIndex: itemIndex
                 },
-                onProgress: (pct) => {
+                onProgress: (pct, info) => {
+                  const phase = (info && (info.phase || info.stage)) || '';
+                  if (phase === 'read' || phase === 'write' || phase === 'prepare') {
+                    rowCtx.setStatus('Preparing', { color: null });
+                  } else if (phase === 'split') {
+                    rowCtx.setStatus('Splitting', { color: null });
+                  } else if (phase === 'remux' || phase === 'remuxing') {
+                    rowCtx.setStatus('Remuxing', { color: null });
+                  } else if (phase === 'upload-video' || phase === 'upload-playlist') {
+                    rowCtx.setStatus('Uploading', { color: null });
+                  } else if (phase === 'complete') {
+                    rowCtx.setStatus('Done', { color: '#6ec1e4' });
+                  }
+
                   const loaded = Number.isFinite(fileSizeBytes) ? (pct / 100) * fileSizeBytes : undefined;
                   rowCtx.setProgress(pct, { loadedBytes: loaded });
                 }
               }) : null;
 	              const url = splitUpload ? splitUpload.url : await uploadToCatboxWithProgress(
 	                file,
-	                pct => {
+	                (pct, info) => {
+                  const phase = (info && (info.phase || info.stage)) || '';
+                  if (phase === 'read' || phase === 'write' || phase === 'prepare') {
+                    rowCtx.setStatus('Preparing', { color: null });
+                  } else if (phase === 'split') {
+                    rowCtx.setStatus('Splitting', { color: null });
+                  } else if (phase === 'remux' || phase === 'remuxing') {
+                    rowCtx.setStatus('Remuxing', { color: null });
+                  } else if (phase === 'upload-video' || phase === 'upload-playlist' || phase === 'upload') {
+                    rowCtx.setStatus('Uploading', { color: null });
+                  }
 	                  const loaded = Number.isFinite(fileSizeBytes) ? (pct / 100) * fileSizeBytes : undefined;
 	                  rowCtx.setProgress(pct, { loadedBytes: loaded });
 	                },
-	                { context: 'batch', signal: uploadAbortController.signal, allowProxy: false, creatorItem: { categoryTitle, itemIndex, sourceTitle: title } }
+	                { context: 'batch', signal: uploadAbortController.signal, allowProxy: false, creatorItem: { categoryTitle, itemIndex, sourceTitle: title }, playlistMeta: { directoryTitle: (() => { const input = document.getElementById('dirTitle'); return input && typeof input.value === 'string' ? input.value.trim() : ''; })(), categoryTitle, episodeTitle: title, categoryIndex, episodeIndex: itemIndex }, targetEpisodeEl: epDiv || null }
 	              );
               if (splitUpload && epDiv) {
                 epDiv._hiddenSplitParts = splitUpload.parts || [];
@@ -1036,18 +1059,40 @@
                   categoryIndex,
                   episodeIndex: itemIndex
                 },
-                onProgress: (pct) => {
+                onProgress: (pct, info) => {
+                  const phase = (info && (info.phase || info.stage)) || '';
+                  if (phase === 'read' || phase === 'write' || phase === 'prepare') {
+                    rowCtx.setStatus('Preparing', { color: null });
+                  } else if (phase === 'split') {
+                    rowCtx.setStatus('Splitting', { color: null });
+                  } else if (phase === 'remux' || phase === 'remuxing') {
+                    rowCtx.setStatus('Remuxing', { color: null });
+                  } else if (phase === 'upload-video' || phase === 'upload-playlist') {
+                    rowCtx.setStatus('Uploading', { color: null });
+                  } else if (phase === 'complete') {
+                    rowCtx.setStatus('Done', { color: '#6ec1e4' });
+                  }
                   const loaded = Number.isFinite(fileSizeBytes) ? (pct / 100) * fileSizeBytes : undefined;
                   rowCtx.setProgress(pct, { loadedBytes: loaded });
                 }
               }) : null;
 	              const url = splitUpload ? splitUpload.url : await uploadToCatboxWithProgress(
 	                fileForUpload,
-	                (pct) => {
+	                (pct, info) => {
+                  const phase = (info && (info.phase || info.stage)) || '';
+                  if (phase === 'read' || phase === 'write' || phase === 'prepare') {
+                    rowCtx.setStatus('Preparing', { color: null });
+                  } else if (phase === 'split') {
+                    rowCtx.setStatus('Splitting', { color: null });
+                  } else if (phase === 'remux' || phase === 'remuxing') {
+                    rowCtx.setStatus('Remuxing', { color: null });
+                  } else if (phase === 'upload-video' || phase === 'upload-playlist' || phase === 'upload') {
+                    rowCtx.setStatus('Uploading', { color: null });
+                  }
 	                  const loaded = Number.isFinite(fileSizeBytes) ? (pct / 100) * fileSizeBytes : undefined;
 	                  rowCtx.setProgress(pct, { loadedBytes: loaded });
 	                },
-	                { context: 'batch', signal: uploadAbortController.signal, allowProxy: false, creatorItem: { categoryTitle, itemIndex, sourceTitle: title } }
+	                { context: 'batch', signal: uploadAbortController.signal, allowProxy: false, creatorItem: { categoryTitle, itemIndex, sourceTitle: title }, playlistMeta: { directoryTitle: (() => { const input = document.getElementById('dirTitle'); return input && typeof input.value === 'string' ? input.value.trim() : ''; })(), categoryTitle, episodeTitle: title, categoryIndex, episodeIndex: itemIndex }, targetEpisodeEl: epDiv || null }
 	              );
               if (splitUpload && epDiv) {
                 epDiv._hiddenSplitParts = splitUpload.parts || [];

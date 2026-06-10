@@ -155,7 +155,10 @@
           "src": "Sources/Files/Playlists/Kill_La_Kill_Season_1_Episode_23_23.m3u8",
           "fileSizeBytes": 253814466,
           "durationSeconds": 1469,
-          "progressKey": "sepitem:1ug26re"
+          "progressKey": "sepitem:1ug26re",
+          "isPlaceholder": true,
+          "unavailableReason": "Confirmed unavailable on 2026-06-10: playlist segment 1 returns HTTP 404.",
+          "unavailableCheckedAt": "2026-06-10"
         },
         {
           "title": "Episode 24",

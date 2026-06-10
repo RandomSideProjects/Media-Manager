@@ -123,6 +123,7 @@ function normalizeSeparatedEpisode(entry, context) {
 
 function getEpisodeMetaText(entry) {
   if (!entry || typeof entry !== 'object') return '';
+  if (entry.isPlaceholder) return 'Unavailable';
   const isManga = isEpisodeManga(entry);
   if (isManga) {
     let totalPages = Number.isFinite(Number(entry.VolumePageCount)) ? Number(entry.VolumePageCount) : NaN;
@@ -483,11 +484,15 @@ function renderEpisodeList() {
       const button = document.createElement('button');
       button.className = 'episode-button';
       if (singleCenter) button.classList.add('single-center');
+      if (entry.isPlaceholder) button.classList.add('episode--unavailable');
       button.dataset.flatIndex = String(index);
+      if (entry.isPlaceholder && typeof entry.unavailableReason === 'string' && entry.unavailableReason.trim()) {
+        button.title = entry.unavailableReason.trim();
+      }
 
       // Watch-progress fill behind tile contents
       try {
-        const ratio = getEpisodeWatchProgressRatio(entry);
+        const ratio = entry.isPlaceholder ? null : getEpisodeWatchProgressRatio(entry);
         if (ratio !== null) {
           const fill = document.createElement('div');
           fill.className = 'episode-progress-fill';

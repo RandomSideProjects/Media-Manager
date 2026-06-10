@@ -604,7 +604,7 @@
     return "";
   }
 
-  async function uploadFileToCatbox(file, { signal, onProgress, creatorItem } = {}) {
+  async function uploadFileToCatbox(file, { signal, onProgress, creatorItem, playlistMeta, targetEpisodeEl, onSplitUpload } = {}) {
     const uploader = (typeof window !== "undefined" && typeof window.uploadToCatboxWithProgress === "function")
       ? window.uploadToCatboxWithProgress
       : (typeof uploadToCatboxWithProgress === "function" ? uploadToCatboxWithProgress : null);
@@ -613,7 +613,7 @@
       if (typeof onProgress === "function") {
         try { onProgress(Number(pct), info || {}); } catch {}
       }
-    }, { context: "batch", signal, creatorItem });
+    }, { context: "batch", signal, creatorItem, playlistMeta, targetEpisodeEl, onSplitUpload });
   }
 
   function ensureTargetCategory({ createNew } = {}) {
@@ -1201,14 +1201,6 @@
           const fileType = blob && blob.type ? blob.type : "video/mp4";
           const file = new File([blob], fileName, { type: fileType });
 
-          const MAX_CATBOX_BYTES = 200 * 1024 * 1024;
-          if (file.size > MAX_CATBOX_BYTES) {
-            setEpStatus("File over 200MB; choose a lower quality.", "#ff6b6b");
-            log(`${label}: SKIPPED (over 200MB)`);
-            if (progressBar) progressBar.value = idx + 1;
-            continue;
-          }
-
           // Metadata (size/duration) before upload so the exported JSON includes it.
           try {
             if (epDiv && epDiv.dataset) {
@@ -1249,20 +1241,44 @@
               categoryIndex: 1,
               episodeIndex: itemIndex
             },
-            onProgress: (pct) => {
+            onProgress: (pct, info) => {
               const safe = Number.isFinite(pct) ? Math.max(0, Math.min(100, pct)) : 0;
-              setEpStatus(`Uploading ${Math.round(safe)}%`, "#9ecbff", { value: safe, max: 100 });
+              const stage = (info && (info.phase || info.stage)) || "";
+              const verb = (stage === "read" || stage === "write" || stage === "prepare")
+                ? "Preparing"
+                : (stage === "split"
+                  ? "Splitting"
+                  : ((stage === "remux" || stage === "remuxing")
+                    ? "Remuxing"
+                    : (stage === "upload-playlist" ? "Uploading playlist" : "Uploading")));
+              setEpStatus(`${verb} ${Math.round(safe)}%`, "#9ecbff", { value: safe, max: 100 });
             }
           }) : null;
           const catboxUrl = splitUpload ? splitUpload.url : await uploadFileToCatbox(file, {
             signal: abortController.signal,
             creatorItem: { categoryTitle, itemIndex, sourceTitle: label },
+            playlistMeta: {
+              directoryTitle: (() => {
+                const input = document.getElementById("dirTitle");
+                return input && typeof input.value === "string" ? input.value.trim() : "";
+              })(),
+              categoryTitle,
+              episodeTitle: label,
+              categoryIndex: 1,
+              episodeIndex: itemIndex
+            },
+            targetEpisodeEl: epDiv || null,
             onProgress: (pct, info) => {
               const safe = Number.isFinite(pct) ? Math.max(0, Math.min(100, pct)) : 0;
-              const stage = info && typeof info.stage === "string" ? info.stage : "";
-              const verb = stage === "hashing"
-                ? "Hashing"
-                : (stage === "finalizing" ? "Finalizing" : "Uploading");
+              const stage = (info && (info.phase || info.stage)) || "";
+              const verb = (stage === "read" || stage === "write" || stage === "prepare")
+                ? "Preparing"
+                : (stage === "split" ? "Splitting"
+                  : ((stage === "remux" || stage === "remuxing")
+                    ? "Remuxing"
+                    : (stage === "upload-playlist" ? "Uploading playlist"
+                      : (stage === "hashing" ? "Hashing"
+                        : (stage === "finalizing" ? "Finalizing" : "Uploading")))));
               setEpStatus(`${verb} ${Math.round(safe)}%`, "#9ecbff", { value: safe, max: 100 });
             }
           });
