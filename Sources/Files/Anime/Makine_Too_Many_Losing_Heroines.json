@@ -1,0 +1,86 @@
+{
+  "title": "Makine: Too Many Losing Heroines",
+  "Image": "https://files.catbox.moe/w0vplp.webp",
+  "LatestTime": "2026-06-10T15:45:08.490Z",
+  "categories": [
+    {
+      "category": "Season 1",
+      "episodes": [
+        {
+          "title": "Episode 1",
+          "src": "https://files.catbox.moe/vhxzyi.mp4",
+          "fileSizeBytes": 148555800,
+          "durationSeconds": 1440
+        },
+        {
+          "title": "Episode 2",
+          "src": "https://files.catbox.moe/kqbrsn.mp4",
+          "fileSizeBytes": 147513083,
+          "durationSeconds": 1440
+        },
+        {
+          "title": "Episode 3",
+          "src": "https://files.catbox.moe/w4da6n.mp4",
+          "fileSizeBytes": 167653219,
+          "durationSeconds": 1440
+        },
+        {
+          "title": "Episode 4",
+          "src": "https://files.catbox.moe/divney.mp4",
+          "fileSizeBytes": 157637664,
+          "durationSeconds": 1500
+        },
+        {
+          "title": "Episode 5",
+          "src": "https://files.catbox.moe/ae78rc.mp4",
+          "fileSizeBytes": 151460952,
+          "durationSeconds": 1440
+        },
+        {
+          "title": "Episode 6",
+          "src": "https://files.catbox.moe/c7h7x6.mp4",
+          "fileSizeBytes": 162477034,
+          "durationSeconds": 1440
+        },
+        {
+          "title": "Episode 7",
+          "src": "https://files.catbox.moe/qxdpsu.mp4",
+          "fileSizeBytes": 139201570,
+          "durationSeconds": 1440
+        },
+        {
+          "title": "Episode 8",
+          "src": "https://files.catbox.moe/mohrxu.mp4",
+          "fileSizeBytes": 147080106,
+          "durationSeconds": 1440
+        },
+        {
+          "title": "Episode 9",
+          "src": "https://files.catbox.moe/xidpoy.mp4",
+          "fileSizeBytes": 150041614,
+          "durationSeconds": 1440
+        },
+        {
+          "title": "Episode 10",
+          "src": "https://files.catbox.moe/1jqzt8.mp4",
+          "fileSizeBytes": 153100077,
+          "durationSeconds": 1440
+        },
+        {
+          "title": "Episode 11",
+          "src": "https://files.catbox.moe/ba50tj.mp4",
+          "fileSizeBytes": 105067448,
+          "durationSeconds": 1440
+        },
+        {
+          "title": "Episode 12",
+          "src": "https://files.catbox.moe/f2ctm1.mp4",
+          "fileSizeBytes": 142594165,
+          "durationSeconds": 1440
+        }
+      ]
+    }
+  ],
+  "totalFileSizeBytes": 1772382732,
+  "totalDurationSeconds": 17340
+}
