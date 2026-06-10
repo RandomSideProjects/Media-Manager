@@ -361,6 +361,18 @@
       "LatestTime": "2026-05-12T01:27:25.810Z"
     },
     {
+      "file": "Makine_Too_Many_Losing_Heroines.json",
+      "path": "./Files/Anime/Makine_Too_Many_Losing_Heroines.json",
+      "title": "Makine: Too Many Losing Heroines",
+      "poster": "./Posters/Anime/Makine_Too_Many_Losing_Heroines.webp",
+      "categoryCount": 1,
+      "episodeCount": 12,
+      "itemCount": 12,
+      "totalFileSizeBytes": 1772382732,
+      "totalDurationSeconds": 17340,
+      "LatestTime": "2026-06-10T15:45:08.490Z"
+    },
+    {
       "file": "MarriedNotLovers.json",
       "path": "./Files/Anime/MarriedNotLovers.json",
       "title": "More Than a Married Couple, But Not Lovers",
