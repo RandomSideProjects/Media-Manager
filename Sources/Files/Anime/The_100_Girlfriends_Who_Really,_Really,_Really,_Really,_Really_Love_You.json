@@ -1,6 +1,6 @@
 {
   "title": "The 100 Girlfriends Who Really, Really, Really, Really, Really Love You",
-  "LatestTime": "2025-08-11T12:36:00",
+  "Image": "./Sources/Posters/Anime/The_100_Girlfriends_Who_Really,_Really,_Really,_Really,_Really_Love_You.webp",
   "categories": [
     {
       "category": "Season 1",
@@ -155,9 +155,28 @@
           "durationSeconds": 1430
         }
       ]
+    },
+    {
+      "category": "Season 3",
+      "episodes": [
+        {
+          "title": "Episode 1",
+          "src": "https://files.catbox.moe/c5ttq3.m3u8",
+          "fileSizeBytes": 214235580,
+          "ItemfileSizeBytes": 214235580,
+          "durationSeconds": 1431
+        },
+        {
+          "title": "Episode 2",
+          "src": "https://files.catbox.moe/g65p3p.m3u8",
+          "fileSizeBytes": 215513502,
+          "ItemfileSizeBytes": 215513502,
+          "durationSeconds": 1431
+        }
+      ]
     }
   ],
-  "totalFileSizeBytes": 3796211196,
-  "totalDurationSeconds": 34218,
-  "Image": "./Sources/Posters/Anime/The_100_Girlfriends_Who_Really,_Really,_Really,_Really,_Really_Love_You.webp"
+  "totalFileSizeBytes": 4225960278,
+  "LatestTime": "2026-07-15T16:31:18.862Z",
+  "totalDurationSeconds": 37080
 }
