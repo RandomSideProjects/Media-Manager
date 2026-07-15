@@ -902,7 +902,6 @@ async function uploadOversizeVideoAsCatboxPlaylist(file, options = {}) {
           context: opts.context || 'manual',
           disableAutoSplit: true,
           allowProxy: true,
-          forceProxy: true,
           signal: opts.signal,
           creatorItem: Object.assign({}, opts.creatorItem || {}, { sourceTitle })
         });
@@ -940,7 +939,6 @@ async function uploadOversizeVideoAsCatboxPlaylist(file, options = {}) {
         context: opts.context || 'manual',
         disableAutoSplit: true,
         allowProxy: true,
-        forceProxy: true,
         signal: opts.signal,
         creatorItem: opts.creatorItem || null
       });
@@ -2740,7 +2738,6 @@ function addEpisode(container, data) {
         }, {
           context: 'manual',
           allowProxy: true,
-          forceProxy: true,
           creatorItem: getEpisodeUploadContext(sourceTitle)
         });
         uploadedParts.push({
@@ -2774,7 +2771,6 @@ function addEpisode(container, data) {
       }, {
         context: 'manual',
         allowProxy: true,
-        forceProxy: true,
         creatorItem: getEpisodeUploadContext(epTitle && typeof epTitle.value === 'string' ? epTitle.value : 'Playlist')
       });
       if (playlistUrl) {

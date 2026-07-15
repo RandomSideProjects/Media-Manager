@@ -224,6 +224,60 @@
     return Number.isFinite(duration) && duration > 0 ? duration : 0;
   }
 
+  function parsePositiveDuration(value) {
+    const duration = Number(value);
+    return Number.isFinite(duration) && duration > 0 ? duration : 0;
+  }
+
+  async function readFfprobeOutput(ffmpeg, args, outputName) {
+    if (!ffmpeg || typeof ffmpeg.ffprobe !== 'function') return '';
+    try {
+      await ffmpeg.ffprobe([...args, '-o', outputName]);
+    } finally {
+      // Read whatever ffprobe managed to write even when it exits non-zero.
+    }
+    try {
+      return String(await ffmpeg.readFile(outputName, 'utf8') || '');
+    } finally {
+      try { await ffmpeg.deleteFile(outputName); } catch {}
+    }
+  }
+
+  async function measureDurationFromFfprobe(ffmpeg, inputName) {
+    if (!ffmpeg || typeof ffmpeg.ffprobe !== 'function') return 0;
+
+    const textOutputName = `probe_duration_${Date.now()}.txt`;
+    try {
+      const text = (await readFfprobeOutput(ffmpeg, [
+        '-v', 'error',
+        '-show_entries', 'format=duration',
+        '-of', 'default=noprint_wrappers=1:nokey=1',
+        inputName
+      ], textOutputName)).trim();
+      const duration = parsePositiveDuration(text);
+      if (duration) return duration;
+    } catch {}
+
+    const jsonOutputName = `probe_duration_${Date.now()}.json`;
+    try {
+      const text = await readFfprobeOutput(ffmpeg, [
+        '-v', 'error',
+        '-show_entries', 'format=duration:stream=duration',
+        '-of', 'json',
+        inputName
+      ], jsonOutputName);
+      const parsed = JSON.parse(String(text || '{}'));
+      const formatDuration = parsePositiveDuration(parsed && parsed.format && parsed.format.duration);
+      if (formatDuration) return formatDuration;
+      const streamDurations = Array.isArray(parsed && parsed.streams)
+        ? parsed.streams.map((stream) => parsePositiveDuration(stream && stream.duration)).filter(Boolean)
+        : [];
+      return streamDurations.length ? Math.max(...streamDurations) : 0;
+    } catch {
+      return 0;
+    }
+  }
+
   async function measureDurationFromFfmpegInput(ffmpeg, inputName) {
     let duration = 0;
     const listener = (message) => {
@@ -265,40 +319,34 @@
     try {
       if (typeof ffmpeg.ffprobe === 'function') {
         const outputName = `probe_${Date.now()}.json`;
-        try {
-          await ffmpeg.ffprobe([
-            '-v', 'error',
-            '-show_entries', 'stream=index,codec_type,codec_name,bit_rate:stream_tags=language',
-            '-of', 'json',
-            inputName,
-            '-o', outputName
-          ]);
-          const text = await ffmpeg.readFile(outputName, 'utf8');
-          const parsed = JSON.parse(String(text || '{}'));
-          const streams = Array.isArray(parsed.streams) ? parsed.streams : [];
-          const video = streams.find((s) => s && s.codec_type === 'video');
-          const audio = streams.filter((s) => s && s.codec_type === 'audio');
-          const subtitles = streams.filter((s) => s && s.codec_type === 'subtitle');
-          return {
-            videoIndex: video && Number.isFinite(Number(video.index)) ? Number(video.index) : null,
-            videoCodec: video ? String(video.codec_name).toLowerCase() : null,
-            videoBitrate: video && Number.isFinite(Number(video.bit_rate)) ? Math.round(Number(video.bit_rate)) : null,
-            audioStreams: audio.map((a) => ({
-              index: Number(a.index),
-              codec: String(a.codec_name).toLowerCase(),
-              bitrate: Number.isFinite(Number(a.bit_rate)) ? Math.round(Number(a.bit_rate)) : null,
-              lang: (a.tags && (a.tags.language || a.tags.LANGUAGE)) || null
-            })),
-            subtitleStreams: subtitles.map((s) => ({
-              index: Number(s.index),
-              codec: String(s.codec_name).toLowerCase(),
-              isText: isTextSubtitleCodec(s.codec_name),
-              lang: (s.tags && (s.tags.language || s.tags.LANGUAGE)) || null
-            }))
-          };
-        } finally {
-          try { await ffmpeg.deleteFile(outputName); } catch {}
-        }
+        const text = await readFfprobeOutput(ffmpeg, [
+          '-v', 'error',
+          '-show_entries', 'stream=index,codec_type,codec_name,bit_rate:stream_tags=language',
+          '-of', 'json',
+          inputName
+        ], outputName);
+        const parsed = JSON.parse(String(text || '{}'));
+        const streams = Array.isArray(parsed.streams) ? parsed.streams : [];
+        const video = streams.find((s) => s && s.codec_type === 'video');
+        const audio = streams.filter((s) => s && s.codec_type === 'audio');
+        const subtitles = streams.filter((s) => s && s.codec_type === 'subtitle');
+        return {
+          videoIndex: video && Number.isFinite(Number(video.index)) ? Number(video.index) : null,
+          videoCodec: video ? String(video.codec_name).toLowerCase() : null,
+          videoBitrate: video && Number.isFinite(Number(video.bit_rate)) ? Math.round(Number(video.bit_rate)) : null,
+          audioStreams: audio.map((a) => ({
+            index: Number(a.index),
+            codec: String(a.codec_name).toLowerCase(),
+            bitrate: Number.isFinite(Number(a.bit_rate)) ? Math.round(Number(a.bit_rate)) : null,
+            lang: (a.tags && (a.tags.language || a.tags.LANGUAGE)) || null
+          })),
+          subtitleStreams: subtitles.map((s) => ({
+            index: Number(s.index),
+            codec: String(s.codec_name).toLowerCase(),
+            isText: isTextSubtitleCodec(s.codec_name),
+            lang: (s.tags && (s.tags.language || s.tags.LANGUAGE)) || null
+          }))
+        };
       }
 
       // Fallback: Parse ffmpeg -i output
@@ -482,6 +530,7 @@
     const parts = [];
     let splitCount = 0;
     try {
+      if (!duration) duration = await measureDurationFromFfprobe(ffmpeg, inputName);
       if (!duration) duration = await measureDurationFromFfmpegInput(ffmpeg, inputName);
       if (!duration) throw new Error('Could not read video duration for splitting.');
       const streams = await inspectInputStreams(ffmpeg, inputName);
@@ -555,6 +604,7 @@
 
     try {
       let duration = await measureDuration(file);
+      if (!duration) duration = await measureDurationFromFfprobe(ffmpeg, inputName);
       if (!duration) duration = await measureDurationFromFfmpegInput(ffmpeg, inputName);
       const streams = await inspectInputStreams(ffmpeg, inputName);
       if (onProgress) onProgress({ phase: 'remux', ratio: 0, message: 'Remuxing video' });

@@ -755,6 +755,28 @@ function assertUploadTargetUrl(uploadUrl) {
   }
 }
 
+function getUploadErrorStatus(err) {
+  if (!err) return 0;
+  if (Number.isFinite(Number(err.status))) return Number(err.status);
+  const match = String(err && err.message ? err.message : err).match(/\b(\d{3})\b/);
+  return match ? Number(match[1]) : 0;
+}
+
+function shouldRetryDirectAfterProxyFailure(target, options, err) {
+  if (!target || target.kind !== 'proxy') return false;
+  if (!options || options.allowProxy === false) return false;
+  if (options.forceProxy !== true) return false;
+  return getUploadErrorStatus(err) === 413;
+}
+
+async function retryCatboxUploadDirectAfterProxyFailure(target, attemptUpload) {
+  const directUrl = sanitizeUploadUrl(DIRECT_CATBOX_UPLOAD_URL, '');
+  if (!directUrl || directUrl === target.url) throw new Error('Direct Catbox upload URL is invalid or unchanged.');
+  const directTarget = { kind: 'direct', url: directUrl, fallbackUrl: '' };
+  updateCatboxRuntime(directTarget);
+  return await attemptUpload(directTarget.url);
+}
+
 async function uploadCatboxRequest(uploadFile, settings, uploadUrl, options) {
   const api = getUploadServerApi();
   const requestUrl = sanitizeUploadUrl(uploadUrl, '');
@@ -946,6 +968,12 @@ async function uploadToCatbox(file, opts) {
     if (api && typeof api.markResult === 'function') {
       api.markResult({ endpoint: target.url, ok: false, error: String(err && err.message ? err.message : err) });
     }
+    if (shouldRetryDirectAfterProxyFailure(target, options, err)) {
+      return await retryCatboxUploadDirectAfterProxyFailure(
+        target,
+        (nextUrl) => uploadCatboxRequest(uploadFile, requestSettings, nextUrl, options)
+      );
+    }
     if (target.kind === 'auto' && target.fallbackUrl && target.fallbackUrl !== target.url) {
       const fallbackTarget = { kind: 'proxy', url: target.fallbackUrl, fallbackUrl: '' };
       updateCatboxRuntime(fallbackTarget);
@@ -1017,6 +1045,19 @@ async function uploadToCatboxWithProgressPrepared(file, onProgress, opts) {
       .catch(async (err) => {
         if (api && typeof api.markResult === 'function') {
           api.markResult({ endpoint: target.url, ok: false, error: String(err && err.message ? err.message : err) });
+        }
+        if (shouldRetryDirectAfterProxyFailure(target, options, err)) {
+          try {
+            const result = await retryCatboxUploadDirectAfterProxyFailure(
+              target,
+              (nextUrl) => uploadCatboxRequestWithProgress(uploadFile, requestSettings, nextUrl, options, onProgress)
+            );
+            resolve(result);
+            return;
+          } catch (retryErr) {
+            reject(retryErr);
+            return;
+          }
         }
         if (target.kind === 'auto' && target.fallbackUrl && target.fallbackUrl !== target.url) {
           try {
