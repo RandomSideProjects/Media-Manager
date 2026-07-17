@@ -146,17 +146,64 @@ async function handleExtractedFiles(files) {
     } catch { return null; }
   }
 
+  function resolveLocalPlaylistPath(playlistPath, mediaPath) {
+    const reference = String(mediaPath || '').trim().replace(/\\/g, '/');
+    if (!reference || /^(?:[a-z]+:)?\/\//i.test(reference) || /^(?:blob|data):/i.test(reference)) return '';
+    const cleanReference = reference.split(/[?#]/, 1)[0];
+    const playlist = String(playlistPath || '').replace(/\\/g, '/');
+    const baseParts = cleanReference.startsWith('/')
+      ? []
+      : playlist.split('/').slice(0, -1).filter(Boolean);
+    cleanReference.split('/').forEach((part) => {
+      if (!part || part === '.') return;
+      if (part === '..') baseParts.pop();
+      else baseParts.push(part);
+    });
+    return baseParts.join('/');
+  }
+
+  async function createPlayableLocalHlsUrl(manifestSrc, playlistFile) {
+    if (!playlistFile || !/\.m3u8(?:$|[?#])/i.test(String(manifestSrc || ''))) {
+      return { url: '', missingMedia: false };
+    }
+    try {
+      const lines = String(await playlistFile.text()).split(/\r?\n/);
+      let missingMedia = false;
+      lines.forEach((rawLine, lineIndex) => {
+        const line = String(rawLine || '').trim();
+        if (!line || line[0] === '#') return;
+        const resolvedPath = resolveLocalPlaylistPath(manifestSrc, line);
+        if (!resolvedPath) return;
+        const mediaFile = findEpisodeFile(resolvedPath);
+        if (!mediaFile) {
+          missingMedia = true;
+          return;
+        }
+        lines[lineIndex] = URL.createObjectURL(mediaFile);
+      });
+      if (missingMedia) return { url: '', missingMedia: true };
+      const playlistBlob = new Blob([lines.join('\n')], { type: 'application/vnd.apple.mpegurl' });
+      return { url: `${URL.createObjectURL(playlistBlob)}#local-playlist.m3u8`, missingMedia: false };
+    } catch {
+      return { url: '', missingMedia: true };
+    }
+  }
+
   let flatCounter = 0;
-  videoList = (cats || []).map(cat => ({
-    category: cat.category,
-    separated: Number(cat && cat.separated) === 1 ? 1 : 0,
-    episodes: (cat.episodes || []).map(ep => {
+  videoList = await Promise.all((cats || []).map(async (cat) => {
+    const episodes = await Promise.all((cat.episodes || []).map(async (ep) => {
       const separatedItemFlag = coerceSeparatedFlag(ep && (ep.separated ?? ep.seperated));
       const manifestSources = Array.isArray(ep && ep.sources) ? ep.sources : [];
       const treatAsSeparatedItem = separatedItemFlag || manifestSources.length > 0;
 
       const primaryFile = findEpisodeFile(ep && ep.src);
-      const primarySrcUrl = primaryFile ? URL.createObjectURL(primaryFile) : '';
+      let primarySrcUrl = primaryFile ? URL.createObjectURL(primaryFile) : '';
+      let localHlsMissingMedia = false;
+      if (primaryFile && !treatAsSeparatedItem && /\.m3u8(?:$|[?#])/i.test(String(ep && ep.src || ''))) {
+        const localHls = await createPlayableLocalHlsUrl(ep.src, primaryFile);
+        localHlsMissingMedia = localHls.missingMedia;
+        if (localHls.url) primarySrcUrl = localHls.url;
+      }
 
       const separatedParts = treatAsSeparatedItem ? manifestSources.map((source, idx) => {
         const sourcePath = source && source.src;
@@ -196,7 +243,7 @@ async function handleExtractedFiles(files) {
       }
 
       const missingParts = treatAsSeparatedItem ? separatedParts.filter(part => !part.file) : [];
-      const baseIsPlaceholder = !primaryFile || (primaryFile && primaryFile.size === 0);
+      const baseIsPlaceholder = !primaryFile || (primaryFile && primaryFile.size === 0) || localHlsMissingMedia;
       const isPlaceholder = treatAsSeparatedItem ? (missingParts.length > 0) : baseIsPlaceholder;
 
       let durationSeconds = (typeof ep.durationSeconds === 'number') ? ep.durationSeconds : null;
@@ -249,7 +296,12 @@ async function handleExtractedFiles(files) {
       }
 
       return entry;
-    })
+    }));
+    return {
+      category: cat.category,
+      separated: Number(cat && cat.separated) === 1 ? 1 : 0,
+      episodes
+    };
   }));
   directoryTitle.textContent = dirTitle;
   try { document.title = `${(dirTitle || '').trim() || 'Source'} on RSP Media Manager`; } catch {}

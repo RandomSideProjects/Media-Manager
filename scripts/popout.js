@@ -260,7 +260,10 @@
           }
 
           function isHlsSource(source) {
-            try { return /\\.m3u8$/i.test(new URL(source, window.location.href).pathname); }
+            try {
+              const parsed = new URL(source, window.location.href);
+              return /\\.m3u8$/i.test(parsed.pathname) || /\\.m3u8$/i.test(parsed.hash || "");
+            }
             catch { return /\\.m3u8(?:$|[?#])/i.test(String(source || "")); }
           }
 

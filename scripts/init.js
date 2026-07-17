@@ -88,6 +88,34 @@ function setRecentSourcesActive(flag) {
   }
 }
 
+function initSourcesDropdown() {
+  const dropdown = document.querySelector('.toolbar .dropdown');
+  const button = dropdown ? dropdown.querySelector('.dropbtn') : null;
+  if (!dropdown || !button || button.dataset.bound === '1') return;
+  button.dataset.bound = '1';
+
+  const setOpen = (open) => {
+    dropdown.classList.toggle('is-open', open);
+    button.setAttribute('aria-expanded', open ? 'true' : 'false');
+  };
+
+  button.addEventListener('click', (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setOpen(!dropdown.classList.contains('is-open'));
+  });
+
+  dropdown.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape') return;
+    setOpen(false);
+    button.focus();
+  });
+
+  document.addEventListener('click', (event) => {
+    if (!dropdown.contains(event.target)) setOpen(false);
+  });
+}
+
 // Centralized loader so we can reuse for initial param load and manual input without forcing a full page reload.
 async function loadSource(rawInput) {
   const rawSrc = (rawInput || '').trim();
@@ -252,6 +280,7 @@ async function loadSource(rawInput) {
 }
 
 async function init() {
+  initSourcesDropdown();
   if (attemptLegacySourceRedirect()) return;
   const params = new URLSearchParams(window.location.search);
   const paramValue = params.get('source') || '';

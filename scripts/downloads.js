@@ -104,6 +104,102 @@ function isHlsSourceUrl(url) {
   }
 }
 
+function parseHlsDownloadPlaylist(text, baseUrl) {
+  const playlistText = String(text || '');
+  const lines = playlistText.split(/\r?\n/);
+  const parts = [];
+  const variants = [];
+  let pendingDuration = null;
+  let pendingTitle = '';
+  let pendingFileSize = null;
+  let pendingVariant = null;
+  let encrypted = false;
+  let usesByteRanges = false;
+  let usesInitSegment = false;
+
+  const resolveUrl = (value) => {
+    try { return new URL(String(value || ''), baseUrl).href; }
+    catch { return String(value || ''); }
+  };
+  const parseAttributeNumber = (line, name) => {
+    const match = String(line || '').match(new RegExp(`(?:^|[:,\\s])${name}=([0-9]+)`, 'i'));
+    if (!match) return null;
+    const value = Number.parseInt(match[1], 10);
+    return Number.isFinite(value) && value >= 0 ? value : null;
+  };
+
+  lines.forEach((rawLine, lineIndex) => {
+    const line = String(rawLine || '').trim();
+    if (!line) return;
+
+    const extInf = line.match(/^#EXTINF:([^,]*)(?:,(.*))?$/i);
+    if (extInf) {
+      const duration = Number.parseFloat(extInf[1]);
+      pendingDuration = Number.isFinite(duration) && duration > 0 ? duration : null;
+      pendingTitle = String(extInf[2] || '').trim();
+      pendingFileSize = null;
+      return;
+    }
+
+    const sizeTag = line.match(/^#EXT-X-MM-FILE-SIZE:(\d+)$/i);
+    if (sizeTag) {
+      const size = Number.parseInt(sizeTag[1], 10);
+      pendingFileSize = Number.isFinite(size) && size > 0 ? size : null;
+      return;
+    }
+
+    if (/^#EXT-X-STREAM-INF:/i.test(line)) {
+      pendingVariant = {
+        bandwidth: parseAttributeNumber(line, 'BANDWIDTH') || 0,
+        averageBandwidth: parseAttributeNumber(line, 'AVERAGE-BANDWIDTH') || 0
+      };
+      return;
+    }
+    if (/^#EXT-X-BYTERANGE:/i.test(line)) {
+      usesByteRanges = true;
+      return;
+    }
+    if (/^#EXT-X-MAP:/i.test(line)) {
+      usesInitSegment = true;
+      return;
+    }
+    if (/^#EXT-X-KEY:/i.test(line) && !/METHOD=NONE(?:,|$)/i.test(line)) {
+      encrypted = true;
+      return;
+    }
+    if (line[0] === '#') return;
+
+    const resolved = resolveUrl(line);
+    if (pendingVariant) {
+      variants.push({ ...pendingVariant, url: resolved });
+      pendingVariant = null;
+      return;
+    }
+
+    const part = {
+      title: pendingTitle || `Part ${parts.length + 1}`,
+      src: resolved,
+      lineIndex
+    };
+    if (pendingDuration !== null) part.durationSeconds = pendingDuration;
+    if (pendingFileSize !== null) part.fileSizeBytes = pendingFileSize;
+    parts.push(part);
+    pendingDuration = null;
+    pendingTitle = '';
+    pendingFileSize = null;
+  });
+
+  return {
+    text: playlistText,
+    lines,
+    parts,
+    variants,
+    encrypted,
+    usesByteRanges,
+    usesInitSegment
+  };
+}
+
 function extractSeparatedParts(entry) {
   if (!entry || typeof entry !== 'object') return [];
   const candidates = [
@@ -704,6 +800,24 @@ async function downloadSourceFolder(options = {}) {
           placeholder,
           parts: partPlans
         };
+      } else if (isHlsPlaylist) {
+        const playlistFileName = `${prefix}${pad}.m3u8`;
+        const mediaFolderName = `${prefix}${pad}`;
+        const mediaFolder = catEntryFolder.folder(mediaFolderName);
+        placeholder.src = `${folderPath}${playlistFileName}`;
+        plannedTask = {
+          type: 'hls',
+          ci,
+          ei,
+          episode,
+          placeholder,
+          playlistUrl: rawSrc,
+          playlistFileName,
+          mediaFolderName,
+          folderPath,
+          categoryFolder: catEntryFolder,
+          mediaFolder
+        };
       } else {
         const fileName = `${prefix}${pad}${ext}`;
         placeholder.src = `${folderPath}${fileName}`;
@@ -914,6 +1028,39 @@ async function downloadSourceFolder(options = {}) {
       if (idx >= 0) activeFetchControllers.splice(idx, 1);
     }
   }
+
+  async function loadHlsDownloadManifest(sourceUrl, depth = 0, visited = new Set()) {
+    if (depth > 4) throw new Error('HLS playlist nesting is too deep');
+    const absoluteUrl = (() => {
+      try { return new URL(String(sourceUrl || ''), window.location.href).href; }
+      catch { return String(sourceUrl || ''); }
+    })();
+    if (!absoluteUrl || visited.has(absoluteUrl)) throw new Error('HLS playlist contains a loop');
+    visited.add(absoluteUrl);
+
+    const response = await fetchWithTimeout(absoluteUrl, {
+      cache: 'no-store',
+      credentials: 'omit',
+      referrerPolicy: 'no-referrer'
+    }, FETCH_TOTAL_TIMEOUT_MS);
+    if (!response || (!response.ok && response.status !== 0)) {
+      throw new Error(`Playlist download failed: ${response ? response.status : 'Network error'}`);
+    }
+    const responseUrl = response.url || absoluteUrl;
+    const parsed = parseHlsDownloadPlaylist(await response.text(), responseUrl);
+    if (parsed.encrypted) throw new Error('Encrypted HLS downloads are not supported');
+    if (parsed.usesByteRanges) throw new Error('Byte-range HLS downloads are not supported');
+    if (parsed.usesInitSegment) throw new Error('Fragmented HLS downloads are not supported yet');
+    if (parsed.parts.length) return { ...parsed, playlistUrl: responseUrl };
+    if (!parsed.variants.length) throw new Error('Playlist contains no downloadable media');
+
+    const variants = parsed.variants.slice().sort((a, b) => {
+      const aRate = Number(a.averageBandwidth) || Number(a.bandwidth) || 0;
+      const bRate = Number(b.averageBandwidth) || Number(b.bandwidth) || 0;
+      return bRate - aRate;
+    });
+    return loadHlsDownloadManifest(variants[0].url, depth + 1, visited);
+  }
   let plannedTotalBytes = 0;
   let failureCount = 0;
   let totalFailedBytes = 0;
@@ -1011,6 +1158,8 @@ async function downloadSourceFolder(options = {}) {
       labelText += ` (Parts: ${task.parts.length})`;
     } else if (type === 'json') {
       labelText += ' [JSON]';
+    } else if (type === 'hls') {
+      labelText += ' [M3U8]';
     } else if (type === 'cbz') {
       labelText += ' [CBZ]';
     }
@@ -1430,6 +1579,141 @@ async function downloadSourceFolder(options = {}) {
           setStatus(idx, 'Done', { color: '#7fe7a9' });
           rowCompleted[idx] = true;
           applyVisibilityAll();
+        } else if (type === 'hls') {
+          const epObj = catObjs[ci].episodes[ei];
+          setStatus(idx, 'Reading playlist…', { color: '#6ec1e4' });
+          const playlist = await loadHlsDownloadManifest(task.playlistUrl);
+          const mediaParts = Array.isArray(playlist.parts) ? playlist.parts : [];
+          if (!mediaParts.length) throw new Error('Playlist contains no downloadable media');
+
+          const partPlans = mediaParts.map((part, partIndex) => {
+            let partExt = inferExtensionFromUrl(part.src, '.mp4').toLowerCase();
+            if (!partExt || partExt === '.m3u8' || partExt.length > 8 || /[^a-z0-9.]/i.test(partExt)) partExt = '.mp4';
+            const partFileName = `P${String(partIndex + 1).padStart(2, '0')}${partExt}`;
+            const duration = Number(part.durationSeconds);
+            const fileSize = Number(part.fileSizeBytes);
+            return {
+              remoteUrl: part.src,
+              fileName: partFileName,
+              playlistLineIndex: Number(part.lineIndex),
+              localPlaylistPath: `${task.mediaFolderName}/${partFileName}`,
+              duration: Number.isFinite(duration) && duration > 0 ? duration : null,
+              fileSize: Number.isFinite(fileSize) && fileSize > 0 ? fileSize : null
+            };
+          });
+
+          epObj.src = placeholder.src;
+
+          const declaredTotal = partPlans.reduce((sum, plan) => sum + (Number(plan.fileSize) || 0), 0);
+          if (declaredTotal > 0) totalBytes[idx] = declaredTotal;
+          let accumulatedBytes = 0;
+          let accumulatedDuration = 0;
+
+          for (let partIndex = 0; partIndex < partPlans.length; partIndex += 1) {
+            const plan = partPlans[partIndex];
+            let partBlob = await new Promise((resolve, reject) => {
+              const xhr = new XMLHttpRequest();
+              xhrs.push(xhr);
+              let cleaned = false;
+              let watchdog;
+              const cleanup = () => {
+                if (cleaned) return;
+                cleaned = true;
+                if (watchdog) watchdog.cancel();
+                const xhrIndex = xhrs.indexOf(xhr);
+                if (xhrIndex >= 0) xhrs.splice(xhrIndex, 1);
+              };
+              const rejectWithCleanup = (err) => { cleanup(); reject(err); };
+              watchdog = createXhrInactivityWatchdog(xhr, rejectWithCleanup);
+              xhr.addEventListener('loadend', cleanup);
+              xhr.open('GET', plan.remoteUrl);
+              xhr.responseType = 'blob';
+              xhr.addEventListener('progress', (event) => {
+                const expectedPartBytes = Number(plan.fileSize) || (event.lengthComputable ? event.total : 0);
+                const totalExpected = declaredTotal > 0
+                  ? declaredTotal
+                  : Math.max(0, accumulatedBytes + expectedPartBytes);
+                loadedBytes[idx] = accumulatedBytes + Math.max(0, Number(event.loaded) || 0);
+                if (totalExpected > 0) totalBytes[idx] = totalExpected;
+                const fraction = event.lengthComputable && event.total > 0
+                  ? Math.max(0, Math.min(1, event.loaded / event.total))
+                  : 0;
+                setRowProgress(idx, ((partIndex + fraction) / partPlans.length) * 100);
+                setStatus(idx, `Part ${partIndex + 1}/${partPlans.length}…`, { color: '#6ec1e4' });
+                updateRemainingLabel();
+                updateSpeedAndEta();
+              });
+              xhr.onload = () => {
+                const ok = (xhr.status >= 200 && xhr.status < 300) || xhr.status === 0;
+                if (ok) { cleanup(); resolve(xhr.response); }
+                else rejectWithCleanup(new Error(`Download failed: ${xhr.status}`));
+              };
+              xhr.onerror = () => rejectWithCleanup(new Error('Network error'));
+              xhr.send();
+            }).catch(() => null);
+
+            if (!partBlob) {
+              try {
+                const response = await fetchWithTimeout(plan.remoteUrl, {
+                  cache: 'no-store',
+                  credentials: 'omit',
+                  referrerPolicy: 'no-referrer'
+                }, FETCH_TOTAL_TIMEOUT_MS);
+                if (response && (response.ok || response.status === 0)) partBlob = await response.blob();
+              } catch {}
+            }
+            if (!partBlob) throw new Error(`Download failed for playlist part ${partIndex + 1}`);
+
+            task.mediaFolder.file(plan.fileName, partBlob);
+            const measuredSize = Number(partBlob.size);
+            if (Number.isFinite(measuredSize) && measuredSize >= 0) {
+              accumulatedBytes += measuredSize;
+              loadedBytes[idx] = accumulatedBytes;
+            }
+
+            // EXTINF describes the intended A/V timeline. Prefer it over the
+            // MP4 container duration, which can be inflated by untrimmed subtitle tracks.
+            let partDuration = Number(plan.duration);
+            if (!Number.isFinite(partDuration) || partDuration <= 0) {
+              try { partDuration = await computeBlobDurationSeconds(partBlob); }
+              catch { partDuration = NaN; }
+            }
+            if (Number.isFinite(partDuration) && partDuration > 0) {
+              accumulatedDuration += partDuration;
+            }
+
+            setRowProgress(idx, ((partIndex + 1) / partPlans.length) * 100);
+            setStatus(idx, partIndex + 1 === partPlans.length ? 'Finalizing…' : `Part ${partIndex + 1}/${partPlans.length}`, { color: '#6ec1e4' });
+            updateRemainingLabel();
+            updateSpeedAndEta();
+          }
+
+          if (accumulatedBytes > 0) {
+            epObj.fileSizeBytes = Math.round(accumulatedBytes);
+            epObj.ItemfileSizeBytes = Math.round(accumulatedBytes);
+            totalBytes[idx] = accumulatedBytes;
+            loadedBytes[idx] = accumulatedBytes;
+          }
+          if (accumulatedDuration > 0) epObj.durationSeconds = Math.round(accumulatedDuration);
+          const rewrittenLines = Array.isArray(playlist.lines) ? playlist.lines.slice() : [];
+          partPlans.forEach((plan) => {
+            if (Number.isInteger(plan.playlistLineIndex) && plan.playlistLineIndex >= 0 && plan.playlistLineIndex < rewrittenLines.length) {
+              rewrittenLines[plan.playlistLineIndex] = plan.localPlaylistPath;
+            }
+          });
+          const rewrittenPlaylist = rewrittenLines.join('\n');
+          task.categoryFolder.file(task.playlistFileName, rewrittenPlaylist);
+          setRowProgress(idx, 100, { state: 'complete' });
+          setStatus(idx, 'Done', { color: '#7fe7a9' });
+          rowCompleted[idx] = true;
+          applyVisibilityAll();
+          logDl('Completed M3U8', {
+            idx,
+            playlist: task.playlistFileName,
+            parts: partPlans.length,
+            bytes: accumulatedBytes,
+            duration: accumulatedDuration
+          });
         } else if (type === 'separated') {
           const epObj = catObjs[ci].episodes[ei];
           const partPlans = Array.isArray(task.parts) ? task.parts : [];
@@ -1622,7 +1906,9 @@ async function downloadSourceFolder(options = {}) {
       } catch (err) {
         const errorContext = type === 'separated'
           ? (task.parts && task.parts[0] && task.parts[0].remoteUrl)
-          : (episode && episode.src);
+          : type === 'hls'
+            ? task.playlistUrl
+            : (episode && episode.src);
         console.error('Error downloading', errorContext, err);
         logDl('Error', { idx, type, category: ci, episode: ei, error: String(err && err.message || err) });
         const failureContext = placeholder && placeholder.src ? placeholder : episode;

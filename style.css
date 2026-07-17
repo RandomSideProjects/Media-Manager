@@ -2464,3 +2464,38 @@ html::-webkit-scrollbar,
 body::-webkit-scrollbar {
   display: none;
 }
+
+/* Design-preserving responsive and interaction fixes */
+body {
+  overflow-x: hidden;
+}
+
+.container,
+.directory-header {
+  box-sizing: border-box;
+}
+
+.dropdown.is-open .dropdown-content {
+  display: flex;
+}
+
+.dropbtn:focus-visible,
+.dropdown-item:focus-visible {
+  outline: 3px solid rgba(99, 179, 237, 0.7);
+  outline-offset: 2px;
+}
+
+@media (max-width: 768px) {
+  .container {
+    width: calc(100% - 1rem);
+    padding: 1rem;
+  }
+
+  #homeMainRegion {
+    padding-bottom: 5.5rem;
+  }
+
+  .directory-header {
+    max-width: 100%;
+  }
+}

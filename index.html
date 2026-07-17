@@ -12,6 +12,7 @@ i really gotta learn this bc it is cool asf
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Media Manager</title>
+  <link rel="icon" href="Assets/Favicon.png" type="image/png">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -19,8 +20,8 @@ i really gotta learn this bc it is cool asf
     <nav class="tabs">
       <button onclick="location.href='./index.html'" class="tab-button">Home</button>
       <div class="dropdown">
-        <button class="tab-button dropbtn">Sources</button>
-        <div class="dropdown-content">
+        <button class="tab-button dropbtn" aria-haspopup="true" aria-expanded="false" aria-controls="sourcesMenu">Sources</button>
+        <div class="dropdown-content" id="sourcesMenu">
           <button onclick="location.href='./Creator/index.html'" class="tab-button dropdown-item">Modify or Create</button>
           <button onclick="location.href='./Sources/index.html'" class="tab-button dropdown-item">Public sources</button>
         </div>
@@ -33,7 +34,7 @@ i really gotta learn this bc it is cool asf
       <button id="themeToggle" title="Toggle Theme" aria-label="Toggle theme">☾</button>
     </div>
   </div>
-  <a class="site-title-link" href="https://randomsideprojects.github.io/Media-Manager/"><header>RSP Media Manager</header></a>
+  <a class="site-title-link" href="./index.html"><header>RSP Media Manager</header></a>
   <div id="accountHeaderLine" class="account-header-line" hidden></div>
   <div id="homeMainRegion">
     <section id="recentSourcesRail" class="recent-sources" aria-label="Recent sources" hidden></section>

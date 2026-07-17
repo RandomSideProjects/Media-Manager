@@ -143,8 +143,8 @@ function isHlsSource(src) {
   const value = String(src || '').trim();
   if (!value) return false;
   try {
-    const pathname = new URL(value, window.location && window.location.href ? window.location.href : document.baseURI).pathname;
-    return /\.m3u8$/i.test(pathname);
+    const parsed = new URL(value, window.location && window.location.href ? window.location.href : document.baseURI);
+    return /\.m3u8$/i.test(parsed.pathname) || /\.m3u8$/i.test(parsed.hash || '');
   } catch {
     return /\.m3u8(?:$|[?#])/i.test(value);
   }
@@ -1183,11 +1183,18 @@ function setSeparatedPartSource(item, partIndex, options) {
     const onMeta = () => {
       try {
         const partSrc = part && part.src ? String(part.src) : getMediaElementOriginalSource(video, item);
-        if (partSrc) localStorage.setItem(partSrc + ':duration', video.duration);
+        const declaredPartDuration = getPartDuration(meta, item, targetIndex);
+        const mediaDuration = Number(video.duration);
+        const effectivePartDuration = Number.isFinite(declaredPartDuration) && declaredPartDuration > 0
+          ? declaredPartDuration
+          : mediaDuration;
+        if (partSrc && Number.isFinite(effectivePartDuration) && effectivePartDuration > 0) {
+          localStorage.setItem(partSrc + ':duration', effectivePartDuration);
+        }
         if (resumeKey && Number.isFinite(item.__separatedTotalDuration) && item.__separatedTotalDuration > 0) {
           localStorage.setItem(`${resumeKey}:duration`, item.__separatedTotalDuration);
         }
-        const clamped = Math.max(0, Math.min(resumeTime, Number(video.duration) || resumeTime));
+        const clamped = Math.max(0, Math.min(resumeTime, effectivePartDuration || resumeTime));
         try { video.currentTime = clamped; } catch {}
         if (!suppressPlay) {
           const playPromise = video.play();
