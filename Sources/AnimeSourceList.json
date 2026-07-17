@@ -433,18 +433,6 @@
       "LatestTime": "2025-10-19T03:10:54.126Z"
     },
     {
-      "file": "One_Piece.json",
-      "path": "./Files/Anime/One_Piece.json",
-      "title": "One Piece",
-      "poster": "./Posters/Anime/One_Piece.webp",
-      "categoryCount": 1,
-      "episodeCount": 1057,
-      "itemCount": 1057,
-      "totalFileSizeBytes": 135607247131,
-      "totalDurationSeconds": 1518221,
-      "LatestTime": "2025-12-10T03:54:59.586Z"
-    },
-    {
       "file": "One-Punch_Man.json",
       "path": "./Files/Anime/One-Punch_Man.json",
       "title": "One-Punch Man",
@@ -520,7 +508,7 @@
       "file": "Science_Fell_in_Love,_So_I_Tried_to_Prove_it.json",
       "path": "./Files/Anime/Science_Fell_in_Love,_So_I_Tried_to_Prove_it.json",
       "title": "Science Fell in Love, So I Tried to Prove it",
-      "poster": "./Posters/Anime/Science_Fell_in_Love,_So_I_Tried_to_Prove_it.webp",
+      "poster": null,
       "categoryCount": 2,
       "episodeCount": 24,
       "itemCount": 24,
@@ -565,16 +553,16 @@
       "LatestTime": "2025-09-28T01:18:29.309Z"
     },
     {
-      "file": "Hyakano.json",
-      "path": "./Files/Anime/Hyakano.json",
+      "file": "The_100_Girlfriends_Who_Really,_Really,_Really,_Really,_Really_Love_You.json",
+      "path": "./Files/Anime/The_100_Girlfriends_Who_Really,_Really,_Really,_Really,_Really_Love_You.json",
       "title": "The 100 Girlfriends Who Really, Really, Really, Really, Really Love You",
       "poster": "./Posters/Anime/The_100_Girlfriends_Who_Really,_Really,_Really,_Really,_Really_Love_You.webp",
-      "categoryCount": 2,
-      "episodeCount": 24,
-      "itemCount": 24,
-      "totalFileSizeBytes": 3796211196,
-      "totalDurationSeconds": 34218,
-      "LatestTime": "2025-08-11T12:36:00"
+      "categoryCount": 3,
+      "episodeCount": 26,
+      "itemCount": 26,
+      "totalFileSizeBytes": 4225960278,
+      "totalDurationSeconds": 37080,
+      "LatestTime": "2026-07-15T16:31:18.862Z"
     },
     {
       "file": "The_Dreaming_Boy_is_a_Realist.json",
