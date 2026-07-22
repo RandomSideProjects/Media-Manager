@@ -1,0 +1,20 @@
+{
+  "title": "Backrooms",
+  "Image": "https://cpr.xpbliss.fyi/MM/backrooms/Backrooms/9316ad4c29.webp",
+  "LatestTime": "2026-07-22T17:53:46.432Z",
+  "categories": [
+    {
+      "category": "Season 1",
+      "episodes": [
+        {
+          "title": "Episode 1",
+          "src": "https://cpr.xpbliss.fyi/MM/backrooms/Backrooms/S01E01_Episode_1.mp4",
+          "fileSizeBytes": 2186284601,
+          "durationSeconds": 6629
+        }
+      ]
+    }
+  ],
+  "totalFileSizeBytes": 2186284601,
+  "totalDurationSeconds": 6629
+}
