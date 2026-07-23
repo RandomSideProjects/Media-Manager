@@ -64,7 +64,7 @@
       "file": "Backrooms.json",
       "path": "./Files/Anime/Backrooms.json",
       "title": "Backrooms",
-      "poster": null,
+      "poster": "./Posters/Anime/Backrooms.webp",
       "categoryCount": 1,
       "episodeCount": 1,
       "itemCount": 1,
