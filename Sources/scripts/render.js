@@ -8,6 +8,10 @@ function setCountParagraph(p, count, singular, plural) {
   p.style.display = count > 0 ? 'block' : 'none';
 }
 
+function isMovieCategory(category) {
+  return /\bmovie\b/i.test(String(category && category.category || '').trim());
+}
+
 // Build a card from manifest/meta entry
 function buildSourceCardFromMeta(meta) {
   const title = meta.title || meta.file || 'Untitled';
@@ -18,6 +22,7 @@ function buildSourceCardFromMeta(meta) {
   const separatedCategoryCount = isManga ? 0 : separatedCountRaw;
   const separatedItemCountRaw = (!isManga && Number.isFinite(Number(meta.separatedItemCount))) ? Number(meta.separatedItemCount) : 0;
   const separatedItemCount = isManga ? 0 : separatedItemCountRaw;
+  const movieCount = !isManga && Number.isFinite(Number(meta.movieCount)) ? Number(meta.movieCount) : 0;
   const hasSeparatedMeta = !isManga && separatedCategoryCount > 0;
   let itemCount = 0;
   if (!isManga) {
@@ -65,7 +70,7 @@ function buildSourceCardFromMeta(meta) {
   const p1 = document.createElement('p');
   const p2 = document.createElement('p');
   const p3 = document.createElement('p');
-  const isSingleMovie = (!isManga && categoryCount === 0 && episodeCount === 0 && separatedCategoryCount === 1);
+  const isSingleMovie = (!isManga && categoryCount === 0 && episodeCount === 0 && (separatedCategoryCount === 1 || movieCount === 1));
   if (isManga) {
     setCountParagraph(p1, volumeCount, 'Volume', 'Volumes');
     setCountParagraph(p2, pageCountRaw, 'Page', 'Pages');
@@ -78,8 +83,8 @@ function buildSourceCardFromMeta(meta) {
   } else {
     setCountParagraph(p1, categoryCount, 'Season', 'Seasons');
     setCountParagraph(p2, episodeCount, 'Episode', 'Episodes');
-    if (hasSeparatedMeta) {
-      setCountParagraph(p3, separatedCategoryCount, 'Movie', 'Movies');
+    if (hasSeparatedMeta || movieCount > 0) {
+      setCountParagraph(p3, separatedCategoryCount + movieCount, 'Movie', 'Movies');
     } else {
       p3.style.display = 'none';
     }
@@ -161,8 +166,8 @@ function buildSourceCardFromMeta(meta) {
         timeP.style.display = 'none';
         sizeP.style.display = 'none';
         durP.style.display = 'none';
-        if (hasSeparatedMeta) {
-          setCountParagraph(p3, separatedCategoryCount, 'Movie', 'Movies');
+        if (hasSeparatedMeta || movieCount > 0) {
+          setCountParagraph(p3, separatedCategoryCount + movieCount, 'Movie', 'Movies');
         }
       }
     }
@@ -188,12 +193,15 @@ function buildSourceCard(data, openSourceParam, fileNameForFallback) {
   const categories = Array.isArray(data.categories) ? data.categories : [];
   const separatedCategories = isManga ? [] : categories.filter(cat => Number(cat && cat.separated) === 1);
   const primaryCategories = isManga ? categories : categories.filter(cat => Number(cat && cat.separated) !== 1);
-  const seasons = isManga ? primaryCategories.length : primaryCategories.length;
+  const separatedCategoryCount = isManga ? 0 : separatedCategories.length;
+  const movieCategories = isManga ? [] : primaryCategories.filter(isMovieCategory);
+  const showCategories = isManga ? primaryCategories : primaryCategories.filter(category => !isMovieCategory(category));
+  const seasons = isManga ? primaryCategories.length : showCategories.length;
   let episodes = 0;
-  primaryCategories.forEach(cat => {
+  showCategories.forEach(cat => {
     if (Array.isArray(cat.episodes)) episodes += cat.episodes.length;
   });
-  const separatedCategoryCount = isManga ? 0 : separatedCategories.length;
+  const movieCount = isManga ? 0 : movieCategories.length;
   let separatedItemCount = 0;
   separatedCategories.forEach(cat => {
     if (Array.isArray(cat.episodes)) separatedItemCount += cat.episodes.length;
@@ -254,7 +262,7 @@ function buildSourceCard(data, openSourceParam, fileNameForFallback) {
   const p1 = document.createElement('p');
   const p2 = document.createElement('p');
   const p3 = document.createElement('p');
-  const isSingleMovie = (!isManga && seasons === 0 && episodes === 0 && separatedCategoryCount === 1);
+  const isSingleMovie = (!isManga && seasons === 0 && episodes === 0 && (separatedCategoryCount === 1 || movieCount === 1));
   if (isManga) {
     setCountParagraph(p1, volumeCount, 'Volume', 'Volumes');
     setCountParagraph(p2, pageCount, 'Page', 'Pages');
@@ -267,8 +275,8 @@ function buildSourceCard(data, openSourceParam, fileNameForFallback) {
   } else {
     setCountParagraph(p1, seasons, 'Season', 'Seasons');
     setCountParagraph(p2, episodes, 'Episode', 'Episodes');
-    if (hasSeparatedMeta) {
-      setCountParagraph(p3, separatedCategoryCount, 'Movie', 'Movies');
+    if (hasSeparatedMeta || movieCount > 0) {
+      setCountParagraph(p3, separatedCategoryCount + movieCount, 'Movie', 'Movies');
     } else {
       p3.style.display = 'none';
     }
@@ -330,8 +338,8 @@ function buildSourceCard(data, openSourceParam, fileNameForFallback) {
         setCountParagraph(p2, episodes, 'Episode', 'Episodes');
         sizeP.style.display = 'none';
         durP.style.display = 'none';
-        if (hasSeparatedMeta) {
-          setCountParagraph(p3, separatedCategoryCount, 'Movie', 'Movies');
+        if (hasSeparatedMeta || movieCount > 0) {
+          setCountParagraph(p3, separatedCategoryCount + movieCount, 'Movie', 'Movies');
         }
       }
     }
