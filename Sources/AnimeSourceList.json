@@ -524,7 +524,7 @@
       "file": "Science_Fell_in_Love,_So_I_Tried_to_Prove_it.json",
       "path": "./Files/Anime/Science_Fell_in_Love,_So_I_Tried_to_Prove_it.json",
       "title": "Science Fell in Love, So I Tried to Prove it",
-      "poster": null,
+      "poster": "./Posters/Anime/Science_Fell_in_Love,_So_I_Tried_to_Prove_it.webp",
       "categoryCount": 2,
       "episodeCount": 24,
       "itemCount": 24,
@@ -567,18 +567,6 @@
       "totalFileSizeBytes": 3131550331,
       "totalDurationSeconds": 35500,
       "LatestTime": "2025-09-28T01:18:29.309Z"
-    },
-    {
-      "file": "The_100_Girlfriends_Who_Really,_Really,_Really,_Really,_Really_Love_You.json",
-      "path": "./Files/Anime/The_100_Girlfriends_Who_Really,_Really,_Really,_Really,_Really_Love_You.json",
-      "title": "The 100 Girlfriends Who Really, Really, Really, Really, Really Love You",
-      "poster": "./Posters/Anime/The_100_Girlfriends_Who_Really,_Really,_Really,_Really,_Really_Love_You.webp",
-      "categoryCount": 3,
-      "episodeCount": 26,
-      "itemCount": 26,
-      "totalFileSizeBytes": 4225960278,
-      "totalDurationSeconds": 37080,
-      "LatestTime": "2026-07-15T16:31:18.862Z"
     },
     {
       "file": "The_100_Girlfriends_Who_Really_Really_Really_Really_Really_Love_You.json",
