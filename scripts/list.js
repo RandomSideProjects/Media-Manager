@@ -216,6 +216,11 @@ function shouldTreatCategoryAsSeparated(category) {
   return episodes.every(ep => !isEpisodeManga(ep));
 }
 
+function isMovieCategory(category) {
+  const title = category && typeof category.category === 'string' ? category.category.trim() : '';
+  return /\bmovie\b/i.test(title);
+}
+
 function buildSeparatedResumeKey(startIndex) {
   const base = (sourceKey && typeof sourceKey === 'string' && sourceKey.trim()) ? sourceKey.trim() : 'source';
   return `separated:${base}:${startIndex}`;
@@ -310,22 +315,25 @@ function renderEpisodeList() {
     try { return String(text || '').toLowerCase().includes('episode'); } catch { return false; }
   };
 
-  let singleTileSeparatedOnly = tileCount === 1 && separatedTiles === 1;
-  if (singleTileSeparatedOnly) {
+  let singleTileMovie = tileCount === 1;
+  if (singleTileMovie) {
     for (let i = 0; i < videoList.length; i++) {
       const category = videoList[i];
       const episodes = Array.isArray(category && category.episodes) ? category.episodes : [];
       const useSeparated = shouldTreatCategoryAsSeparated(category);
-      if (!useSeparated || !episodes.length) continue;
+      if (!episodes.length) continue;
       const categoryTitleRaw = (category && category.category) ? category.category : `Category ${i + 1}`;
-      if (titleContainsEpisode(categoryTitleRaw)) singleTileSeparatedOnly = false;
+      const itemTitle = episodes[0] && episodes[0].title;
+      if (!isMovieCategory(category) && (titleContainsEpisode(categoryTitleRaw) || titleContainsEpisode(itemTitle))) {
+        singleTileMovie = false;
+      }
       break;
     }
   }
-  episodeList.classList.toggle('single-tile', singleTileSeparatedOnly);
+  episodeList.classList.toggle('single-tile', singleTileMovie);
 
   const normalizeSingleTitle = (text) => {
-    if (singleTileSeparatedOnly && typeof text === 'string' && /^season\s*1$/i.test(text.trim())) {
+    if (singleTileMovie && typeof text === 'string' && /^season\s*1$/i.test(text.trim())) {
       return 'Movie';
     }
     return text;
