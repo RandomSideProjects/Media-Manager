@@ -118,6 +118,67 @@ function updateCategoryAddButton(categoryDiv) {
   addBtn.textContent = isSeparated ? 'Add Part' : 'Add Episode';
 }
 
+function updateCategoryMovieToggle(categoryDiv) {
+  if (!categoryDiv) return;
+  const wrap = categoryDiv._movieToggleWrap;
+  const input = categoryDiv._movieToggleInput;
+  const titleInput = categoryDiv._categoryTitleInput;
+  if (!wrap || !input || !titleInput) return;
+
+  const episodes = categoryDiv.querySelectorAll('.episode');
+  const available = !isMangaMode() && episodes.length === 1;
+  wrap.style.display = available ? '' : 'none';
+  input.disabled = !available;
+  if (!available && input.checked) {
+    input.checked = false;
+    categoryDiv.dataset.movie = '0';
+    if (titleInput.value.trim() === 'Movie') titleInput.value = categoryDiv.dataset.preMovieCategoryTitle || `Season ${Array.from(categoriesEl.children).indexOf(categoryDiv) + 1}`;
+  }
+
+  const separationInput = categoryDiv._separationInput;
+  if (separationInput) {
+    separationInput.disabled = input.checked;
+    if (input.checked) {
+      separationInput.checked = false;
+      categoryDiv.dataset.separated = '0';
+    }
+  }
+}
+
+function setCategoryMovieMode(categoryDiv, enabled) {
+  if (!categoryDiv || isMangaMode()) return;
+  const titleInput = categoryDiv._categoryTitleInput;
+  const movieInput = categoryDiv._movieToggleInput;
+  const episodes = categoryDiv.querySelectorAll('.episode');
+  if (!titleInput || !movieInput || episodes.length !== 1) return;
+  const itemTitle = episodes[0]._titleInput;
+
+  if (enabled) {
+    categoryDiv.dataset.preMovieCategoryTitle = titleInput.value.trim();
+    if (itemTitle) categoryDiv.dataset.preMovieItemTitle = itemTitle.value.trim();
+    titleInput.value = 'Movie';
+    const genericItem = !itemTitle || /^(movie|episode\s*1)$/i.test(itemTitle.value.trim());
+    if (itemTitle && genericItem) {
+      const directoryTitle = (document.getElementById('dirTitle')?.value || '').trim();
+      itemTitle.value = directoryTitle || 'Item 1';
+      itemTitle.dataset.mmEdited = '1';
+    }
+    categoryDiv.dataset.movie = '1';
+  } else {
+    categoryDiv.dataset.movie = '0';
+    if (titleInput.value.trim() === 'Movie') {
+      titleInput.value = categoryDiv.dataset.preMovieCategoryTitle || `Season ${Array.from(categoriesEl.children).indexOf(categoryDiv) + 1}`;
+    }
+    if (itemTitle && itemTitle.value.trim() === 'Movie') {
+      itemTitle.value = categoryDiv.dataset.preMovieItemTitle || 'Episode 1';
+      itemTitle.dataset.mmEdited = '0';
+    }
+  }
+  updateCategoryMovieToggle(categoryDiv);
+  updateCategoryAddButton(categoryDiv);
+  refreshAllSeparationToggles();
+}
+
 function updateEpisodeSeparatedUi(epDiv) {
   if (!epDiv) return;
   const wrap = epDiv._separatedToggleWrap;
@@ -1917,6 +1978,8 @@ function addCategory(data) {
   categoryDiv.className = 'category';
   const separatedFromData = (!isMangaMode() && data && Number(data.separated) === 1);
   categoryDiv.dataset.separated = separatedFromData ? '1' : '0';
+  const movieFromData = !isMangaMode() && data && /\bmovie\b/i.test(String(data.category || '').trim());
+  categoryDiv.dataset.movie = movieFromData ? '1' : '0';
   categoryDiv.addEventListener('contextmenu', (e) => {
     // Guard against episode right-clicks bubbling up and triggering category removal
     const target = e.target;
@@ -1951,6 +2014,7 @@ function addCategory(data) {
   }
   titleLabel.appendChild(document.createElement('br'));
   titleLabel.appendChild(titleInput);
+  categoryDiv._categoryTitleInput = titleInput;
 
   categoryHeader.appendChild(categoryHandle);
   categoryHeader.appendChild(titleLabel);
@@ -1975,13 +2039,30 @@ function addCategory(data) {
     refreshAllSeparationToggles();
   });
 
+  const movieLabel = document.createElement('label');
+  movieLabel.className = 'category-separation-toggle category-movie-toggle';
+  const movieInput = document.createElement('input');
+  movieInput.type = 'checkbox';
+  movieInput.className = 'category-movie-checkbox';
+  movieInput.checked = movieFromData;
+  const movieText = document.createElement('span');
+  movieText.textContent = 'Treat as movie';
+  movieLabel.append(movieInput, movieText);
+  categoryHeader.appendChild(movieLabel);
+  categoryDiv._movieToggleWrap = movieLabel;
+  categoryDiv._movieToggleInput = movieInput;
+  movieInput.addEventListener('change', () => setCategoryMovieMode(categoryDiv, movieInput.checked));
+
   const episodesDiv = document.createElement('div');
   episodesDiv.className = 'episodes';
   const addEpBtn = document.createElement('button');
   addEpBtn.type = 'button';
   categoryDiv._addEpisodeButton = addEpBtn;
   updateCategoryAddButton(categoryDiv);
-  addEpBtn.addEventListener('click', () => addEpisode(episodesDiv));
+  addEpBtn.addEventListener('click', () => {
+    addEpisode(episodesDiv);
+    updateCategoryMovieToggle(categoryDiv);
+  });
 
   categoryDiv.appendChild(categoryHeader);
   categoryDiv.appendChild(episodesDiv);
@@ -1992,6 +2073,7 @@ function addCategory(data) {
   makeSortable(episodesDiv, { itemSelector: '.episode', handleSelector: '.episode-top-row .drag-handle' });
 
   if (data && data.episodes) { data.episodes.forEach(ep => addEpisode(episodesDiv, ep)); }
+  updateCategoryMovieToggle(categoryDiv);
   updateCategoryButtonVisibility();
 }
 
@@ -2021,6 +2103,7 @@ function addEpisode(container, data) {
       onConfirm: () => {
         epDiv.remove();
         normalizeEpisodeTitles();
+        updateCategoryMovieToggle(parentCategory);
       }
     });
   });
@@ -3788,7 +3871,8 @@ function buildLocalDirectoryJSON(options = {}) {
   const isMangaLibrary = isMangaMode();
   document.querySelectorAll('.category').forEach((cat, catIndex) => {
     const titleInput = cat.querySelector('.category-header input[type="text"]') || cat.querySelector('input[type="text"]');
-    const catTitle = titleInput ? titleInput.value.trim() : '';
+    const movie = !isMangaLibrary && cat.dataset && cat.dataset.movie === '1';
+    const catTitle = movie ? 'Movie' : (titleInput ? titleInput.value.trim() : '');
     const episodes = [];
     cat.querySelectorAll('.episode').forEach(epDiv => {
       const info = extractEpisodeDataFromElement(epDiv, { isManga: isMangaLibrary });
@@ -3814,7 +3898,7 @@ function buildLocalDirectoryJSON(options = {}) {
       else totalSecs += info.totalDuration || 0;
     });
     if (catTitle) {
-      const separated = !isMangaLibrary && cat.dataset && cat.dataset.separated === '1';
+      const separated = !isMangaLibrary && !movie && cat.dataset && cat.dataset.separated === '1';
       const categoryPayload = { category: catTitle, episodes };
       if (separated) {
         categoryPayload.separated = 1;
