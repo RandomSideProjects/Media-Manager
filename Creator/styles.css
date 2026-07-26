@@ -39,8 +39,89 @@ body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background: #121212;
   color: #f1f1f1;
-  padding: 2em;
+  padding: 0;
   margin: 0;
+}
+
+.creator-main-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 10030;
+  min-height: 68px;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 1rem;
+  padding: 0.55rem clamp(1rem, 3vw, 2rem);
+  background: rgba(17, 17, 17, 0.96);
+  border-bottom: 1px solid #242424;
+  backdrop-filter: blur(14px);
+}
+
+.creator-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+  color: #f1f1f1;
+  text-decoration: none;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.creator-brand img {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+}
+
+.creator-nav,
+.creator-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.creator-toolbar-actions {
+  justify-content: flex-end;
+}
+
+.creator-nav-button {
+  width: 42px;
+  height: 42px;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  border-radius: 8px;
+  background: #007bff;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.creator-nav-button svg {
+  width: 21px;
+  height: 21px;
+  fill: currentColor;
+}
+
+.creator-nav-button:hover {
+  background: #0056b3;
+}
+
+.creator-nav-button.active {
+  background: #f1f1f1;
+  color: #111;
+}
+
+.creator-nav-button--secondary {
+  background: transparent;
+  border: 1px solid #333;
 }
 
 .creator-layout {
@@ -49,13 +130,15 @@ body {
   --pahe-gap: 5.2em;
   width: 100%;
   margin: 0;
+  padding: 0 1rem;
+  box-sizing: border-box;
   position: relative;
 }
 
 .creator-layout .container {
   width: var(--creator-width);
   max-width: none;
-  margin: 2em auto;
+  margin: clamp(1.25rem, 4vh, 2.5rem) auto;
 }
 
 .side-panel {
@@ -228,7 +311,8 @@ body {
   background: #1a1a1a;
   padding: 2.5em;
   border-radius: 16px;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.34);
   position: relative;
   display: flex;
   flex-direction: column;
@@ -248,11 +332,12 @@ h1 {
 }
 input[type="text"],
 input[type="password"] {
-  width: calc(100% - 0.8em);
-  padding: 0.6em;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 0.75em 0.85em;
   margin-top: 0.2em;
   border: 1px solid #444;
-  border-radius: 4px;
+  border-radius: 8px;
   background: #2a2a2a;
   color: #f1f1f1;
   transition: border-color 0.2s, box-shadow 0.2s;
@@ -269,7 +354,18 @@ input[type="file"] {
   background: #2a2a2a;
   color: #f1f1f1;
   border: 1px solid #444;
-  border-radius: 4px;
+  border-radius: 8px;
+  padding: 0.25rem;
+  max-width: 100%;
+}
+input[type="file"]::file-selector-button {
+  margin-right: 0.7rem;
+  padding: 0.55rem 0.75rem;
+  border: 0;
+  border-radius: 6px;
+  background: #007bff;
+  color: #fff;
+  cursor: pointer;
 }
 button {
   padding: 0.6em 1.2em;
@@ -868,21 +964,64 @@ pre {
   min-height: 1em;
 }
 /* Server status badge */
+.creator-status-slot {
+  width: 100%;
+  min-height: 0;
+}
 #serverStatusBox {
-  position: fixed;
-  top: 1rem;
-  left: 1rem;
-  background: #1a1a1a;
+  position: static;
+  width: 100%;
+  box-sizing: border-box;
+  background: rgba(93, 156, 255, 0.08);
   color: #f1f1f1;
-  border: 1px solid #333;
+  border: 1px solid rgba(93, 156, 255, 0.28);
   border-radius: 10px;
   padding: 0.6em 0.9em;
   font-size: 0.9rem;
   line-height: 1.2;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.4);
-  z-index: 9999;
+  box-shadow: none;
   white-space: pre-line;
   display: none; /* default hidden until success */
+}
+
+@media (max-width: 720px) {
+  .creator-main-toolbar {
+    gap: 0.45rem;
+    padding-inline: 0.65rem;
+  }
+
+  .creator-brand span {
+    display: none;
+  }
+
+  .creator-brand img {
+    width: 32px;
+    height: 32px;
+  }
+
+  .creator-nav {
+    gap: 0.25rem;
+  }
+
+  .creator-nav-button {
+    width: 36px;
+    height: 36px;
+  }
+
+  .creator-layout {
+    padding: 0 0.5rem;
+  }
+
+  .container {
+    width: 100%;
+    padding: 1.25rem;
+  }
+
+  .load-input-row,
+  #posterGroup {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }
 .mm-upload-server-summary {
   color: #9ecbff;

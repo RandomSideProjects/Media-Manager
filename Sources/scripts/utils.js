@@ -2,6 +2,17 @@
 
 const RECENT_SOURCES_STORAGE_KEY = 'rsp_recent_sources_list_v1';
 
+function resolvePublicSourceAsset(value) {
+  const raw = typeof value === 'string' ? value.trim() : '';
+  if (!raw) return '';
+  if (/^(?:https?:|blob:|data:)/i.test(raw)) return raw;
+  const normalized = raw.replace(/^\.\//, '').replace(/^\/+/, '');
+  const rooted = normalized.toLowerCase().startsWith('sources/')
+    ? normalized
+    : `Sources/${normalized}`;
+  return new URL(rooted, window.location.href).href;
+}
+
 function extractPoster(entry) {
   if (!entry || typeof entry !== 'object') return '';
   if (typeof entry.Image === 'string' && entry.Image !== 'N/A') return entry.Image;
@@ -97,7 +108,7 @@ async function hydrateMtimes(list) {
     if (m.LatestTime) return; // we have explicit timestamp
     if (typeof m._mtime === 'number') return;
     try {
-      const url = new URL(m.path || m.openPath || '', window.location.href).href;
+      const url = resolvePublicSourceAsset(m.path || m.openPath || '');
       const resp = await fetch(url, { method: 'HEAD', cache: 'no-store' });
       const lm = resp.headers.get('last-modified') || resp.headers.get('Last-Modified');
       m._mtime = lm ? Date.parse(lm) : idx;

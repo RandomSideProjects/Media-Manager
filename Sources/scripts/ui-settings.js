@@ -8,7 +8,7 @@ let rowLimitRange = null;
 let rowLimitValue = null;
 let settingsCancelBtn = null;
 let hidePostersToggle = null;
-let sortRadios = [];
+let sortSelect = null;
 let modeRadios = [];
 let searchToggleEl = null;
 let openFeedbackBtn = null;
@@ -24,7 +24,7 @@ function ensureSourcesSettingsOverlay() {
       rowLimitValue = document.getElementById('rowLimitValue');
       settingsCancelBtn = document.getElementById('settingsCancel');
       hidePostersToggle = document.getElementById('toggleHidePosters');
-      sortRadios = Array.from(document.querySelectorAll('#sortOptions input[name="sort"]'));
+      sortSelect = document.getElementById('sortOptions');
       modeRadios = Array.from(document.querySelectorAll('#modeOptions input[name="mode"]'));
       searchToggleEl = document.getElementById('toggleSearchBar');
       openFeedbackBtn = document.getElementById('openFeedback');
@@ -68,14 +68,14 @@ function openSettingsPanel(){
   
   // Re-query elements
   hidePostersToggle = document.getElementById('toggleHidePosters');
-  sortRadios = Array.from(document.querySelectorAll('#sortOptions input[name="sort"]'));
+  sortSelect = document.getElementById('sortOptions');
   modeRadios = Array.from(document.querySelectorAll('#modeOptions input[name="mode"]'));
   rowLimitRange = document.getElementById('rowLimitRange');
   rowLimitValue = document.getElementById('rowLimitValue');
   searchToggleEl = document.getElementById('toggleSearchBar');
   
   if (hidePostersToggle) hidePostersToggle.checked = !!SOURCES_HIDE_POSTERS;
-  for (const r of sortRadios) r.checked = (r.value === SOURCES_SORT);
+  if (sortSelect) sortSelect.value = SOURCES_SORT;
   for (const m of modeRadios) m.checked = (m.value === SOURCES_MODE);
   updateRowLimitMax();
   if (rowLimitRange) {
@@ -135,14 +135,13 @@ window.addEventListener('resize', () => {
 });
 
 async function applySettings() {
-  sortRadios = Array.from(document.querySelectorAll('#sortOptions input[name="sort"]'));
+  sortSelect = document.getElementById('sortOptions');
   modeRadios = Array.from(document.querySelectorAll('#modeOptions input[name="mode"]'));
   hidePostersToggle = document.getElementById('toggleHidePosters');
   searchToggleEl = document.getElementById('toggleSearchBar');
   rowLimitRange = document.getElementById('rowLimitRange');
   
-  const selected = sortRadios.find(r => r.checked);
-  SOURCES_SORT = selected ? selected.value : 'az';
+  SOURCES_SORT = sortSelect ? sortSelect.value : 'az';
   SOURCES_HIDE_POSTERS = !!hidePostersToggle.checked;
   localStorage.setItem('sources_sortOrder', SOURCES_SORT);
   localStorage.setItem('sources_hidePosters', SOURCES_HIDE_POSTERS ? '1':'0');

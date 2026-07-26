@@ -9,7 +9,8 @@
     badge.target = '_blank';
     badge.rel = 'noopener noreferrer';
     badge.textContent = 'Version …';
-    document.body.appendChild(badge);
+    const footer = document.getElementById('appFooter');
+    (footer || document.body).appendChild(badge);
 
     function colorForAgeDays(days){
       const d = Math.max(0, Math.min(30, days)); // clamp 0..30

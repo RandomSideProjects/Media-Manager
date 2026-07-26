@@ -31,11 +31,16 @@ window.OverlayFactory = (function() {
   function assetPath(fileName) {
     const raw = typeof fileName === 'string' ? fileName.trim() : '';
     if (!raw) return '';
-    const path = (typeof window !== 'undefined' && window.location && window.location.pathname)
-      ? String(window.location.pathname)
-      : '';
-    const needsParent = /\/(Sources|Creator)\//.test(path);
-    return `${needsParent ? '../' : ''}Assets/${raw}`;
+    try {
+      const base = (typeof document !== 'undefined' && document.baseURI)
+        ? document.baseURI
+        : window.location.href;
+      const path = new URL(base).pathname;
+      const needsParent = /\/(Sources|Creator)\//.test(path);
+      return new URL(`${needsParent ? '../' : ''}Assets/${raw}`, base).href;
+    } catch {
+      return `Assets/${raw}`;
+    }
   }
 
   function iconButton(id, label, iconFileName, extraClassName) {
@@ -460,13 +465,15 @@ window.OverlayFactory = (function() {
       createElement('div', { id: 'sourcesSettingsPanel', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'sourcesSettingsTitle' }, [
         createElement('h3', { id: 'sourcesSettingsTitle' }, ['Public Sources — Settings']),
         createElement('div', { className: 'section' }, [
-          createElement('div', { className: 'settings-row' }, [createElement('strong', {}, ['Sort by'])]),
-          createElement('div', { className: 'settings-radio', id: 'sortOptions' }, [
-            createElement('label', {}, [createElement('input', { type: 'radio', name: 'sort', value: 'az' }), ' A–Z']),
-            createElement('label', {}, [createElement('input', { type: 'radio', name: 'sort', value: 'za' }), ' Z–A']),
-            createElement('label', {}, [createElement('input', { type: 'radio', name: 'sort', value: 'newold' }), ' New → Old']),
-            createElement('label', {}, [createElement('input', { type: 'radio', name: 'sort', value: 'oldnew' }), ' Old → New']),
-            createElement('label', {}, [createElement('input', { type: 'radio', name: 'sort', value: 'recent' }), ' Last opened'])
+          createElement('label', { className: 'settings-row settings-select-row', for: 'sortOptions' }, [
+            createElement('strong', {}, ['Sort by']),
+            createElement('select', { id: 'sortOptions', name: 'sort' }, [
+              createElement('option', { value: 'az' }, ['A–Z']),
+              createElement('option', { value: 'za' }, ['Z–A']),
+              createElement('option', { value: 'newold' }, ['New → Old']),
+              createElement('option', { value: 'oldnew' }, ['Old → New']),
+              createElement('option', { value: 'recent' }, ['Last opened'])
+            ])
           ])
         ]),
         createElement('div', { className: 'section' }, [
@@ -477,10 +484,7 @@ window.OverlayFactory = (function() {
         ]),
         createElement('div', { className: 'section' }, [
           createElement('label', { className: 'settings-row', style: { justifyContent: 'space-between' } }, [
-            createElement('span', { style: { display: 'flex', alignItems: 'center', gap: '8px' } }, [
-              createElement('span', {}, ['Enable search bar']),
-              createElement('span', { 'data-setting-tag': 'beta' })
-            ]),
+            createElement('span', {}, ['Enable search bar']),
             createElement('input', { type: 'checkbox', id: 'toggleSearchBar' })
           ])
         ]),

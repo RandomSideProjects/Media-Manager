@@ -211,7 +211,8 @@ async function checkHostAndLoadCreator() {
   if (!statusBox) {
     statusBox = document.createElement("div");
     statusBox.id = "serverStatusBox";
-    document.body.appendChild(statusBox);
+    const statusSlot = document.getElementById("creatorStatusSlot");
+    (statusSlot || document.body).appendChild(statusBox);
   }
 
   const paheEnabled = readPaheEnabled();

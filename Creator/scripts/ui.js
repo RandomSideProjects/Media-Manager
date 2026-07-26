@@ -3718,6 +3718,8 @@ outputContainer.addEventListener('contextmenu', (e) => {
 createTabBtn.addEventListener('click', () => {
   createTabBtn.classList.add('active');
   editTabBtn.classList.remove('active');
+  createTabBtn.setAttribute('aria-current', 'page');
+  editTabBtn.removeAttribute('aria-current');
   loadUrlContainer.style.display = 'none';
   document.getElementById('dirTitle').value = '';
   categoriesEl.innerHTML = '';
@@ -3733,6 +3735,8 @@ createTabBtn.addEventListener('click', () => {
 editTabBtn.addEventListener('click', () => {
   editTabBtn.classList.add('active');
   createTabBtn.classList.remove('active');
+  editTabBtn.setAttribute('aria-current', 'page');
+  createTabBtn.removeAttribute('aria-current');
   loadUrlContainer.style.display = 'flex';
   document.getElementById('dirTitle').value = '';
   categoriesEl.innerHTML = '';

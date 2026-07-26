@@ -12,7 +12,7 @@ const tempState = { urls: [] };
       if (typeof input === 'string') {
         // If string looks like full URL or blob, treat as direct; else resolve relative to this page.
         const isDirect = /^(https?:|blob:)/i.test(input);
-        const fetchUrl = isDirect ? input : new URL(input, window.location.href).href;
+        const fetchUrl = isDirect ? input : resolvePublicSourceAsset(input);
         const text = await (await fetch(fetchUrl)).text();
         data = JSON.parse(text);
         openParam = isDirect ? input : `Sources/${(input || '').replace(/^\.\//,'')}`;
@@ -72,11 +72,13 @@ function createSourceCard(data, openTarget) {
     const img = document.createElement('img');
     img.className = 'source-thumb';
     img.alt = `${title} poster`;
+    img.loading = 'lazy';
+    img.decoding = 'async';
     img.referrerPolicy = 'no-referrer';
     img.addEventListener('load', () => fitPosterToCard(img, card));
     window.addEventListener('resize', () => fitPosterToCard(img, card));
     img.onerror = () => { img.style.display = 'none'; card.classList.add('no-thumb'); };
-    img.src = imgUrl;
+    img.src = resolvePublicSourceAsset(imgUrl);
     if (img.complete && img.naturalWidth) fitPosterToCard(img, card);
     card.appendChild(img);
   } else {
@@ -99,11 +101,16 @@ function createSourceCard(data, openTarget) {
   btn.className = 'pill-button';
   btn.textContent = 'Open';
   if (openTarget) {
-    btn.onclick = () => {
+    const openSource = () => {
       const isFull = /^https?:\/\//i.test(openTarget);
       const srcParam = isFull ? openTarget : `Sources/${openTarget.replace(/^\.\/?/, '')}`;
-      window.location.href = `../index.html?source=${encodeURIComponent(srcParam)}`;
+      window.location.href = `./index.html?source=${encodeURIComponent(srcParam)}`;
     };
+    if (typeof makeSourceCardInteractive === 'function') {
+      makeSourceCardInteractive(card, btn, title, openSource);
+    } else {
+      btn.onclick = openSource;
+    }
   } else {
     btn.disabled = true;
     btn.title = 'No source URL provided for this temporary card';

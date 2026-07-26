@@ -12,6 +12,30 @@ function isMovieCategory(category) {
   return /\bmovie\b/i.test(String(category && category.category || '').trim());
 }
 
+function makeSourceCardInteractive(card, button, title, openSource) {
+  if (!card || typeof openSource !== 'function') return;
+  card.classList.add('is-interactive');
+  card.tabIndex = 0;
+  card.setAttribute('role', 'link');
+  card.setAttribute('aria-label', `Open ${title || 'source'}`);
+
+  card.addEventListener('click', (event) => {
+    if (event.target.closest('button, a, input, select, textarea, label')) return;
+    openSource();
+  });
+  card.addEventListener('keydown', (event) => {
+    if (event.target !== card || (event.key !== 'Enter' && event.key !== ' ')) return;
+    event.preventDefault();
+    openSource();
+  });
+  if (button) {
+    button.addEventListener('click', (event) => {
+      event.stopPropagation();
+      openSource();
+    });
+  }
+}
+
 // Build a card from manifest/meta entry
 function buildSourceCardFromMeta(meta) {
   const title = meta.title || meta.file || 'Untitled';
@@ -51,10 +75,12 @@ function buildSourceCardFromMeta(meta) {
     const img = document.createElement('img');
     img.className = 'source-thumb';
     img.alt = `${title} poster`;
+    img.loading = 'lazy';
+    img.decoding = 'async';
     img.addEventListener('load', () => fitPosterToCard(img, card));
     window.addEventListener('resize', () => fitPosterToCard(img, card));
     img.onerror = () => { img.style.display = 'none'; card.classList.add('no-thumb'); };
-    img.src = posterSrc;
+    img.src = resolvePublicSourceAsset(posterSrc);
     if (img.complete && img.naturalWidth) fitPosterToCard(img, card);
     card.appendChild(img);
   } else {
@@ -129,10 +155,11 @@ function buildSourceCardFromMeta(meta) {
   const btn = document.createElement('button');
   btn.className = 'pill-button';
   btn.textContent = 'Open';
-  btn.onclick = () => {
+  const openSource = () => {
     const src = encodeURIComponent(openTarget);
-    window.location.href = `../index.html?source=${src}`;
+    window.location.href = `./index.html?source=${src}`;
   };
+  makeSourceCardInteractive(card, btn, title, openSource);
 
   right.append(h3, p1, p2);
   if (hasSeparatedMeta) right.appendChild(p3);
@@ -240,6 +267,8 @@ function buildSourceCard(data, openSourceParam, fileNameForFallback) {
     const img = document.createElement('img');
     img.className = 'source-thumb';
     img.alt = `${title} poster`;
+    img.loading = 'lazy';
+    img.decoding = 'async';
     img.referrerPolicy = 'no-referrer';
     img.addEventListener('load', () => fitPosterToCard(img, card));
     window.addEventListener('resize', () => fitPosterToCard(img, card));
@@ -285,10 +314,11 @@ function buildSourceCard(data, openSourceParam, fileNameForFallback) {
   const btn = document.createElement('button');
   btn.className = 'pill-button';
   btn.textContent = 'Open';
-  btn.onclick = () => {
+  const openSource = () => {
     const src = encodeURIComponent(openSourceParam);
-    window.location.href = `../index.html?source=${src}`;
+    window.location.href = `./index.html?source=${src}`;
   };
+  makeSourceCardInteractive(card, btn, title, openSource);
 
   // Totals (hidden by default)
   const formatBytes = (n) => {

@@ -5,9 +5,29 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Directory Creator</title>
   <link rel="icon" href="../Assets/Favicon.png">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=20260725-shared-shell">
 </head>
 <body>
+  <header class="creator-main-toolbar">
+    <a class="creator-brand" href="../index.html" aria-label="RSP Media Manager home">
+      <img src="../Assets/Favicon.png" alt="">
+      <span>RSP Media Manager</span>
+    </a>
+    <nav class="creator-nav" aria-label="Creator navigation">
+      <button id="homeTabBtn" class="creator-nav-button" type="button" aria-label="Public sources" title="Public sources">
+        <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 4h6v6H4V4Zm10 0h6v6h-6V4ZM4 14h6v6H4v-6Zm10 0h6v6h-6v-6Z"/></svg>
+      </button>
+      <button id="createTabBtn" class="creator-nav-button active" type="button" aria-label="Create source" title="Create source" aria-current="page">
+        <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M11 4h2v7h7v2h-7v7h-2v-7H4v-2h7V4Z"/></svg>
+      </button>
+      <button id="editTabBtn" class="creator-nav-button creator-nav-button--secondary" type="button" aria-label="Edit source" title="Edit source">
+        <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m15.7 4.3 4 4L9 19H5v-4L15.7 4.3Zm1.4-1.4a2 2 0 0 1 2.8 0l1.2 1.2a2 2 0 0 1 0 2.8l-.8.8-4-4 .8-.8Z"/></svg>
+      </button>
+    </nav>
+    <div class="creator-toolbar-actions">
+      <button id="mmUploadSettingsBtn" class="creator-nav-button" type="button" aria-label="Creator settings" title="Settings">⚙</button>
+    </div>
+  </header>
   <div class="creator-layout">
     <div class="side-panel" style="display:none;">
       <div class="field-group" id="paheImportGroup">
@@ -81,12 +101,7 @@
     </div>
 
     <div class="container">
-      <div class="tabs">
-        <button id="homeTabBtn" class="tab-button">Home</button>
-        <button id="createTabBtn" class="tab-button active">Create</button>
-        <button id="editTabBtn" class="tab-button">Edit</button>
-      </div>
-      <button id="mmUploadSettingsBtn" class="settings-button">⚙️</button>
+      <div id="creatorStatusSlot" class="creator-status-slot" aria-live="polite"></div>
       <h1>Directory Creator</h1>
       <div class="field-group" id="loadUrlContainer">
         <label for="loadUrl">Load Directory:</label><br/>
@@ -145,16 +160,16 @@
   <script src="../scripts/alerts.js"></script>
   <script src="../scripts/dev-core.js"></script>
   <script src="../scripts/tags.js"></script>
-  <script src="../scripts/overlay-factory.js"></script>
+  <script src="../scripts/overlay-factory.js?v=20260725-layout"></script>
   <script src="../scripts/account-sync.js"></script>
   <script src="../scripts/storage.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="scripts/up2k-standalone.js"></script>
   <script src="scripts/upload-server.js"></script>
   <script src="scripts/uploader.js"></script>
-  <script src="scripts/ui.js"></script>
+  <script src="scripts/ui.js?v=20260725-layout"></script>
   <script src="scripts/polling.js"></script>
-  <script src="scripts/server.js"></script>
+  <script src="scripts/server.js?v=20260725-layout"></script>
   <script src="scripts/settings.js"></script>
   <script src="scripts/folder-upload.js"></script>
   <script src="scripts/ffmpeg-splitter.js"></script>

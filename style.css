@@ -11,6 +11,8 @@ html {
   --button-text: #ffffff;
   --button-hover-bg: #0056b3;
   --muted-text: rgba(241, 241, 241, 0.72);
+  --surface-border: rgba(255, 255, 255, 0.08);
+  --input-bg: rgba(255, 255, 255, 0.055);
   --menu-button-font-size: 0.92rem;
   --menu-button-padding: 0.45em 0.9em;
 
@@ -22,6 +24,8 @@ body.light-mode {
   --text: #333333;
   --container-bg: #ffffff;
   --muted-text: rgba(51, 51, 51, 0.64);
+  --surface-border: rgba(20, 28, 45, 0.12);
+  --input-bg: rgba(20, 28, 45, 0.045);
 
   /* Episode tile watch-progress fill (adjust for UX testing) */
   --episode-progress-fill: rgba(46, 125, 50, 0.18);
@@ -47,7 +51,8 @@ body {
   padding: 2em;
   background: var(--container-bg);
   border-radius: 16px;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
+  border: 1px solid var(--surface-border);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.34);
   text-align: center;
 }
 
@@ -60,7 +65,7 @@ body {
   gap: 0;
   margin-bottom: 2rem;
   min-height: calc(100vh - 80px);
-  padding-top: 1rem;
+  padding-top: clamp(2rem, 7vh, 5.5rem);
 }
 
 #recentSourcesRail {
@@ -608,10 +613,102 @@ body.light-mode .episode-button.episode--complete .episode-progress-fill {
   display: none;
   flex-direction: column;
   align-items: center;
+  width: min(680px, 100%);
+  margin: 0 auto;
+  padding: clamp(1rem, 2vw, 2rem) 0;
 }
 #urlInput {
+  box-sizing: border-box;
   width: 100%;
-  max-width: 600px;
+  min-width: 0;
+  margin: 0;
+  padding: 0.95rem 1rem;
+  color: var(--text);
+  background: var(--input-bg);
+  border: 1px solid var(--surface-border);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+}
+#urlInput::placeholder {
+  color: var(--muted-text);
+}
+#urlInput:focus {
+  border-color: rgba(67, 139, 255, 0.85);
+  box-shadow: 0 0 0 4px rgba(0, 123, 255, 0.14);
+  background: transparent;
+}
+.source-loader-heading {
+  max-width: 590px;
+  margin-bottom: 1.6rem;
+}
+.source-loader-kicker {
+  display: inline-block;
+  color: #5d9cff;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
+}
+.source-loader-heading h1 {
+  margin: 0;
+  color: var(--text);
+  font-size: clamp(2rem, 5vw, 3.25rem);
+  line-height: 1.05;
+  letter-spacing: -0.045em;
+}
+.source-loader-heading p {
+  margin: 0.85rem auto 0;
+  color: var(--muted-text);
+  font-size: clamp(0.96rem, 2vw, 1.08rem);
+  line-height: 1.55;
+}
+.source-url-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.65rem;
+  width: 100%;
+}
+.source-url-row #goBtn {
+  margin: 0;
+  padding-inline: 1.4rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.source-loader-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  width: 100%;
+  margin: 1.35rem 0 0.85rem;
+  color: var(--muted-text);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.source-loader-divider::before,
+.source-loader-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--surface-border);
+}
+.folder-button.folder-button--large {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0.78rem 1.2rem;
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--surface-border);
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.folder-button.folder-button--large:hover {
+  background: var(--input-bg);
+  border-color: rgba(67, 139, 255, 0.65);
 }
 #errorMessage {
   display: none;
@@ -656,9 +753,9 @@ body.light-mode .episode-button.episode--complete .episode-progress-fill {
 
 #directoryPoster {
   display: none; /* only if Image present */
-  height: 252px;
+  height: 210px;
   width: auto;
-  max-width: 360px;
+  max-width: 300px;
   object-fit: contain;
   border-radius: 8px;
   border: 1px solid #333;
@@ -718,33 +815,61 @@ header {
   z-index: 1001;
   background: #111;
   border-bottom: 1px solid #1f1f1f;
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
-  justify-content: center;
-  padding: 0.35em 1rem;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.55rem clamp(1rem, 3vw, 2rem);
   box-sizing: border-box;
-  min-height: 64px;
+  min-height: 68px;
   width: 100%;
   left: 0;
   right: 0;
 }
 
- .toolbar-actions {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
+.toolbar-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.toolbar-brand img {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+}
+.toolbar-brand:focus-visible {
+  outline: 2px solid var(--button-bg);
+  outline-offset: 5px;
+  border-radius: 8px;
+}
+.toolbar-controls {
   display: flex;
+  align-items: center;
+  justify-content: flex-end;
   gap: 0.4em;
 }
 
+.toolbar-actions {
+  position: static;
+  transform: none;
+  display: flex;
+  gap: 0.4em;
+  justify-content: flex-end;
+}
+
 .toolbar-actions--left {
-  right: 5rem;
-  left: auto;
+  flex: 0 0 auto;
+  margin-left: auto;
 }
 
 .toolbar-actions--right {
-  right: 1rem;
-  left: auto;
+  flex: 0 0 auto;
 }
 
 .toolbar-actions button {
@@ -783,25 +908,27 @@ header {
     margin: 0 auto;
   }
   #directoryPoster {
-    max-width: 280px;
-    width: min(80vw, 280px);
+    max-width: 190px;
+    width: min(48vw, 190px);
     height: auto;
     align-self: center;
     order: -1;
   }
   #directoryTitle {
+    font-size: clamp(1.7rem, 8vw, 2.35rem);
     text-align: center;
     max-width: 100%;
     width: 100%;
     flex: unset;
   }
   .toolbar-actions--left {
-    right: auto;
-    left: 1rem;
+    margin-left: auto;
   }
   .toolbar-actions--right {
-    right: 1rem;
-    left: auto;
+    margin-left: 0;
+  }
+  .toolbar-brand span {
+    display: none;
   }
 }
 
@@ -812,7 +939,7 @@ header {
   justify-content: center;
   align-items: center;
   flex-wrap: wrap;
-  flex: 1;
+  flex: 0 1 auto;
 }
 .tab-button {
   padding: 0.6em 1.2em;
@@ -828,6 +955,32 @@ header {
 }
 .tab-button:hover { background: #0056b3; }
 .tab-button:active { transform: scale(0.98); }
+.tab-button--icon {
+  width: 42px;
+  height: 42px;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
+}
+.tab-button--icon svg {
+  width: 21px;
+  height: 21px;
+  fill: currentColor;
+}
+.tab-button.is-active {
+  background: #f1f1f1;
+  color: #111;
+}
+.tab-button--secondary {
+  background: transparent;
+  border: 1px solid var(--surface-border);
+}
+.tab-button--secondary:hover {
+  background: var(--input-bg);
+}
 .dropdown { position: relative; }
 .dropdown-content {
   display: none;
@@ -2310,13 +2463,11 @@ body.mm-notice-open {
   border-radius: clamp(0.45rem, 0.4rem + 0.4vw, 0.8rem);
   gap: clamp(0.35rem, 0.25rem + 0.3vw, 0.6rem);
   box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-  z-index: 10000;
+  z-index: 1;
 }
 
 #githubLink {
-  position: fixed;
-  bottom: clamp(0.75rem, 0.55rem + 0.9vw, 1.5rem);
-  left: clamp(0.75rem, 0.55rem + 0.9vw, 1.5rem);
+  position: static;
   background: var(--button-bg);
   color: var(--button-text);
 }
@@ -2328,11 +2479,18 @@ body.mm-notice-open {
 
 /* Version badge (bottom-right) */
 #versionBadge {
-  position: fixed;
-  bottom: clamp(0.75rem, 0.55rem + 0.9vw, 1.5rem);
-  right: clamp(0.75rem, 0.55rem + 0.9vw, 1.5rem);
+  position: static;
   background: #16a34a; /* default green, JS updates with age */
   color: var(--button-text);
+}
+
+.app-footer {
+  width: min(1180px, calc(100% - 2rem));
+  margin: auto auto 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
 }
 
 
@@ -2492,10 +2650,111 @@ body {
   }
 
   #homeMainRegion {
+    padding-top: 1.25rem;
     padding-bottom: 5.5rem;
   }
 
   .directory-header {
     max-width: 100%;
+  }
+}
+
+@media (max-width: 560px) {
+  .toolbar {
+    gap: 0.45rem;
+    padding-inline: 0.65rem;
+  }
+
+  .toolbar-brand img {
+    width: 32px;
+    height: 32px;
+  }
+
+  .tabs {
+    gap: 0.25rem;
+  }
+
+  .tab-button {
+    padding: 0.55em 0.7em;
+    font-size: 0.82rem;
+  }
+
+  .tab-button.tab-button--icon {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+  }
+
+  .toolbar-actions {
+    gap: 0.25rem;
+  }
+
+  .toolbar-actions button {
+    width: 2.15em;
+    height: 2.15em;
+  }
+
+  #urlInputContainer {
+    padding-block: 0.5rem;
+  }
+
+  .source-url-row {
+    grid-template-columns: 1fr;
+  }
+
+  .source-url-row #goBtn {
+    padding-block: 0.85rem;
+  }
+}
+
+html.custom-embed,
+html.custom-embed body {
+  min-height: 0;
+  background: transparent;
+}
+
+html.custom-embed .toolbar,
+html.custom-embed #githubLink,
+html.custom-embed #versionBadge,
+html.custom-embed .app-footer,
+html.custom-embed #accountHeaderLine,
+html.custom-embed #recentSourcesRail {
+  display: none !important;
+}
+
+html.custom-embed #homeMainRegion {
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+}
+
+html.custom-embed #playerContainer.container {
+  width: 100%;
+  max-width: none;
+  min-height: 100vh;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(1rem, 4vw, 3rem);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+html.custom-embed #urlInputContainer {
+  padding: 0;
+}
+
+@media (max-width: 560px) {
+  .app-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .app-footer #githubLink,
+  .app-footer #versionBadge {
+    justify-content: center;
   }
 }
