@@ -1,7 +1,6 @@
 {
   "title": "The 100 Girlfriends Who Really, Really, Really, Really, Really Love You",
   "Image": "./Sources/Posters/Anime/The_100_Girlfriends_Who_Really,_Really,_Really,_Really,_Really_Love_You.webp",
-  "LatestTime": "2026-07-19T14:22:44.556Z",
   "categories": [
     {
       "category": "Season 1",
@@ -168,19 +167,26 @@
         },
         {
           "title": "Episode 2",
-          "src": "https://files.catbox.moe/g65p3p.m3u8",
-          "fileSizeBytes": 215513502,
-          "durationSeconds": 1431
+          "src": "https://cpr.xpbliss.fyi/MM/backrooms/The100GirlfriendsWhoReallyReallyReallyReallyReallyLoveYou/S03E02_Episode_2.mp4",
+          "fileSizeBytes": 244446775,
+          "durationSeconds": 1430
         },
         {
           "title": "Episode 3",
           "src": "https://files.catbox.moe/s3rvcb.mp4",
           "fileSizeBytes": 200408036,
           "durationSeconds": 1430
+        },
+        {
+          "title": "Episode 4",
+          "src": "https://cpr.xpbliss.fyi/MM/backrooms/The100GirlfriendsWhoReallyReallyReallyReallyReallyLoveYou/S03E04_Episode_4.mp4",
+          "fileSizeBytes": 212588044,
+          "durationSeconds": 1430
         }
       ]
     }
   ],
-  "totalFileSizeBytes": 4426329170,
-  "totalDurationSeconds": 38510
+  "totalFileSizeBytes": 4667850487,
+  "LatestTime": "2026-07-26T23:24:38.137Z",
+  "totalDurationSeconds": 39939
 }
