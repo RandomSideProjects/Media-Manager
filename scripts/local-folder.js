@@ -323,7 +323,7 @@ async function handleExtractedFiles(files) {
   urlInputContainer.style.display = "none";
   selectorScreen.style.display = "flex";
   renderEpisodeList();
-  showResumeMessage();
+  if (!openSingleItemMovieSource()) showResumeMessage();
   if (window.RSPRecentSources && typeof window.RSPRecentSources.setSourceActive === 'function') {
     try { window.RSPRecentSources.setSourceActive(true); } catch {}
   }
