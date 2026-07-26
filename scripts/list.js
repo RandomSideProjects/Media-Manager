@@ -221,6 +221,29 @@ function isMovieCategory(category) {
   return /\bmovie\b/i.test(title);
 }
 
+function openSingleItemMovieSource() {
+  if (!Array.isArray(videoList) || videoList.length !== 1) return false;
+  const category = videoList[0];
+  const episodes = Array.isArray(category && category.episodes) ? category.episodes : [];
+  if (!isMovieCategory(category) || episodes.length !== 1 || !Array.isArray(flatList) || flatList.length !== 1) {
+    return false;
+  }
+
+  const entry = flatList[0];
+  if (!entry || entry.isPlaceholder) return false;
+
+  const resumeKey = resolveResumeKeyForItem(entry);
+  if (resumeKey) localStorage.setItem('lastEpSrc', resumeKey);
+  writeSourceScopedValue('SavedItem', '0');
+  currentIndex = 0;
+  selectorScreen.style.display = 'none';
+  playerScreen.style.display = 'block';
+  backBtn.style.display = 'inline-block';
+  theaterBtn.style.display = 'inline-block';
+  loadVideo(currentIndex);
+  return true;
+}
+
 function buildSeparatedResumeKey(startIndex) {
   const base = (sourceKey && typeof sourceKey === 'string' && sourceKey.trim()) ? sourceKey.trim() : 'source';
   return `separated:${base}:${startIndex}`;
