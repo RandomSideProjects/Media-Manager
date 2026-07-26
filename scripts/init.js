@@ -247,7 +247,7 @@ async function loadSource(rawInput) {
     directoryTitle.style.display = 'block';
     selectorScreen.style.display = 'flex';
     renderEpisodeList();
-    showResumeMessage();
+    if (!openSingleItemMovieSource()) showResumeMessage();
     setRecentSourcesActive(true);
     if (window.RSPRecentSources && typeof window.RSPRecentSources.record === 'function') {
       try {
