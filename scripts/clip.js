@@ -24,7 +24,8 @@ let clipDisplayStart = null;
 let clipDisplayEnd = null;
 let clipDisplayLength = null;
 
-const DEFAULT_CLIP_BACKEND = 'https://mm.littlehacker303.workers.dev';
+const DEFAULT_CLIP_BACKEND = 'https://mm.alexspac.es';
+const LEGACY_CLIP_BACKEND_ORIGIN = 'https://mm.littlehacker303.workers.dev';
 const CLIP_BACKEND_STORAGE_KEY = 'clipBackendUrl';
 const BACKEND_ROOT_STORAGE_KEY = 'dev:mmBackendRoot';
 const REMOTE_CLIP_API_CHECK_TIMEOUT = 5000;
@@ -45,6 +46,9 @@ function getClipBackendBase() {
     const raw = stored || rootStored;
     if (!raw) return DEFAULT_CLIP_BACKEND;
     const normalized = raw.replace(/\/+$/, '').replace(/\/clip\/?$/, '');
+    if (normalized.toLowerCase() === LEGACY_CLIP_BACKEND_ORIGIN) {
+      return DEFAULT_CLIP_BACKEND;
+    }
     return normalized || DEFAULT_CLIP_BACKEND;
   } catch {
     return DEFAULT_CLIP_BACKEND;

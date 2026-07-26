@@ -966,7 +966,7 @@ window.OverlayFactory = (function() {
 	                type: 'text',
 	                id: 'devBackendRootUrl',
 	                className: 'dev-field-input',
-	                placeholder: 'https://mm.littlehacker303.workers.dev'
+	                placeholder: 'https://mm.alexspac.es'
 	              }),
 	              createElement('p', { className: 'dev-menu-hint' }, ['Example: localhost:8787 (used for /clip and /account/*).'])
 	            ])

@@ -1,7 +1,7 @@
 "use strict";
 
 // Variables (top)
-const UPLOADER_CATBOX_BACKEND_URL = 'https://mm.littlehacker303.workers.dev/catbox/user/api.php';
+const UPLOADER_CATBOX_BACKEND_URL = 'https://mm.alexspac.es/catbox/user/api.php';
 const CUSTOM_CATBOX_LIMIT = 104857600;
 const DIRECT_CATBOX_UPLOAD_URL = 'https://catbox.moe/user/api.php';
 const DEFAULT_CATBOX_USERHASH = '2cdcc7754c86c2871ed2bde9d';

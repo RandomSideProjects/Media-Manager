@@ -5,7 +5,8 @@
 
   const SETTINGS_KEY = "mm_upload_settings";
   const DIRECT_URL = "https://catbox.moe/user/api.php";
-  const DEFAULT_PROXY_URL = "https://mm.littlehacker303.workers.dev/catbox/user/api.php";
+  const DEFAULT_PROXY_URL = "https://mm.alexspac.es/catbox/user/api.php";
+  const LEGACY_PROXY_URL = "https://mm.littlehacker303.workers.dev/catbox/user/api.php";
   const DEFAULT_THRESHOLD_MB = 100;
   const DEFAULT_PROBE_TIMEOUT_MS = 4500;
   const STATE_EVENT = "mm:upload-server-state";
@@ -129,7 +130,7 @@
             ? raw.catboxUploadUrl.trim()
             : ""),
         DEFAULT_PROXY_URL
-      ),
+      ).replace(LEGACY_PROXY_URL, DEFAULT_PROXY_URL),
       copypartyUrl,
       copypartyPw: (typeof raw.copypartyPw === "string") ? raw.copypartyPw : "",
       copypartyThresholdMb: normalizeThresholdMb(

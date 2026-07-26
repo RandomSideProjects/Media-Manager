@@ -614,7 +614,8 @@ let directoryCode = '';
 let githubUploadUrl = '';
 let isGithubUploadInFlight = false;
 let posterPreviewObjectUrl = '';
-const UI_GITHUB_WORKER_ROOT = 'https://mm.littlehacker303.workers.dev/gh';
+const UI_GITHUB_WORKER_ROOT = 'https://mm.alexspac.es/gh';
+const PREVIOUS_GITHUB_WORKER_ROOT = 'https://mm.littlehacker303.workers.dev/gh';
 const UI_DEFAULT_GITHUB_WORKER_URL = (typeof window !== 'undefined' && typeof window.MM_DEFAULT_GITHUB_WORKER_URL === 'string') ? window.MM_DEFAULT_GITHUB_WORKER_URL : UI_GITHUB_WORKER_ROOT;
 const LEGACY_GITHUB_WORKER_ROOT = 'https://mmback.littlehacker303.workers.dev/gh';
 const CREATOR_PLAYLIST_DIR = 'Sources/Files/Playlists';
@@ -738,10 +739,12 @@ function normalizeGithubWorkerUrlValue(raw) {
   const trimmed = (typeof raw === 'string') ? raw.trim() : '';
   if (!trimmed) return '';
   const withoutTrailingSlash = trimmed.replace(/\/+$/, '');
-  if (withoutTrailingSlash === LEGACY_GITHUB_WORKER_ROOT) {
+  if (withoutTrailingSlash === LEGACY_GITHUB_WORKER_ROOT
+    || withoutTrailingSlash === PREVIOUS_GITHUB_WORKER_ROOT) {
     return UI_GITHUB_WORKER_ROOT;
   }
-  if (withoutTrailingSlash === 'https://mmback.littlehacker303.workers.dev') {
+  if (withoutTrailingSlash === 'https://mmback.littlehacker303.workers.dev'
+    || withoutTrailingSlash === 'https://mm.littlehacker303.workers.dev') {
     return UI_GITHUB_WORKER_ROOT;
   }
   if (withoutTrailingSlash === UI_GITHUB_WORKER_ROOT) {

@@ -6,7 +6,8 @@ const DEFAULT_PAHE_KWIK_API_BASE = 'https://access-kwik.apex-cloud.workers.dev';
 const DEFAULT_PAHE_KWIK_AUTH_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.O0FKaqhJjEZgCAVfZoLz6Pjd7Gs9Kv6qi0P8RyATjaE';
 const DEFAULT_PAHE_IMPORT_ENABLED = false;
 const LS_SETTINGS_KEY = 'mm_upload_settings';
-const SETTINGS_CURRENT_GITHUB_WORKER_ROOT = 'https://mm.littlehacker303.workers.dev/gh';
+const SETTINGS_CURRENT_GITHUB_WORKER_ROOT = 'https://mm.alexspac.es/gh';
+const SETTINGS_PREVIOUS_GITHUB_WORKER_ROOT = 'https://mm.littlehacker303.workers.dev/gh';
 const SETTINGS_DEFAULT_GITHUB_WORKER_URL = (typeof window !== 'undefined' && typeof window.MM_DEFAULT_GITHUB_WORKER_URL === 'string') ? window.MM_DEFAULT_GITHUB_WORKER_URL : SETTINGS_CURRENT_GITHUB_WORKER_ROOT;
 const SETTINGS_LEGACY_GITHUB_WORKER_ROOT = 'https://mmback.littlehacker303.workers.dev/gh';
 const SETTINGS_CATBOX_DIRECT_URL = 'https://catbox.moe/user/api.php';
@@ -21,10 +22,12 @@ function normalizeGithubWorkerUrlValue(raw) {
   const trimmed = (typeof raw === 'string') ? raw.trim() : '';
   if (!trimmed) return '';
   const withoutTrailingSlash = trimmed.replace(/\/+$/, '');
-  if (withoutTrailingSlash === SETTINGS_LEGACY_GITHUB_WORKER_ROOT) {
+  if (withoutTrailingSlash === SETTINGS_LEGACY_GITHUB_WORKER_ROOT
+    || withoutTrailingSlash === SETTINGS_PREVIOUS_GITHUB_WORKER_ROOT) {
     return SETTINGS_CURRENT_GITHUB_WORKER_ROOT;
   }
-  if (withoutTrailingSlash === 'https://mmback.littlehacker303.workers.dev') {
+  if (withoutTrailingSlash === 'https://mmback.littlehacker303.workers.dev'
+    || withoutTrailingSlash === 'https://mm.littlehacker303.workers.dev') {
     return SETTINGS_CURRENT_GITHUB_WORKER_ROOT;
   }
   if (withoutTrailingSlash === SETTINGS_CURRENT_GITHUB_WORKER_ROOT) {

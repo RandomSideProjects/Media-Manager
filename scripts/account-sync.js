@@ -14,7 +14,8 @@
   const DEVICE_ID_KEY = "rsp_device_id";
   const LOCK_KEY = "dev:accountSyncLock";
 
-  const DEFAULT_BACKEND_ROOT = "https://mm.littlehacker303.workers.dev";
+  const DEFAULT_BACKEND_ROOT = "https://mm.alexspac.es";
+  const LEGACY_BACKEND_HOST = "mm.littlehacker303.workers.dev";
   const LOCK_TTL_MS = 25_000;
   const REQUEST_TIMEOUT_MS = 15_000;
   const MAX_OPS_PER_SYNC = 2500;
@@ -191,6 +192,11 @@
     let normalized = withScheme.replace(/\/+$/, "");
     try {
       const url = new URL(normalized);
+      if (url.hostname.toLowerCase() === LEGACY_BACKEND_HOST) {
+        url.protocol = "https:";
+        url.hostname = "mm.alexspac.es";
+        url.port = "";
+      }
       normalized = `${url.protocol}//${url.host}${url.pathname.replace(/\/+$/, "")}`;
     } catch {}
     return normalized;

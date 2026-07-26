@@ -55,7 +55,8 @@
   const CLIP_BACKEND_STORAGE_KEY = "clipBackendUrl";
   const BACKEND_ROOT_STORAGE_KEY = "dev:mmBackendRoot";
   const LEGACY_ACCOUNT_SYNC_URL_KEY = "dev:accountSyncUrl";
-  const DEFAULT_BACKEND_ROOT = "https://mm.littlehacker303.workers.dev";
+  const DEFAULT_BACKEND_ROOT = "https://mm.alexspac.es";
+  const LEGACY_BACKEND_HOST = "mm.littlehacker303.workers.dev";
   const PART_PRELOAD_METHOD_KEY = "dev:partPreloadMethod";
   const DEFAULT_PART_PRELOAD_METHOD = "swap";
   const CATBOX_SETTINGS_KEY = "mm_upload_settings";
@@ -116,6 +117,11 @@
     let normalized = withScheme.replace(/\/+$/, "");
     try {
       const url = new URL(normalized);
+      if (url.hostname.toLowerCase() === LEGACY_BACKEND_HOST) {
+        url.protocol = "https:";
+        url.hostname = "mm.alexspac.es";
+        url.port = "";
+      }
       normalized = `${url.protocol}//${url.host}${url.pathname.replace(/\/+$/, "")}`;
     } catch {}
     return normalized;

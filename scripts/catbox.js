@@ -4,7 +4,8 @@
   if (typeof window === "undefined") return;
 
   const DIRECT_URL = "https://catbox.moe/user/api.php";
-  const DEFAULT_PROXY_URL = "https://mm.littlehacker303.workers.dev/catbox/user/api.php";
+  const DEFAULT_PROXY_URL = "https://mm.alexspac.es/catbox/user/api.php";
+  const LEGACY_PROXY_URL = "https://mm.littlehacker303.workers.dev/catbox/user/api.php";
   const LS_SETTINGS_KEY = "mm_upload_settings";
   const PROBE_TIMEOUT_MS = 4500;
 
@@ -29,11 +30,12 @@
       const raw = localStorage.getItem(LS_SETTINGS_KEY);
       const parsed = raw ? JSON.parse(raw) : {};
       const data = parsed && typeof parsed === "object" ? parsed : {};
+      const storedProxyUrl = (typeof data.catboxUploadUrl === "string" && data.catboxUploadUrl.trim())
+        ? data.catboxUploadUrl.trim()
+        : DEFAULT_PROXY_URL;
       return {
         mode: normalizeMode(data.catboxOverrideMode),
-        proxyUrl: (typeof data.catboxUploadUrl === "string" && data.catboxUploadUrl.trim())
-          ? data.catboxUploadUrl.trim()
-          : DEFAULT_PROXY_URL
+        proxyUrl: storedProxyUrl === LEGACY_PROXY_URL ? DEFAULT_PROXY_URL : storedProxyUrl
       };
     } catch {
       return { mode: "auto", proxyUrl: DEFAULT_PROXY_URL };
