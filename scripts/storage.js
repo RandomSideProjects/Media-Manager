@@ -15,6 +15,8 @@
   let selectiveDeleteOverlayElement = null;
   let pendingImportData = null;
   let pendingImportNotice = null;
+  let importQueryProcessed = false;
+  let keydownHandler = null;
 
   function getStoredSourceKey() {
     try {
@@ -446,6 +448,17 @@
     const storageExportBtn = document.getElementById('storageExportBtn');
     const storageImportBtn = document.getElementById('storageImportBtn');
     const storageAccountSyncBtn = document.getElementById('storageAccountSyncBtn');
+    const bindingMarker = storageMenuPanel
+      || storageDeleteBtn
+      || storageExportBtn
+      || storageImportBtn
+      || storageAccountSyncBtn;
+
+    // Settings overlays on the Sources and Creator pages are built after this
+    // script loads. Allow those pages to ask for a rebind without attaching
+    // duplicate handlers to an overlay that is already active.
+    if (bindingMarker && bindingMarker.dataset.mmStorageBound === '1') return;
+    if (bindingMarker) bindingMarker.dataset.mmStorageBound = '1';
 
     let clearOverlay = null;
     let clearConfirmBtn = null;
@@ -1763,32 +1776,42 @@
       });
     }
 
-    processImportQuery();
+    if (!importQueryProcessed) {
+      importQueryProcessed = true;
+      processImportQuery();
+    }
 
-    document.addEventListener('keydown', (event) => {
-      if (event.key !== ESCAPE_KEY) return;
-      let handled = false;
-      if (storageMenuPanel && storageMenuPanel.classList.contains('open')) {
-        closeMenu();
-        handled = true;
-      }
-      if (importOverlayVisible) {
-        closeImportOverlay();
-        handled = true;
-      }
-      if (clearOverlayVisible) {
-        closeClearOverlay();
-        handled = true;
-      }
-      if (selectiveDeleteOverlayVisible) {
-        closeSelectiveDeleteOverlay();
-        handled = true;
-      }
-      if (handled) {
-        try { event.preventDefault(); } catch {}
-      }
-    });
+    if (bindingMarker || importOverlayVisible) {
+      if (keydownHandler) document.removeEventListener('keydown', keydownHandler);
+      keydownHandler = (event) => {
+        if (event.key !== ESCAPE_KEY) return;
+        let handled = false;
+        if (storageMenuPanel && storageMenuPanel.classList.contains('open')) {
+          closeMenu();
+          handled = true;
+        }
+        if (importOverlayVisible) {
+          closeImportOverlay();
+          handled = true;
+        }
+        if (clearOverlayVisible) {
+          closeClearOverlay();
+          handled = true;
+        }
+        if (selectiveDeleteOverlayVisible) {
+          closeSelectiveDeleteOverlay();
+          handled = true;
+        }
+        if (handled) {
+          try { event.preventDefault(); } catch {}
+        }
+      };
+      document.addEventListener('keydown', keydownHandler);
+    }
   }
+
+  window.MMStorageUI = window.MMStorageUI || {};
+  window.MMStorageUI.wireUp = wireUp;
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', wireUp, { once: true });

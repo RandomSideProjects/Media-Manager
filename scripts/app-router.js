@@ -2,20 +2,20 @@
 
 (function () {
   const params = new URLSearchParams(window.location.search);
-  const customMode = params.has('source') || params.get('custom') === '1' || params.get('embed') === '1';
+  const customMode = (params.get('source') || '').trim() !== '';
 
   const publicScripts = [
     'scripts/alerts.js',
     'scripts/dev-core.js',
     'scripts/tags.js',
-    'scripts/overlay-factory.js?v=20260725-settings',
+    'scripts/overlay-factory.js?v=20260727-storage-ui',
     'scripts/account-sync.js',
-    'scripts/storage.js',
+    'scripts/storage.js?v=20260727-storage',
     'Sources/scripts/constants.js',
     'Sources/scripts/utils.js',
-    'Sources/scripts/render.js',
+    'Sources/scripts/render.js?v=20260727-continue-watching-direct-item',
     'Sources/scripts/search.js',
-    'Sources/scripts/ui-settings.js?v=20260725-settings',
+    'Sources/scripts/ui-settings.js?v=20260727-storage',
     'Sources/scripts/feedback.js',
     'Sources/scripts/loader.js',
     'Sources/scripts/temp-sources.js'
@@ -26,13 +26,13 @@
     'scripts/constants.js',
     'scripts/alerts.js',
     'scripts/dev-core.js',
-    'scripts/overlay-factory.js?v=20260725-settings',
+    'scripts/overlay-factory.js?v=20260727-storage-ui',
     'scripts/dom.js',
     'scripts/theater.js',
     'scripts/tags.js',
-    'scripts/recent-sources.js',
+    'scripts/recent-sources.js?v=20260727-continue-watching',
     'https://cdn.jsdelivr.net/npm/hls.js@1/dist/hls.min.js',
-    'scripts/player.js',
+    'scripts/player.js?v=20260727-continue-watching',
     'scripts/popout.js',
     'scripts/list.js',
     'scripts/downloads.js',
@@ -41,13 +41,13 @@
     'scripts/settings.js',
     'scripts/dev-menu.js',
     'scripts/theme.js',
-    'scripts/init.js',
+    'scripts/init.js?v=20260727-continue-watching',
     'scripts/local-folder.js',
     'scripts/zxing-lib.min.js',
     'scripts/jsqr.min.js',
     'scripts/qrcode.min.js',
     'scripts/account-sync.js',
-    'scripts/storage.js',
+    'scripts/storage.js?v=20260727-storage',
     'scripts/version.js?v=20260725-layout'
   ];
 
@@ -86,7 +86,7 @@
           <button type="button" data-route="./index.html" class="tab-button tab-button--icon" aria-label="Public sources" title="Public sources">
             <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 4h6v6H4V4Zm10 0h6v6h-6V4ZM4 14h6v6H4v-6Zm10 0h6v6h-6v-6Z"/></svg>
           </button>
-          <button type="button" data-route="./index.html?custom=1" class="tab-button tab-button--icon is-active" aria-label="Custom view" title="Custom view" aria-current="page">
+          <button type="button" class="tab-button tab-button--icon is-active" aria-label="Custom view" title="Custom view" aria-current="page">
             <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 6.5A2.5 2.5 0 0 1 5.5 4H10l2 2h6.5A2.5 2.5 0 0 1 21 8.5v8A2.5 2.5 0 0 1 18.5 19h-13A2.5 2.5 0 0 1 3 16.5v-10Zm9 3.5v2H9v2h3v3h2v-3h3v-2h-3v-2h-2Z"/></svg>
           </button>
           <button type="button" data-route="./Creator/index.html" class="tab-button tab-button--icon tab-button--secondary" aria-label="Create or modify a source" title="Create or modify">

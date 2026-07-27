@@ -105,8 +105,8 @@
   }
 
   function readEnabledSetting() {
-    try { return localStorage.getItem(TOGGLE_KEY) === "true"; }
-    catch { return false; }
+    try { return localStorage.getItem(TOGGLE_KEY) !== "false"; }
+    catch { return true; }
   }
 
   // (removed) placement setting; rail is inline on Home.
@@ -116,7 +116,7 @@
   function writeEnabledSetting(value) {
     try {
       if (value) localStorage.setItem(TOGGLE_KEY, "true");
-      else localStorage.removeItem(TOGGLE_KEY);
+      else localStorage.setItem(TOGGLE_KEY, "false");
     } catch {}
   }
 
@@ -590,13 +590,15 @@
     wrapper.className = "source-card recent-source-card continue-card";
 
     const continueIndex = getContinueIndexForEntry(entry);
+    const sourceKey = entry && entry.file ? String(entry.file) : "";
+    const lastIndex = sourceKey ? readNumber(`${sourceKey}:LastIndex`) : null;
 
     // Best-effort progress estimate from stored time/duration.
     let ratio = 0;
     let watched = 0;
     let duration = 0;
     try {
-      const sk = entry && entry.file ? String(entry.file) : "";
+      const sk = sourceKey;
       if (continueIndex !== null && continueIndex !== undefined) {
         const durNum = Number(readString(`${sk}:itemDuration:${continueIndex}`));
         if (Number.isFinite(durNum) && durNum > 0) duration = durNum;
@@ -642,19 +644,21 @@
     duration = hintedDuration || duration;
     ratio = (duration > 0) ? Math.max(0, Math.min(1, watched / duration)) : 0;
 
-    const isNextUp = isVideoSource && ratio >= 0.90;
+    const isNextUp = continueIndex !== null
+      && lastIndex !== null
+      && continueIndex > lastIndex;
 
     // Bottom centered:
     // - <5% watched -> "Start Watching"
     // - <90% watched -> watched/duration
     // - >=90% watched -> "Next Episode"
     if (isVideoSource) {
-      if (ratio > 0 && ratio < 0.05) {
+      if (isNextUp) {
+        bottom.textContent = "Next Episode";
+      } else if (ratio < 0.05) {
         bottom.textContent = "Start Watching";
       } else if (!isNextUp) {
         bottom.textContent = `${formatTime(watched)} / ${formatTime(duration)}`;
-      } else {
-        bottom.textContent = "Next Episode";
       }
     } else {
       bottom.textContent = "";
@@ -700,7 +704,9 @@
         try {
           const response = window.loadSource(payload);
           if (response && typeof response.then === "function") {
-            response.catch((err) => console.error("[RecentSources] Inline reopen failed", err));
+            response
+              .then((ok) => resumeLoadedEntry(ok, opts.resumeIndex))
+              .catch((err) => console.error("[RecentSources] Inline reopen failed", err));
           }
         } catch (err) {
           console.error("[RecentSources] Inline reopen threw", err);
@@ -716,7 +722,10 @@
     if (urlInputField) urlInputField.value = rawValue;
     try {
       const params = new URLSearchParams(window.location.search);
-      params.set("source", encodeURIComponent(rawValue));
+      params.set("source", rawValue);
+      const idx = Number.isFinite(Number(opts.resumeIndex)) ? Number(opts.resumeIndex) : null;
+      if (idx === null) params.delete("item");
+      else params.set("item", String(idx + 1));
       window.history.replaceState(null, "", `${window.location.pathname}?${params.toString()}`);
     } catch {}
     if (typeof window.loadSource === "function") {
@@ -725,28 +734,28 @@
         if (response && typeof response.then === "function") {
           response
             .then((ok) => {
-              const idx = Number.isFinite(Number(opts.resumeIndex)) ? Number(opts.resumeIndex) : null;
-              if (!ok || idx === null) return;
-              // Jump straight into the player at the requested index.
-              try {
-                if (typeof window.currentIndex === 'number') window.currentIndex = idx;
-                else if (typeof currentIndex === 'number') currentIndex = idx;
-              } catch {}
-              try {
-                if (typeof selectorScreen !== 'undefined' && selectorScreen) selectorScreen.style.display = 'none';
-                if (typeof playerScreen !== 'undefined' && playerScreen) playerScreen.style.display = 'block';
-                if (typeof backBtn !== 'undefined' && backBtn) backBtn.style.display = 'inline-block';
-                if (typeof theaterBtn !== 'undefined' && theaterBtn) theaterBtn.style.display = 'inline-block';
-              } catch {}
-              try {
-                if (typeof window.loadVideo === 'function') window.loadVideo(idx);
-              } catch {}
+              resumeLoadedEntry(ok, opts.resumeIndex);
             })
             .catch((err) => console.error("[RecentSources] reopen failed", err));
         }
       } catch (err) {
         console.error("[RecentSources] reopen threw", err);
       }
+    }
+  }
+
+  function resumeLoadedEntry(ok, rawIndex) {
+    const idx = Number.isFinite(Number(rawIndex)) ? Number(rawIndex) : null;
+    if (!ok || idx === null) return;
+    try {
+      if (typeof currentIndex === "number") currentIndex = idx;
+      if (selectorScreen) selectorScreen.style.display = "none";
+      if (playerScreen) playerScreen.style.display = "block";
+      if (backBtn) backBtn.style.display = "inline-block";
+      if (theaterBtn) theaterBtn.style.display = "inline-block";
+      if (typeof loadVideo === "function") loadVideo(idx);
+    } catch (err) {
+      console.error("[RecentSources] Unable to resume saved item", err);
     }
   }
 

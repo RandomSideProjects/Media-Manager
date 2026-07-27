@@ -2459,6 +2459,7 @@ function handleActiveVideoTimeUpdate(event) {
               try {
                 localStorage.setItem(`${sourceKey}:itemSrc:${nextIdx}`, String(nextSrc));
                 localStorage.setItem(`${sourceKey}:itemDuration:${nextIdx}`, String(nextHintedDuration));
+                if (nextItem.title) localStorage.setItem(`${sourceKey}:itemTitle:${nextIdx}`, String(nextItem.title));
               } catch {}
               generateThumbFromSrcOnce(nextIdx, nextSrc, nextHintedDuration);
             }
@@ -2522,6 +2523,7 @@ function handleActiveVideoTimeUpdate(event) {
               try {
                 localStorage.setItem(`${sourceKey}:itemSrc:${nextIdx}`, String(nextSrc));
                 localStorage.setItem(`${sourceKey}:itemDuration:${nextIdx}`, String(nextHintedDuration));
+                if (nextItem.title) localStorage.setItem(`${sourceKey}:itemTitle:${nextIdx}`, String(nextItem.title));
               } catch {}
               generateThumbFromSrcOnce(nextIdx, nextSrc, nextHintedDuration);
             }

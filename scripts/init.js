@@ -294,7 +294,7 @@ async function init() {
       // Update query param without full reload.
       const basePath = window.location.pathname;
       const searchParams = new URLSearchParams(window.location.search);
-      searchParams.set('source', encodeURIComponent(userURL));
+      searchParams.set('source', userURL);
       window.history.replaceState(null, '', `${basePath}?${searchParams.toString()}`);
       await loadSource(userURL);
     };

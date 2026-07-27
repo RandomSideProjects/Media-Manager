@@ -36,6 +36,116 @@ function makeSourceCardInteractive(card, button, title, openSource) {
   }
 }
 
+function readContinueWatchingNumber(key) {
+  try {
+    const raw = localStorage.getItem(key);
+    if (raw === null || raw === undefined || raw === '') return null;
+    const value = Number(raw);
+    return Number.isFinite(value) ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+function readContinueWatchingString(key) {
+  try {
+    const value = localStorage.getItem(key);
+    return value === null || value === undefined ? '' : String(value);
+  } catch {
+    return '';
+  }
+}
+
+function formatContinueWatchingTime(seconds) {
+  const total = Math.max(0, Math.floor(Number(seconds) || 0));
+  const hours = Math.floor(total / 3600);
+  const minutes = Math.floor((total % 3600) / 60);
+  const remainder = total % 60;
+  return hours > 0
+    ? `${hours}:${String(minutes).padStart(2, '0')}:${String(remainder).padStart(2, '0')}`
+    : `${minutes}:${String(remainder).padStart(2, '0')}`;
+}
+
+function getContinueWatchingState(entry) {
+  const sourceKey = entry && typeof entry.file === 'string' ? entry.file : '';
+  if (!sourceKey) return null;
+  const continueIndex = readContinueWatchingNumber(`${sourceKey}:ContinueIndex`);
+  const savedIndex = readContinueWatchingNumber(`${sourceKey}:SavedItem`);
+  const lastIndex = readContinueWatchingNumber(`${sourceKey}:LastIndex`);
+  const index = continueIndex ?? savedIndex ?? lastIndex;
+  if (index === null || index < 0) return null;
+
+  const watched = readContinueWatchingNumber(`${sourceKey}:itemTime:${index}`) || 0;
+  const duration = readContinueWatchingNumber(`${sourceKey}:itemDuration:${index}`) || 0;
+  const movedToNext = continueIndex !== null && lastIndex !== null && continueIndex > lastIndex;
+  let detail = 'Start watching';
+  if (movedToNext) detail = 'Next episode';
+  else if (duration > 0 && watched > 0) {
+    detail = `${formatContinueWatchingTime(watched)} / ${formatContinueWatchingTime(duration)}`;
+  }
+
+  return {
+    index,
+    title: readContinueWatchingString(`${sourceKey}:itemTitle:${index}`) || entry.title || `Item ${index + 1}`,
+    detail
+  };
+}
+
+function renderContinueWatching() {
+  const section = document.getElementById('continueWatchingSection');
+  const grid = document.getElementById('continueWatchingGrid');
+  if (!section || !grid) return;
+
+  const enabledValue = readContinueWatchingString('rsp_recent_sources_enabled');
+  const enabled = enabledValue !== 'false';
+  const entries = enabled && typeof readRecentSourceEntries === 'function'
+    ? readRecentSourceEntries()
+    : [];
+  const cards = entries
+    .filter((entry) => {
+      if (!entry || entry.openKind === 'local' || entry.openKind === 'inline' || !extractPoster(entry)) return false;
+      const source = typeof entry.path === 'string' ? entry.path.trim() : '';
+      return source && !/^(?:local|inline)::/i.test(source);
+    })
+    .map((entry) => ({ entry, state: getContinueWatchingState(entry) }))
+    .filter(({ state }) => state !== null)
+    .slice(0, 5);
+
+  grid.innerHTML = '';
+  section.hidden = cards.length === 0;
+  if (!cards.length) return;
+
+  cards.forEach(({ entry, state }) => {
+    const card = document.createElement('button');
+    card.type = 'button';
+    card.className = 'continue-watching-card';
+    card.setAttribute('aria-label', `Continue: ${state.title}`);
+
+    const poster = document.createElement('img');
+    poster.src = resolvePublicSourceAsset(extractPoster(entry));
+    poster.alt = '';
+    poster.loading = 'lazy';
+    poster.decoding = 'async';
+
+    const title = document.createElement('span');
+    title.className = 'continue-watching-card-title';
+    title.textContent = state.title;
+
+    const detail = document.createElement('span');
+    detail.className = 'continue-watching-card-detail';
+    detail.textContent = state.detail;
+
+    card.append(poster, title, detail);
+    card.addEventListener('click', () => {
+      const params = new URLSearchParams();
+      params.set('source', entry.path);
+      params.set('item', String(state.index + 1));
+      window.location.href = `index.html?${params.toString()}`;
+    });
+    grid.appendChild(card);
+  });
+}
+
 // Build a card from manifest/meta entry
 function buildSourceCardFromMeta(meta) {
   const title = meta.title || meta.file || 'Untitled';
@@ -211,6 +321,7 @@ function renderSourcesFromState() {
     const card = buildSourceCardFromMeta(meta);
     container.appendChild(card);
   }
+  renderContinueWatching();
 }
 
 // Build a card from a full data JSON

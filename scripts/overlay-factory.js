@@ -60,6 +60,12 @@ window.OverlayFactory = (function() {
     if (el) el.remove();
   }
 
+  function wireStorageControls() {
+    if (window.MMStorageUI && typeof window.MMStorageUI.wireUp === 'function') {
+      window.MMStorageUI.wireUp();
+    }
+  }
+
   // Create settings overlay for main page
   function createSettingsOverlay() {
     removeOverlay('settingsOverlay');
@@ -101,10 +107,10 @@ window.OverlayFactory = (function() {
       createElement('div', { className: 'setting-category-header' }, ['General']),
       createElement('div', { className: 'setting-row recent-sources-setting' }, [
         createElement('div', { className: 'recent-sources-label' }, [
-          createElement('span', {}, ['Show Recently Watched'])
+          createElement('span', {}, ['Show Continue Watching'])
         ]),
         createElement('div', { className: 'recent-sources-controls' }, [
-          createElement('input', { type: 'checkbox', id: 'recentSourcesToggle', 'aria-label': 'Show recently watched' })
+          createElement('input', { type: 'checkbox', id: 'recentSourcesToggle', 'aria-label': 'Show Continue Watching' })
         ])
       ])
     ]);
@@ -152,6 +158,7 @@ window.OverlayFactory = (function() {
     ]);
     
     document.body.appendChild(overlay);
+    wireStorageControls();
     return overlay;
   }
 
@@ -522,6 +529,7 @@ window.OverlayFactory = (function() {
     ]);
     
     document.body.appendChild(overlay);
+    wireStorageControls();
     return overlay;
   }
 
@@ -817,16 +825,13 @@ window.OverlayFactory = (function() {
           createElement('button', { id: 'devMenuBtn', type: 'button', className: 'dev-menu-trigger' }, ['Dev Menu']),
           createElement('span', { className: 'dev-menu-status', id: 'devMenuStatus' }, ['Developer tools'])
         ]),
-        createElement('div', { className: 'mm-settings-row', style: { justifyContent: 'space-between', alignItems: 'center', gap: '.6em' } }, [
-          createElement('span', { style: { fontWeight: '600' } }, ['Storage']),
-          createElement('div', { className: 'storage-menu' }, [
-            createElement('button', { id: 'storageMenuBtn', type: 'button' }, ['Storage']),
-            createElement('div', { id: 'storageMenuPanel', className: 'storage-menu-panel', role: 'menu', 'aria-hidden': 'true' }, [
-              createElement('button', { id: 'storageDeleteBtn', type: 'button', className: 'danger-button storage-menu-item' }, ['Delete storage']),
-              createElement('button', { id: 'storageExportBtn', type: 'button', className: 'storage-menu-item' }, ['Export']),
-              createElement('button', { id: 'storageImportBtn', type: 'button', className: 'storage-menu-item' }, ['Import']),
-              createElement('button', { id: 'storageAccountSyncBtn', type: 'button', className: 'storage-menu-item' }, ['Account'])
-            ])
+        createElement('div', { className: 'mm-settings-row creator-storage-section' }, [
+          createElement('span', { className: 'creator-storage-heading' }, ['Storage']),
+          createElement('div', { className: 'storage-actions-grid' }, [
+            iconButton('storageImportBtn', 'Import', 'Import.svg'),
+            iconButton('storageExportBtn', 'Export', 'Export.svg'),
+            iconButton('storageAccountSyncBtn', 'Account', 'Account.svg'),
+            iconButton('storageDeleteBtn', 'Delete', 'Delete.svg', 'danger-button')
           ])
         ]),
         createElement('div', { className: 'mm-actions' }, [
@@ -837,6 +842,7 @@ window.OverlayFactory = (function() {
     ]);
     
     document.body.appendChild(panel);
+    wireStorageControls();
     return panel;
   }
 

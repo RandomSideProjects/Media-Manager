@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>RSP Media Manager</title>
   <link rel="icon" href="Assets/Favicon.png">
-  <link rel="stylesheet" id="publicSourcesStyles" href="Sources/styles.css?v=20260725-settings">
+  <link rel="stylesheet" id="publicSourcesStyles" href="Sources/styles.css?v=20260727-storage-ui-continue-watching">
 </head>
 <body>
   <header class="sources-main-toolbar">
@@ -30,6 +30,10 @@
   </header>
 
   <main>
+    <section id="continueWatchingSection" class="continue-watching-section" aria-labelledby="continueWatchingTitle" hidden>
+      <h2 id="continueWatchingTitle">Continue watching</h2>
+      <div id="continueWatchingGrid" class="continue-watching-grid"></div>
+    </section>
     <div class="sources-search" id="sourcesToolbar">
       <label class="sr-only" for="sourcesSearchInput">Search public sources</label>
       <input
@@ -51,26 +55,38 @@
       <button class="custom-view-close" id="customViewCloseBtn" type="button" aria-label="Close custom view" title="Close">
         <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m6.4 5 5.6 5.6L17.6 5 19 6.4 13.4 12l5.6 5.6-1.4 1.4-5.6-5.6L6.4 19 5 17.6l5.6-5.6L5 6.4 6.4 5Z"/></svg>
       </button>
-      <iframe id="customViewFrame" title="Open a custom media source" data-src="index.html?custom=1&amp;embed=1"></iframe>
+      <div class="custom-source-prompt" id="customSourcePrompt">
+        <form id="customSourceForm">
+          <label for="customSourceInput">Source file link or Catbox ID</label>
+          <div class="custom-source-row">
+            <input id="customSourceInput" type="text" required autocomplete="off" placeholder="https://example.com/source.json">
+            <button type="submit">Open source</button>
+          </div>
+        </form>
+      </div>
+      <iframe id="customViewFrame" title="Open a custom media source" hidden></iframe>
     </section>
   </div>
 
   <footer class="sources-footer">
     <a href="https://github.com/RandomSideProjects/Media-Manager/blob/main/Sources/README.md" id="simpleSourceLink" target="_blank" rel="noopener">Simple Version</a>
   </footer>
-  <script src="scripts/app-router.js?v=20260725-unified"></script>
+  <script src="scripts/app-router.js?v=20260727-storage-ui-continue-watching-direct-item"></script>
   <script>
     (() => {
       const openButton = document.getElementById('customViewBtn');
       const overlay = document.getElementById('customViewOverlay');
       const closeButton = document.getElementById('customViewCloseBtn');
       const frame = document.getElementById('customViewFrame');
+      const sourcePrompt = document.getElementById('customSourcePrompt');
+      const sourceForm = document.getElementById('customSourceForm');
+      const sourceInput = document.getElementById('customSourceInput');
       const background = [
         document.querySelector('.sources-main-toolbar'),
         document.querySelector('main'),
         document.querySelector('.sources-footer')
       ].filter(Boolean);
-      if (!openButton || !overlay || !closeButton || !frame) return;
+      if (!openButton || !overlay || !closeButton || !frame || !sourcePrompt || !sourceForm || !sourceInput) return;
 
       const closeOverlay = () => {
         overlay.hidden = true;
@@ -80,14 +96,38 @@
         openButton.focus();
       };
 
-      const openOverlay = () => {
-        if (!frame.getAttribute('src')) frame.setAttribute('src', frame.dataset.src);
+      const openOverlay = (focusTarget = closeButton) => {
         overlay.hidden = false;
         document.body.classList.add('custom-view-open');
         background.forEach((element) => element.setAttribute('inert', ''));
         openButton.setAttribute('aria-expanded', 'true');
-        closeButton.focus();
+        focusTarget.focus();
       };
+
+      window.openCustomViewPath = (path) => {
+        const target = typeof path === 'string' ? path.trim() : '';
+        if (!target) return;
+        const targetUrl = new URL(target, window.location.href);
+        if (!(targetUrl.searchParams.get('source') || '').trim()) return;
+        frame.setAttribute('src', target);
+        sourcePrompt.hidden = true;
+        frame.hidden = false;
+        openOverlay();
+      };
+
+      const openSourcePrompt = () => {
+        frame.hidden = true;
+        sourcePrompt.hidden = false;
+        openOverlay(sourceInput);
+      };
+
+      sourceForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const source = sourceInput.value.trim();
+        if (!source) return;
+        const params = new URLSearchParams({ source, embed: '1' });
+        window.openCustomViewPath(`index.html?${params.toString()}`);
+      });
 
       const getFrameFocusable = () => {
         try {
@@ -123,7 +163,7 @@
       });
 
       openButton.setAttribute('aria-expanded', 'false');
-      openButton.addEventListener('click', openOverlay);
+      openButton.addEventListener('click', openSourcePrompt);
       closeButton.addEventListener('click', closeOverlay);
       overlay.querySelector('[data-custom-close]').addEventListener('click', closeOverlay);
       document.addEventListener('keydown', (event) => {
@@ -134,6 +174,10 @@
         }
         if (event.key === 'Tab' && document.activeElement === closeButton) {
           event.preventDefault();
+          if (!sourcePrompt.hidden) {
+            sourceInput.focus();
+            return;
+          }
           const focusable = getFrameFocusable();
           if (focusable.length) focusable[event.shiftKey ? focusable.length - 1 : 0].focus();
           else frame.focus();

@@ -77,7 +77,6 @@ function openSettingsPanel(){
   if (hidePostersToggle) hidePostersToggle.checked = !!SOURCES_HIDE_POSTERS;
   if (sortSelect) sortSelect.value = SOURCES_SORT;
   for (const m of modeRadios) m.checked = (m.value === SOURCES_MODE);
-  updateRowLimitMax();
   if (rowLimitRange) {
     rowLimitRange.value = String(SOURCES_ROW_LIMIT);
     if (rowLimitValue) rowLimitValue.textContent = String(SOURCES_ROW_LIMIT);
@@ -86,6 +85,9 @@ function openSettingsPanel(){
   if (settingsOverlay) settingsOverlay.style.display = 'flex';
 }
 function closeSettingsPanel(){ 
+  // The range previews changes immediately. Restore the saved value when the
+  // panel is dismissed without applying.
+  applyRowLimit(SOURCES_ROW_LIMIT);
   if (settingsOverlay) settingsOverlay.style.display = 'none'; 
 }
 
@@ -97,42 +99,12 @@ if (settingsBtn) settingsBtn.addEventListener('click', openSettingsPanel);
 
 function applyRowLimit(n){
   const container = document.getElementById('sourcesContainer');
-  if (container) container.style.setProperty('--cols', String(n));
+  const value = Number.isFinite(n) ? Math.max(2, Math.min(10, Math.floor(n))) : 3;
+  if (container) container.style.setProperty('--cols', String(value));
 }
 
 // Initialize applied row limit on load
 applyRowLimit(SOURCES_ROW_LIMIT);
-
-// Compute dynamic max columns based on window/container width (minus one)
-function computeMaxCols(){
-  try {
-    const container = document.getElementById('sourcesContainer');
-    const containerWidth = (container && container.clientWidth) ? container.clientWidth : Math.floor((window.innerWidth || 1280) * 0.9);
-    const cardWidth = 360; // fixed card width
-    const fit = Math.max(1, Math.floor(containerWidth / cardWidth));
-    const maxCols = Math.max(1, fit - 1);
-    return Math.min(10, Math.max(1, maxCols));
-  } catch { return 3; }
-}
-
-function updateRowLimitMax(){
-  if (!rowLimitRange) return;
-  const maxCols = computeMaxCols();
-  rowLimitRange.max = String(maxCols);
-  if (SOURCES_ROW_LIMIT > maxCols) {
-    SOURCES_ROW_LIMIT = maxCols;
-    localStorage.setItem('sources_rowLimit', String(SOURCES_ROW_LIMIT));
-    applyRowLimit(SOURCES_ROW_LIMIT);
-  }
-  if (rowLimitValue) rowLimitValue.textContent = String(SOURCES_ROW_LIMIT);
-}
-
-// Update limits on resize (throttled)
-let __rowLimitTimer = null;
-window.addEventListener('resize', () => {
-  if (__rowLimitTimer) return;
-  __rowLimitTimer = setTimeout(() => { __rowLimitTimer = null; updateRowLimitMax(); }, 100);
-});
 
 async function applySettings() {
   sortSelect = document.getElementById('sortOptions');
@@ -159,10 +131,8 @@ async function applySettings() {
   SOURCES_MODE = newMode;
   localStorage.setItem('sources_mode', SOURCES_MODE);
   if (rowLimitRange) {
-    // Clamp to dynamic max based on window width
-    const maxCols = computeMaxCols();
     const v = parseInt(rowLimitRange.value, 10);
-    const clamped = Math.max(1, Math.min(maxCols, Number.isFinite(v) ? v : SOURCES_ROW_LIMIT));
+    const clamped = Math.max(2, Math.min(10, Number.isFinite(v) ? v : SOURCES_ROW_LIMIT));
     SOURCES_ROW_LIMIT = clamped;
     localStorage.setItem('sources_rowLimit', String(clamped));
     applyRowLimit(SOURCES_ROW_LIMIT);
