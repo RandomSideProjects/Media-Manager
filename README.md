@@ -42,6 +42,23 @@ Browser-only player for video libraries and CBZ manga archives. Point it at a JS
 ## Creator web app
 Launch `Creator/index.html` for a guided editor that can import existing manifests, convert folders full of media/CBZ files, upload posters/assets to Catbox, and manage manga options like CBZ expansion. Upload settings (library type, anonymous mode, concurrency) persist locally so you can fine-tune workflows. Uploads randomize filenames by default; Creator item uploads use `S##E##_Title` when the category is `Season #`, otherwise `##_Title`.
 
+### Nyaa torrent import
+
+Creator also includes a local Nyaa torrent-import panel. The browser remains the
+frontend while a localhost companion runs native torrent/FFmpeg processing and
+Toodrive upload through the installed `td` CLI:
+
+```sh
+node Creator/scripts/torrent-job-service.mjs
+```
+
+Open Creator, search Nyaa, select a result, choose the Toodrive folder and
+Creator category, and start the job. The panel polls the resumable job, imports
+ordered public links into the selected category, and leaves Creator's existing
+JSON/GitHub save flow in charge of writing the source file. The service uses
+`~/.deno/bin/td` by default; override with `TD_BIN` or
+`CREATOR_TORRENT_PORT` when needed.
+
 ## JSON schema (abridged)
 ```json
 {

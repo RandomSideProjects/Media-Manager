@@ -98,6 +98,36 @@
           <div id="paheLog" class="pahe-log"></div>
         </div>
       </div>
+
+      <div class="field-group" id="torrentImportGroup">
+        <label style="font-weight:700;">Nyaa Torrent Import</label>
+        <div class="pahe-row">
+          <input type="text" id="torrentQuery" placeholder="Search Nyaa.si" />
+          <button id="torrentSearchBtn" type="button">Search</button>
+        </div>
+        <div id="torrentResults" class="pahe-results"></div>
+        <div id="torrentSelection" style="display:none;">
+          <div class="pahe-row">
+            <label for="torrentDestination" style="min-width:82px;">Toodrive folder</label>
+            <input type="text" id="torrentDestination" value="The Apothecary Diaries/Season 02" />
+          </div>
+          <div class="pahe-row">
+            <label for="torrentTargetCategory" style="min-width:82px;">Creator category</label>
+            <select id="torrentTargetCategory" class="pahe-select"></select>
+          </div>
+          <div class="pahe-row">
+            <label for="torrentNewCategory" style="min-width:82px;">New category</label>
+            <input type="text" id="torrentNewCategory" value="Season 2" />
+          </div>
+          <button id="torrentStartBtn" type="button">Download, process, and upload</button>
+          <button id="torrentCancelBtn" type="button" style="display:none; background:#3a3a3a;">Cancel</button>
+          <div id="torrentProgress" class="pahe-progress" style="display:none;">
+            <div id="torrentProgressText" class="pahe-progress-text"></div>
+            <progress id="torrentProgressBar" max="1" value="0"></progress>
+          </div>
+          <pre id="torrentLog" class="pahe-log"></pre>
+        </div>
+      </div>
     </div>
 
     <div class="container">
@@ -174,6 +204,7 @@
   <script src="scripts/folder-upload.js"></script>
   <script src="scripts/ffmpeg-splitter.js"></script>
   <script src="scripts/animepahe-import.js"></script>
+  <script src="scripts/torrent-import.js"></script>
   <script src="scripts/dev-menu.js"></script>
 </body>
 </html>
