@@ -1,6 +1,16 @@
 # [RSP Media Manager](https://randomsideprojects.github.io/Media-Manager/)
 ![RSP Media Manager logo](https://github.com/RandomSideProjects/Media-Manager/blob/main/Assets/Favicon.png?raw=true)
 
+
+
+# NOTE: this is the **worst** code you have and ever will read. I have not read what is below in six months (January of 2026).
+
+
+
+
+
+
+
 Browser-only player for video libraries and CBZ manga archives. Point it at a JSON manifest—from Catbox, GitHub Pages, or a local folder—and it handles playback, progress, downloads, clipping, and manga reading without any backend.
 
 ## Why use it
