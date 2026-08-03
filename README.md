@@ -42,24 +42,27 @@ Browser-only player for video libraries and CBZ manga archives. Point it at a JS
 ## Creator web app
 Launch `Creator/index.html` for a guided editor that can import existing manifests, convert folders full of media/CBZ files, upload posters/assets to Catbox, and manage manga options like CBZ expansion. Upload settings (library type, anonymous mode, concurrency) persist locally so you can fine-tune workflows. Uploads randomize filenames by default; Creator item uploads use `S##E##_Title` when the category is `Season #`, otherwise `##_Title`.
 
-### Nyaa library maintenance
+## Maintenance app
 
-Creator includes a local Nyaa maintenance panel. The browser remains the
-frontend while a localhost companion runs native torrent/FFmpeg processing,
-Toodrive upload, and source-manifest updates through the installed `td` CLI:
+Launch `Maintenance/index.html` for the standalone library-maintenance app.
+The default General maintenance view scans every existing anime source and
+lets you select a show/category to refresh. “Add a show” is a separate,
+explicit workflow so it cannot accidentally create a new source while doing
+normal upkeep.
+
+Start its local companion from the repository:
 
 ```sh
-node Creator/scripts/torrent-job-service.mjs
+node Maintenance/service.mjs
 ```
 
-Open Creator, choose “Maintain existing show” or “Add new show,” search Nyaa,
-select a release, choose the Toodrive folder, and start the job. Existing shows
-can replace matching episode links and/or append missing episodes. New shows
-are written as a new `Sources/Files/Anime/*.json` manifest. Episode numbers are
-read from the uploaded torrent paths, and the selected release is processed by
-`td --video-pipeline --download-all --repair` before links are saved. The panel
-reports the exact file changed; commit and push that JSON to publish it and let
-the existing source maintainer workflow regenerate indexes/posters.
+Serve the repository and open `http://127.0.0.1:8000/Maintenance/`. Existing
+shows can replace matching episode links and/or append missing episodes. New
+shows are written as a new `Sources/Files/Anime/*.json` manifest. Episode
+numbers are read from the uploaded torrent paths, and the selected release is
+processed by `td --video-pipeline --download-all --repair` before links are
+saved. Commit and push the changed JSON to publish it and let the existing
+source maintainer workflow regenerate indexes/posters.
 
 The service uses `~/.deno/bin/td` by default. Override `TD_BIN`,
 `MEDIA_MANAGER_ROOT`, `TOODRIVE_BASE_URL`, or `CREATOR_TORRENT_PORT` when needed.
