@@ -16,6 +16,16 @@
   const log = document.getElementById("torrentLog");
   if (!query || !search || !results || !selection) return;
 
+  // The legacy Animepahe controls live in a side panel that is hidden when its
+  // optional backend is unavailable. Keep torrent import usable independently
+  // by moving this group into Creator's main container at startup.
+  const sidePanel = document.querySelector(".side-panel");
+  const mainContainer = document.querySelector(".creator-layout > .container");
+  const torrentGroup = document.getElementById("torrentImportGroup");
+  if (sidePanel?.contains(torrentGroup) && mainContainer) {
+    mainContainer.insertBefore(torrentGroup, mainContainer.firstChild);
+  }
+
   const SERVICE = "http://127.0.0.1:41723";
   let selected = null;
   let jobId = null;
