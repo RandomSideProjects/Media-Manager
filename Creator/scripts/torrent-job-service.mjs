@@ -128,8 +128,12 @@ const server = createServer(async (req, res) => {
     if (jobMatch && req.method === "DELETE") {
       const job = jobs.get(jobMatch[1]);
       if (!job) return json(res, 404, { error: "job not found" });
-      job.stop?.();
-      job.state = "cancelled";
+      if (!job.finishedAt) {
+        job.stop?.();
+        job.finishedAt = new Date().toISOString();
+        job.exitCode = null;
+        job.state = "cancelled";
+      }
       return json(res, 200, publicJob(job));
     }
     json(res, 404, { error: "not found" });
