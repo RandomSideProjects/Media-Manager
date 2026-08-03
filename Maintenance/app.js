@@ -5,9 +5,9 @@
   const $ = (id) => document.getElementById(id);
   const state = {
     sources: [],
-    updateRelease: null,
     addRelease: null,
     jobId: null,
+    jobKind: null,
     pollTimer: null,
     pollInFlight: false,
     seenEventCount: 0,
@@ -15,7 +15,7 @@
 
   function appendLog(line) {
     const log = $("jobLog");
-    if (!log) return;
+    if (!log || !line) return;
     log.textContent = `${log.textContent ? `${log.textContent}\n` : ""}${line}`;
     log.scrollTop = log.scrollHeight;
   }
@@ -39,48 +39,14 @@
     return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString();
   }
 
-  function currentUpdateSource() {
-    return state.sources.find((source) => source.file === $("updateShow").value) || null;
-  }
-
   function folderFor(title, category) {
     return `${String(title || "Show").trim() || "Show"}/${String(category || "Season 1").trim() || "Season 1"}`;
-  }
-
-  function populateUpdateCategories(preferred) {
-    const source = currentUpdateSource();
-    const select = $("updateCategory");
-    select.innerHTML = "";
-    for (const category of source?.categories || []) {
-      const option = document.createElement("option");
-      option.value = category.category;
-      option.textContent = `${category.category} (${category.episodeCount}${category.latestEpisode ? `, latest ${category.latestEpisode}` : ""})`;
-      select.appendChild(option);
-    }
-    if (source?.categories?.length) {
-      select.value = source.categories.some((category) => category.category === preferred)
-        ? preferred
-        : source.categories[source.categories.length - 1].category;
-    }
-  }
-
-  function selectUpdateSource(file, scroll = false) {
-    const select = $("updateShow");
-    if (file && state.sources.some((source) => source.file === file)) select.value = file;
-    const source = currentUpdateSource();
-    populateUpdateCategories($("updateCategory").value);
-    const category = $("updateCategory").value || "Season 1";
-    if (source) {
-      $("updateQuery").value = source.title;
-      $("updateDestination").value = folderFor(source.title, category);
-    }
-    if (scroll) $("updateHeading").scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   function renderLibrary() {
     const filter = $("libraryFilter").value.trim().toLowerCase();
     const visible = state.sources.filter((source) => !filter || `${source.title} ${source.file}`.toLowerCase().includes(filter));
-    $("librarySummary").textContent = `${visible.length} of ${state.sources.length} shows`;
+    $("librarySummary").textContent = `${visible.length} of ${state.sources.length} shows · latest season checked automatically`;
     const list = $("libraryList");
     list.innerHTML = "";
     for (const source of visible) {
@@ -98,8 +64,12 @@
       const button = document.createElement("button");
       button.className = "button button-secondary";
       button.type = "button";
-      button.textContent = "Maintain";
-      button.addEventListener("click", () => selectUpdateSource(source.file, true));
+      button.textContent = "Maintain automatically";
+      button.title = `Automatically search, process, and update ${source.title}`;
+      button.addEventListener("click", () => startAutomatedMaintenance([source.path], source.title).catch((error) => {
+        setJobBusy(false);
+        appendLog(`Start failed: ${error.message}`);
+      }));
       row.append(details, button);
       list.appendChild(row);
     }
@@ -112,17 +82,6 @@
     try {
       const data = await request("/api/library");
       state.sources = Array.isArray(data.sources) ? data.sources : [];
-      const previous = $("updateShow").value;
-      const select = $("updateShow");
-      select.innerHTML = "";
-      for (const source of state.sources) {
-        const option = document.createElement("option");
-        option.value = source.file;
-        option.textContent = `${source.title}${source.hidden ? " (hidden)" : ""}`;
-        select.appendChild(option);
-      }
-      if (state.sources.length) select.value = state.sources.some((source) => source.file === previous) ? previous : state.sources[0].file;
-      selectUpdateSource();
       renderLibrary();
       setServiceState(`${state.sources.length} shows loaded`);
       if (data.errors?.length) appendLog(`Skipped ${data.errors.length} unreadable source file(s).`);
@@ -161,13 +120,6 @@
     renderResults(results, data.items, selectRelease);
   }
 
-  function selectUpdateRelease(release) {
-    state.updateRelease = release;
-    $("updateSelectedTitle").textContent = release.title;
-    $("updateSelection").hidden = false;
-    appendLog(`Selected update release: ${release.title}`);
-  }
-
   function selectAddRelease(release) {
     state.addRelease = release;
     $("addSelectedTitle").textContent = release.title;
@@ -182,20 +134,6 @@
     $("cancelJobBtn").hidden = !busy;
   }
 
-  function updatePayload() {
-    const source = currentUpdateSource();
-    if (!source) throw new Error("select an existing show");
-    if (!$("updateCategory").value) throw new Error("select a category");
-    return {
-      action: "update",
-      sourcePath: source.path,
-      categoryName: $("updateCategory").value,
-      replaceExisting: $("updateReplace").checked,
-      addMissing: $("updateAdd").checked,
-      seasonNumber: Number((($("updateCategory").value || "").match(/\b(?:Season|S)\s*(\d+)/i) || [])[1]) || undefined,
-    };
-  }
-
   function addPayload() {
     const title = $("addTitle").value.trim();
     if (!title) throw new Error("enter a title for the new show");
@@ -208,24 +146,73 @@
     };
   }
 
+  function resetJobPanel() {
+    clearInterval(state.pollTimer);
+    state.seenEventCount = 0;
+    $("jobProgress").value = 0;
+    $("jobProgressText").textContent = "Starting…";
+    $("jobResult").textContent = "";
+    $("jobLog").textContent = "";
+  }
+
   function handleEvents(job) {
     const events = Array.isArray(job.events) ? job.events : [];
     for (const event of events.slice(state.seenEventCount)) {
       const message = event.message || event.phase || event.event;
       if (message) $("jobProgressText").textContent = message;
-      if (event.event === "progress" && event.totalBytes) $("jobProgress").value = Math.min(1, event.transferredBytes / event.totalBytes);
+      if (event.event === "progress" && event.totalBytes) {
+        $("jobProgress").value = Math.min(1, event.transferredBytes / event.totalBytes);
+      }
       if (event.event === "link" && event.url) appendLog(`${event.remotePath || "file"} → ${event.url}`);
+      if (event.event === "run") appendLog(message);
     }
     state.seenEventCount = events.length;
+  }
+
+  function renderRunProgress(run) {
+    const total = Number(run.total) || 0;
+    const completed = Number(run.completed) || 0;
+    $("jobProgress").value = total ? Math.min(1, completed / total) : 1;
+    const current = (run.items || []).find((item) => item.id === run.current);
+    if (current) {
+      $("jobProgressText").textContent = `${current.state === "searching" ? "Searching Nyaa" : "Processing"}: ${current.title} · ${current.category} (${completed}/${total})`;
+      $("automationSummary").textContent = `Automatic run in progress: ${completed} of ${total} categories finished.`;
+    } else {
+      $("jobProgressText").textContent = `Automatic maintenance: ${completed}/${total} categories finished.`;
+    }
+  }
+
+  function renderRunResult(run) {
+    const items = Array.isArray(run.items) ? run.items : [];
+    const updated = items.filter((item) => item.state === "complete").length;
+    const failed = items.filter((item) => item.state === "failed").length;
+    const skipped = items.filter((item) => item.state === "skipped").length;
+    const cancelled = items.filter((item) => item.state === "cancelled").length;
+    const errors = items.filter((item) => item.error).slice(0, 5).map((item) => `${item.title} · ${item.category}: ${item.error}`);
+    $("automationSummary").textContent = `Automatic run finished: ${updated} updated, ${failed} failed, ${skipped} skipped${cancelled ? `, ${cancelled} cancelled` : ""}.`;
+    $("jobResult").textContent = $("automationSummary").textContent;
+    for (const error of errors) appendLog(error);
   }
 
   async function pollJob() {
     if (!state.jobId || state.pollInFlight) return;
     state.pollInFlight = true;
     try {
-      const job = await request(`/api/maintenance/jobs/${encodeURIComponent(state.jobId)}`);
+      const endpoint = state.jobKind === "run"
+        ? `/api/maintenance/runs/${encodeURIComponent(state.jobId)}`
+        : `/api/maintenance/jobs/${encodeURIComponent(state.jobId)}`;
+      const job = await request(endpoint);
       handleEvents(job);
-      if (job.state === "complete") {
+      if (state.jobKind === "run") {
+        renderRunProgress(job);
+        const done = ["complete", "complete_with_errors", "failed", "cancelled"].includes(job.state);
+        if (done) {
+          clearInterval(state.pollTimer);
+          setJobBusy(false);
+          renderRunResult(job);
+          if (job.items?.some((item) => item.state === "complete")) await refreshLibrary();
+        }
+      } else if (job.state === "complete") {
         clearInterval(state.pollTimer);
         setJobBusy(false);
         const manifest = job.manifest;
@@ -238,7 +225,7 @@
           $("jobResult").textContent = `Uploaded ${job.links?.length || 0} ordered links.`;
         }
         await refreshLibrary();
-      } else if (job.state === "failed" || job.state === "cancelled") {
+      } else if (["failed", "cancelled"].includes(job.state)) {
         clearInterval(state.pollTimer);
         setJobBusy(false);
         $("jobProgressText").textContent = `Job ${job.state}.`;
@@ -251,26 +238,44 @@
     }
   }
 
-  async function startJob(kind) {
-    const release = kind === "update" ? state.updateRelease : state.addRelease;
-    if (!release) throw new Error("select a Nyaa release first");
-    const maintenance = kind === "update" ? updatePayload() : addPayload();
-    const title = kind === "update" ? currentUpdateSource()?.title : $("addTitle").value.trim();
-    const category = kind === "update" ? $("updateCategory").value : $("addCategory").value.trim();
-    const destination = $(kind === "update" ? "updateDestination" : "addDestination").value.trim() || folderFor(title, category);
+  async function startAutomatedMaintenance(sourcePaths = [], title = "the library") {
+    if (!state.sources.length) throw new Error("the library is empty or has not loaded yet");
     setJobBusy(true);
-    $("jobProgress").value = 0;
-    $("jobProgressText").textContent = "Starting…";
-    $("jobResult").textContent = "";
-    $("jobLog").textContent = "";
-    state.seenEventCount = 0;
+    resetJobPanel();
+    $("automationSummary").textContent = `Queuing automatic maintenance for ${title}…`;
+    const run = await request("/api/maintenance/runs", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        sourcePaths,
+        replaceExisting: $("updateReplace").checked,
+        addMissing: $("updateAdd").checked,
+        allCategories: $("updateAllCategories").checked,
+      }),
+    });
+    state.jobId = run.id;
+    state.jobKind = "run";
+    appendLog(`Started automated maintenance run ${run.id}`);
+    state.pollTimer = setInterval(() => { void pollJob(); }, 2000);
+    await pollJob();
+  }
+
+  async function startAddJob() {
+    if (!state.addRelease) throw new Error("select a Nyaa release first");
+    const maintenance = addPayload();
+    const title = $("addTitle").value.trim();
+    const category = $("addCategory").value.trim() || "Season 1";
+    const destination = $("addDestination").value.trim() || folderFor(title, category);
+    setJobBusy(true);
+    resetJobPanel();
     const job = await request("/api/maintenance/jobs", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ torrentUrl: release.torrentUrl, magnet: release.magnet, destination, maintenance }),
+      body: JSON.stringify({ torrentUrl: state.addRelease.torrentUrl, magnet: state.addRelease.magnet, destination, maintenance }),
     });
     state.jobId = job.id;
-    appendLog(`Started ${kind} job ${job.id}`);
+    state.jobKind = "job";
+    appendLog(`Started new-show job ${job.id}`);
     state.pollTimer = setInterval(() => { void pollJob(); }, 2000);
     await pollJob();
   }
@@ -289,22 +294,21 @@
   $("addTab").addEventListener("click", () => setTab("add"));
   $("refreshLibraryBtn").addEventListener("click", () => { void refreshLibrary(); });
   $("libraryFilter").addEventListener("input", renderLibrary);
-  $("updateShow").addEventListener("change", () => selectUpdateSource());
-  $("updateCategory").addEventListener("change", () => {
-    const source = currentUpdateSource();
-    if (source) $("updateDestination").value = folderFor(source.title, $("updateCategory").value);
-  });
-  $("updateSearchBtn").addEventListener("click", () => searchNyaa($("updateQuery"), $("updateResults"), selectUpdateRelease).catch((error) => { $("updateResults").textContent = `Search failed: ${error.message}`; }));
+  $("updateStartBtn").addEventListener("click", () => startAutomatedMaintenance().catch((error) => { setJobBusy(false); appendLog(`Start failed: ${error.message}`); }));
   $("addSearchBtn").addEventListener("click", () => searchNyaa($("addQuery"), $("addResults"), selectAddRelease).catch((error) => { $("addResults").textContent = `Search failed: ${error.message}`; }));
   $("addTitle").addEventListener("input", () => {
     if (!$("addQuery").value.trim() || $("addQuery").value === $("addTitle").dataset.previousTitle) $("addQuery").value = $("addTitle").value;
     if (!$("addDestination").value.trim()) $("addDestination").value = folderFor($("addTitle").value, $("addCategory").value);
     $("addTitle").dataset.previousTitle = $("addTitle").value;
   });
-  $("updateStartBtn").addEventListener("click", () => startJob("update").catch((error) => { setJobBusy(false); appendLog(`Start failed: ${error.message}`); }));
-  $("addStartBtn").addEventListener("click", () => startJob("new").catch((error) => { setJobBusy(false); appendLog(`Start failed: ${error.message}`); }));
+  $("addStartBtn").addEventListener("click", () => startAddJob().catch((error) => { setJobBusy(false); appendLog(`Start failed: ${error.message}`); }));
   $("cancelJobBtn").addEventListener("click", async () => {
-    if (state.jobId) await request(`/api/maintenance/jobs/${encodeURIComponent(state.jobId)}`, { method: "DELETE" }).catch(() => {});
+    if (state.jobId) {
+      const endpoint = state.jobKind === "run"
+        ? `/api/maintenance/runs/${encodeURIComponent(state.jobId)}`
+        : `/api/maintenance/jobs/${encodeURIComponent(state.jobId)}`;
+      await request(endpoint, { method: "DELETE" }).catch(() => {});
+    }
     clearInterval(state.pollTimer);
     setJobBusy(false);
     $("jobProgressText").textContent = "Cancelled.";
@@ -314,4 +318,3 @@
   setTab("maintenance");
   void refreshLibrary();
 })();
-
