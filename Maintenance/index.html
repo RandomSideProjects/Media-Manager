@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Library Maintenance · RSP Media Manager</title>
   <link rel="icon" href="../Assets/Favicon.png" />
-  <link rel="stylesheet" href="styles.css?v=20260803-maintenance" />
+  <link rel="stylesheet" href="styles.css?v=20260803-maintenance-auto" />
 </head>
 <body>
   <header class="maintenance-toolbar">
@@ -31,7 +31,7 @@
       <div>
         <span class="eyebrow">Media library tools</span>
         <h1>Keep the library current</h1>
-        <p>Review existing shows, replace old releases, add missing episodes, or start a separate new-show import.</p>
+        <p>Keep existing shows current automatically, or use the separate new-show workflow when you want to choose a release yourself.</p>
       </div>
       <div class="service-state" id="serviceState" aria-live="polite">Connecting to local service…</div>
     </section>
@@ -58,26 +58,16 @@
         </section>
 
         <section class="panel workflow-panel" aria-labelledby="updateHeading">
-          <span class="eyebrow">Selected release</span>
-          <h2 id="updateHeading">Maintain an existing show</h2>
-          <div class="field-grid">
-            <label>Show<select id="updateShow"></select></label>
-            <label>Category<select id="updateCategory"></select></label>
+          <span class="eyebrow">Automatic upkeep</span>
+          <h2 id="updateHeading">Maintain the library</h2>
+          <p class="workflow-copy">One click checks each show’s latest season on Nyaa, picks the strongest matching release, downloads it, runs the video pipeline, uploads ordered links, and updates the existing JSON. Movies are skipped.</p>
+          <div class="check-row automation-options">
+            <label><input id="updateReplace" type="checkbox" checked /> Replace matching episodes</label>
+            <label><input id="updateAdd" type="checkbox" checked /> Add missing episodes</label>
+            <label><input id="updateAllCategories" type="checkbox" /> Check every season</label>
           </div>
-          <div class="field-grid">
-            <label class="wide-label">Nyaa search<input id="updateQuery" type="search" placeholder="Show or release name" /></label>
-            <button id="updateSearchBtn" class="button button-primary align-end" type="button">Search Nyaa</button>
-          </div>
-          <div id="updateResults" class="search-results"></div>
-          <div id="updateSelection" class="selected-release" hidden>
-            <div class="selected-release-title" id="updateSelectedTitle"></div>
-            <label>Toodrive folder<input id="updateDestination" type="text" placeholder="Show/Season 01" /></label>
-            <div class="check-row">
-              <label><input id="updateReplace" type="checkbox" checked /> Replace matching episodes</label>
-              <label><input id="updateAdd" type="checkbox" checked /> Add missing episodes</label>
-            </div>
-            <button id="updateStartBtn" class="button button-primary" type="button">Download, process, and update</button>
-          </div>
+          <button id="updateStartBtn" class="button button-primary automation-start" type="button">Run automated maintenance</button>
+          <div id="automationSummary" class="muted-line" aria-live="polite">No automated run started.</div>
         </section>
       </div>
     </section>
@@ -120,6 +110,6 @@
     </section>
   </main>
 
-  <script src="app.js?v=20260803-maintenance"></script>
+  <script src="app.js?v=20260803-maintenance-auto"></script>
 </body>
 </html>

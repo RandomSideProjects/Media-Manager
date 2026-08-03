@@ -45,10 +45,10 @@ Launch `Creator/index.html` for a guided editor that can import existing manifes
 ## Maintenance app
 
 Launch `Maintenance/index.html` for the standalone library-maintenance app.
-The default General maintenance view scans every existing anime source and
-lets you select a show/category to refresh. “Add a show” is a separate,
-explicit workflow so it cannot accidentally create a new source while doing
-normal upkeep.
+The default General maintenance view runs an automated upkeep pass: it searches
+Nyaa internally, selects the strongest matching release for each show’s latest
+season, downloads and processes it, uploads ordered links, and updates the
+existing manifest. “Add a show” is the only workflow with manual Nyaa search.
 
 Start its local companion from the repository:
 
@@ -57,12 +57,14 @@ node Maintenance/service.mjs
 ```
 
 Serve the repository and open `http://127.0.0.1:8000/Maintenance/`. Existing
-shows can replace matching episode links and/or append missing episodes. New
-shows are written as a new `Sources/Files/Anime/*.json` manifest. Episode
-numbers are read from the uploaded torrent paths, and the selected release is
-processed by `td --video-pipeline --download-all --repair` before links are
-saved. Commit and push the changed JSON to publish it and let the existing
-source maintainer workflow regenerate indexes/posters.
+The automated pass runs categories sequentially, skips movie-only sources, and
+can optionally check every season. It can replace matching episode links and/or
+append missing episodes. New shows are written as a new
+`Sources/Files/Anime/*.json` manifest. Episode numbers are read from the
+uploaded torrent paths, and each release is processed by
+`td --video-pipeline --download-all --repair` before links are saved. Commit and
+push the changed JSON to publish it and let the existing source maintainer
+workflow regenerate indexes/posters.
 
 The service uses `~/.deno/bin/td` by default. Override `TD_BIN`,
 `MEDIA_MANAGER_ROOT`, `TOODRIVE_BASE_URL`, or `CREATOR_TORRENT_PORT` when needed.

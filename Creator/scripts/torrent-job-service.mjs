@@ -19,6 +19,7 @@ const SOURCE_DIR = resolve(REPO_ROOT, "Sources/Files/Anime");
 const SOURCE_PREFIX = "Sources/Files/Anime/";
 const DEFAULT_CACHE = join(homedir(), ".local/share/toodrive-job/creator-cache");
 const jobs = new Map();
+const maintenanceRuns = new Map();
 
 function json(res, status, body) {
   const payload = JSON.stringify(body);
@@ -56,13 +57,16 @@ function parseItems(xml) {
     const title = get("title");
     const viewUrl = get("link");
     const hash = get("nyaa:infoHash") || get("infoHash");
+    const seeders = Number(get("nyaa:seeders")) || 0;
+    const downloads = Number(get("nyaa:downloads")) || 0;
+    const publishedAt = get("pubDate");
     const enclosure = block.match(/<enclosure[^>]+url=["']([^"']+)["']/i)?.[1] ||
       (viewUrl.includes("/download/") ? viewUrl :
         (viewUrl.includes("/view/") ? viewUrl.replace("/view/", "/download/") + ".torrent" : ""));
     const magnet = hash
       ? `magnet:?xt=urn:btih:${hash}&dn=${encodeURIComponent(title)}`
       : "";
-    if (title) items.push({ title, viewUrl, torrentUrl: enclosure, magnet, hash });
+    if (title) items.push({ title, viewUrl, torrentUrl: enclosure, magnet, hash, seeders, downloads, publishedAt });
   }
   return items;
 }
@@ -72,6 +76,74 @@ async function nyaaSearch(query) {
   const response = await fetch(url, { headers: { "user-agent": "Media-Manager-Creator/1.0" } });
   if (!response.ok) throw new Error(`Nyaa returned HTTP ${response.status}`);
   return parseItems(await response.text());
+}
+
+const SEARCH_STOP_WORDS = new Set([
+  "a", "an", "and", "are", "at", "for", "in", "is", "of", "on", "or", "the", "to", "with",
+  "world", "season", "complete", "batch", "collection",
+]);
+
+function searchTokens(value) {
+  return new Set(String(value || "")
+    .normalize("NFKD")
+    .toLowerCase()
+    .split(/[^\p{L}\p{N}]+/u)
+    .map((token) => token.trim())
+    .filter((token) => token.length >= 2 && !SEARCH_STOP_WORDS.has(token)));
+}
+
+function categorySeasonNumber(categoryName) {
+  const parsed = episodeInfo(categoryName);
+  return parsed.season || null;
+}
+
+function automaticReleaseScore(item, source, categoryName) {
+  const sourceTokens = searchTokens(source.title);
+  const releaseTokens = searchTokens(item.title);
+  const overlap = [...sourceTokens].filter((token) => releaseTokens.has(token)).length;
+  if (!overlap || !item.torrentUrl && !item.magnet) return Number.NEGATIVE_INFINITY;
+
+  const requestedSeason = categorySeasonNumber(categoryName);
+  const releaseInfo = episodeInfo(item.title);
+  let score = overlap * 20;
+  if (overlap === sourceTokens.size && sourceTokens.size > 1) score += 12;
+  if (requestedSeason && releaseInfo.season === requestedSeason) score += 42;
+  else if (requestedSeason && releaseInfo.season && releaseInfo.season !== requestedSeason) score -= 55;
+  if (/\b(?:batch|complete|collection|全集|season)\b/i.test(item.title)) score += 14;
+  if (/\b(?:bd|bdmv|remux|1080p|720p|web[- .]?dl|dual audio|multi audio)\b/i.test(item.title)) score += 5;
+  score += Math.min(10, Math.log10(Math.max(1, item.seeders || 0) + 1) * 3);
+  score += Math.min(5, Math.log10(Math.max(1, item.downloads || 0) + 1));
+  return score;
+}
+
+async function findAutomaticRelease(source, categoryName) {
+  const titleTokens = [...searchTokens(source.title)];
+  const tokenFallbacks = titleTokens.length > 1
+    ? [`${titleTokens.slice(-2).join(" ")} ${categoryName}`, titleTokens.at(-1)]
+    : titleTokens;
+  const queries = [`${source.title} ${categoryName}`, source.title, ...tokenFallbacks]
+    .map((query) => query.trim())
+    .filter((query, index, all) => query && all.indexOf(query) === index);
+  let best = null;
+  let lastError = null;
+  for (const query of queries) {
+    try {
+      const items = await nyaaSearch(query);
+      const ranked = items
+        .map((item) => ({ item, score: automaticReleaseScore(item, source, categoryName) }))
+        .filter((candidate) => Number.isFinite(candidate.score))
+        .sort((a, b) => b.score - a.score);
+      if (ranked[0] && (!best || ranked[0].score > best.score)) best = { ...ranked[0], query };
+      if (ranked[0] && ranked[0].score >= 32) {
+        return { ...ranked[0].item, score: ranked[0].score, query };
+      }
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  if (best && best.score >= 22) return { ...best.item, score: best.score, query: best.query };
+  if (lastError) throw lastError;
+  throw new Error(`no confident Nyaa release found for ${source.title} · ${categoryName}`);
 }
 
 function episodeInfo(value) {
@@ -172,6 +244,173 @@ async function listLibrary() {
     }
   }
   return { sources, errors };
+}
+
+function automaticCategories(source, allCategories = false) {
+  const categories = Array.isArray(source?.categories) ? source.categories : [];
+  const usable = categories.filter((category) => !/\bmovies?\b/i.test(String(category.category || "")));
+  if (allCategories) return usable;
+  const seasonal = usable.filter((category) => categorySeasonNumber(category.category));
+  if (seasonal.length) {
+    const latest = Math.max(...seasonal.map((category) => categorySeasonNumber(category.category)));
+    return seasonal.filter((category) => categorySeasonNumber(category.category) === latest);
+  }
+  return usable.length ? [usable[usable.length - 1]] : [];
+}
+
+function maintenanceFolder(title, category) {
+  return `${String(title || "Show").trim() || "Show"}/${String(category || "Season 1").trim() || "Season 1"}`;
+}
+
+function runEvent(run, message, extra = {}) {
+  const event = { at: new Date().toISOString(), event: "run", message, ...extra };
+  run.events.push(event);
+  if (run.events.length > 2000) run.events.shift();
+}
+
+function publicRun(run) {
+  return {
+    id: run.id,
+    state: run.state,
+    total: run.total,
+    completed: run.completed,
+    failed: run.failed,
+    skipped: run.skipped,
+    current: run.current,
+    currentJobId: run.currentJobId,
+    items: run.items,
+    events: run.events,
+    startedAt: run.startedAt,
+    finishedAt: run.finishedAt,
+  };
+}
+
+function buildMaintenanceWork(sources, payload) {
+  const sourcePaths = Array.isArray(payload?.sourcePaths) && payload.sourcePaths.length
+    ? new Set(payload.sourcePaths.map((path) => String(path)))
+    : null;
+  const work = [];
+  for (const source of sources) {
+    if (sourcePaths && !sourcePaths.has(source.path) && !sourcePaths.has(source.file)) continue;
+    const categories = automaticCategories(source, payload?.allCategories === true);
+    if (!categories.length) {
+      work.push({
+        id: randomUUID(), sourcePath: source.path, sourceFile: source.file, title: source.title,
+        category: "", state: "skipped", reason: "no maintainable season category",
+      });
+      continue;
+    }
+    for (const category of categories) {
+      work.push({
+        id: randomUUID(), sourcePath: source.path, sourceFile: source.file, title: source.title,
+        category: category.category, state: "queued", query: "", candidate: null,
+        jobId: null, manifest: null, links: 0, error: "",
+      });
+    }
+  }
+  return work;
+}
+
+async function executeMaintenanceRun(run, payload) {
+  try {
+    for (const item of run.items) {
+      if (run.cancelled) break;
+      run.current = item.id;
+      if (item.state === "skipped") {
+        run.skipped += 1;
+        run.completed += 1;
+        runEvent(run, `Skipped ${item.title}${item.category ? ` · ${item.category}` : ""}: ${item.reason}.`);
+        continue;
+      }
+
+      const source = { title: item.title };
+      item.state = "searching";
+      runEvent(run, `Searching Nyaa automatically for ${item.title} · ${item.category}.`);
+      try {
+        const release = await findAutomaticRelease(source, item.category);
+        item.query = release.query;
+        item.candidate = { title: release.title, score: release.score, viewUrl: release.viewUrl };
+        item.state = "downloading";
+        runEvent(run, `Selected ${release.title} for ${item.title} · ${item.category}.`);
+        const child = await startJob({
+          torrentUrl: release.torrentUrl,
+          magnet: release.magnet,
+          destination: maintenanceFolder(item.title, item.category),
+          maintenance: {
+            action: "update",
+            sourcePath: item.sourcePath,
+            categoryName: item.category,
+            seasonNumber: categorySeasonNumber(item.category) || undefined,
+            replaceExisting: payload?.replaceExisting !== false,
+            addMissing: payload?.addMissing !== false,
+          },
+        });
+        item.jobId = child.id;
+        run.currentJobId = child.id;
+        const result = await child.done;
+        item.links = result.links?.length || 0;
+        item.manifest = result.manifest || null;
+        if (result.state === "complete") {
+          item.state = "complete";
+          runEvent(run, `Updated ${item.title} · ${item.category} (${item.links} links).`);
+        } else if (result.state === "cancelled") {
+          item.state = "cancelled";
+          run.cancelled = true;
+          runEvent(run, `Cancelled ${item.title} · ${item.category}.`);
+        } else {
+          item.state = "failed";
+          item.error = result.events?.at(-1)?.message || `td exited with code ${result.exitCode ?? "?"}`;
+          run.failed += 1;
+          runEvent(run, `Failed ${item.title} · ${item.category}: ${item.error}.`);
+        }
+      } catch (error) {
+        item.state = "failed";
+        item.error = error instanceof Error ? error.message : String(error);
+        run.failed += 1;
+        runEvent(run, `Skipped ${item.title} · ${item.category}: ${item.error}.`);
+      }
+      run.completed += 1;
+    }
+    if (run.cancelled) {
+      for (const item of run.items.filter((candidate) => candidate.state === "queued" || candidate.state === "searching")) {
+        item.state = "cancelled";
+      }
+      run.state = "cancelled";
+    } else {
+      run.state = run.failed ? "complete_with_errors" : "complete";
+    }
+  } catch (error) {
+    run.failed += 1;
+    run.state = "failed";
+    runEvent(run, error instanceof Error ? error.message : String(error));
+  } finally {
+    run.current = null;
+    run.currentJobId = null;
+    run.finishedAt = new Date().toISOString();
+  }
+}
+
+async function startMaintenanceRun(payload = {}) {
+  const library = await listLibrary();
+  const run = {
+    id: randomUUID(), state: "starting", total: 0, completed: 0, failed: 0, skipped: 0,
+    current: null, currentJobId: null, items: buildMaintenanceWork(library.sources, payload),
+    events: [], startedAt: new Date().toISOString(), finishedAt: null, cancelled: false,
+  };
+  run.total = run.items.length;
+  maintenanceRuns.set(run.id, run);
+  run.stop = () => {
+    run.cancelled = true;
+    run.currentJobId && jobs.get(run.currentJobId)?.stop?.();
+  };
+  if (!run.total) {
+    run.state = "complete";
+    run.finishedAt = new Date().toISOString();
+  } else {
+    run.state = "running";
+    void executeMaintenanceRun(run, payload);
+  }
+  return run;
 }
 
 function artifactInfo(artifact) {
@@ -293,6 +532,7 @@ async function finishJob(job, code, error) {
   job.state = finalCode === 0 ? "complete" : "failed";
   if (error) job.events.push({ at: new Date().toISOString(), event: "error", message: error instanceof Error ? error.message : String(error) });
   delete job.finishing;
+  job.resolveDone?.(job);
 }
 
 function recordEvent(job, event, stream) {
@@ -315,7 +555,13 @@ async function startJob({ torrentUrl, magnet, destination, cacheDir, maintenance
   if (!torrentUrl && !magnet) throw new Error("torrentUrl or magnet is required");
   if (!destination || typeof destination !== "string") throw new Error("destination is required");
   const id = randomUUID();
-  const job = { id, state: "starting", events: [], links: [], artifacts: [], manifest: null, maintenance: maintenance || null, startedAt: new Date().toISOString() };
+  let resolveDone;
+  const job = {
+    id, state: "starting", events: [], links: [], artifacts: [], manifest: null,
+    maintenance: maintenance || null, startedAt: new Date().toISOString(),
+    done: new Promise((resolveDonePromise) => { resolveDone = resolveDonePromise; }),
+  };
+  job.resolveDone = resolveDone;
   jobs.set(id, job);
   const source = torrentUrl || magnet;
   const cache = resolve(cacheDir || DEFAULT_CACHE);
@@ -382,6 +628,23 @@ const server = createServer(async (req, res) => {
       return json(res, 200, { items: await nyaaSearch(query) });
     }
     if (req.method === "GET" && url.pathname === "/api/library") return json(res, 200, await listLibrary());
+    if (req.method === "POST" && (url.pathname === "/api/maintenance/runs" || url.pathname === "/api/maintenance/scan")) {
+      return json(res, 202, publicRun(await startMaintenanceRun(await readBody(req))));
+    }
+    const runMatch = url.pathname.match(/^\/api\/maintenance\/runs\/([^/]+)$/);
+    if (runMatch && req.method === "GET") {
+      const run = maintenanceRuns.get(runMatch[1]);
+      return run ? json(res, 200, publicRun(run)) : json(res, 404, { error: "maintenance run not found" });
+    }
+    if (runMatch && req.method === "DELETE") {
+      const run = maintenanceRuns.get(runMatch[1]);
+      if (!run) return json(res, 404, { error: "maintenance run not found" });
+      if (!run.finishedAt) {
+        run.stop?.();
+        run.state = "cancelled";
+      }
+      return json(res, 200, publicRun(run));
+    }
     if (req.method === "POST" && (url.pathname === "/api/torrent/jobs" || url.pathname === "/api/maintenance/jobs")) {
       return json(res, 202, publicJob(await startJob(await readBody(req))));
     }
@@ -398,6 +661,7 @@ const server = createServer(async (req, res) => {
         job.finishedAt = new Date().toISOString();
         job.exitCode = null;
         job.state = "cancelled";
+        job.resolveDone?.(job);
       }
       return json(res, 200, publicJob(job));
     }
