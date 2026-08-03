@@ -100,7 +100,49 @@
       </div>
 
       <div class="field-group" id="torrentImportGroup">
-        <label style="font-weight:700;">Nyaa Torrent Import</label>
+        <label style="font-weight:700;">Library maintenance</label>
+        <small style="display:block; margin:.25em 0 .55em; color:#b9c7d8;">
+          Refresh existing shows or add a new show from a Nyaa release. The service uploads remuxed MP4 links to Toodrive and updates the local source JSON.
+        </small>
+        <div class="pahe-row">
+          <label for="maintenanceMode" style="min-width:82px;">Action</label>
+          <select id="maintenanceMode" class="pahe-select">
+            <option value="update">Maintain existing show</option>
+            <option value="new">Add new show</option>
+          </select>
+        </div>
+        <div id="maintenanceExistingFields">
+          <div class="pahe-row">
+            <label for="maintenanceShow" style="min-width:82px;">Show</label>
+            <select id="maintenanceShow" class="pahe-select"></select>
+          </div>
+          <div class="pahe-row">
+            <label for="maintenanceCategory" style="min-width:82px;">Category</label>
+            <select id="maintenanceCategory" class="pahe-select"></select>
+          </div>
+          <div class="pahe-row" style="gap:.8em; flex-wrap:wrap;">
+            <label class="mm-toggle"><input type="checkbox" id="torrentReplaceExisting" checked> Replace matching episodes</label>
+            <label class="mm-toggle"><input type="checkbox" id="torrentAddMissing" checked> Add missing episodes</label>
+          </div>
+        </div>
+        <div id="maintenanceNewFields" style="display:none;">
+          <div class="pahe-row">
+            <label for="maintenanceNewTitle" style="min-width:82px;">Title</label>
+            <input type="text" id="maintenanceNewTitle" placeholder="Series title" />
+          </div>
+          <div class="pahe-row">
+            <label for="maintenanceNewFile" style="min-width:82px;">JSON file</label>
+            <input type="text" id="maintenanceNewFile" placeholder="Auto-generated from title" />
+          </div>
+          <div class="pahe-row">
+            <label for="maintenanceNewCategory" style="min-width:82px;">Category</label>
+            <input type="text" id="maintenanceNewCategory" value="Season 1" />
+          </div>
+          <div class="pahe-row">
+            <label for="maintenanceNewImage" style="min-width:82px;">Poster URL</label>
+            <input type="url" id="maintenanceNewImage" placeholder="Optional image URL" />
+          </div>
+        </div>
         <div class="pahe-row">
           <input type="text" id="torrentQuery" placeholder="Search Nyaa.si" />
           <button id="torrentSearchBtn" type="button">Search</button>
@@ -109,23 +151,16 @@
         <div id="torrentSelection" style="display:none;">
           <div class="pahe-row">
             <label for="torrentDestination" style="min-width:82px;">Toodrive folder</label>
-            <input type="text" id="torrentDestination" value="The Apothecary Diaries/Season 02" />
+            <input type="text" id="torrentDestination" placeholder="Show/Season 01" />
           </div>
-          <div class="pahe-row">
-            <label for="torrentTargetCategory" style="min-width:82px;">Creator category</label>
-            <select id="torrentTargetCategory" class="pahe-select"></select>
-          </div>
-          <div class="pahe-row">
-            <label for="torrentNewCategory" style="min-width:82px;">New category</label>
-            <input type="text" id="torrentNewCategory" value="Season 2" />
-          </div>
-          <button id="torrentStartBtn" type="button">Download, process, and upload</button>
+          <button id="torrentStartBtn" type="button">Download, process, and update library</button>
           <button id="torrentCancelBtn" type="button" style="display:none; background:#3a3a3a;">Cancel</button>
           <div id="torrentProgress" class="pahe-progress" style="display:none;">
             <div id="torrentProgressText" class="pahe-progress-text"></div>
             <progress id="torrentProgressBar" max="1" value="0"></progress>
           </div>
           <pre id="torrentLog" class="pahe-log"></pre>
+          <div id="torrentManifestStatus" class="creator-status-slot" aria-live="polite"></div>
         </div>
       </div>
     </div>
