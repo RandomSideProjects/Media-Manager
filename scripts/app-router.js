@@ -92,6 +92,9 @@
           <button type="button" data-route="./Creator/index.html" class="tab-button tab-button--icon tab-button--secondary" aria-label="Create or modify a source" title="Create or modify">
             <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m15.7 4.3 4 4L9 19H5v-4L15.7 4.3Zm1.4-1.4a2 2 0 0 1 2.8 0l1.2 1.2a2 2 0 0 1 0 2.8l-.8.8-4-4 .8-.8Z"/></svg>
           </button>
+          <button type="button" data-route="./Maintenance/index.html" class="tab-button tab-button--icon tab-button--secondary" aria-label="Library maintenance" title="Library maintenance">
+            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m14.4 4.2 5.4 5.4-1.5 1.5-1.3-1.3-6.7 6.7-.5 2.6-2.6.5.5-2.6 6.7-6.7-1.3-1.3 1.3-1.3Zm-8.9 14h7v2h-7v-2Z"/></svg>
+          </button>
         </nav>
         <div class="toolbar-controls">
           <div class="toolbar-actions toolbar-actions--left">

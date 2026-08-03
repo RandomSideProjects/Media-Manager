@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Library Maintenance · RSP Media Manager</title>
+  <link rel="icon" href="../Assets/Favicon.png" />
+  <link rel="stylesheet" href="styles.css?v=20260803-maintenance" />
+</head>
+<body>
+  <header class="maintenance-toolbar">
+    <a class="maintenance-brand" href="../index.html" aria-label="RSP Media Manager home">
+      <img src="../Assets/Favicon.png" alt="" />
+      <span>RSP Media Manager</span>
+    </a>
+    <nav class="maintenance-nav" aria-label="Main navigation">
+      <a class="maintenance-nav-button" href="../index.html" aria-label="Public sources" title="Public sources">
+        <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 4h6v6H4V4Zm10 0h6v6h-6V4ZM4 14h6v6H4v-6Zm10 0h6v6h-6v-6Z"/></svg>
+      </a>
+      <a class="maintenance-nav-button is-active" href="index.html" aria-label="Library maintenance" title="Library maintenance" aria-current="page">
+        <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m14.4 4.2 5.4 5.4-1.5 1.5-1.3-1.3-6.7 6.7-.5 2.6-2.6.5.5-2.6 6.7-6.7-1.3-1.3 1.3-1.3Zm-8.9 14h7v2h-7v-2Z"/></svg>
+      </a>
+      <a class="maintenance-nav-button" href="../Creator/index.html" aria-label="Create or modify a source" title="Create or modify">
+        <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m15.7 4.3 4 4L9 19H5v-4L15.7 4.3Zm1.4-1.4a2 2 0 0 1 2.8 0l1.2 1.2a2 2 0 0 1 0 2.8l-.8.8-4-4 .8-.8Z"/></svg>
+      </a>
+    </nav>
+  </header>
+
+  <main class="maintenance-main">
+    <section class="maintenance-hero">
+      <div>
+        <span class="eyebrow">Media library tools</span>
+        <h1>Keep the library current</h1>
+        <p>Review existing shows, replace old releases, add missing episodes, or start a separate new-show import.</p>
+      </div>
+      <div class="service-state" id="serviceState" aria-live="polite">Connecting to local service…</div>
+    </section>
+
+    <div class="maintenance-tabs" role="tablist" aria-label="Maintenance actions">
+      <button id="maintenanceTab" class="maintenance-tab is-active" type="button" role="tab" aria-selected="true">General maintenance</button>
+      <button id="addTab" class="maintenance-tab" type="button" role="tab" aria-selected="false">Add a show</button>
+    </div>
+
+    <section id="maintenancePane" class="maintenance-pane" role="tabpanel" aria-labelledby="maintenanceTab">
+      <div class="maintenance-columns">
+        <section class="panel library-panel" aria-labelledby="libraryHeading">
+          <div class="panel-heading">
+            <div>
+              <span class="eyebrow">Existing sources</span>
+              <h2 id="libraryHeading">Library</h2>
+            </div>
+            <button id="refreshLibraryBtn" class="button button-secondary" type="button">Refresh</button>
+          </div>
+          <label class="sr-only" for="libraryFilter">Filter library</label>
+          <input id="libraryFilter" class="full-input" type="search" placeholder="Filter shows" autocomplete="off" />
+          <div id="librarySummary" class="muted-line" aria-live="polite"></div>
+          <div id="libraryList" class="library-list" aria-live="polite"></div>
+        </section>
+
+        <section class="panel workflow-panel" aria-labelledby="updateHeading">
+          <span class="eyebrow">Selected release</span>
+          <h2 id="updateHeading">Maintain an existing show</h2>
+          <div class="field-grid">
+            <label>Show<select id="updateShow"></select></label>
+            <label>Category<select id="updateCategory"></select></label>
+          </div>
+          <div class="field-grid">
+            <label class="wide-label">Nyaa search<input id="updateQuery" type="search" placeholder="Show or release name" /></label>
+            <button id="updateSearchBtn" class="button button-primary align-end" type="button">Search Nyaa</button>
+          </div>
+          <div id="updateResults" class="search-results"></div>
+          <div id="updateSelection" class="selected-release" hidden>
+            <div class="selected-release-title" id="updateSelectedTitle"></div>
+            <label>Toodrive folder<input id="updateDestination" type="text" placeholder="Show/Season 01" /></label>
+            <div class="check-row">
+              <label><input id="updateReplace" type="checkbox" checked /> Replace matching episodes</label>
+              <label><input id="updateAdd" type="checkbox" checked /> Add missing episodes</label>
+            </div>
+            <button id="updateStartBtn" class="button button-primary" type="button">Download, process, and update</button>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <section id="addPane" class="maintenance-pane" role="tabpanel" aria-labelledby="addTab" hidden>
+      <section class="panel add-panel" aria-labelledby="addHeading">
+        <span class="eyebrow">Explicit new-source workflow</span>
+        <h2 id="addHeading">Add a new show</h2>
+        <div class="field-grid">
+          <label>Title<input id="addTitle" type="text" placeholder="Series title" /></label>
+          <label>JSON filename<input id="addFile" type="text" placeholder="Auto-generated from title" /></label>
+          <label>Category<input id="addCategory" type="text" value="Season 1" /></label>
+          <label>Poster URL<input id="addImage" type="url" placeholder="Optional image URL" /></label>
+        </div>
+        <div class="field-grid">
+          <label class="wide-label">Nyaa search<input id="addQuery" type="search" placeholder="Show or release name" /></label>
+          <button id="addSearchBtn" class="button button-primary align-end" type="button">Search Nyaa</button>
+        </div>
+        <div id="addResults" class="search-results"></div>
+        <div id="addSelection" class="selected-release" hidden>
+          <div class="selected-release-title" id="addSelectedTitle"></div>
+          <label>Toodrive folder<input id="addDestination" type="text" placeholder="Show/Season 01" /></label>
+          <button id="addStartBtn" class="button button-primary" type="button">Download, process, and create source</button>
+        </div>
+      </section>
+    </section>
+
+    <section class="panel job-panel" aria-labelledby="jobHeading">
+      <div class="panel-heading">
+        <div>
+          <span class="eyebrow">Activity</span>
+          <h2 id="jobHeading">Job status</h2>
+        </div>
+        <button id="cancelJobBtn" class="button button-danger" type="button" hidden>Cancel</button>
+      </div>
+      <div id="jobProgressText" class="muted-line" aria-live="polite">No job running.</div>
+      <progress id="jobProgress" max="1" value="0"></progress>
+      <pre id="jobLog" class="job-log"></pre>
+      <div id="jobResult" class="job-result" aria-live="polite"></div>
+    </section>
+  </main>
+
+  <script src="app.js?v=20260803-maintenance"></script>
+</body>
+</html>
