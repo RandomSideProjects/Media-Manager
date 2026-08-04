@@ -11,7 +11,6 @@
     pollTimer: null,
     pollInFlight: false,
     seenEventCount: 0,
-    lastLogLoad: 0,
   };
 
   function appendLog(line) {
@@ -53,7 +52,6 @@
       log.textContent = entries.map(formatPersistedLog).join("\n");
       log.scrollTop = log.scrollHeight;
       $("logState").textContent = `${entries.length} saved log entr${entries.length === 1 ? "y" : "ies"}`;
-      state.lastLogLoad = Date.now();
     } catch (error) {
       $("logState").textContent = `Saved log unavailable: ${error.message}`;
     }
