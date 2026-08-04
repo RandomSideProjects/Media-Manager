@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Library Maintenance · RSP Media Manager</title>
   <link rel="icon" href="../Assets/Favicon.png" />
-  <link rel="stylesheet" href="styles.css?v=20260803-maintenance-auto" />
+  <link rel="stylesheet" href="styles.css?v=20260804-mal-preflight" />
 </head>
 <body>
   <header class="maintenance-toolbar">
@@ -60,7 +60,7 @@
         <section class="panel workflow-panel" aria-labelledby="updateHeading">
           <span class="eyebrow">Automatic upkeep</span>
           <h2 id="updateHeading">Maintain the library</h2>
-          <p class="workflow-copy">One click checks each show’s latest season on Nyaa, picks the strongest matching release, downloads it, runs the video pipeline, uploads ordered links, and updates the existing JSON. Movies are skipped.</p>
+          <p class="workflow-copy">One click checks MyAnimeList for missing episodes first, then searches Nyaa only for seasons that need work. Matching releases are downloaded, remixed, uploaded in order, and written back to the existing JSON. Movies are skipped.</p>
           <div class="check-row automation-options">
             <label><input id="updateReplace" type="checkbox" checked /> Replace matching episodes</label>
             <label><input id="updateAdd" type="checkbox" checked /> Add missing episodes</label>
@@ -114,6 +114,6 @@
     </section>
   </main>
 
-  <script src="app.js?v=20260803-maintenance-auto"></script>
+  <script src="app.js?v=20260804-mal-preflight"></script>
 </body>
 </html>
