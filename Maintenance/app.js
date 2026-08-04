@@ -201,6 +201,14 @@
   }
 
   function renderRunProgress(run) {
+    if (run.state === "checking") {
+      const checked = Number(run.preflightCompleted) || 0;
+      const checkTotal = Number(run.preflightTotal) || 0;
+      $("jobProgress").value = checkTotal ? Math.min(1, checked / checkTotal) : 0;
+      $("jobProgressText").textContent = `Checking MyAnimeList for missing episodes${checkTotal ? ` (${checked}/${checkTotal})` : "…"}`;
+      $("automationSummary").textContent = "MAL preflight is deciding which categories actually need maintenance.";
+      return;
+    }
     const total = Number(run.total) || 0;
     const completed = Number(run.completed) || 0;
     $("jobProgress").value = total ? Math.min(1, completed / total) : 1;
@@ -215,6 +223,13 @@
 
   function renderRunResult(run) {
     const items = Array.isArray(run.items) ? run.items : [];
+    if (run.planOnly === true) {
+      const queued = items.filter((item) => item.state === "queued");
+      const skipped = items.filter((item) => item.state === "skipped").length;
+      $("automationSummary").textContent = `Plan ready: ${queued.length} categor${queued.length === 1 ? "y" : "ies"} need maintenance, ${skipped} skipped.`;
+      $("jobResult").textContent = queued.map((item) => `${item.title} · ${item.category}${item.missingEpisodes?.length ? ` (missing ${item.missingEpisodes.join(", ")})` : ""}`).join("\n") || "No categories need maintenance.";
+      return;
+    }
     const updated = items.filter((item) => item.state === "complete").length;
     const failed = items.filter((item) => item.state === "failed").length;
     const skipped = items.filter((item) => item.state === "skipped").length;

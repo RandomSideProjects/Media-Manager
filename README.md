@@ -68,6 +68,17 @@ uploaded torrent paths, and each release is processed by
 push the changed JSON to publish it and let the existing source maintainer
 workflow regenerate indexes/posters.
 
+Before a General maintenance run searches Nyaa, it checks each selected season
+against MyAnimeList. The service uses MAL's public HTML search first and Jikan
+as a fallback, then queues only seasons with missing numbered episodes. A
+successful lookup is cached for 30 minutes at
+`~/.local/share/media-manager-maintenance/mal-cache.json` (override with
+`MAL_CACHE_FILE`); an unavailable lookup is reported and skipped rather than
+guessing. Add `"malTitle": "..."` to a manifest when its display title is an
+abbreviation or typo that MAL cannot match automatically. A dry planning pass
+is available to API callers with `{ "dryRun": true }`; it returns the skipped
+and queued categories without starting torrent jobs.
+
 The local video-pipeline conversion maps every audio and subtitle stream into
 the MP4 output, converts text subtitles to `mov_text`, and preserves container
 metadata and chapters.
