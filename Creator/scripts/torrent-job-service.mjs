@@ -5,11 +5,11 @@
 // Run from the repository with: node Creator/scripts/torrent-job-service.mjs
 
 import { createServer } from "node:http";
-import { mkdir, readFile, readdir, unlink, writeFile } from "node:fs/promises";
+import { appendFile, mkdir, readFile, readdir, unlink, writeFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import { spawn } from "node:child_process";
 import { homedir } from "node:os";
-import { extname, join, resolve, sep } from "node:path";
+import { dirname, extname, join, resolve, sep } from "node:path";
 
 const PORT = Number(process.env.CREATOR_TORRENT_PORT || 41723);
 const TD_BIN = process.env.TD_BIN || join(homedir(), ".deno/bin/td");
@@ -22,8 +22,45 @@ const REPO_ROOT = resolve(process.env.MEDIA_MANAGER_ROOT || process.cwd());
 const SOURCE_DIR = resolve(REPO_ROOT, "Sources/Files/Anime");
 const SOURCE_PREFIX = "Sources/Files/Anime/";
 const DEFAULT_CACHE = join(homedir(), ".local/share/toodrive-job/creator-cache");
+const LOG_FILE = resolve(process.env.MEDIA_MANAGER_LOG_FILE || join(homedir(), ".local/share/media-manager-maintenance/maintenance.log"));
+const LOG_PROGRESS_INTERVAL_MS = 30_000;
 const jobs = new Map();
 const maintenanceRuns = new Map();
+const logProgressAt = new Map();
+let logQueue = Promise.resolve();
+
+function persistLog(entry) {
+  const timestamp = Date.parse(entry.at || "") || Date.now();
+  if (entry.event === "progress") {
+    const key = `${entry.jobId || entry.runId || "service"}:${entry.remotePath || ""}:${entry.phase || ""}`;
+    const previous = logProgressAt.get(key) || 0;
+    if (timestamp - previous < LOG_PROGRESS_INTERVAL_MS) return;
+    logProgressAt.set(key, timestamp);
+  }
+  const line = `${JSON.stringify({ at: new Date(timestamp).toISOString(), ...entry })}\n`;
+  logQueue = logQueue.then(async () => {
+    try {
+      await mkdir(dirname(LOG_FILE), { recursive: true });
+      await appendFile(LOG_FILE, line, "utf8");
+    } catch (error) {
+      console.error(`[maintenance-log] ${error instanceof Error ? error.message : String(error)}`);
+    }
+  });
+}
+
+async function readPersistedLogs({ runId = "", jobId = "", limit = 500 } = {}) {
+  let raw;
+  try {
+    raw = await readFile(LOG_FILE, "utf8");
+  } catch (error) {
+    if (error?.code === "ENOENT") return [];
+    throw error;
+  }
+  const max = Math.min(2_000, Math.max(1, Number(limit) || 500));
+  return raw.split(/\r?\n/).filter(Boolean).map((line) => {
+    try { return JSON.parse(line); } catch { return { at: "", event: "log", message: line }; }
+  }).filter((entry) => (!runId || entry.runId === runId) && (!jobId || entry.jobId === jobId)).slice(-max);
+}
 
 async function clearStalePipelineLock(cachePath) {
   const lockPath = join(cachePath, ".td-pipeline.lock");
@@ -302,6 +339,7 @@ function runEvent(run, message, extra = {}) {
   const event = { at: new Date().toISOString(), event: "run", message, ...extra };
   run.events.push(event);
   if (run.events.length > 2000) run.events.shift();
+  persistLog({ scope: "run", runId: run.id, ...event });
 }
 
 function publicRun(run) {
@@ -372,6 +410,7 @@ async function executeMaintenanceRun(run, payload) {
           torrentUrl: release.torrentUrl,
           magnet: release.magnet,
           destination: maintenanceFolder(item.title, item.category),
+          runId: run.id,
           maintenance: {
             action: "update",
             sourcePath: item.sourcePath,
@@ -423,6 +462,16 @@ async function executeMaintenanceRun(run, payload) {
     run.current = null;
     run.currentJobId = null;
     run.finishedAt = new Date().toISOString();
+    persistLog({
+      scope: "run",
+      event: "run_finished",
+      runId: run.id,
+      state: run.state,
+      completed: run.completed,
+      total: run.total,
+      failed: run.failed,
+      skipped: run.skipped,
+    });
   }
 }
 
@@ -446,6 +495,7 @@ async function startMaintenanceRun(payload = {}) {
     run.state = "running";
     void executeMaintenanceRun(run, payload);
   }
+  persistLog({ scope: "run", event: "run_started", runId: run.id, state: run.state, total: run.total });
   return run;
 }
 
@@ -568,6 +618,15 @@ async function finishJob(job, code, error) {
   job.state = finalCode === 0 ? "complete" : "failed";
   if (error) job.events.push({ at: new Date().toISOString(), event: "error", message: error instanceof Error ? error.message : String(error) });
   if (job.cacheDir) await clearStalePipelineLock(job.cacheDir).catch(() => {});
+  persistLog({
+    scope: "job",
+    event: finalCode === 0 ? "job_complete" : "job_failed",
+    jobId: job.id,
+    runId: job.runId,
+    state: job.state,
+    exitCode: finalCode,
+    message: error ? (error instanceof Error ? error.message : String(error)) : undefined,
+  });
   delete job.finishing;
   job.resolveDone?.(job);
 }
@@ -586,16 +645,17 @@ function recordEvent(job, event, stream) {
   }
   job.events.push({ at: new Date().toISOString(), stream, ...event });
   if (job.events.length > 5000) job.events.shift();
+  persistLog({ scope: "job", jobId: job.id, runId: job.runId, stream, ...event });
 }
 
-async function startJob({ torrentUrl, magnet, destination, cacheDir, maintenance }) {
+async function startJob({ torrentUrl, magnet, destination, cacheDir, runId, maintenance }) {
   if (!torrentUrl && !magnet) throw new Error("torrentUrl or magnet is required");
   if (!destination || typeof destination !== "string") throw new Error("destination is required");
   const id = randomUUID();
   let resolveDone;
   const job = {
     id, state: "starting", events: [], links: [], artifacts: [], manifest: null,
-    maintenance: maintenance || null, cacheDir: null, startedAt: new Date().toISOString(),
+    runId: runId || maintenance?.runId || null, maintenance: maintenance || null, cacheDir: null, startedAt: new Date().toISOString(),
     done: new Promise((resolveDonePromise) => { resolveDone = resolveDonePromise; }),
   };
   job.resolveDone = resolveDone;
@@ -611,6 +671,7 @@ async function startJob({ torrentUrl, magnet, destination, cacheDir, maintenance
   const child = spawn(TD_BIN, args, { env: { ...process.env }, stdio: ["ignore", "pipe", "pipe"] });
   job.pid = child.pid;
   job.state = "running";
+  persistLog({ scope: "job", event: "job_started", jobId: job.id, runId: job.runId, pid: job.pid, source, destination });
   const buffers = { stdout: "", stderr: "" };
   const consume = (chunk, stream) => {
     buffers[stream] += String(chunk);
@@ -642,6 +703,7 @@ async function startJob({ torrentUrl, magnet, destination, cacheDir, maintenance
 function publicJob(job) {
   return {
     id: job.id,
+    runId: job.runId,
     state: job.state,
     pid: job.pid,
     links: job.links,
@@ -668,6 +730,14 @@ const server = createServer(async (req, res) => {
       return json(res, 200, { items: await nyaaSearch(query) });
     }
     if (req.method === "GET" && url.pathname === "/api/library") return json(res, 200, await listLibrary());
+    if (req.method === "GET" && url.pathname === "/api/maintenance/logs") {
+      const entries = await readPersistedLogs({
+        runId: url.searchParams.get("runId") || url.searchParams.get("run") || "",
+        jobId: url.searchParams.get("jobId") || url.searchParams.get("job") || "",
+        limit: url.searchParams.get("limit") || 500,
+      });
+      return json(res, 200, { file: LOG_FILE, entries });
+    }
     if (req.method === "POST" && (url.pathname === "/api/maintenance/runs" || url.pathname === "/api/maintenance/scan")) {
       return json(res, 202, publicRun(await startMaintenanceRun(await readBody(req))));
     }
@@ -716,4 +786,5 @@ server.listen(PORT, "127.0.0.1", () => {
   console.log(`Repository: ${REPO_ROOT}`);
   console.log(`Using td: ${TD_BIN}`);
   console.log(`Using Toodrive: ${TOODRIVE_BASE_URL}`);
+  persistLog({ scope: "service", event: "service_started", port: PORT, repository: REPO_ROOT, td: TD_BIN });
 });
