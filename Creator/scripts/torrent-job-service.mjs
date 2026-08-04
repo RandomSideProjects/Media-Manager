@@ -5,7 +5,7 @@
 // Run from the repository with: node Creator/scripts/torrent-job-service.mjs
 
 import { createServer } from "node:http";
-import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, unlink, writeFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import { spawn } from "node:child_process";
 import { homedir } from "node:os";
@@ -14,12 +14,38 @@ import { extname, join, resolve, sep } from "node:path";
 const PORT = Number(process.env.CREATOR_TORRENT_PORT || 41723);
 const TD_BIN = process.env.TD_BIN || join(homedir(), ".deno/bin/td");
 const TOODRIVE_BASE_URL = process.env.TOODRIVE_BASE_URL || "https://toodrive.xpbliss.fyi";
+const NYAA_BASE_URLS = [
+  process.env.NYAA_BASE_URL || "https://nyaa.si",
+  process.env.NYAA_FALLBACK_URL || "https://nyaa.net",
+].filter((base, index, all) => base && all.indexOf(base) === index);
 const REPO_ROOT = resolve(process.env.MEDIA_MANAGER_ROOT || process.cwd());
 const SOURCE_DIR = resolve(REPO_ROOT, "Sources/Files/Anime");
 const SOURCE_PREFIX = "Sources/Files/Anime/";
 const DEFAULT_CACHE = join(homedir(), ".local/share/toodrive-job/creator-cache");
 const jobs = new Map();
 const maintenanceRuns = new Map();
+
+async function clearStalePipelineLock(cachePath) {
+  const lockPath = join(cachePath, ".td-pipeline.lock");
+  let lockPid;
+  try {
+    lockPid = Number((await readFile(lockPath, "utf8")).trim());
+  } catch (error) {
+    if (error?.code === "ENOENT") return;
+    throw error;
+  }
+  if (lockPid > 0) {
+    try {
+      process.kill(lockPid, 0);
+      return;
+    } catch (error) {
+      if (error?.code !== "ESRCH") return;
+    }
+  }
+  await unlink(lockPath).catch((error) => {
+    if (error?.code !== "ENOENT") throw error;
+  });
+}
 
 function json(res, status, body) {
   const payload = JSON.stringify(body);
@@ -72,10 +98,18 @@ function parseItems(xml) {
 }
 
 async function nyaaSearch(query) {
-  const url = `https://nyaa.si/?page=rss&q=${encodeURIComponent(query)}&c=1_2&f=0`;
-  const response = await fetch(url, { headers: { "user-agent": "Media-Manager-Creator/1.0" } });
-  if (!response.ok) throw new Error(`Nyaa returned HTTP ${response.status}`);
-  return parseItems(await response.text());
+  let lastError = null;
+  for (const baseUrl of NYAA_BASE_URLS) {
+    const url = `${baseUrl.replace(/\/$/, "")}/?page=rss&q=${encodeURIComponent(query)}&c=1_2&f=0`;
+    try {
+      const response = await fetch(url, { headers: { "user-agent": "Media-Manager-Creator/1.0" } });
+      if (!response.ok) throw new Error(`Nyaa returned HTTP ${response.status}`);
+      return parseItems(await response.text());
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  throw lastError || new Error("Nyaa search failed");
 }
 
 const SEARCH_STOP_WORDS = new Set([
@@ -110,7 +144,9 @@ function automaticReleaseScore(item, source, categoryName) {
   if (requestedSeason && releaseInfo.season === requestedSeason) score += 42;
   else if (requestedSeason && releaseInfo.season && releaseInfo.season !== requestedSeason) score -= 55;
   if (/\b(?:batch|complete|collection|全集|season)\b/i.test(item.title)) score += 14;
-  if (/\b(?:bd|bdmv|remux|1080p|720p|web[- .]?dl|dual audio|multi audio)\b/i.test(item.title)) score += 5;
+  if (/\bremux\b/i.test(item.title)) score += 25;
+  if (/\b(?:bd|bdmv|bluray|bdrip)\b/i.test(item.title)) score += 8;
+  if (/\b(?:1080p|720p|web[- .]?dl|dual audio|multi audio|multi[- .]?subs)\b/i.test(item.title)) score += 5;
   score += Math.min(10, Math.log10(Math.max(1, item.seeders || 0) + 1) * 3);
   score += Math.min(5, Math.log10(Math.max(1, item.downloads || 0) + 1));
   return score;
@@ -531,6 +567,7 @@ async function finishJob(job, code, error) {
   job.exitCode = finalCode;
   job.state = finalCode === 0 ? "complete" : "failed";
   if (error) job.events.push({ at: new Date().toISOString(), event: "error", message: error instanceof Error ? error.message : String(error) });
+  if (job.cacheDir) await clearStalePipelineLock(job.cacheDir).catch(() => {});
   delete job.finishing;
   job.resolveDone?.(job);
 }
@@ -558,14 +595,17 @@ async function startJob({ torrentUrl, magnet, destination, cacheDir, maintenance
   let resolveDone;
   const job = {
     id, state: "starting", events: [], links: [], artifacts: [], manifest: null,
-    maintenance: maintenance || null, startedAt: new Date().toISOString(),
+    maintenance: maintenance || null, cacheDir: null, startedAt: new Date().toISOString(),
     done: new Promise((resolveDonePromise) => { resolveDone = resolveDonePromise; }),
   };
   job.resolveDone = resolveDone;
   jobs.set(id, job);
   const source = torrentUrl || magnet;
-  const cache = resolve(cacheDir || DEFAULT_CACHE);
+  const cacheRoot = resolve(cacheDir || DEFAULT_CACHE);
+  const cache = join(cacheRoot, id);
   await mkdir(cache, { recursive: true });
+  job.cacheDir = cache;
+  await clearStalePipelineLock(cache);
   const args = ["--base-url", TOODRIVE_BASE_URL, "torrent", source, destination, "--video-pipeline", "--download-all", "--repair", "--json", "--cache-dir", cache];
   if (maintenance?.replaceExisting) args.push("--exist=overwrite");
   const child = spawn(TD_BIN, args, { env: { ...process.env }, stdio: ["ignore", "pipe", "pipe"] });

@@ -1,16 +1,6 @@
 # [RSP Media Manager](https://randomsideprojects.github.io/Media-Manager/)
 ![RSP Media Manager logo](https://github.com/RandomSideProjects/Media-Manager/blob/main/Assets/Favicon.png?raw=true)
 
-
-
-# NOTE: this is the **worst** code you have and ever will read. I have not read what is below in six months (January of 2026).
-
-
-
-
-
-
-
 Browser-only player for video libraries and CBZ manga archives. Point it at a JSON manifest—from Catbox, GitHub Pages, or a local folder—and it handles playback, progress, downloads, clipping, and manga reading without any backend.
 
 ## Why use it
@@ -59,6 +49,8 @@ The default General maintenance view runs an automated upkeep pass: it searches
 Nyaa internally, selects the strongest matching release for each show’s latest
 season, downloads and processes it, uploads ordered links, and updates the
 existing manifest. “Add a show” is the only workflow with manual Nyaa search.
+If `nyaa.si` is unavailable, the service automatically falls back to the Nyaa
+RSS mirror at `nyaa.net`.
 
 Start its local companion from the repository:
 
@@ -75,6 +67,10 @@ uploaded torrent paths, and each release is processed by
 `td --video-pipeline --download-all --repair` before links are saved. Commit and
 push the changed JSON to publish it and let the existing source maintainer
 workflow regenerate indexes/posters.
+
+The local video-pipeline conversion maps every audio and subtitle stream into
+the MP4 output, converts text subtitles to `mov_text`, and preserves container
+metadata and chapters.
 
 The service uses `~/.deno/bin/td` by default. Override `TD_BIN`,
 `MEDIA_MANAGER_ROOT`, `TOODRIVE_BASE_URL`, or `CREATOR_TORRENT_PORT` when needed.
