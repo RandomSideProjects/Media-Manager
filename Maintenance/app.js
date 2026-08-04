@@ -11,6 +11,7 @@
     pollTimer: null,
     pollInFlight: false,
     seenEventCount: 0,
+    lastLogLoad: 0,
   };
 
   function appendLog(line) {
@@ -25,6 +26,37 @@
     const body = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(body.error || `HTTP ${response.status}`);
     return body;
+  }
+
+  function formatPersistedLog(entry) {
+    const timestamp = entry.at ? new Date(entry.at) : null;
+    const when = timestamp && !Number.isNaN(timestamp.getTime()) ? timestamp.toLocaleTimeString() : "--:--:--";
+    const scope = entry.scope ? `[${entry.scope}]` : "[service]";
+    let message = entry.message || entry.phase || entry.event || "log";
+    if (entry.event === "progress" && entry.totalBytes) {
+      const percent = Math.min(100, (Number(entry.transferredBytes || 0) / Number(entry.totalBytes)) * 100).toFixed(1);
+      message = `${entry.phase || "progress"} ${percent}%${entry.remotePath ? ` · ${entry.remotePath}` : ""}`;
+    } else if (entry.remotePath) {
+      message = `${message} · ${entry.remotePath}`;
+    }
+    return `${when} ${scope} ${message}`;
+  }
+
+  async function reloadPersistedLog() {
+    const params = new URLSearchParams({ limit: "500" });
+    if (state.jobKind === "run" && state.jobId) params.set("runId", state.jobId);
+    if (state.jobKind === "job" && state.jobId) params.set("jobId", state.jobId);
+    try {
+      const data = await request(`/api/maintenance/logs?${params}`);
+      const entries = Array.isArray(data.entries) ? data.entries : [];
+      const log = $("jobLog");
+      log.textContent = entries.map(formatPersistedLog).join("\n");
+      log.scrollTop = log.scrollHeight;
+      $("logState").textContent = `${entries.length} saved log entr${entries.length === 1 ? "y" : "ies"}`;
+      state.lastLogLoad = Date.now();
+    } catch (error) {
+      $("logState").textContent = `Saved log unavailable: ${error.message}`;
+    }
   }
 
   function setServiceState(text, error = false) {
@@ -153,6 +185,7 @@
     $("jobProgressText").textContent = "Starting…";
     $("jobResult").textContent = "";
     $("jobLog").textContent = "";
+    $("logState").textContent = "Waiting for persisted events…";
   }
 
   function handleEvents(job) {
@@ -256,6 +289,7 @@
     state.jobId = run.id;
     state.jobKind = "run";
     appendLog(`Started automated maintenance run ${run.id}`);
+    void reloadPersistedLog();
     state.pollTimer = setInterval(() => { void pollJob(); }, 2000);
     await pollJob();
   }
@@ -276,6 +310,7 @@
     state.jobId = job.id;
     state.jobKind = "job";
     appendLog(`Started new-show job ${job.id}`);
+    void reloadPersistedLog();
     state.pollTimer = setInterval(() => { void pollJob(); }, 2000);
     await pollJob();
   }
@@ -293,6 +328,7 @@
   $("maintenanceTab").addEventListener("click", () => setTab("maintenance"));
   $("addTab").addEventListener("click", () => setTab("add"));
   $("refreshLibraryBtn").addEventListener("click", () => { void refreshLibrary(); });
+  $("refreshLogBtn").addEventListener("click", () => { void reloadPersistedLog(); });
   $("libraryFilter").addEventListener("input", renderLibrary);
   $("updateStartBtn").addEventListener("click", () => startAutomatedMaintenance().catch((error) => { setJobBusy(false); appendLog(`Start failed: ${error.message}`); }));
   $("addSearchBtn").addEventListener("click", () => searchNyaa($("addQuery"), $("addResults"), selectAddRelease).catch((error) => { $("addResults").textContent = `Search failed: ${error.message}`; }));
@@ -317,4 +353,5 @@
 
   setTab("maintenance");
   void refreshLibrary();
+  void reloadPersistedLog();
 })();

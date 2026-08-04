@@ -73,7 +73,11 @@ the MP4 output, converts text subtitles to `mov_text`, and preserves container
 metadata and chapters.
 
 The service uses `~/.deno/bin/td` by default. Override `TD_BIN`,
-`MEDIA_MANAGER_ROOT`, `TOODRIVE_BASE_URL`, or `CREATOR_TORRENT_PORT` when needed.
+`MEDIA_MANAGER_ROOT`, `TOODRIVE_BASE_URL`, `CREATOR_TORRENT_PORT`, or
+`MEDIA_MANAGER_LOG_FILE` when needed. Maintenance events are persisted as
+JSONL at `~/.local/share/media-manager-maintenance/maintenance.log` by default;
+the app’s **Reload log** button reads the saved entries through
+`/api/maintenance/logs`.
 
 ## JSON schema (abridged)
 ```json

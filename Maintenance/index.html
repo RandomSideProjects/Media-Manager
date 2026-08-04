@@ -101,10 +101,14 @@
           <span class="eyebrow">Activity</span>
           <h2 id="jobHeading">Job status</h2>
         </div>
-        <button id="cancelJobBtn" class="button button-danger" type="button" hidden>Cancel</button>
+        <div class="job-actions">
+          <button id="refreshLogBtn" class="button button-secondary" type="button">Reload log</button>
+          <button id="cancelJobBtn" class="button button-danger" type="button" hidden>Cancel</button>
+        </div>
       </div>
       <div id="jobProgressText" class="muted-line" aria-live="polite">No job running.</div>
       <progress id="jobProgress" max="1" value="0"></progress>
+      <div id="logState" class="muted-line" aria-live="polite">Persistent log available from the local service.</div>
       <pre id="jobLog" class="job-log"></pre>
       <div id="jobResult" class="job-result" aria-live="polite"></div>
     </section>
