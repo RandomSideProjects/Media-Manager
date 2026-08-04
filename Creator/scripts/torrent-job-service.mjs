@@ -49,6 +49,7 @@ function persistLog(entry) {
 }
 
 async function readPersistedLogs({ runId = "", jobId = "", limit = 500 } = {}) {
+  await logQueue;
   let raw;
   try {
     raw = await readFile(LOG_FILE, "utf8");
