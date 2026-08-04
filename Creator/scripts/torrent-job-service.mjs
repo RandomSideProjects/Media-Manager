@@ -5,21 +5,102 @@
 // Run from the repository with: node Creator/scripts/torrent-job-service.mjs
 
 import { createServer } from "node:http";
-import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
+import { appendFile, mkdir, readFile, readdir, unlink, writeFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import { spawn } from "node:child_process";
 import { homedir } from "node:os";
-import { extname, join, resolve, sep } from "node:path";
+import { dirname, extname, join, resolve, sep } from "node:path";
 
 const PORT = Number(process.env.CREATOR_TORRENT_PORT || 41723);
 const TD_BIN = process.env.TD_BIN || join(homedir(), ".deno/bin/td");
 const TOODRIVE_BASE_URL = process.env.TOODRIVE_BASE_URL || "https://toodrive.xpbliss.fyi";
+const NYAA_BASE_URLS = [
+  process.env.NYAA_BASE_URL || "https://nyaa.si",
+  process.env.NYAA_FALLBACK_URL || "https://nyaa.net",
+].filter((base, index, all) => base && all.indexOf(base) === index);
 const REPO_ROOT = resolve(process.env.MEDIA_MANAGER_ROOT || process.cwd());
 const SOURCE_DIR = resolve(REPO_ROOT, "Sources/Files/Anime");
 const SOURCE_PREFIX = "Sources/Files/Anime/";
 const DEFAULT_CACHE = join(homedir(), ".local/share/toodrive-job/creator-cache");
+const LOG_FILE = resolve(process.env.MEDIA_MANAGER_LOG_FILE || join(homedir(), ".local/share/media-manager-maintenance/maintenance.log"));
+// General maintenance uses Jikan's public MyAnimeList mirror as a preflight
+// check.  The cache keeps recurring runs fast and the request gate stays below
+// Jikan's public rate limit.  Set MAL_CHECK=0 (or malCheck:false in a request)
+// only for an explicitly forced run.
+const MAL_API_BASE_URL = String(process.env.MAL_API_BASE_URL || "https://api.jikan.moe/v4").replace(/\/$/, "");
+const MAL_HTML_BASE_URL = String(process.env.MAL_HTML_BASE_URL || "https://myanimelist.net").replace(/\/$/, "");
+const MAL_CACHE_FILE = resolve(process.env.MAL_CACHE_FILE || join(homedir(), ".local/share/media-manager-maintenance/mal-cache.json"));
+const MAL_CACHE_TTL_MS = Math.max(60_000, Number(process.env.MAL_CACHE_TTL_MS) || 30 * 60_000);
+const MAL_ERROR_CACHE_TTL_MS = Math.max(15_000, Number(process.env.MAL_ERROR_CACHE_TTL_MS) || 2 * 60_000);
+const MAL_REQUEST_TIMEOUT_MS = Math.max(2_000, Number(process.env.MAL_REQUEST_TIMEOUT_MS) || 12_000);
+const MAL_REQUEST_INTERVAL_MS = Math.max(250, Number(process.env.MAL_REQUEST_INTERVAL_MS) || 400);
+const MAL_CACHE_VERSION = 8;
+const LOG_PROGRESS_INTERVAL_MS = 30_000;
 const jobs = new Map();
 const maintenanceRuns = new Map();
+const logProgressAt = new Map();
+let logQueue = Promise.resolve();
+let malCache = null;
+let malCacheLoad = null;
+let malCacheWrite = Promise.resolve();
+let malRequestQueue = Promise.resolve();
+let malLastRequestAt = 0;
+
+function persistLog(entry) {
+  const timestamp = Date.parse(entry.at || "") || Date.now();
+  if (entry.event === "progress") {
+    const key = `${entry.jobId || entry.runId || "service"}:${entry.remotePath || ""}:${entry.phase || ""}`;
+    const previous = logProgressAt.get(key) || 0;
+    if (timestamp - previous < LOG_PROGRESS_INTERVAL_MS) return;
+    logProgressAt.set(key, timestamp);
+  }
+  const line = `${JSON.stringify({ at: new Date(timestamp).toISOString(), ...entry })}\n`;
+  logQueue = logQueue.then(async () => {
+    try {
+      await mkdir(dirname(LOG_FILE), { recursive: true });
+      await appendFile(LOG_FILE, line, "utf8");
+    } catch (error) {
+      console.error(`[maintenance-log] ${error instanceof Error ? error.message : String(error)}`);
+    }
+  });
+}
+
+async function readPersistedLogs({ runId = "", jobId = "", limit = 500 } = {}) {
+  await logQueue;
+  let raw;
+  try {
+    raw = await readFile(LOG_FILE, "utf8");
+  } catch (error) {
+    if (error?.code === "ENOENT") return [];
+    throw error;
+  }
+  const max = Math.min(2_000, Math.max(1, Number(limit) || 500));
+  return raw.split(/\r?\n/).filter(Boolean).map((line) => {
+    try { return JSON.parse(line); } catch { return { at: "", event: "log", message: line }; }
+  }).filter((entry) => (!runId || entry.runId === runId) && (!jobId || entry.jobId === jobId)).slice(-max);
+}
+
+async function clearStalePipelineLock(cachePath) {
+  const lockPath = join(cachePath, ".td-pipeline.lock");
+  let lockPid;
+  try {
+    lockPid = Number((await readFile(lockPath, "utf8")).trim());
+  } catch (error) {
+    if (error?.code === "ENOENT") return;
+    throw error;
+  }
+  if (lockPid > 0) {
+    try {
+      process.kill(lockPid, 0);
+      return;
+    } catch (error) {
+      if (error?.code !== "ESRCH") return;
+    }
+  }
+  await unlink(lockPath).catch((error) => {
+    if (error?.code !== "ENOENT") throw error;
+  });
+}
 
 function json(res, status, body) {
   const payload = JSON.stringify(body);
@@ -72,14 +153,366 @@ function parseItems(xml) {
 }
 
 async function nyaaSearch(query) {
-  const url = `https://nyaa.si/?page=rss&q=${encodeURIComponent(query)}&c=1_2&f=0`;
-  const response = await fetch(url, { headers: { "user-agent": "Media-Manager-Creator/1.0" } });
-  if (!response.ok) throw new Error(`Nyaa returned HTTP ${response.status}`);
-  return parseItems(await response.text());
+  let lastError = null;
+  for (const baseUrl of NYAA_BASE_URLS) {
+    const url = `${baseUrl.replace(/\/$/, "")}/?page=rss&q=${encodeURIComponent(query)}&c=1_2&f=0`;
+    try {
+      const response = await fetch(url, { headers: { "user-agent": "Media-Manager-Creator/1.0" } });
+      if (!response.ok) throw new Error(`Nyaa returned HTTP ${response.status}`);
+      return parseItems(await response.text());
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  throw lastError || new Error("Nyaa search failed");
+}
+
+function normalizeTitle(value) {
+  return String(value || "")
+    .normalize("NFKD")
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, "")
+    .trim();
+}
+
+function malCacheKey(title) {
+  return normalizeTitle(title) || String(title || "").trim().toLowerCase();
+}
+
+async function loadMalCache() {
+  if (malCache) return malCache;
+  if (malCacheLoad) return malCacheLoad;
+  malCacheLoad = readFile(MAL_CACHE_FILE, "utf8")
+    .then((raw) => {
+      const parsed = JSON.parse(raw);
+      malCache = parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+      return malCache;
+    })
+    .catch((error) => {
+      if (error?.code !== "ENOENT") console.error(`[mal-cache] ${error instanceof Error ? error.message : String(error)}`);
+      malCache = {};
+      return malCache;
+    });
+  return malCacheLoad;
+}
+
+function queueMalCacheWrite() {
+  const snapshot = JSON.stringify(malCache || {}, null, 2);
+  malCacheWrite = malCacheWrite.then(async () => {
+    try {
+      await mkdir(dirname(MAL_CACHE_FILE), { recursive: true });
+      await writeFile(MAL_CACHE_FILE, `${snapshot}\n`, "utf8");
+    } catch (error) {
+      console.error(`[mal-cache] ${error instanceof Error ? error.message : String(error)}`);
+    }
+  });
+  return malCacheWrite;
+}
+
+function queueMalRequest(task) {
+  const next = malRequestQueue.then(async () => {
+    const waitMs = Math.max(0, MAL_REQUEST_INTERVAL_MS - (Date.now() - malLastRequestAt));
+    if (waitMs) await new Promise((resolveWait) => setTimeout(resolveWait, waitMs));
+    malLastRequestAt = Date.now();
+    return task();
+  }, async () => task());
+  // A failed request must not poison the queue for every later show.
+  malRequestQueue = next.catch(() => {});
+  return next;
+}
+
+async function fetchMalText(url) {
+  return queueMalRequest(async () => {
+    let lastError = null;
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), MAL_REQUEST_TIMEOUT_MS);
+      try {
+        const response = await fetch(url, {
+          headers: { "user-agent": "Media-Manager-Maintenance/1.0" },
+          signal: controller.signal,
+        });
+        if (response.status === 429 || response.status >= 500) {
+          const retryAfter = Number(response.headers.get("retry-after")) || 0;
+          throw new Error(`MAL returned HTTP ${response.status}${retryAfter ? ` (retry after ${retryAfter}s)` : ""}`);
+        }
+        if (!response.ok) throw new Error(`MAL returned HTTP ${response.status}`);
+        return await response.text();
+      } catch (error) {
+        lastError = error;
+        if (attempt < 2) await new Promise((resolveWait) => setTimeout(resolveWait, 500 * (attempt + 1)));
+      } finally {
+        clearTimeout(timeout);
+      }
+    }
+    throw lastError || new Error("MAL request failed");
+  });
+}
+
+async function fetchMalJson(url) {
+  return JSON.parse(await fetchMalText(url));
+}
+
+function decodeHtml(value) {
+  return String(value || "")
+    .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCodePoint(Number.parseInt(hex, 16)))
+    .replace(/&#(\d+);/g, (_, digits) => String.fromCodePoint(Number(digits)))
+    .replace(/&amp;/gi, "&")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function stripHtml(value) {
+  return decodeHtml(String(value || "").replace(/<[^>]*>/g, " "));
+}
+
+function parseMalHtml(html) {
+  const items = [];
+  for (const match of String(html || "").matchAll(/<tr\b[\s\S]*?<\/tr>/gi)) {
+    const row = match[0];
+    const idMatch = row.match(/(?:https?:\/\/myanimelist\.net)?\/anime\/(\d+)\/[^"'\s<]+/i);
+    const titleMatch = row.match(/<strong>([\s\S]*?)<\/strong>/i);
+    if (!idMatch || !titleMatch) continue;
+    const cells = [...row.matchAll(/<td\b[^>]*>([\s\S]*?)<\/td>/gi)].map((cell) => stripHtml(cell[1]));
+    const type = cells[2] || "";
+    const episodeMatch = String(cells[3] || "").match(/\d+/);
+    items.push({
+      mal_id: Number(idMatch[1]),
+      title: stripHtml(titleMatch[1]),
+      url: `${MAL_HTML_BASE_URL}/anime/${Number(idMatch[1])}`,
+      type,
+      episodes: episodeMatch ? Number(episodeMatch[0]) : null,
+      status: "",
+      airing: false,
+    });
+  }
+  return items;
+}
+
+function malDetailValue(html, label) {
+  const match = String(html || "").match(new RegExp(`<span class=["']dark_text["']>${label}:<\\/span>([\\s\\S]*?)<\\/div>`, "i"));
+  return match ? stripHtml(match[1]) : "";
+}
+
+function applyMalDetail(item, html) {
+  const english = malDetailValue(html, "English");
+  const japanese = malDetailValue(html, "Japanese");
+  const synonyms = malDetailValue(html, "Synonyms");
+  const episodes = malDetailValue(html, "Episodes").match(/\d+/)?.[0];
+  const status = malDetailValue(html, "Status");
+  const type = malDetailValue(html, "Type");
+  return {
+    ...item,
+    title_english: english || item.title_english || "",
+    title_japanese: japanese || item.title_japanese || "",
+    titles: synonyms ? [{ title: synonyms }] : item.titles,
+    episodes: episodes ? Number(episodes) : item.episodes,
+    status: status || item.status || "",
+    type: type || item.type || "",
+  };
+}
+
+async function enrichMalCandidates(items, source, categoryName) {
+  const requestedSeason = categorySeasonNumber(categoryName);
+  const isUsable = (item) => malTitleConfidence(item, source) && malCandidateStartsWithSource(item, source)
+    && (!requestedSeason || malSeasonMarker(item) === requestedSeason || requestedSeason === 1 && !malSeasonMarker(item));
+  if (items.some(isUsable)) return items;
+  // MAL's search table uses the native title only.  Resolve at most the first
+  // three result pages to obtain the English title, which handles translated
+  // library names without turning a preflight into dozens of requests.
+  const enriched = [];
+  for (const item of items.slice(0, 5)) {
+    if (!item?.mal_id) {
+      enriched.push(item);
+      continue;
+    }
+    try {
+      const detail = await fetchMalText(`${MAL_HTML_BASE_URL}/anime/${item.mal_id}`);
+      const candidate = applyMalDetail(item, detail);
+      enriched.push(candidate);
+      if (isUsable(candidate)) break;
+    } catch {
+      enriched.push(item);
+    }
+  }
+  return enriched.length ? enriched : items;
+}
+
+async function searchMalHtml(query, source, categoryName) {
+  const html = await fetchMalText(`${MAL_HTML_BASE_URL}/anime.php?q=${encodeURIComponent(query)}&cat=anime`);
+  return enrichMalCandidates(parseMalHtml(html), source, categoryName);
+}
+
+function malTitles(item) {
+  return [
+    item?.title,
+    item?.title_english,
+    item?.titleEnglish,
+    item?.title_japanese,
+    item?.titleJapanese,
+    ...(Array.isArray(item?.titles) ? item.titles.map((title) => title?.title) : []),
+  ].filter(Boolean).map(String);
+}
+
+function malTitleQueries(source) {
+  const title = String(source?.malTitle || source?.title || "").trim();
+  const fileTitle = String(source?.file || "")
+    .replace(/\.json$/i, "")
+    .replace(/[._-]+/g, " ")
+    .trim();
+  return [title, fileTitle]
+    .filter(Boolean)
+    .filter((query, index, all) => all.findIndex((candidate) => normalizeTitle(candidate) === normalizeTitle(query)) === index);
+}
+
+function malSeasonMarker(item) {
+  const text = malTitles(item).join(" ");
+  const numbered = text.match(/\b(?:season|s)\s*0*(\d{1,2})\b/i);
+  if (numbered) return Number(numbered[1]);
+  const ordinal = text.match(/\b0*(\d{1,2})(?:st|nd|rd|th)\s+season\b/i);
+  if (ordinal) return Number(ordinal[1]);
+  const suffix = text.match(/(?:^|[\s:])0*(\d{1,2})\s*$/i);
+  return suffix ? Number(suffix[1]) : null;
+}
+
+function malCandidateScore(item, source, categoryName) {
+  const sourceTokens = malSearchTokens(source?.malTitle || source?.title);
+  const titleTokens = malSearchTokens(malTitles(item).join(" "));
+  const overlap = [...sourceTokens].filter((token) => titleTokens.has(token)).length;
+  if (!overlap) return Number.NEGATIVE_INFINITY;
+  const requestedSeason = categorySeasonNumber(categoryName);
+  const marker = malSeasonMarker(item);
+  let score = overlap * 20;
+  if (sourceTokens.size && overlap === sourceTokens.size) score += 35;
+  if (requestedSeason && marker === requestedSeason) score += 55;
+  else if (requestedSeason > 1 && marker && marker !== requestedSeason) score -= 70;
+  else if (requestedSeason === 1 && marker && marker > 1) score -= 50;
+  if (String(item?.type || "").toUpperCase() === "TV") score += 8;
+  if (/\b(?:movie|special|ona|ova)\b/i.test(String(item?.type || ""))) score -= 15;
+  if (Number(item?.episodes) > 0) score += 3;
+  return score;
+}
+
+function summarizeMalCandidate(item, score) {
+  return {
+    malId: Number(item?.mal_id) || null,
+    title: String(item?.title || item?.title_english || "").trim(),
+    titleEnglish: String(item?.title_english || "").trim(),
+    type: String(item?.type || ""),
+    episodes: Number(item?.episodes) > 0 ? Number(item.episodes) : null,
+    status: String(item?.status || ""),
+    airing: item?.airing === true,
+    seasonMarker: malSeasonMarker(item),
+    score,
+  };
+}
+
+function malTitleConfidence(candidate, source) {
+  const sourceTokens = malSearchTokens(source?.malTitle || source?.title);
+  const titleTokens = malSearchTokens(malTitles(candidate).join(" "));
+  const overlap = [...sourceTokens].filter((token) => titleTokens.has(token)).length;
+  if (!sourceTokens.size) return false;
+  // A one-token title can still be a distinctive show name (Aharen, Frieren).
+  // Two-token titles may use a distinctive first token (Aharen-san) when the
+  // English alias differs, but longer titles require at least 60% overlap;
+  // this avoids matches such as "Ghost Stories" -> "Monster Hunter Stories"
+  // or "Hazbin Hotel" -> "Sparrow's Hotel".
+  const required = sourceTokens.size === 1
+    ? 1
+    : sourceTokens.size === 2
+      ? 1
+      : Math.max(2, Math.ceil(sourceTokens.size * 0.6));
+  if (overlap < required) return false;
+  if (sourceTokens.size === 2 && overlap === 1) {
+    const firstSourceToken = [...sourceTokens][0];
+    const firstTitleToken = [...titleTokens][0];
+    return firstTitleToken === firstSourceToken;
+  }
+  return true;
+}
+
+function malCandidateStartsWithSource(candidate, source) {
+  const sourceFirst = [...malSearchTokens(source?.malTitle || source?.title)][0];
+  if (!sourceFirst) return false;
+  const nativeFirst = [...malSearchTokens(candidate?.title)][0];
+  if (nativeFirst === sourceFirst) return true;
+  const aliases = [candidate?.title_english, candidate?.titleEnglish, candidate?.title_japanese, candidate?.titleJapanese]
+    .filter(Boolean);
+  return aliases.some((alias) => [...malSearchTokens(alias)][0] === sourceFirst);
+}
+
+function chooseMalCandidate(candidates, source, categoryName) {
+  const requestedSeason = categorySeasonNumber(categoryName);
+  return (Array.isArray(candidates) ? candidates : [])
+    .map((candidate) => ({ candidate, score: malCandidateScore(candidate, source, categoryName) }))
+    .filter((entry) => {
+      if (!Number.isFinite(entry.score) || !malTitleConfidence(entry.candidate, source) || !malCandidateStartsWithSource(entry.candidate, source)) return false;
+      const marker = malSeasonMarker(entry.candidate);
+      // Never use a base/other-season MAL record to decide whether a later
+      // season is complete. An unmarked result is safe only for Season 1.
+      if (requestedSeason > 1 && marker !== requestedSeason) return false;
+      if (requestedSeason === 1 && marker && marker > 1) return false;
+      return true;
+    })
+    .sort((a, b) => b.score - a.score)[0]?.candidate || null;
+}
+
+async function findMalAnime(source, categoryName) {
+  const cache = await loadMalCache();
+  const key = malCacheKey(source?.malTitle || source?.title);
+  const cached = cache[key];
+  const now = Date.now();
+  const cacheTtl = cached?.error ? MAL_ERROR_CACHE_TTL_MS : MAL_CACHE_TTL_MS;
+  if (cached?.version === MAL_CACHE_VERSION && Number.isFinite(Number(cached.checkedAt)) && now - Number(cached.checkedAt) < cacheTtl) {
+    const candidate = chooseMalCandidate(cached.candidates, source, categoryName);
+    return { ...cached, candidate: candidate ? { ...candidate } : null, cached: true };
+  }
+
+  let lastError = null;
+  const candidates = [];
+  for (const query of malTitleQueries(source)) {
+    let items = [];
+    try {
+      // MAL's HTML search is available without credentials and is used first;
+      // Jikan remains a structured fallback when MAL changes its markup.
+      items = await searchMalHtml(query, source, categoryName);
+    } catch (error) {
+      lastError = error;
+    }
+    if (!items.length) {
+      try {
+        const payload = await fetchMalJson(`${MAL_API_BASE_URL}/anime?q=${encodeURIComponent(query)}&limit=10`);
+        items = Array.isArray(payload?.data) ? payload.data : [];
+      } catch (error) {
+        lastError = error;
+      }
+    }
+    for (const item of items) {
+      const score = malCandidateScore(item, source, categoryName);
+      if (Number.isFinite(score)) candidates.push(summarizeMalCandidate(item, score));
+    }
+    if (candidates.length) break;
+  }
+  candidates.sort((a, b) => b.score - a.score);
+  const record = {
+    version: MAL_CACHE_VERSION,
+    checkedAt: now,
+    query: malTitleQueries(source)[0] || "",
+    candidates: candidates.slice(0, 10),
+    error: candidates.length ? "" : (lastError ? (lastError instanceof Error ? lastError.message : String(lastError)) : ""),
+  };
+  cache[key] = record;
+  queueMalCacheWrite();
+  return { ...record, candidate: chooseMalCandidate(candidates, source, categoryName), cached: false };
 }
 
 const SEARCH_STOP_WORDS = new Set([
-  "a", "an", "and", "are", "at", "for", "in", "is", "of", "on", "or", "the", "to", "with",
+  "a", "an", "and", "are", "at", "by", "for", "in", "is", "of", "on", "or", "the", "to", "with",
+  "production",
   "world", "season", "complete", "batch", "collection",
 ]);
 
@@ -90,6 +523,20 @@ function searchTokens(value) {
     .split(/[^\p{L}\p{N}]+/u)
     .map((token) => token.trim())
     .filter((token) => token.length >= 2 && !SEARCH_STOP_WORDS.has(token)));
+}
+
+const MAL_GENERIC_TOKENS = new Set([
+  ...SEARCH_STOP_WORDS,
+  "gals", "girl", "girls", "hotel", "love", "lovely", "night", "stories", "story", "super",
+]);
+
+function malSearchTokens(value) {
+  return new Set(String(value || "")
+    .normalize("NFKD")
+    .toLowerCase()
+    .split(/[^\p{L}\p{N}]+/u)
+    .map((token) => token.trim())
+    .filter((token) => token.length >= 2 && !MAL_GENERIC_TOKENS.has(token)));
 }
 
 function categorySeasonNumber(categoryName) {
@@ -110,7 +557,9 @@ function automaticReleaseScore(item, source, categoryName) {
   if (requestedSeason && releaseInfo.season === requestedSeason) score += 42;
   else if (requestedSeason && releaseInfo.season && releaseInfo.season !== requestedSeason) score -= 55;
   if (/\b(?:batch|complete|collection|全集|season)\b/i.test(item.title)) score += 14;
-  if (/\b(?:bd|bdmv|remux|1080p|720p|web[- .]?dl|dual audio|multi audio)\b/i.test(item.title)) score += 5;
+  if (/\bremux\b/i.test(item.title)) score += 25;
+  if (/\b(?:bd|bdmv|bluray|bdrip)\b/i.test(item.title)) score += 8;
+  if (/\b(?:1080p|720p|web[- .]?dl|dual audio|multi audio|multi[- .]?subs)\b/i.test(item.title)) score += 5;
   score += Math.min(10, Math.log10(Math.max(1, item.seeders || 0) + 1) * 3);
   score += Math.min(5, Math.log10(Math.max(1, item.downloads || 0) + 1));
   return score;
@@ -157,7 +606,7 @@ function episodeInfo(value) {
   const episode = rawEpisode ? Number(rawEpisode) : null;
   const season = seasonEpisode?.[1] || (seasonMatch ? seasonMatch[1] : null);
   return {
-    season: Number.isInteger(season) && season > 0 ? season : null,
+    season: Number.isInteger(Number(season)) && Number(season) > 0 ? Number(season) : null,
     episode: Number.isInteger(episode) && episode > 0 && episode < 1000 ? episode : null,
   };
 }
@@ -214,11 +663,13 @@ function totalSize(data) {
 function categorySummary(category, index) {
   const { entries } = getEntries(category);
   const parsed = entries.map((entry) => episodeInfo(entry?.title)).filter((info) => info.episode);
+  const episodeNumbers = [...new Set(parsed.map((info) => info.episode))].sort((a, b) => a - b);
   return {
     index,
     category: String(category?.category || `Season ${index + 1}`),
     episodeCount: entries.length,
     latestEpisode: parsed.length ? Math.max(...parsed.map((info) => info.episode)) : null,
+    episodeNumbers,
   };
 }
 
@@ -234,6 +685,7 @@ async function listLibrary() {
         file,
         path: `${SOURCE_PREFIX}${file}`,
         title: String(data.title || file.replace(/\.json$/i, "")),
+        malTitle: String(data.malTitle || data.MALTitle || "").trim(),
         image: data.Image || data.image || data.poster || "",
         hidden: data.hidden === true || data.Hidden === true || data.maintainerHidden === true,
         latestTime: data.LatestTime || data.latestTime || "",
@@ -266,16 +718,21 @@ function runEvent(run, message, extra = {}) {
   const event = { at: new Date().toISOString(), event: "run", message, ...extra };
   run.events.push(event);
   if (run.events.length > 2000) run.events.shift();
+  persistLog({ scope: "run", runId: run.id, ...event });
 }
 
 function publicRun(run) {
   return {
     id: run.id,
     state: run.state,
+    phase: run.phase,
     total: run.total,
     completed: run.completed,
     failed: run.failed,
     skipped: run.skipped,
+    preflightCompleted: run.preflightCompleted,
+    preflightTotal: run.preflightTotal,
+    planOnly: run.planOnly === true,
     current: run.current,
     currentJobId: run.currentJobId,
     items: run.items,
@@ -285,30 +742,104 @@ function publicRun(run) {
   };
 }
 
-function buildMaintenanceWork(sources, payload) {
+function maintenanceMalEnabled(payload) {
+  return process.env.MAL_CHECK !== "0" && payload?.malCheck !== false;
+}
+
+function missingEpisodesForCategory(category, expectedEpisodes) {
+  const expected = Number(expectedEpisodes);
+  if (!Number.isInteger(expected) || expected <= 0) return { known: false, missing: [] };
+  const numbers = Array.isArray(category?.episodeNumbers)
+    ? category.episodeNumbers.filter((number) => Number.isInteger(number) && number > 0)
+    : [];
+  if (!numbers.length) {
+    return {
+      known: true,
+      missing: Number(category?.episodeCount) < expected ? Array.from({ length: Math.max(0, expected - Number(category?.episodeCount || 0)) }, (_, index) => Number(category?.episodeCount || 0) + index + 1) : [],
+    };
+  }
+  const present = new Set(numbers);
+  const missing = [];
+  for (let episode = 1; episode <= expected; episode += 1) {
+    if (!present.has(episode)) missing.push(episode);
+  }
+  return { known: true, missing };
+}
+
+function skippedMaintenanceItem(source, category, reason, mal = null) {
+  return {
+    id: randomUUID(), sourcePath: source.path, sourceFile: source.file, title: source.title,
+    category: category?.category || "", state: "skipped", reason, mal,
+  };
+}
+
+async function buildMaintenanceWork(sources, payload, { onProgress } = {}) {
   const sourcePaths = Array.isArray(payload?.sourcePaths) && payload.sourcePaths.length
     ? new Set(payload.sourcePaths.map((path) => String(path)))
     : null;
   const work = [];
-  for (const source of sources) {
+  const selectedSources = sources.filter((source) => !sourcePaths || sourcePaths.has(source.path) || sourcePaths.has(source.file));
+  let preflightCompleted = 0;
+  const malEnabled = maintenanceMalEnabled(payload);
+  for (const source of selectedSources) {
     if (sourcePaths && !sourcePaths.has(source.path) && !sourcePaths.has(source.file)) continue;
     const categories = automaticCategories(source, payload?.allCategories === true);
     if (!categories.length) {
-      work.push({
-        id: randomUUID(), sourcePath: source.path, sourceFile: source.file, title: source.title,
-        category: "", state: "skipped", reason: "no maintainable season category",
-      });
+      work.push(skippedMaintenanceItem(source, null, "no maintainable season category"));
       continue;
     }
+
+    let malResult = null;
+    if (malEnabled) {
+      try {
+        onProgress?.({ title: source.title, state: "checking_mal" });
+        malResult = await findMalAnime(source, categories[0].category);
+      } catch (error) {
+        malResult = { candidate: null, candidates: [], error: error instanceof Error ? error.message : String(error) };
+      }
+    }
     for (const category of categories) {
+      preflightCompleted += 1;
+      onProgress?.({ title: source.title, category: category.category, completed: preflightCompleted });
+      if (malEnabled) {
+        const malCandidate = chooseMalCandidate(malResult?.candidates, source, category.category);
+        if (!malCandidate) {
+          const reason = malResult?.error
+            ? `MAL check unavailable: ${malResult.error}`
+            : "MAL did not return a confident matching anime";
+          work.push(skippedMaintenanceItem(source, category, reason, { status: "unavailable", error: malResult?.error || "" }));
+          continue;
+        }
+        if (!Number.isInteger(Number(malCandidate.episodes)) || Number(malCandidate.episodes) <= 0) {
+          work.push(skippedMaintenanceItem(source, category, "MAL episode count is not available yet", { status: "unknown", ...malCandidate }));
+          continue;
+        }
+        const missing = missingEpisodesForCategory(category, malCandidate.episodes);
+        if (!missing.known) {
+          work.push(skippedMaintenanceItem(source, category, "library episode numbering is not readable", { status: "unknown", ...malCandidate }));
+          continue;
+        }
+        if (!missing.missing.length) {
+          work.push(skippedMaintenanceItem(source, category, `MAL reports ${malCandidate.episodes} episodes and the library is complete`, { status: "complete", ...malCandidate }));
+          continue;
+        }
+        work.push({
+          id: randomUUID(), sourcePath: source.path, sourceFile: source.file, title: source.title,
+          category: category.category, state: "queued", query: "", candidate: null,
+          jobId: null, manifest: null, links: 0, error: "", missingEpisodes: missing.missing,
+          mal: { status: "missing", ...malCandidate },
+        });
+        continue;
+      }
       work.push({
         id: randomUUID(), sourcePath: source.path, sourceFile: source.file, title: source.title,
         category: category.category, state: "queued", query: "", candidate: null,
-        jobId: null, manifest: null, links: 0, error: "",
+        jobId: null, manifest: null, links: 0, error: "", missingEpisodes: [],
+        mal: { status: "disabled" },
       });
     }
   }
-  return work;
+  return { work, preflightCompleted, preflightTotal: selectedSources.reduce((sum, source) => sum + automaticCategories(source, payload?.allCategories === true).length, 0), malEnabled };
 }
 
 async function executeMaintenanceRun(run, payload) {
@@ -336,6 +867,7 @@ async function executeMaintenanceRun(run, payload) {
           torrentUrl: release.torrentUrl,
           magnet: release.magnet,
           destination: maintenanceFolder(item.title, item.category),
+          runId: run.id,
           maintenance: {
             action: "update",
             sourcePath: item.sourcePath,
@@ -386,30 +918,81 @@ async function executeMaintenanceRun(run, payload) {
   } finally {
     run.current = null;
     run.currentJobId = null;
+    run.phase = "complete";
     run.finishedAt = new Date().toISOString();
+    persistLog({
+      scope: "run",
+      event: "run_finished",
+      runId: run.id,
+      state: run.state,
+      completed: run.completed,
+      total: run.total,
+      failed: run.failed,
+      skipped: run.skipped,
+    });
   }
 }
 
 async function startMaintenanceRun(payload = {}) {
   const library = await listLibrary();
   const run = {
-    id: randomUUID(), state: "starting", total: 0, completed: 0, failed: 0, skipped: 0,
-    current: null, currentJobId: null, items: buildMaintenanceWork(library.sources, payload),
-    events: [], startedAt: new Date().toISOString(), finishedAt: null, cancelled: false,
+    id: randomUUID(), state: "checking", phase: maintenanceMalEnabled(payload) ? "mal" : "planning",
+    total: 0, completed: 0, failed: 0, skipped: 0, preflightCompleted: 0, preflightTotal: 0,
+    current: null, currentJobId: null, items: [], events: [], startedAt: new Date().toISOString(),
+    finishedAt: null, cancelled: false, planOnly: payload?.dryRun === true || payload?.planOnly === true,
   };
-  run.total = run.items.length;
+  const requestedSources = Array.isArray(payload?.sourcePaths) && payload.sourcePaths.length
+    ? new Set(payload.sourcePaths.map((path) => String(path)))
+    : null;
+  run.preflightTotal = library.sources
+    .filter((source) => !requestedSources || requestedSources.has(source.path) || requestedSources.has(source.file))
+    .reduce((sum, source) => sum + automaticCategories(source, payload?.allCategories === true).length, 0);
   maintenanceRuns.set(run.id, run);
   run.stop = () => {
     run.cancelled = true;
     run.currentJobId && jobs.get(run.currentJobId)?.stop?.();
   };
-  if (!run.total) {
-    run.state = "complete";
-    run.finishedAt = new Date().toISOString();
-  } else {
-    run.state = "running";
-    void executeMaintenanceRun(run, payload);
-  }
+  persistLog({ scope: "run", event: "run_started", runId: run.id, state: run.state, phase: run.phase });
+  void (async () => {
+    try {
+      runEvent(run, maintenanceMalEnabled(payload)
+        ? "Checking MyAnimeList for missing episodes before searching Nyaa."
+        : "MAL preflight disabled; planning all selected categories.");
+      const planned = await buildMaintenanceWork(library.sources, payload, {
+        onProgress: (progress) => {
+          if (progress?.completed) run.preflightCompleted = progress.completed;
+          if (progress?.state === "checking_mal") run.current = null;
+        },
+      });
+      run.items = planned.work;
+      run.total = run.items.length;
+      run.preflightCompleted = planned.preflightCompleted;
+      run.preflightTotal = planned.preflightTotal;
+      if (run.cancelled) {
+        run.state = "cancelled";
+        run.phase = "complete";
+      } else if (run.planOnly) {
+        run.state = "complete";
+        run.phase = "plan";
+        run.finishedAt = new Date().toISOString();
+        runEvent(run, `Plan ready: ${run.items.filter((item) => item.state === "queued").length} category(s) need maintenance.`);
+      } else if (!run.total) {
+        run.state = "complete";
+        run.phase = "complete";
+        run.finishedAt = new Date().toISOString();
+      } else {
+        run.state = "running";
+        run.phase = "maintenance";
+        void executeMaintenanceRun(run, payload);
+      }
+    } catch (error) {
+      run.failed += 1;
+      run.state = run.cancelled ? "cancelled" : "failed";
+      run.phase = "complete";
+      run.finishedAt = new Date().toISOString();
+      runEvent(run, error instanceof Error ? error.message : String(error));
+    }
+  })();
   return run;
 }
 
@@ -531,6 +1114,16 @@ async function finishJob(job, code, error) {
   job.exitCode = finalCode;
   job.state = finalCode === 0 ? "complete" : "failed";
   if (error) job.events.push({ at: new Date().toISOString(), event: "error", message: error instanceof Error ? error.message : String(error) });
+  if (job.cacheDir) await clearStalePipelineLock(job.cacheDir).catch(() => {});
+  persistLog({
+    scope: "job",
+    event: finalCode === 0 ? "job_complete" : "job_failed",
+    jobId: job.id,
+    runId: job.runId,
+    state: job.state,
+    exitCode: finalCode,
+    message: error ? (error instanceof Error ? error.message : String(error)) : undefined,
+  });
   delete job.finishing;
   job.resolveDone?.(job);
 }
@@ -549,28 +1142,33 @@ function recordEvent(job, event, stream) {
   }
   job.events.push({ at: new Date().toISOString(), stream, ...event });
   if (job.events.length > 5000) job.events.shift();
+  persistLog({ scope: "job", jobId: job.id, runId: job.runId, stream, ...event });
 }
 
-async function startJob({ torrentUrl, magnet, destination, cacheDir, maintenance }) {
+async function startJob({ torrentUrl, magnet, destination, cacheDir, runId, maintenance }) {
   if (!torrentUrl && !magnet) throw new Error("torrentUrl or magnet is required");
   if (!destination || typeof destination !== "string") throw new Error("destination is required");
   const id = randomUUID();
   let resolveDone;
   const job = {
     id, state: "starting", events: [], links: [], artifacts: [], manifest: null,
-    maintenance: maintenance || null, startedAt: new Date().toISOString(),
+    runId: runId || maintenance?.runId || null, maintenance: maintenance || null, cacheDir: null, startedAt: new Date().toISOString(),
     done: new Promise((resolveDonePromise) => { resolveDone = resolveDonePromise; }),
   };
   job.resolveDone = resolveDone;
   jobs.set(id, job);
   const source = torrentUrl || magnet;
-  const cache = resolve(cacheDir || DEFAULT_CACHE);
+  const cacheRoot = resolve(cacheDir || DEFAULT_CACHE);
+  const cache = join(cacheRoot, id);
   await mkdir(cache, { recursive: true });
+  job.cacheDir = cache;
+  await clearStalePipelineLock(cache);
   const args = ["--base-url", TOODRIVE_BASE_URL, "torrent", source, destination, "--video-pipeline", "--download-all", "--repair", "--json", "--cache-dir", cache];
   if (maintenance?.replaceExisting) args.push("--exist=overwrite");
   const child = spawn(TD_BIN, args, { env: { ...process.env }, stdio: ["ignore", "pipe", "pipe"] });
   job.pid = child.pid;
   job.state = "running";
+  persistLog({ scope: "job", event: "job_started", jobId: job.id, runId: job.runId, pid: job.pid, source, destination });
   const buffers = { stdout: "", stderr: "" };
   const consume = (chunk, stream) => {
     buffers[stream] += String(chunk);
@@ -602,6 +1200,7 @@ async function startJob({ torrentUrl, magnet, destination, cacheDir, maintenance
 function publicJob(job) {
   return {
     id: job.id,
+    runId: job.runId,
     state: job.state,
     pid: job.pid,
     links: job.links,
@@ -628,6 +1227,14 @@ const server = createServer(async (req, res) => {
       return json(res, 200, { items: await nyaaSearch(query) });
     }
     if (req.method === "GET" && url.pathname === "/api/library") return json(res, 200, await listLibrary());
+    if (req.method === "GET" && url.pathname === "/api/maintenance/logs") {
+      const entries = await readPersistedLogs({
+        runId: url.searchParams.get("runId") || url.searchParams.get("run") || "",
+        jobId: url.searchParams.get("jobId") || url.searchParams.get("job") || "",
+        limit: url.searchParams.get("limit") || 500,
+      });
+      return json(res, 200, { file: LOG_FILE, entries });
+    }
     if (req.method === "POST" && (url.pathname === "/api/maintenance/runs" || url.pathname === "/api/maintenance/scan")) {
       return json(res, 202, publicRun(await startMaintenanceRun(await readBody(req))));
     }
@@ -676,4 +1283,5 @@ server.listen(PORT, "127.0.0.1", () => {
   console.log(`Repository: ${REPO_ROOT}`);
   console.log(`Using td: ${TD_BIN}`);
   console.log(`Using Toodrive: ${TOODRIVE_BASE_URL}`);
+  persistLog({ scope: "service", event: "service_started", port: PORT, repository: REPO_ROOT, td: TD_BIN });
 });

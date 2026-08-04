@@ -27,6 +27,36 @@
     return body;
   }
 
+  function formatPersistedLog(entry) {
+    const timestamp = entry.at ? new Date(entry.at) : null;
+    const when = timestamp && !Number.isNaN(timestamp.getTime()) ? timestamp.toLocaleTimeString() : "--:--:--";
+    const scope = entry.scope ? `[${entry.scope}]` : "[service]";
+    let message = entry.message || entry.phase || entry.event || "log";
+    if (entry.event === "progress" && entry.totalBytes) {
+      const percent = Math.min(100, (Number(entry.transferredBytes || 0) / Number(entry.totalBytes)) * 100).toFixed(1);
+      message = `${entry.phase || "progress"} ${percent}%${entry.remotePath ? ` · ${entry.remotePath}` : ""}`;
+    } else if (entry.remotePath) {
+      message = `${message} · ${entry.remotePath}`;
+    }
+    return `${when} ${scope} ${message}`;
+  }
+
+  async function reloadPersistedLog() {
+    const params = new URLSearchParams({ limit: "500" });
+    if (state.jobKind === "run" && state.jobId) params.set("runId", state.jobId);
+    if (state.jobKind === "job" && state.jobId) params.set("jobId", state.jobId);
+    try {
+      const data = await request(`/api/maintenance/logs?${params}`);
+      const entries = Array.isArray(data.entries) ? data.entries : [];
+      const log = $("jobLog");
+      log.textContent = entries.map(formatPersistedLog).join("\n");
+      log.scrollTop = log.scrollHeight;
+      $("logState").textContent = `${entries.length} saved log entr${entries.length === 1 ? "y" : "ies"}`;
+    } catch (error) {
+      $("logState").textContent = `Saved log unavailable: ${error.message}`;
+    }
+  }
+
   function setServiceState(text, error = false) {
     const element = $("serviceState");
     element.textContent = text;
@@ -153,6 +183,7 @@
     $("jobProgressText").textContent = "Starting…";
     $("jobResult").textContent = "";
     $("jobLog").textContent = "";
+    $("logState").textContent = "Waiting for persisted events…";
   }
 
   function handleEvents(job) {
@@ -170,6 +201,14 @@
   }
 
   function renderRunProgress(run) {
+    if (run.state === "checking") {
+      const checked = Number(run.preflightCompleted) || 0;
+      const checkTotal = Number(run.preflightTotal) || 0;
+      $("jobProgress").value = checkTotal ? Math.min(1, checked / checkTotal) : 0;
+      $("jobProgressText").textContent = `Checking MyAnimeList for missing episodes${checkTotal ? ` (${checked}/${checkTotal})` : "…"}`;
+      $("automationSummary").textContent = "MAL preflight is deciding which categories actually need maintenance.";
+      return;
+    }
     const total = Number(run.total) || 0;
     const completed = Number(run.completed) || 0;
     $("jobProgress").value = total ? Math.min(1, completed / total) : 1;
@@ -184,6 +223,13 @@
 
   function renderRunResult(run) {
     const items = Array.isArray(run.items) ? run.items : [];
+    if (run.planOnly === true) {
+      const queued = items.filter((item) => item.state === "queued");
+      const skipped = items.filter((item) => item.state === "skipped").length;
+      $("automationSummary").textContent = `Plan ready: ${queued.length} categor${queued.length === 1 ? "y" : "ies"} need maintenance, ${skipped} skipped.`;
+      $("jobResult").textContent = queued.map((item) => `${item.title} · ${item.category}${item.missingEpisodes?.length ? ` (missing ${item.missingEpisodes.join(", ")})` : ""}`).join("\n") || "No categories need maintenance.";
+      return;
+    }
     const updated = items.filter((item) => item.state === "complete").length;
     const failed = items.filter((item) => item.state === "failed").length;
     const skipped = items.filter((item) => item.state === "skipped").length;
@@ -256,6 +302,7 @@
     state.jobId = run.id;
     state.jobKind = "run";
     appendLog(`Started automated maintenance run ${run.id}`);
+    void reloadPersistedLog();
     state.pollTimer = setInterval(() => { void pollJob(); }, 2000);
     await pollJob();
   }
@@ -276,6 +323,7 @@
     state.jobId = job.id;
     state.jobKind = "job";
     appendLog(`Started new-show job ${job.id}`);
+    void reloadPersistedLog();
     state.pollTimer = setInterval(() => { void pollJob(); }, 2000);
     await pollJob();
   }
@@ -293,6 +341,7 @@
   $("maintenanceTab").addEventListener("click", () => setTab("maintenance"));
   $("addTab").addEventListener("click", () => setTab("add"));
   $("refreshLibraryBtn").addEventListener("click", () => { void refreshLibrary(); });
+  $("refreshLogBtn").addEventListener("click", () => { void reloadPersistedLog(); });
   $("libraryFilter").addEventListener("input", renderLibrary);
   $("updateStartBtn").addEventListener("click", () => startAutomatedMaintenance().catch((error) => { setJobBusy(false); appendLog(`Start failed: ${error.message}`); }));
   $("addSearchBtn").addEventListener("click", () => searchNyaa($("addQuery"), $("addResults"), selectAddRelease).catch((error) => { $("addResults").textContent = `Search failed: ${error.message}`; }));
@@ -317,4 +366,5 @@
 
   setTab("maintenance");
   void refreshLibrary();
+  void reloadPersistedLog();
 })();

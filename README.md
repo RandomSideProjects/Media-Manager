@@ -1,16 +1,6 @@
 # [RSP Media Manager](https://randomsideprojects.github.io/Media-Manager/)
 ![RSP Media Manager logo](https://github.com/RandomSideProjects/Media-Manager/blob/main/Assets/Favicon.png?raw=true)
 
-
-
-# NOTE: this is the **worst** code you have and ever will read. I have not read what is below in six months (January of 2026).
-
-
-
-
-
-
-
 Browser-only player for video libraries and CBZ manga archives. Point it at a JSON manifest—from Catbox, GitHub Pages, or a local folder—and it handles playback, progress, downloads, clipping, and manga reading without any backend.
 
 ## Why use it
@@ -59,6 +49,8 @@ The default General maintenance view runs an automated upkeep pass: it searches
 Nyaa internally, selects the strongest matching release for each show’s latest
 season, downloads and processes it, uploads ordered links, and updates the
 existing manifest. “Add a show” is the only workflow with manual Nyaa search.
+If `nyaa.si` is unavailable, the service automatically falls back to the Nyaa
+RSS mirror at `nyaa.net`.
 
 Start its local companion from the repository:
 
@@ -76,8 +68,27 @@ uploaded torrent paths, and each release is processed by
 push the changed JSON to publish it and let the existing source maintainer
 workflow regenerate indexes/posters.
 
+Before a General maintenance run searches Nyaa, it checks each selected season
+against MyAnimeList. The service uses MAL's public HTML search first and Jikan
+as a fallback, then queues only seasons with missing numbered episodes. A
+successful lookup is cached for 30 minutes at
+`~/.local/share/media-manager-maintenance/mal-cache.json` (override with
+`MAL_CACHE_FILE`); an unavailable lookup is reported and skipped rather than
+guessing. Add `"malTitle": "..."` to a manifest when its display title is an
+abbreviation or typo that MAL cannot match automatically. A dry planning pass
+is available to API callers with `{ "dryRun": true }`; it returns the skipped
+and queued categories without starting torrent jobs.
+
+The local video-pipeline conversion maps every audio and subtitle stream into
+the MP4 output, converts text subtitles to `mov_text`, and preserves container
+metadata and chapters.
+
 The service uses `~/.deno/bin/td` by default. Override `TD_BIN`,
-`MEDIA_MANAGER_ROOT`, `TOODRIVE_BASE_URL`, or `CREATOR_TORRENT_PORT` when needed.
+`MEDIA_MANAGER_ROOT`, `TOODRIVE_BASE_URL`, `CREATOR_TORRENT_PORT`, or
+`MEDIA_MANAGER_LOG_FILE` when needed. Maintenance events are persisted as
+JSONL at `~/.local/share/media-manager-maintenance/maintenance.log` by default;
+the app’s **Reload log** button reads the saved entries through
+`/api/maintenance/logs`.
 
 ## JSON schema (abridged)
 ```json
