@@ -601,7 +601,8 @@ async function startJob({ torrentUrl, magnet, destination, cacheDir, maintenance
   job.resolveDone = resolveDone;
   jobs.set(id, job);
   const source = torrentUrl || magnet;
-  const cache = resolve(cacheDir || DEFAULT_CACHE);
+  const cacheRoot = resolve(cacheDir || DEFAULT_CACHE);
+  const cache = join(cacheRoot, id);
   await mkdir(cache, { recursive: true });
   job.cacheDir = cache;
   await clearStalePipelineLock(cache);
