@@ -179,8 +179,8 @@
         },
         {
           "title": "Episode 4",
-          "src": "https://cpr.xpbliss.fyi/MM/backrooms/The100GirlfriendsWhoReallyReallyReallyReallyReallyLoveYou/S03E04_Episode_4.mp4",
-          "fileSizeBytes": 212588044,
+          "src": "http://localhost:16169/dl/v8h3helaqnisam35i9vu0x1d/raw",
+          "fileSizeBytes": 1459435136,
           "durationSeconds": 1430
         },
         {
@@ -191,7 +191,6 @@
       ]
     }
   ],
-  "totalFileSizeBytes": 8842282717,
-  "LatestTime": "2026-08-07T18:20:12.473Z",
-  "totalDurationSeconds": 39939
+  "totalFileSizeBytes": 10089129809,
+  "LatestTime": "2026-08-07T18:32:56.692Z"
 }
