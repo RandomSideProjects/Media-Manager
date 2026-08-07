@@ -44,34 +44,75 @@ Launch `Creator/index.html` for a guided editor that can import existing manifes
 
 ## Maintenance app
 
-Launch `Maintenance/index.html` for the standalone library-maintenance app.
+The maintenance app is available from the normal navigation and directly at
+`Maintenance/index.html`. The page keeps the automated run, current-job
+progress, and persistent log visible while manual release searching stays
+collapsed until you choose **Add a show manually**.
 The default General maintenance view runs an automated upkeep pass: it searches
-Nyaa internally, selects the strongest matching release for each show’s latest
-season, downloads and processes it, uploads ordered links, and updates the
-existing manifest. “Add a show” is the only workflow with manual Nyaa search.
-If `nyaa.si` is unavailable, the service automatically falls back to the Nyaa
-RSS mirror at `nyaa.net`.
+SeaDex first and falls back to Nyaa/RSS mirrors when no suitable curated release
+exists, selects the strongest release for each show’s latest season or missing
+episode range, downloads it from the returned torrent or info-hash magnet,
+processes it, uploads ordered links, and updates the existing manifest. “Add a
+show” is the only workflow with manual release search. SeaDex title matching
+uses AniList; `RELEASES_BASE_URL` and `ANILIST_API_URL` can override the service
+defaults, while `NYAA_BASE_URL` and `NYAA_FALLBACK_URL` override the Nyaa mirrors.
 
-Start its local companion from the repository:
+The self-starting launcher starts both local servers and opens the UI for you:
 
 ```sh
-node Maintenance/service.mjs
+node Maintenance/standalone.mjs
 ```
 
-Serve the repository and open `http://127.0.0.1:8000/Maintenance/`. Existing
-The automated pass runs categories sequentially, skips movie-only sources, and
+On macOS, you can double-click `Maintenance/Library Maintenance.command` instead.
+Use `--no-open` when you want to start the servers without opening a browser.
+`node Maintenance/service.mjs` remains available as the direct API-service
+entrypoint for advanced/manual setups. The automated pass skips movie-only
+sources and runs one torrent pipeline at a time across General maintenance and
+manual jobs; queued work waits for the current job to finish. Seasons within a
+manifest remain sequential, and
 can optionally check every season. It can replace matching episode links and/or
 append missing episodes. New shows are written as a new
 `Sources/Files/Anime/*.json` manifest. Episode numbers are read from the
 uploaded torrent paths, and each release is processed by
-`td --video-pipeline --download-all --repair` before links are saved. Commit and
-push the changed JSON to publish it and let the existing source maintainer
-workflow regenerate indexes/posters.
+`td --video-pipeline --download-all --repair` before links are saved. Manifest
+writes are serialized so queued work cannot overwrite another update. After a
+successful job, the backend publishes the changed JSON through the GitHub
+Contents API and also updates the local checkout used by the service. Set
+`MEDIA_MANAGER_GITHUB_TOKEN` (or `GITHUB_TOKEN`) to a token with Contents
+read/write access, and optionally set `MEDIA_MANAGER_GITHUB_REPOSITORY` and
+`MEDIA_MANAGER_GITHUB_BRANCH` (default: `RandomSideProjects/Media-Manager`
+and `main`). If GitHub publication is not configured, manifest finalization
+fails instead of silently leaving a local-only update; set
+`MEDIA_MANAGER_GITHUB_PUBLISH=0` only when local-only behavior is intentional.
+Each uploaded file's torrent source and re-encoded file are removed as soon as
+that upload succeeds. Cancelling a run or job stops its `td` process, waits for
+that stop to settle, and removes its cache; every completed or failed job also
+removes the rest of its temporary cache. A service crash before a job reaches a
+terminal state can still leave a cache for restart recovery.
 
-Before a General maintenance run searches Nyaa, it checks each selected season
-against MyAnimeList. The service uses MAL's public HTML search first and Jikan
-as a fallback, then queues only seasons with missing numbered episodes. A
-successful lookup is cached for 30 minutes at
+### Linux API-only server
+
+To install only the Maintenance API as a user-level systemd service on a Linux
+machine, run:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/RandomSideProjects/Media-Manager/main/Maintenance/install-linux.sh | bash
+```
+
+The installer creates a shallow checkout, installs no player or static web
+server, and starts only `Maintenance/service.mjs`. It listens on port `6968`
+and binds to `0.0.0.0` by default so a separate browser/UI machine can reach
+it. Set `MAINTENANCE_HOST=127.0.0.1` or edit the generated environment file if
+it should remain private, and allow port `6968` only through a trusted LAN or
+VPN firewall. For a checkout that already exists, run
+`bash Maintenance/install-linux.sh` from that checkout instead.
+
+Before a General maintenance run searches release sources, it checks each
+selected season against MyAnimeList. The service uses MAL's public HTML search
+first and Jikan as a fallback, then reads MAL's published episode list when an
+airing season still reports `Episodes: Unknown`. It queues only missing aired
+episode numbers and never guesses future episodes. A successful lookup is cached
+for 30 minutes at
 `~/.local/share/media-manager-maintenance/mal-cache.json` (override with
 `MAL_CACHE_FILE`); an unavailable lookup is reported and skipped rather than
 guessing. Add `"malTitle": "..."` to a manifest when its display title is an
@@ -79,16 +120,46 @@ abbreviation or typo that MAL cannot match automatically. A dry planning pass
 is available to API callers with `{ "dryRun": true }`; it returns the skipped
 and queued categories without starting torrent jobs.
 
-The local video-pipeline conversion maps every audio and subtitle stream into
-the MP4 output, converts text subtitles to `mov_text`, and preserves container
-metadata and chapters.
+The local video-pipeline conversion maps every audio and compatible text-
+subtitle stream into the MP4 output, converts text subtitles to `mov_text`, and
+preserves container metadata and chapters. English audio is mapped first and
+explicitly marked as the default track when an English language/title tag is
+present; existing MP4 inputs with a non-default English track are normalized
+before upload as well. Bitmap-only subtitles such as PGS cannot be embedded in
+an MP4 container and require a sidecar or MKV output.
 
 The service uses `~/.deno/bin/td` by default. Override `TD_BIN`,
-`MEDIA_MANAGER_ROOT`, `TOODRIVE_BASE_URL`, `CREATOR_TORRENT_PORT`, or
-`MEDIA_MANAGER_LOG_FILE` when needed. Maintenance events are persisted as
+`MEDIA_MANAGER_ROOT`, `TOODRIVE_BASE_URL`, `CREATOR_TORRENT_HOST`,
+`CREATOR_TORRENT_PORT` (default `6968`), `MEDIA_MANAGER_LOG_FILE`, or the
+`MEDIA_MANAGER_GITHUB_*` settings when needed. Maintenance events are persisted as
 JSONL at `~/.local/share/media-manager-maintenance/maintenance.log` by default;
 the app’s **Reload log** button reads the saved entries through
-`/api/maintenance/logs`.
+`/api/maintenance/logs`. General runs validate the `td` session before starting
+any queued torrent; if it is expired, run `td login --auth-backend=file` and
+start the run again.
+Unfinished maintenance runs are also checkpointed at
+`~/.local/share/media-manager-maintenance/resume-state.json`. When the service
+starts again, it rehydrates the run and relaunches `td` with the same cache
+directory, allowing completed downloads and pipeline work to be reused.
+Override that location with `MEDIA_MANAGER_RESUME_FILE` when needed.
+
+### Native macOS app (Tauri)
+
+The native build owns the window and starts/stops the maintenance service for
+you. Build it from the repository with:
+
+```sh
+cd Maintenance/src-tauri
+npx @tauri-apps/cli@2.11.4 build --bundles app
+open "target/release/bundle/macos/Media Manager Maintenance.app"
+```
+
+The app bundles the maintenance service, torrent-job service, and source
+manifests, so no browser or local static server is needed. On first launch it
+copies the manifests into the app’s writable Application Support data folder;
+maintenance updates are stored there across launches. Node.js is still
+required to run the bundled service, and `td` plus FFmpeg are required when a
+maintenance job actually downloads or remixes media.
 
 ## JSON schema (abridged)
 ```json

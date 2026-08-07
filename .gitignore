@@ -2,7 +2,10 @@
 .DS_Store
 .DS_Store
 /Tools/__pycache__
-/Maintenance/
+# The generated native maintenance output is workstation-only; keep the
+# source-side Maintenance service and installer in version control.
+/Maintenance/tauri-dist/
+/Maintenance/src-tauri/target/
 mm-src-url-report.summary.txt
 mm-src-url-report.json
 reports/curl-source-url-scan-*.json

@@ -1,0 +1,14 @@
+[package]
+name = "media-manager-maintenance"
+version = "0.1.0"
+description = "Native Tauri desktop app for Media Manager library maintenance"
+authors = ["RandomSideProjects"]
+edition = "2021"
+rust-version = "1.77.2"
+build = "build.rs"
+
+[build-dependencies]
+tauri-build = { version = "2.6.3", features = [] }
+
+[dependencies]
+tauri = { version = "2.11.3", features = [] }

@@ -1,7 +1,7 @@
 {
   "title": "Campfire Cooking in Another World with My Absurd Skill",
   "Image": "./Sources/Posters/Anime/Campfire_Cooking_in_Another_World_with_My_Absurd_Skill.webp",
-  "LatestTime": "2026-01-15T22:56:10.304Z",
+  "LatestTime": "2026-08-06T13:22:49.577Z",
   "categories": [
     {
       "category": "Season 1",
@@ -79,8 +79,73 @@
           "durationSeconds": 1436
         }
       ]
+    },
+    {
+      "category": "Season 2",
+      "episodes": [
+        {
+          "title": "Episode 01",
+          "src": "https://toodrive.xpbliss.fyi/dl/lmggw9hxusx8dr8z6scw99nu/raw",
+          "fileSizeBytes": 996264374
+        },
+        {
+          "title": "Episode 02",
+          "src": "https://toodrive.xpbliss.fyi/dl/kc32azhgaoj3eofofa90k53b/raw",
+          "fileSizeBytes": 347671450
+        },
+        {
+          "title": "Episode 03",
+          "src": "https://toodrive.xpbliss.fyi/dl/mci0bc9x1calpy8z5hevv50d/raw",
+          "fileSizeBytes": 1505635438
+        },
+        {
+          "title": "Episode 04",
+          "src": "https://toodrive.xpbliss.fyi/dl/gyiqtfm4pbmg72b589ahhbkz/raw",
+          "fileSizeBytes": 1501274234
+        },
+        {
+          "title": "Episode 05",
+          "src": "https://toodrive.xpbliss.fyi/dl/d5ojjnlhf67a9vs5adt2i66q/raw",
+          "fileSizeBytes": 1503633201
+        },
+        {
+          "title": "Episode 06",
+          "src": "https://toodrive.xpbliss.fyi/dl/ejlae4zfi3roks5g3qr4a6r2/raw",
+          "fileSizeBytes": 2103902910
+        },
+        {
+          "title": "Episode 07",
+          "src": "https://toodrive.xpbliss.fyi/dl/xk58562zkpbfvob103g71vw1/raw",
+          "fileSizeBytes": 1504665883
+        },
+        {
+          "title": "Episode 08",
+          "src": "https://toodrive.xpbliss.fyi/dl/b8pkzalo1l8e3bqu6qdhoti1/raw",
+          "fileSizeBytes": 1501447865
+        },
+        {
+          "title": "Episode 09",
+          "src": "https://toodrive.xpbliss.fyi/dl/z36mnco9ryilk7j4z8x7wfct/raw",
+          "fileSizeBytes": 1504152279
+        },
+        {
+          "title": "Episode 10",
+          "src": "https://toodrive.xpbliss.fyi/dl/zetqj85ob6oj7qz93b5ouj2m/raw",
+          "fileSizeBytes": 1506216999
+        },
+        {
+          "title": "Episode 11",
+          "src": "https://toodrive.xpbliss.fyi/dl/qbvyrg7lxpkh4tcxe0rcmlr8/raw",
+          "fileSizeBytes": 1500881654
+        },
+        {
+          "title": "Episode 12",
+          "src": "https://toodrive.xpbliss.fyi/dl/xpl1n6knpbecm6a79pbft6bf/raw",
+          "fileSizeBytes": 1506316671
+        }
+      ]
     }
   ],
-  "totalFileSizeBytes": 2007424004,
+  "totalFileSizeBytes": 18989486962,
   "totalDurationSeconds": 17232
 }

@@ -77,10 +77,75 @@
           "durationSeconds": 1432
         }
       ]
+    },
+    {
+      "category": "Season 2",
+      "episodes": [
+        {
+          "title": "Episode 01",
+          "src": "https://toodrive.xpbliss.fyi/dl/krxpub5k1ddrx2v0xv1um4r8/raw",
+          "fileSizeBytes": 1025470525
+        },
+        {
+          "title": "Episode 02",
+          "src": "https://toodrive.xpbliss.fyi/dl/dpo63ns05ijkljs5zmssqymy/raw",
+          "fileSizeBytes": 996877012
+        },
+        {
+          "title": "Episode 03",
+          "src": "https://toodrive.xpbliss.fyi/dl/a7zrs1wgbpndouryp1cf8nq1/raw",
+          "fileSizeBytes": 1026632083
+        },
+        {
+          "title": "Episode 04",
+          "src": "https://toodrive.xpbliss.fyi/dl/cvl2mcca7iculn1ahii2jf7x/raw",
+          "fileSizeBytes": 1025022271
+        },
+        {
+          "title": "Episode 05",
+          "src": "https://toodrive.xpbliss.fyi/dl/l48x0hqpmftqx3ljhhhcj2s4/raw",
+          "fileSizeBytes": 1026336339
+        },
+        {
+          "title": "Episode 06",
+          "src": "https://toodrive.xpbliss.fyi/dl/slnh8jkzigl19pcr2x62rvqb/raw",
+          "fileSizeBytes": 1027669498
+        },
+        {
+          "title": "Episode 07",
+          "src": "https://toodrive.xpbliss.fyi/dl/n3dhbvvdb2r8hba1pt118k4g/raw",
+          "fileSizeBytes": 1063966332
+        },
+        {
+          "title": "Episode 08",
+          "src": "https://toodrive.xpbliss.fyi/dl/kpjxrop7x5wta8hbki2zp7w6/raw",
+          "fileSizeBytes": 931436400
+        },
+        {
+          "title": "Episode 09",
+          "src": "https://toodrive.xpbliss.fyi/dl/libeex1achehyj3cynwxp1s4/raw",
+          "fileSizeBytes": 1000264759
+        },
+        {
+          "title": "Episode 10",
+          "src": "https://toodrive.xpbliss.fyi/dl/to94i2944h14jlmy15wk6lmj/raw",
+          "fileSizeBytes": 996407214
+        },
+        {
+          "title": "Episode 11",
+          "src": "https://toodrive.xpbliss.fyi/dl/up0l6gkqrt9l6osg6aaaz1uo/raw",
+          "fileSizeBytes": 1025115531
+        },
+        {
+          "title": "Episode 12",
+          "src": "https://toodrive.xpbliss.fyi/dl/m0uhd9qfal8im5dhjhb4q0x3/raw",
+          "fileSizeBytes": 1028319071
+        }
+      ]
     }
   ],
-  "LatestTime": "2025-09-24T12:49:34.195Z",
-  "totalFileSizeBytes": 1879729543,
+  "LatestTime": "2026-08-06T16:02:36.162Z",
+  "totalFileSizeBytes": 14053246578,
   "totalDurationSeconds": 17181,
   "Image": "./Sources/Posters/Anime/Farming_Life_In_Another_World.webp"
 }

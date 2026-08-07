@@ -1,5 +1,3 @@
 #!/usr/bin/env node
-// Standalone entrypoint for the Maintenance app. The implementation remains
-// shared with the earlier Creator companion so both local workflows use the
-// same resumable td/video pipeline.
-import "../Creator/scripts/torrent-job-service.mjs";
+// Stable entrypoint for the Maintenance app's API service.
+import "./torrent-job-service.mjs";

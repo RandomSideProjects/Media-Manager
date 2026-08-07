@@ -1,7 +1,7 @@
 {
   "title": "Easygoing Territory Defense by the Optimistic Lord",
   "Image": "./Sources/Posters/Anime/Easygoing_Territory_Defense_by_the_Optimistic_Lord.webp",
-  "LatestTime": "2026-02-01T03:09:12.287Z",
+  "LatestTime": "2026-08-06T14:27:21.053Z",
   "categories": [
     {
       "category": "Season 1",
@@ -29,10 +29,50 @@
           "src": "https://cpr.xpbliss.fyi/pub/MM/Easygoing_Territory_Defense_By_The_Optimistic_Lord_Production.json/Easygoing%20Territory%20Defense%20by%20the%20Optimistic%20Lord/S01_E04__ABS0004.mp4",
           "fileSizeBytes": 143689784,
           "durationSeconds": 1420
+        },
+        {
+          "title": "Episode 05",
+          "src": "https://toodrive.xpbliss.fyi/dl/o2m3xuo70tev425iph4tmr8e/raw",
+          "fileSizeBytes": 1452618681
+        },
+        {
+          "title": "Episode 06",
+          "src": "https://toodrive.xpbliss.fyi/dl/fcs64nnlwa2evftr7ief0ylm/raw",
+          "fileSizeBytes": 1452448755
+        },
+        {
+          "title": "Episode 07",
+          "src": "https://toodrive.xpbliss.fyi/dl/av17hgyjr094o5v3is5qy64i/raw",
+          "fileSizeBytes": 1452157255
+        },
+        {
+          "title": "Episode 08",
+          "src": "https://toodrive.xpbliss.fyi/dl/xqw4mykh0pmmhjv51c8avni7/raw",
+          "fileSizeBytes": 1451680480
+        },
+        {
+          "title": "Episode 09",
+          "src": "https://toodrive.xpbliss.fyi/dl/h6qp9aqidb8fmr4qwmmpmiba/raw",
+          "fileSizeBytes": 1451540485
+        },
+        {
+          "title": "Episode 10",
+          "src": "https://toodrive.xpbliss.fyi/dl/t1xgbb9pjjy2aucwm9szzwrs/raw",
+          "fileSizeBytes": 1453084285
+        },
+        {
+          "title": "Episode 11",
+          "src": "https://toodrive.xpbliss.fyi/dl/s8732k1m9ch1sevaeyf80zs1/raw",
+          "fileSizeBytes": 1451487523
+        },
+        {
+          "title": "Episode 12",
+          "src": "https://toodrive.xpbliss.fyi/dl/odau51wrphcix3w7ji18jjsm/raw",
+          "fileSizeBytes": 1453466654
         }
       ]
     }
   ],
-  "totalFileSizeBytes": 652461682,
+  "totalFileSizeBytes": 12270945800,
   "totalDurationSeconds": 5680
 }

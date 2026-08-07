@@ -1,6 +1,6 @@
 {
   "title": "Re: Zero",
-  "LatestTime": "2025-10-14T02:12:39.044Z",
+  "LatestTime": "2026-08-07T08:29:15.650Z",
   "categories": [
     {
       "category": "Season 1",
@@ -413,9 +413,69 @@
           "durationSeconds": 1440
         }
       ]
+    },
+    {
+      "category": "Season 4",
+      "episodes": [
+        {
+          "title": "Episode 01",
+          "src": "https://toodrive.xpbliss.fyi/dl/kkisxvedwc9ds9gn47w5fsr1/raw",
+          "fileSizeBytes": 1478441885
+        },
+        {
+          "title": "Episode 02",
+          "src": "https://toodrive.xpbliss.fyi/dl/w1dfmdwwld3vtiq885dul5zr/raw",
+          "fileSizeBytes": 1489828525
+        },
+        {
+          "title": "Episode 03",
+          "src": "https://toodrive.xpbliss.fyi/dl/pljv49j6hnbzjjbnen8y6wml/raw",
+          "fileSizeBytes": 1486365807
+        },
+        {
+          "title": "Episode 04",
+          "src": "https://toodrive.xpbliss.fyi/dl/i64i4r2msjghxicy2vi77bj8/raw",
+          "fileSizeBytes": 1485105469
+        },
+        {
+          "title": "Episode 05",
+          "src": "https://toodrive.xpbliss.fyi/dl/p7moravsxoyzd26azgp3do4p/raw",
+          "fileSizeBytes": 1481892496
+        },
+        {
+          "title": "Episode 06",
+          "src": "https://toodrive.xpbliss.fyi/dl/pan3g4mxc5lchb5cp7m4ueqb/raw",
+          "fileSizeBytes": 1488711506
+        },
+        {
+          "title": "Episode 07",
+          "src": "https://toodrive.xpbliss.fyi/dl/ausyf3tu6uvw1eosf4ziop2a/raw",
+          "fileSizeBytes": 1476131033
+        },
+        {
+          "title": "Episode 08",
+          "src": "https://toodrive.xpbliss.fyi/dl/j2nu64862ieefke4muplj80y/raw",
+          "fileSizeBytes": 1508022143
+        },
+        {
+          "title": "Episode 09",
+          "src": "https://toodrive.xpbliss.fyi/dl/rz7ts0eyr8806t9au9dvo5pj/raw",
+          "fileSizeBytes": 1484989204
+        },
+        {
+          "title": "Episode 10",
+          "src": "https://toodrive.xpbliss.fyi/dl/c1fvav3nizg8cp51z76le6nl/raw",
+          "fileSizeBytes": 1481737195
+        },
+        {
+          "title": "Episode 11",
+          "src": "https://toodrive.xpbliss.fyi/dl/calbhaxpofil05eiix3r5vn7/raw",
+          "fileSizeBytes": 1535003169
+        }
+      ]
     }
   ],
-  "totalFileSizeBytes": 9572793036,
+  "totalFileSizeBytes": 25969021468,
   "totalDurationSeconds": 108650,
   "Image": "./Sources/Posters/Anime/Re_Zero.webp"
 }

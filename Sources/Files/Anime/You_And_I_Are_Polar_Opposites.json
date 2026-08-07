@@ -1,7 +1,7 @@
 {
   "title": "You And I Are Polar Opposites",
   "Image": "./Sources/Posters/Anime/You_And_I_Are_Polar_Opposites.webp",
-  "LatestTime": "2026-03-30T14:19:34.198Z",
+  "LatestTime": "2026-08-07T05:55:01.338Z",
   "categories": [
     {
       "category": "Season 1",
@@ -65,10 +65,50 @@
           "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/YouAndIArePolarOpposites/S01E10_Episode_10.mp4",
           "fileSizeBytes": 131842893,
           "durationSeconds": 1432
+        },
+        {
+          "title": "Episode 11",
+          "src": "https://toodrive.xpbliss.fyi/dl/kv6ie7yg2jrnh2mjfuetuypx/raw",
+          "fileSizeBytes": 1501203678
+        },
+        {
+          "title": "Episode 12",
+          "src": "https://toodrive.xpbliss.fyi/dl/rswoe6jrfhhv1zaiq2nch74c/raw",
+          "fileSizeBytes": 1500295993
+        }
+      ]
+    },
+    {
+      "category": "Season 2",
+      "episodes": [
+        {
+          "title": "Episode 01",
+          "src": "https://toodrive.xpbliss.fyi/dl/iwd8jozxkzetpt6n1pf1vvtv/raw",
+          "fileSizeBytes": 1517790809
+        },
+        {
+          "title": "Episode 02",
+          "src": "https://toodrive.xpbliss.fyi/dl/g3ja7j3adpzxud02n6e8tduq/raw",
+          "fileSizeBytes": 1515851779
+        },
+        {
+          "title": "Episode 03",
+          "src": "https://toodrive.xpbliss.fyi/dl/nsbo8fszalptopzrf3v3xqcq/raw",
+          "fileSizeBytes": 1517037757
+        },
+        {
+          "title": "Episode 04",
+          "src": "https://toodrive.xpbliss.fyi/dl/ii85uzeubk4x21rit33mjtla/raw",
+          "fileSizeBytes": 227509151
+        },
+        {
+          "title": "Episode 05",
+          "src": "https://toodrive.xpbliss.fyi/dl/xkcvnpvlwl0ltl8tsv3heaaa/raw",
+          "fileSizeBytes": 233928609
         }
       ]
     }
   ],
-  "totalFileSizeBytes": 1337037940,
+  "totalFileSizeBytes": 9350655716,
   "totalDurationSeconds": 14410
 }

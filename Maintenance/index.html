@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Library Maintenance · RSP Media Manager</title>
   <link rel="icon" href="../Assets/Favicon.png" />
-  <link rel="stylesheet" href="styles.css?v=20260804-mal-preflight" />
+  <link rel="stylesheet" href="styles.css?v=20260805-maintenance-reconnect-2" />
 </head>
 <body>
   <header class="maintenance-toolbar">
@@ -26,54 +26,90 @@
     </nav>
   </header>
 
-  <main class="maintenance-main">
+  <main id="maintenanceWorkspace" class="maintenance-main">
     <section class="maintenance-hero">
       <div>
         <span class="eyebrow">Media library tools</span>
         <h1>Keep the library current</h1>
-        <p>Keep existing shows current automatically, or use the separate new-show workflow when you want to choose a release yourself.</p>
+        <p>Run one check for the whole library. MyAnimeList identifies missing episodes and later seasons first; existing shows are updated automatically, while the manual form below is only for a brand-new show.</p>
       </div>
       <div class="service-state" id="serviceState" aria-live="polite">Connecting to local service…</div>
     </section>
 
-    <div class="maintenance-tabs" role="tablist" aria-label="Maintenance actions">
-      <button id="maintenanceTab" class="maintenance-tab is-active" type="button" role="tab" aria-selected="true">General maintenance</button>
-      <button id="addTab" class="maintenance-tab" type="button" role="tab" aria-selected="false">Add a show</button>
-    </div>
-
-    <section id="maintenancePane" class="maintenance-pane" role="tabpanel" aria-labelledby="maintenanceTab">
-      <div class="maintenance-columns">
-        <section class="panel library-panel" aria-labelledby="libraryHeading">
-          <div class="panel-heading">
-            <div>
-              <span class="eyebrow">Existing sources</span>
-              <h2 id="libraryHeading">Library</h2>
-            </div>
-            <button id="refreshLibraryBtn" class="button button-secondary" type="button">Refresh</button>
-          </div>
-          <label class="sr-only" for="libraryFilter">Filter library</label>
-          <input id="libraryFilter" class="full-input" type="search" placeholder="Filter shows" autocomplete="off" />
-          <div id="librarySummary" class="muted-line" aria-live="polite"></div>
-          <div id="libraryList" class="library-list" aria-live="polite"></div>
-        </section>
-
-        <section class="panel workflow-panel" aria-labelledby="updateHeading">
+    <section class="panel quick-run-panel" aria-labelledby="updateHeading">
+      <div class="panel-heading">
+        <div>
           <span class="eyebrow">Automatic upkeep</span>
-          <h2 id="updateHeading">Maintain the library</h2>
-          <p class="workflow-copy">One click checks MyAnimeList for missing episodes first, then searches Nyaa only for seasons that need work. Matching releases are downloaded, remixed, uploaded in order, and written back to the existing JSON. Movies are skipped.</p>
-          <div class="check-row automation-options">
-            <label><input id="updateReplace" type="checkbox" checked /> Replace matching episodes</label>
-            <label><input id="updateAdd" type="checkbox" checked /> Add missing episodes</label>
-            <label><input id="updateAllCategories" type="checkbox" /> Check every season</label>
-          </div>
-          <button id="updateStartBtn" class="button button-primary automation-start" type="button">Run automated maintenance</button>
-          <div id="automationSummary" class="muted-line" aria-live="polite">No automated run started.</div>
-        </section>
+          <h2 id="updateHeading">Check and update the library</h2>
+        </div>
+        <button id="updateStartBtn" class="button button-primary" type="button">Run maintenance</button>
       </div>
+      <p class="workflow-copy">Movies are skipped. Existing episodes are kept unless the matching release needs replacing.</p>
+      <div id="automationSummary" class="muted-line" aria-live="polite">No automated run started.</div>
+      <details class="advanced-options">
+        <summary>Advanced run options</summary>
+        <div class="check-row">
+          <label><input id="updateReplace" type="checkbox" checked /> Replace matching episodes</label>
+          <label><input id="updateAdd" type="checkbox" checked /> Add missing episodes</label>
+          <label><input id="updateAllCategories" type="checkbox" /> Check every season</label>
+          <span class="muted-line">Execution is serialized: one torrent job at a time.</span>
+        </div>
+      </details>
     </section>
 
-    <section id="addPane" class="maintenance-pane" role="tabpanel" aria-labelledby="addTab" hidden>
-      <section class="panel add-panel" aria-labelledby="addHeading">
+    <div class="maintenance-columns">
+      <section class="panel library-panel" aria-labelledby="libraryHeading">
+        <div class="panel-heading">
+          <div>
+            <span class="eyebrow">Existing sources</span>
+            <h2 id="libraryHeading">Library</h2>
+          </div>
+          <button id="refreshLibraryBtn" class="button button-secondary" type="button">Refresh</button>
+        </div>
+        <label class="sr-only" for="libraryFilter">Filter library</label>
+        <input id="libraryFilter" class="full-input" type="search" placeholder="Filter shows" autocomplete="off" />
+        <div id="librarySummary" class="muted-line" aria-live="polite"></div>
+        <div id="libraryList" class="library-list" aria-live="polite"></div>
+      </section>
+
+      <section class="panel current-panel" aria-labelledby="currentJobHeading">
+        <div class="panel-heading">
+          <div>
+            <span class="eyebrow">Live status</span>
+            <h2 id="currentJobHeading">Current job</h2>
+          </div>
+          <span id="currentJobState" class="status-pill" aria-live="polite">Idle</span>
+        </div>
+        <div id="currentJob" class="current-job-card" aria-live="polite">
+          <strong id="currentJobTitle">Nothing running</strong>
+          <span id="currentJobMeta" class="muted-line">Start maintenance to see the active show, season, and step here.</span>
+        </div>
+        <div class="progress-row">
+          <span id="jobProgressText" class="muted-line" aria-live="polite">No job running.</span>
+          <span id="jobProgressCount" class="progress-count" aria-live="polite">0/0</span>
+        </div>
+        <progress id="jobProgress" max="1" value="0" aria-label="Maintenance progress"></progress>
+        <div id="torrentProgressDetails" class="torrent-progress-details" aria-live="polite">
+          <div id="torrentProgressPrimary" class="torrent-progress-primary">No torrent transfer active.</div>
+          <div class="torrent-progress-grid">
+            <span>File<strong id="torrentProgressFile">—</strong></span>
+            <span>Progress<strong id="torrentProgressPercent">—</strong></span>
+            <span>Transferred<strong id="torrentProgressBytes">—</strong></span>
+            <span>File rate<strong id="torrentProgressSpeed">—</strong></span>
+            <span>Swarm rate<strong id="torrentProgressSwarmSpeed">—</strong></span>
+            <span>Peers<strong id="torrentProgressPeers">—</strong></span>
+            <span>ETA<strong id="torrentProgressEta">—</strong></span>
+            <span>Target episodes<strong id="torrentProgressTarget">—</strong></span>
+            <span>Last byte<strong id="torrentProgressLastUpdate">—</strong></span>
+          </div>
+          <div id="torrentProgressJobs" class="torrent-progress-jobs" aria-label="Active torrent jobs"></div>
+        </div>
+      </section>
+    </div>
+
+    <details id="manualTools" class="advanced-tools">
+      <summary>Add a show manually</summary>
+      <section id="addPane" class="panel add-panel" aria-labelledby="addHeading">
         <span class="eyebrow">Explicit new-source workflow</span>
         <h2 id="addHeading">Add a new show</h2>
         <div class="field-grid">
@@ -83,8 +119,8 @@
           <label>Poster URL<input id="addImage" type="url" placeholder="Optional image URL" /></label>
         </div>
         <div class="field-grid">
-          <label class="wide-label">Nyaa search<input id="addQuery" type="search" placeholder="Show or release name" /></label>
-          <button id="addSearchBtn" class="button button-primary align-end" type="button">Search Nyaa</button>
+          <label class="wide-label">Release search<input id="addQuery" type="search" placeholder="Show or release name" /></label>
+          <button id="addSearchBtn" class="button button-primary align-end" type="button">Search releases</button>
         </div>
         <div id="addResults" class="search-results"></div>
         <div id="addSelection" class="selected-release" hidden>
@@ -93,27 +129,25 @@
           <button id="addStartBtn" class="button button-primary" type="button">Download, process, and create source</button>
         </div>
       </section>
-    </section>
+    </details>
 
     <section class="panel job-panel" aria-labelledby="jobHeading">
       <div class="panel-heading">
         <div>
           <span class="eyebrow">Activity</span>
-          <h2 id="jobHeading">Job status</h2>
+          <h2 id="jobHeading">Live log</h2>
         </div>
         <div class="job-actions">
           <button id="refreshLogBtn" class="button button-secondary" type="button">Reload log</button>
           <button id="cancelJobBtn" class="button button-danger" type="button" hidden>Cancel</button>
         </div>
       </div>
-      <div id="jobProgressText" class="muted-line" aria-live="polite">No job running.</div>
-      <progress id="jobProgress" max="1" value="0"></progress>
       <div id="logState" class="muted-line" aria-live="polite">Persistent log available from the local service.</div>
-      <pre id="jobLog" class="job-log"></pre>
+      <pre id="jobLog" class="job-log" aria-live="polite"></pre>
       <div id="jobResult" class="job-result" aria-live="polite"></div>
     </section>
   </main>
 
-  <script src="app.js?v=20260804-mal-preflight"></script>
+  <script src="app.js?v=20260807-single-job-cleanup"></script>
 </body>
 </html>

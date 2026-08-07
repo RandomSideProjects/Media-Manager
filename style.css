@@ -1,3 +1,7 @@
+*[hidden] {
+  display: none !important;
+}
+
 html {
   -ms-overflow-style: none;
   scrollbar-width: none;

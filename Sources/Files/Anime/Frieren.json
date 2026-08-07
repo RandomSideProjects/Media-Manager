@@ -173,10 +173,65 @@
           "durationSeconds": 1463
         }
       ]
+    },
+    {
+      "category": "Season 2",
+      "episodes": [
+        {
+          "title": "Episode 01",
+          "src": "https://toodrive.xpbliss.fyi/dl/pbiyv67gjihk3bjgezdztjqc/raw",
+          "fileSizeBytes": 766504579
+        },
+        {
+          "title": "Episode 02",
+          "src": "https://toodrive.xpbliss.fyi/dl/fsbxkqg3026fa9j9sm9bxu33/raw",
+          "fileSizeBytes": 372335859
+        },
+        {
+          "title": "Episode 03",
+          "src": "https://toodrive.xpbliss.fyi/dl/s5ce648pd20lhws3xdwi3x1f/raw",
+          "fileSizeBytes": 372220883
+        },
+        {
+          "title": "Episode 04",
+          "src": "https://toodrive.xpbliss.fyi/dl/tqslgeaqjs298zx4ogi6rnp4/raw",
+          "fileSizeBytes": 1170753570
+        },
+        {
+          "title": "Episode 05",
+          "src": "https://toodrive.xpbliss.fyi/dl/x4jw82797tjhrv5hn0xmsnj9/raw",
+          "fileSizeBytes": 1170911319
+        },
+        {
+          "title": "Episode 06",
+          "src": "https://toodrive.xpbliss.fyi/dl/wuklf2zmtg3aqdxnmjquaxdb/raw",
+          "fileSizeBytes": 1170980886
+        },
+        {
+          "title": "Episode 07",
+          "src": "https://toodrive.xpbliss.fyi/dl/i3dheqr95oxvbgg18ydddagq/raw",
+          "fileSizeBytes": 447610596
+        },
+        {
+          "title": "Episode 08",
+          "src": "https://toodrive.xpbliss.fyi/dl/xl80ljqs4cpsmnhqs5nz0sqf/raw",
+          "fileSizeBytes": 497296040
+        },
+        {
+          "title": "Episode 09",
+          "src": "https://toodrive.xpbliss.fyi/dl/pz07um8c3edqi0iojbxlku88/raw",
+          "fileSizeBytes": 1170506627
+        },
+        {
+          "title": "Episode 10",
+          "src": "https://toodrive.xpbliss.fyi/dl/p0pxv5a6hs2csrkl3b48cykx/raw",
+          "fileSizeBytes": 1240160574
+        }
+      ]
     }
   ],
-  "LatestTime": "2025-09-07T05:58:52.948Z",
-  "totalFileSizeBytes": 4550926547,
+  "LatestTime": "2026-08-06T17:04:06.513Z",
+  "totalFileSizeBytes": 12930207480,
   "totalDurationSeconds": 41399,
   "Image": "./Sources/Posters/Anime/Frieren_Beyond_Journey's_End.webp"
 }

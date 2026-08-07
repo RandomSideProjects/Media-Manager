@@ -13,6 +13,7 @@
 }
 
 * { box-sizing: border-box; }
+*[hidden] { display: none !important; }
 html { background: var(--bg); color: var(--text); }
 body { margin: 0; min-height: 100vh; background: var(--bg); }
 button, input, select { font: inherit; }
@@ -79,7 +80,16 @@ p { color: var(--muted); max-width: 720px; line-height: 1.55; }
 .button-danger { background: var(--danger); }
 .full-input, input, select { width: 100%; min-height: 40px; border: 1px solid #41414b; border-radius: 7px; background: #111114; color: var(--text); padding: .55rem .65rem; }
 input:focus, select:focus, button:focus-visible { outline: 2px solid #69b0ff; outline-offset: 2px; }
-.library-panel { min-height: 520px; }
+.quick-run-panel { margin-bottom: 1rem; }
+.quick-run-panel .panel-heading { margin-bottom: .25rem; }
+.quick-run-panel .button-primary { min-width: 170px; }
+.advanced-options, .advanced-tools { margin-top: .9rem; border-top: 1px solid #2e2e36; padding-top: .75rem; }
+.advanced-options summary, .advanced-tools summary { cursor: pointer; color: #b9d9ff; font-size: .82rem; font-weight: 700; }
+.advanced-options .check-row { margin-top: .7rem; }
+.advanced-tools { margin-bottom: 1rem; }
+.advanced-tools > summary { padding: .2rem 0 .35rem; }
+.advanced-tools[open] > summary { margin-bottom: .8rem; }
+.library-panel { min-height: 380px; }
 .library-list { display: grid; gap: .45rem; margin-top: .75rem; max-height: 650px; overflow: auto; }
 .library-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .6rem; align-items: center; padding: .7rem; border: 1px solid #2e2e36; border-radius: 8px; background: #17171b; }
 .library-row:hover { border-color: #5c6574; }
@@ -107,7 +117,25 @@ label { display: grid; gap: .35rem; color: #d9d9e0; font-size: .86rem; }
 .check-row input { width: auto; min-height: auto; }
 .job-panel { margin-top: 1rem; }
 .job-actions { display: flex; flex-wrap: wrap; gap: .45rem; justify-content: flex-end; }
+.current-panel { min-height: 380px; }
+.status-pill { display: inline-flex; align-items: center; min-height: 28px; padding: .3rem .55rem; border: 1px solid #3d4f64; border-radius: 999px; color: #c8e3ff; background: #172b41; font-size: .75rem; font-weight: 800; }
+.current-job-card { display: grid; gap: .45rem; min-height: 120px; align-content: center; margin: .9rem 0 1rem; padding: 1rem; border: 1px solid #2e3d50; border-radius: 9px; background: #151e2a; }
+.current-job-card strong { font-size: 1.05rem; line-height: 1.35; }
+.current-job-card .muted-line { line-height: 1.45; }
+.progress-row { display: flex; align-items: baseline; justify-content: space-between; gap: .75rem; }
+.progress-count { color: #d4e8ff; font: .82rem ui-monospace, SFMono-Regular, Menlo, monospace; white-space: nowrap; }
 progress { width: 100%; height: 12px; margin: .65rem 0; accent-color: var(--blue); }
+.torrent-progress-details { margin-top: .15rem; padding: .8rem; border: 1px solid #2e3d50; border-radius: 8px; background: #111a25; }
+.torrent-progress-details.is-stalled { border-color: #8a6530; background: #282116; }
+.torrent-progress-primary { color: #d9ebff; font-size: .82rem; font-weight: 700; line-height: 1.4; }
+.torrent-progress-details.is-stalled .torrent-progress-primary { color: #ffd38a; }
+.torrent-progress-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .6rem .8rem; margin-top: .7rem; }
+.torrent-progress-grid span { min-width: 0; color: var(--muted); font-size: .7rem; }
+.torrent-progress-grid strong { display: block; overflow: hidden; margin-top: .2rem; color: var(--text); font-size: .78rem; font-weight: 600; line-height: 1.25; text-overflow: ellipsis; white-space: nowrap; }
+.torrent-progress-jobs { display: grid; gap: .35rem; margin-top: .75rem; padding-top: .65rem; border-top: 1px solid #2b3644; }
+.torrent-progress-job { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .65rem; align-items: baseline; }
+.torrent-progress-job-title { overflow: hidden; color: #d7e8fb; font-size: .74rem; text-overflow: ellipsis; white-space: nowrap; }
+.torrent-progress-job-meta { color: var(--muted); font: .7rem ui-monospace, SFMono-Regular, Menlo, monospace; white-space: nowrap; }
 .job-log { min-height: 72px; max-height: 260px; overflow: auto; margin: .3rem 0 0; padding: .75rem; border: 1px solid #2f2f38; border-radius: 7px; background: #0d0d10; color: #cfd8e6; white-space: pre-wrap; font: .78rem/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; }
 .job-result { color: #a9d4ff; font-size: .86rem; line-height: 1.45; margin-top: .7rem; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
@@ -124,4 +152,6 @@ progress { width: 100%; height: 12px; margin: .65rem 0; accent-color: var(--blue
   .service-state { display: inline-block; margin-top: .8rem; }
   .field-grid { grid-template-columns: 1fr; }
   .align-end { width: 100%; }
+  .torrent-progress-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .torrent-progress-job { grid-template-columns: 1fr; gap: .15rem; }
 }

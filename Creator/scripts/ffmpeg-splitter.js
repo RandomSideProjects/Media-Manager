@@ -321,7 +321,7 @@
         const outputName = `probe_${Date.now()}.json`;
         const text = await readFfprobeOutput(ffmpeg, [
           '-v', 'error',
-          '-show_entries', 'stream=index,codec_type,codec_name,bit_rate:stream_tags=language',
+          '-show_entries', 'stream=index,codec_type,codec_name,bit_rate:stream_tags=language,title:stream_disposition=default',
           '-of', 'json',
           inputName
         ], outputName);
@@ -338,13 +338,17 @@
             index: Number(a.index),
             codec: String(a.codec_name).toLowerCase(),
             bitrate: Number.isFinite(Number(a.bit_rate)) ? Math.round(Number(a.bit_rate)) : null,
-            lang: (a.tags && (a.tags.language || a.tags.LANGUAGE)) || null
+            lang: (a.tags && (a.tags.language || a.tags.LANGUAGE)) || null,
+            title: (a.tags && (a.tags.title || a.tags.TITLE)) || null,
+            default: a.disposition && Number(a.disposition.default) === 1
           })),
           subtitleStreams: subtitles.map((s) => ({
             index: Number(s.index),
             codec: String(s.codec_name).toLowerCase(),
             isText: isTextSubtitleCodec(s.codec_name),
-            lang: (s.tags && (s.tags.language || s.tags.LANGUAGE)) || null
+            lang: (s.tags && (s.tags.language || s.tags.LANGUAGE)) || null,
+            title: (s.tags && (s.tags.title || s.tags.TITLE)) || null,
+            default: s.disposition && Number(s.disposition.default) === 1
           }))
         };
       }
@@ -368,8 +372,10 @@
         videoIndex: videoMatch ? Number(videoMatch[1]) : 0,
         videoCodec: videoMatch ? videoMatch[2].toLowerCase() : null,
         videoBitrate: bitrateMatch ? Number(bitrateMatch[1]) * 1000 : null,
-        audioStreams: [], 
-        subtitleStreams: [] 
+        // null means probing was unavailable; keep optional maps in the
+        // conversion path instead of silently dropping these streams.
+        audioStreams: null,
+        subtitleStreams: null
       };
     } catch (err) {
       try { console.warn('[Creator] FFmpeg stream probe failed:', err); } catch {}
@@ -391,51 +397,47 @@
     }
   }
 
+  function streamLabel(stream) {
+    return `${stream && stream.lang || ''} ${stream && stream.title || ''}`.trim().toLowerCase();
+  }
+
+  function isEnglishStream(stream) {
+    return /(^|[^a-z])(?:eng|en|english)([^a-z]|$)/i.test(streamLabel(stream));
+  }
+
+  function orderedStreams(streams) {
+    const usable = Array.isArray(streams)
+      ? streams.filter((stream) => stream && Number.isFinite(Number(stream.index)))
+      : [];
+    const english = usable.find(isEnglishStream);
+    return english ? [english, ...usable.filter((stream) => stream !== english)] : usable;
+  }
+
+  function needsEnglishAudioDefault(streams) {
+    const audioStreams = Array.isArray(streams && streams.audioStreams) ? streams.audioStreams : [];
+    const english = audioStreams.find(isEnglishStream);
+    return Boolean(english && english.default !== true);
+  }
+
   function streamMapArgs(streams) {
     if (!streams || !Number.isFinite(Number(streams.videoIndex))) {
-      return ['-map', '0:v:0', '-map', '0:a?'];
+      return ['-map', '0:v:0', '-map', '0:a?', '-map', '0:s?'];
     }
     const args = ['-map', `0:${Number(streams.videoIndex)}`];
 
-    const audioStreams = Array.isArray(streams.audioStreams) ? streams.audioStreams : [];
-    const engAudio = audioStreams.find(s => {
-      const l = String(s.lang || '').toLowerCase();
-      return l === 'eng' || l === 'en' || l === 'english';
-    });
-    
-    if (engAudio) {
-      // If English audio is found, map it first
-      args.push('-map', `0:${Number(engAudio.index)}`);
-      audioStreams.forEach((s) => {
-        if (s && s.index !== engAudio.index && Number.isFinite(Number(s.index))) {
-          args.push('-map', `0:${Number(s.index)}`);
-        }
-      });
+    if (Array.isArray(streams.audioStreams)) {
+      const audioStreams = orderedStreams(streams.audioStreams);
+      audioStreams.forEach((s) => args.push('-map', `0:${Number(s.index)}`));
     } else {
-      audioStreams.forEach((s) => {
-        if (s && Number.isFinite(Number(s.index))) args.push('-map', `0:${Number(s.index)}`);
-      });
+      args.push('-map', '0:a?');
     }
 
-    const subtitleStreams = Array.isArray(streams.subtitleStreams) ? streams.subtitleStreams : [];
-    const textSubtitles = subtitleStreams.filter(s => s.isText);
-    const engSub = textSubtitles.find(s => {
-      const l = String(s.lang || '').toLowerCase();
-      return l === 'eng' || l === 'en' || l === 'english';
-    });
-
-    if (engSub) {
-      // Map English text subtitle first
-      args.push('-map', `0:${Number(engSub.index)}`);
-      textSubtitles.forEach((s) => {
-        if (s && s.index !== engSub.index && Number.isFinite(Number(s.index))) {
-          args.push('-map', `0:${Number(s.index)}`);
-        }
-      });
+    if (Array.isArray(streams.subtitleStreams)) {
+      const subtitleStreams = orderedStreams(streams.subtitleStreams);
+      const textSubtitles = subtitleStreams.filter(s => s.isText);
+      textSubtitles.forEach((s) => args.push('-map', `0:${Number(s.index)}`));
     } else {
-      textSubtitles.forEach((s) => {
-        if (s && Number.isFinite(Number(s.index))) args.push('-map', `0:${Number(s.index)}`);
-      });
+      args.push('-map', '0:s?');
     }
 
     return args;
@@ -479,8 +481,11 @@
     }
 
     // Audio handling: re-encode to aac unless already aac/mp3
-    const audioStreams = (streams && Array.isArray(streams.audioStreams)) ? streams.audioStreams : [];
-    if (audioStreams.length > 0) {
+    const audioStreamsKnown = Boolean(streams && Array.isArray(streams.audioStreams));
+    const audioStreams = orderedStreams(streams && streams.audioStreams);
+    if (!audioStreamsKnown) {
+      args.push('-c:a', 'aac', '-b:a', '128k', '-disposition:a:0', 'default');
+    } else if (audioStreams.length > 0) {
       audioStreams.forEach((s, idx) => {
         const isSupportedAudio = !forceReencode && isMp4CopySafeAudioCodec(s.codec);
         args.push(`-c:a:${idx}`, isSupportedAudio ? 'copy' : 'aac');
@@ -491,14 +496,18 @@
             args.push(`-b:a:${idx}`, '128k');
           }
         }
+        args.push(`-disposition:a:${idx}`, idx === 0 ? 'default' : '0');
       });
     } else {
       args.push('-an');
     }
 
     // Subtitle handling: only keep text subtitles, convert to mov_text
-    const textSubtitles = (streams && Array.isArray(streams.subtitleStreams)) ? streams.subtitleStreams.filter(s => s.isText) : [];
-    if (textSubtitles.length > 0) {
+    const subtitlesKnown = Boolean(streams && Array.isArray(streams.subtitleStreams));
+    const textSubtitles = orderedStreams(streams && streams.subtitleStreams).filter(s => s.isText);
+    if (!subtitlesKnown) {
+      args.push('-c:s', 'mov_text');
+    } else if (textSubtitles.length > 0) {
       textSubtitles.forEach((s, idx) => {
         args.push(`-c:s:${idx}`, 'mov_text');
       });
@@ -594,7 +603,9 @@
     const ext = getExtension(file);
     const baseName = trimName(file.name);
     const fallbackInputName = `input.${ext}`;
-    const outputName = `${baseName}.mp4`;
+    const outputName = getExtension(file) === 'mp4' && options.forceRemux === true
+      ? `${baseName}_normalized.mp4`
+      : `${baseName}.mp4`;
     const { ffmpeg } = await loadFfmpeg(onProgress);
 
     if (onProgress) onProgress({ phase: 'write', ratio: 0, message: 'Preparing video' });
@@ -640,6 +651,7 @@
   window.mmIsVideoFileForFfmpeg = isVideoFile;
   window.mmShouldRemuxVideoFileToMp4 = shouldRemuxToMp4;
   window.mmInspectVideoFileStreamsWithFfmpeg = inspectVideoFileStreams;
+  window.mmNeedsEnglishAudioDefault = needsEnglishAudioDefault;
   window.mmRemuxVideoFileToMp4 = remuxVideoFileToMp4;
   window.mmShouldSplitVideoFile = shouldSplitVideo;
   window.mmSplitVideoFileWithFfmpeg = splitVideoFile;
