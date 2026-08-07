@@ -1,7 +1,7 @@
 {
   "title": "Easygoing Territory Defense by the Optimistic Lord",
   "Image": "./Sources/Posters/Anime/Easygoing_Territory_Defense_by_the_Optimistic_Lord.webp",
-  "LatestTime": "2026-08-06T14:27:21.053Z",
+  "LatestTime": "2026-08-07T17:44:32.046Z",
   "categories": [
     {
       "category": "Season 1",
@@ -26,8 +26,8 @@
         },
         {
           "title": "Episode 4",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/Easygoing_Territory_Defense_By_The_Optimistic_Lord_Production.json/Easygoing%20Territory%20Defense%20by%20the%20Optimistic%20Lord/S01_E04__ABS0004.mp4",
-          "fileSizeBytes": 143689784,
+          "src": "http://localhost:16169/dl/b95plul86g2jky44duar4yk2/raw",
+          "fileSizeBytes": 1452092513,
           "durationSeconds": 1420
         },
         {
@@ -73,6 +73,6 @@
       ]
     }
   ],
-  "totalFileSizeBytes": 12270945800,
+  "totalFileSizeBytes": 13579348529,
   "totalDurationSeconds": 5680
 }
