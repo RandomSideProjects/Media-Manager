@@ -1,8 +1,36 @@
 "use strict";
 
 (function initMaintenanceApp() {
-  const serviceFromUrl = new URLSearchParams(window.location.search).get("service");
-  const SERVICE = window.MAINTENANCE_SERVICE || serviceFromUrl || "http://127.0.0.1:6968";
+  const DEFAULT_SERVICE = "http://127.0.0.1:6968";
+  const SERVICE_STORAGE_KEY = "media-manager.maintenance.backend";
+
+  function normalizeServiceUrl(value) {
+    const raw = String(value || "").trim();
+    if (!raw) return "";
+    try {
+      const url = new URL(raw);
+      if (!["http:", "https:"].includes(url.protocol)) return "";
+      url.search = "";
+      url.hash = "";
+      return url.toString().replace(/\/+$/, "");
+    } catch {
+      return "";
+    }
+  }
+
+  function storedServiceUrl() {
+    try {
+      return normalizeServiceUrl(window.localStorage.getItem(SERVICE_STORAGE_KEY));
+    } catch {
+      return "";
+    }
+  }
+
+  const serviceFromUrl = normalizeServiceUrl(new URLSearchParams(window.location.search).get("service"));
+  const SERVICE = storedServiceUrl()
+    || normalizeServiceUrl(window.MAINTENANCE_SERVICE)
+    || serviceFromUrl
+    || DEFAULT_SERVICE;
   const $ = (id) => document.getElementById(id);
   const state = {
     sources: [],
@@ -307,6 +335,41 @@
     const element = $("serviceState");
     element.textContent = text;
     element.style.color = error ? "#ff9da5" : "";
+    element.title = `Maintenance backend: ${SERVICE}\nPress D to change it`;
+  }
+
+  function configureMaintenanceBackend() {
+    const entered = window.prompt(
+      "Maintenance backend URL (without /api).\nLeave blank to return to the launcher/default backend.",
+      SERVICE,
+    );
+    if (entered === null) return;
+    const value = normalizeServiceUrl(entered);
+    if (!value) {
+      if (String(entered).trim()) {
+        window.alert("Enter a valid http:// or https:// maintenance backend URL.");
+        return;
+      }
+      try {
+        window.localStorage.removeItem(SERVICE_STORAGE_KEY);
+      } catch {
+        // A blocked storage area should not prevent returning to the default backend.
+      }
+      window.location.reload();
+      return;
+    }
+    try {
+      window.localStorage.setItem(SERVICE_STORAGE_KEY, value);
+    } catch {
+      window.alert("The backend URL could not be saved in this browser.");
+      return;
+    }
+    window.location.reload();
+  }
+
+  function isTypingTarget(target) {
+    return target instanceof HTMLElement
+      && (target.matches("input, textarea, select, button, [contenteditable='true']") || target.isContentEditable);
   }
 
   function formatDate(value) {
@@ -767,6 +830,13 @@
     $("jobProgressText").textContent = "Cancelled.";
     updateCurrentJob("Cancelled", "Maintenance", "The current run was cancelled.");
     appendLog("Cancelled.");
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.repeat || event.metaKey || event.ctrlKey || event.altKey || event.key.toLowerCase() !== "d") return;
+    if (isTypingTarget(event.target)) return;
+    event.preventDefault();
+    configureMaintenanceBackend();
   });
 
   void refreshLibrary();

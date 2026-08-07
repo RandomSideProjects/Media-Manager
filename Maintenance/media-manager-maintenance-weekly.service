@@ -1,0 +1,9 @@
+[Unit]
+Description=Run weekly Media Manager maintenance
+Requires=media-manager-maintenance.service
+After=media-manager-maintenance.service
+
+[Service]
+Type=oneshot
+Environment=MAINTENANCE_BACKEND_URL=http://127.0.0.1:6968
+ExecStart=/usr/bin/node %h/media-manager-maintenance/Maintenance/weekly-maintenance-run.mjs
