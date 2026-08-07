@@ -4835,6 +4835,10 @@
     {
       "old": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/TuneInToTheMidnightHeart/S01E10_Episode_10.mp4",
       "new": "http://localhost:16169/dl/ekcb5l0ym12r465a7o57rp83/raw"
+    },
+    {
+      "old": "https://cpr.xpbliss.fyi/pub/MM/Watari_Kun_S_Is_About_To_Collapse.json/Watari-kun%27s%20_%20Is%20About%20To%20Collapse/S01_E01__ABS0001.mp4",
+      "new": "http://localhost:16169/dl/l9bxivf9b8l96dpvuk50163g/raw"
     }
   ]
 }
