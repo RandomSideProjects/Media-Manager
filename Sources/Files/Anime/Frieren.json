@@ -224,14 +224,14 @@
         },
         {
           "title": "Episode 10",
-          "src": "https://toodrive.xpbliss.fyi/dl/p0pxv5a6hs2csrkl3b48cykx/raw",
-          "fileSizeBytes": 1240160574
+          "src": "http://localhost:16169/dl/vu4olh7cha0zyk8jk35zs3an/raw",
+          "fileSizeBytes": 1498148321
         }
       ]
     }
   ],
-  "LatestTime": "2026-08-06T17:04:06.513Z",
-  "totalFileSizeBytes": 12930207480,
+  "LatestTime": "2026-08-07T17:56:09.656Z",
+  "totalFileSizeBytes": 13188195227,
   "totalDurationSeconds": 41399,
   "Image": "./Sources/Posters/Anime/Frieren_Beyond_Journey's_End.webp"
 }
