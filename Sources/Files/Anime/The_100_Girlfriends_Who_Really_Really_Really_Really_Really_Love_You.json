@@ -161,8 +161,8 @@
       "episodes": [
         {
           "title": "Episode 1",
-          "src": "https://files.catbox.moe/rrvgnf.m3u8",
-          "fileSizeBytes": 214196436,
+          "src": "http://localhost:16169/dl/wyhbd6zm4e3nngbx85vfybg7/raw",
+          "fileSizeBytes": 1482273102,
           "durationSeconds": 1431
         },
         {
@@ -191,7 +191,7 @@
       ]
     }
   ],
-  "totalFileSizeBytes": 5052767826,
-  "LatestTime": "2026-08-07T03:19:05.429Z",
+  "totalFileSizeBytes": 6320844492,
+  "LatestTime": "2026-08-07T18:04:57.421Z",
   "totalDurationSeconds": 39939
 }
