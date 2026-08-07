@@ -4779,6 +4779,10 @@
     {
       "old": "https://toodrive.xpbliss.fyi/dl/p0pxv5a6hs2csrkl3b48cykx/raw",
       "new": "http://localhost:16169/dl/vu4olh7cha0zyk8jk35zs3an/raw"
+    },
+    {
+      "old": "https://files.catbox.moe/rrvgnf.m3u8",
+      "new": "http://localhost:16169/dl/wyhbd6zm4e3nngbx85vfybg7/raw"
     }
   ]
 }
