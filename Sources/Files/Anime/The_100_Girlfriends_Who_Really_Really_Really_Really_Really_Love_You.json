@@ -173,8 +173,8 @@
         },
         {
           "title": "Episode 3",
-          "src": "https://files.catbox.moe/s3rvcb.mp4",
-          "fileSizeBytes": 200408036,
+          "src": "http://localhost:16169/dl/jhmn13pwi78lbwexeuu0lkei/raw",
+          "fileSizeBytes": 1483475232,
           "durationSeconds": 1430
         },
         {
@@ -191,7 +191,7 @@
       ]
     }
   ],
-  "totalFileSizeBytes": 7559215521,
-  "LatestTime": "2026-08-07T18:12:25.684Z",
+  "totalFileSizeBytes": 8842282717,
+  "LatestTime": "2026-08-07T18:20:12.473Z",
   "totalDurationSeconds": 39939
 }
