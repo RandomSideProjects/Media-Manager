@@ -1,6 +1,6 @@
 {
   "title": "Watari-kun's ****** Is About To Collapse",
-  "LatestTime": "2026-08-07T20:12:59.379Z",
+  "LatestTime": "2026-08-07T20:22:07.023Z",
   "categories": [
     {
       "category": "Season 1",
@@ -13,8 +13,8 @@
         },
         {
           "title": "Episode 2",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/Watari_Kun_S_Is_About_To_Collapse.json/Watari-kun%27s%20_%20Is%20About%20To%20Collapse/S01_E02__ABS0002.mp4",
-          "fileSizeBytes": 118440893,
+          "src": "http://localhost:16169/dl/t7i5tkewgapzdmebqj77u1wr/raw",
+          "fileSizeBytes": 1489874708,
           "durationSeconds": 1420
         },
         {
@@ -149,6 +149,6 @@
       ]
     }
   ],
-  "totalFileSizeBytes": 25000790861,
+  "totalFileSizeBytes": 26372224676,
   "Image": "./Sources/Posters/Anime/Watari-kun's_Is_About_To_Collapse.webp"
 }
