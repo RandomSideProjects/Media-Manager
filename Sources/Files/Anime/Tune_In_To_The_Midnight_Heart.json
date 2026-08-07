@@ -1,7 +1,7 @@
 {
   "title": "Tune In to the Midnight Heart",
   "Image": "./Sources/Posters/Anime/Tune_In_to_the_Midnight_Heart.webp",
-  "LatestTime": "2026-08-07T19:24:41.747Z",
+  "LatestTime": "2026-08-07T19:36:52.868Z",
   "categories": [
     {
       "category": "Season 1",
@@ -44,8 +44,8 @@
         },
         {
           "title": "Episode 07",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/TuneInToTheMidnightHeart/S01E07_Episode_7.mp4",
-          "fileSizeBytes": 175381109,
+          "src": "http://localhost:16169/dl/tnv3d5x5ruetzlj4mr37wc5b/raw",
+          "fileSizeBytes": 1488001828,
           "durationSeconds": 1420
         },
         {
@@ -79,5 +79,5 @@
       ]
     }
   ],
-  "totalFileSizeBytes": 12513528665
+  "totalFileSizeBytes": 13826149384
 }
