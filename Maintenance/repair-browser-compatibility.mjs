@@ -194,16 +194,21 @@ for (const entry of files) {
     const lines = downloaded.trim().split(/\r?\n/).filter(Boolean);
     if (lines.length === 0) throw new Error("download produced no output");
     const localFile = await findDownloadedFile(work, entry.name);
-    const probe = await execFileAsync("ffprobe", ["-v", "error", "-select_streams", "v:0", "-show_entries", "stream=codec_name,pix_fmt", "-of", "json", localFile], { maxBuffer: 2 * 1024 * 1024 });
-    const video = JSON.parse(probe.stdout).streams?.[0] || {};
-    if (video.codec_name === "h264" && video.pix_fmt === "yuv420p") {
-      console.log(`already browser-safe video: ${entry.name}`);
+    const probe = await execFileAsync("ffprobe", ["-v", "error", "-show_entries", "stream=codec_type,codec_name,pix_fmt", "-of", "json", localFile], { maxBuffer: 2 * 1024 * 1024 });
+    const streams = JSON.parse(probe.stdout).streams || [];
+    const video = streams.find((stream) => stream.codec_type === "video") || {};
+    const audio = streams.filter((stream) => stream.codec_type === "audio");
+    const browserSafe = video.codec_name === "h264"
+      && video.pix_fmt === "yuv420p"
+      && audio.every((stream) => ["aac", "mp3"].includes(String(stream.codec_name || "").toLowerCase()));
+    if (browserSafe) {
+      console.log(`already browser-safe: ${entry.name}`);
       state.replacements[entry.id] = { skipped: true, checkedAt: new Date().toISOString() };
       await saveState(state);
       continue;
     }
     if (DRY_RUN) {
-      console.log(`dry-run would repair ${entry.name}: ${video.codec_name || "unknown"}/${video.pix_fmt || "unknown"}`);
+      console.log(`dry-run would repair ${entry.name}: ${video.codec_name || "unknown"}/${video.pix_fmt || "unknown"} audio=${audio.map((stream) => stream.codec_name).join(",") || "none"}`);
       continue;
     }
     await runHelper(localFile);
