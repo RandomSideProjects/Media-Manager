@@ -180,58 +180,66 @@
         {
           "title": "Episode 01",
           "src": "https://toodrive.xpbliss.fyi/dl/pbiyv67gjihk3bjgezdztjqc/raw",
-          "fileSizeBytes": 766504579
+          "fileSizeBytes": 766504579,
+          "durationSeconds": 1440
         },
         {
           "title": "Episode 02",
           "src": "https://toodrive.xpbliss.fyi/dl/fsbxkqg3026fa9j9sm9bxu33/raw",
-          "fileSizeBytes": 372335859
+          "fileSizeBytes": 372335859,
+          "durationSeconds": 1440
         },
         {
           "title": "Episode 03",
           "src": "https://toodrive.xpbliss.fyi/dl/s5ce648pd20lhws3xdwi3x1f/raw",
-          "fileSizeBytes": 372220883
+          "fileSizeBytes": 372220883,
+          "durationSeconds": 1440
         },
         {
           "title": "Episode 04",
           "src": "https://toodrive.xpbliss.fyi/dl/tqslgeaqjs298zx4ogi6rnp4/raw",
-          "fileSizeBytes": 1170753570
+          "fileSizeBytes": 1170753570,
+          "durationSeconds": 1441
         },
         {
           "title": "Episode 05",
           "src": "https://toodrive.xpbliss.fyi/dl/x4jw82797tjhrv5hn0xmsnj9/raw",
-          "fileSizeBytes": 1170911319
+          "fileSizeBytes": 1170911319,
+          "durationSeconds": 1441
         },
         {
           "title": "Episode 06",
           "src": "https://toodrive.xpbliss.fyi/dl/wuklf2zmtg3aqdxnmjquaxdb/raw",
-          "fileSizeBytes": 1170980886
+          "fileSizeBytes": 1170980886,
+          "durationSeconds": 1441
         },
         {
           "title": "Episode 07",
           "src": "https://toodrive.xpbliss.fyi/dl/i3dheqr95oxvbgg18ydddagq/raw",
-          "fileSizeBytes": 447610596
+          "fileSizeBytes": 447610596,
+          "durationSeconds": 1440
         },
         {
           "title": "Episode 08",
           "src": "https://toodrive.xpbliss.fyi/dl/xl80ljqs4cpsmnhqs5nz0sqf/raw",
-          "fileSizeBytes": 497296040
+          "fileSizeBytes": 497296040,
+          "durationSeconds": 1440
         },
         {
           "title": "Episode 09",
           "src": "https://toodrive.xpbliss.fyi/dl/pz07um8c3edqi0iojbxlku88/raw",
-          "fileSizeBytes": 1170506627
+          "fileSizeBytes": 1170506627,
+          "durationSeconds": 1441
         },
         {
           "title": "Episode 10",
-          "src": "http://localhost:16169/dl/vu4olh7cha0zyk8jk35zs3an/raw",
-          "fileSizeBytes": 1498148321
+          "src": "https://toodrive.xpbliss.fyi/dl/bid30irzafu0xggtmlg3fxfk/raw",
+          "fileSizeBytes": 1462147883
         }
       ]
     }
   ],
-  "LatestTime": "2026-08-07T17:56:09.656Z",
-  "totalFileSizeBytes": 13188195227,
-  "totalDurationSeconds": 41399,
+  "LatestTime": "2026-08-08T01:09:28.711Z",
+  "totalFileSizeBytes": 13152194789,
   "Image": "./Sources/Posters/Anime/Frieren_Beyond_Journey's_End.webp"
 }
