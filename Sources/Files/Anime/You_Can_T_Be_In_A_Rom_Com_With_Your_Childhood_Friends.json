@@ -1,7 +1,7 @@
 {
   "title": "You Can't Be In a Rom-Com with Your Childhood Friends!",
   "Image": "./Sources/Posters/Anime/You_Can't_Be_In_a_Rom-Com_with_Your_Childhood_Friends!.webp",
-  "LatestTime": "2026-08-08T00:50:14.765Z",
+  "LatestTime": "2026-08-08T00:56:42.793Z",
   "categories": [
     {
       "category": "Season 1",
@@ -62,8 +62,8 @@
         },
         {
           "title": "Episode 10",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/YouCantBeInARomComWithYourChildhoodFriends!/S01E10_Episode_10.mp4",
-          "fileSizeBytes": 165056895,
+          "src": "http://localhost:16169/dl/bnh0jouwswxmogp6ipp5pk92/raw",
+          "fileSizeBytes": 1460036821,
           "durationSeconds": 1430
         },
         {
@@ -79,5 +79,5 @@
       ]
     }
   ],
-  "totalFileSizeBytes": 13372489969
+  "totalFileSizeBytes": 14667469895
 }
