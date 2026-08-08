@@ -2,7 +2,7 @@
   "title": "Apothicary Diaries",
   "malTitle": "The Apothecary Diaries",
   "Image": "./Sources/Posters/Anime/Apothicary_Diaries.webp",
-  "LatestTime": "2026-08-08T23:26:20.556Z",
+  "LatestTime": "2026-08-08T23:33:07.445Z",
   "categories": [
     {
       "category": "Season 1",
@@ -343,13 +343,14 @@
         },
         {
           "title": "Episode 24",
-          "src": "https://toodrive.xpbliss.fyi/dl/ssvb0kb9475ua2letjqlhoof/raw",
-          "fileSizeBytes": 1137030381,
-          "durationSeconds": 1425
+          "src": "https://toodrive.xpbliss.fyi/dl/za3mj0sqb34g2jpyp9qvk7yy/raw",
+          "fileSizeBytes": 1490968759,
+          "durationSeconds": 1425,
+          "dualAudio": true
         }
       ]
     }
   ],
-  "totalFileSizeBytes": 68899366507,
+  "totalFileSizeBytes": 69253304885,
   "totalDurationSeconds": 67520
 }
