@@ -311,6 +311,15 @@
     return /^(h264|avc1)$/i.test(String(codecName || ''));
   }
 
+  function isBrowserCompatibleVideoStreams(streams) {
+    const videoCodec = String(streams && streams.videoCodec || '').toLowerCase();
+    const pixelFormat = String(streams && streams.videoPixelFormat || '').toLowerCase();
+    const audioStreams = Array.isArray(streams && streams.audioStreams) ? streams.audioStreams : [];
+    return /^(h264|avc1)$/.test(videoCodec)
+      && pixelFormat === 'yuv420p'
+      && audioStreams.every((stream) => /^(aac|mp3)$/i.test(String(stream && stream.codec || '')));
+  }
+
   function isMp4CopySafeAudioCodec(codecName) {
     return /^(aac|alac|ac3|eac3|mp3)$/i.test(String(codecName || ''));
   }
@@ -321,7 +330,7 @@
         const outputName = `probe_${Date.now()}.json`;
         const text = await readFfprobeOutput(ffmpeg, [
           '-v', 'error',
-          '-show_entries', 'stream=index,codec_type,codec_name,bit_rate:stream_tags=language,title:stream_disposition=default',
+          '-show_entries', 'stream=index,codec_type,codec_name,profile,pix_fmt,bit_rate:stream_tags=language,title:stream_disposition=default',
           '-of', 'json',
           inputName
         ], outputName);
@@ -333,6 +342,8 @@
         return {
           videoIndex: video && Number.isFinite(Number(video.index)) ? Number(video.index) : null,
           videoCodec: video ? String(video.codec_name).toLowerCase() : null,
+          videoPixelFormat: video ? String(video.pix_fmt || '').toLowerCase() : null,
+          videoProfile: video ? String(video.profile || '') : null,
           videoBitrate: video && Number.isFinite(Number(video.bit_rate)) ? Math.round(Number(video.bit_rate)) : null,
           audioStreams: audio.map((a) => ({
             index: Number(a.index),
@@ -371,6 +382,8 @@
       return {
         videoIndex: videoMatch ? Number(videoMatch[1]) : 0,
         videoCodec: videoMatch ? videoMatch[2].toLowerCase() : null,
+        videoPixelFormat: null,
+        videoProfile: null,
         videoBitrate: bitrateMatch ? Number(bitrateMatch[1]) * 1000 : null,
         // null means probing was unavailable; keep optional maps in the
         // conversion path instead of silently dropping these streams.
@@ -451,7 +464,7 @@
     const isSupportedVideo = !forceReencode && (
       remuxMode === 'fast'
         ? isMp4CopySafeVideoCodec(videoCodec)
-        : isCompatibleCopyVideoCodec(videoCodec)
+        : isCompatibleCopyVideoCodec(videoCodec) && String(streams && streams.videoPixelFormat || '').toLowerCase() === 'yuv420p'
     );
     const vCodecArg = isSupportedVideo ? 'copy' : 'libx264';
 
@@ -651,6 +664,7 @@
   window.mmIsVideoFileForFfmpeg = isVideoFile;
   window.mmShouldRemuxVideoFileToMp4 = shouldRemuxToMp4;
   window.mmInspectVideoFileStreamsWithFfmpeg = inspectVideoFileStreams;
+  window.mmIsBrowserCompatibleVideoStreams = isBrowserCompatibleVideoStreams;
   window.mmNeedsEnglishAudioDefault = needsEnglishAudioDefault;
   window.mmRemuxVideoFileToMp4 = remuxVideoFileToMp4;
   window.mmShouldSplitVideoFile = shouldSplitVideo;
