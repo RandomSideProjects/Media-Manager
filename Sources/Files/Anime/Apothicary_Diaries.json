@@ -2,7 +2,7 @@
   "title": "Apothicary Diaries",
   "malTitle": "The Apothecary Diaries",
   "Image": "./Sources/Posters/Anime/Apothicary_Diaries.webp",
-  "LatestTime": "2026-08-08T22:22:03.280Z",
+  "LatestTime": "2026-08-08T22:29:23.342Z",
   "categories": [
     {
       "category": "Season 1",
@@ -287,9 +287,10 @@
         },
         {
           "title": "Episode 16",
-          "src": "https://toodrive.xpbliss.fyi/dl/trt9dclywb2hmfjlf9wjo7ug/raw",
-          "fileSizeBytes": 1151973776,
-          "durationSeconds": 1442
+          "src": "https://toodrive.xpbliss.fyi/dl/e1g0572to7nue0yc7zl9i9kl/raw",
+          "fileSizeBytes": 1508804681,
+          "durationSeconds": 1442,
+          "dualAudio": true
         },
         {
           "title": "Episode 17",
@@ -342,6 +343,6 @@
       ]
     }
   ],
-  "totalFileSizeBytes": 66639102300,
+  "totalFileSizeBytes": 66995933205,
   "totalDurationSeconds": 67520
 }
