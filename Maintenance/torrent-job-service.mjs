@@ -17,6 +17,7 @@ const HOST = String(process.env.CREATOR_TORRENT_HOST || process.env.MAINTENANCE_
 const SERVICE_PROTOCOL_VERSION = "maintenance-v5";
 const TD_BIN = process.env.TD_BIN || join(homedir(), ".deno/bin/td");
 const FFPROBE_BIN = process.env.FFPROBE_BIN || "ffprobe";
+const BROWSER_COMPATIBILITY_ENABLED = process.env.MEDIA_MANAGER_BROWSER_COMPATIBILITY !== "0";
 const TOODRIVE_BASE_URL = process.env.TOODRIVE_BASE_URL || "https://toodrive.xpbliss.fyi";
 const TOODRIVE_PUBLIC_BASE_URL = String(process.env.TOODRIVE_PUBLIC_BASE_URL || "https://toodrive.xpbliss.fyi").replace(/\/$/, "");
 const LEGACY_TOODRIVE_HOSTS = new Set([
@@ -34,6 +35,7 @@ const NYAA_BASE_URLS = [
 ].filter((base, index, all) => base && all.indexOf(base) === index)
   .map((base) => String(base).replace(/\/$/, ""));
 const SERVICE_DIR = dirname(fileURLToPath(import.meta.url));
+const BROWSER_COMPATIBILITY_SCRIPT = resolve(process.env.MEDIA_MANAGER_BROWSER_COMPATIBILITY_SCRIPT || join(SERVICE_DIR, "browser-compatible-reencode.sh"));
 const REPO_ROOT = resolve(process.env.MEDIA_MANAGER_ROOT || join(SERVICE_DIR, ".."));
 const SOURCE_DIR = resolve(REPO_ROOT, "Sources/Files/Anime");
 const SOURCE_PREFIX = "Sources/Files/Anime/";
@@ -1791,6 +1793,7 @@ function categorySummary(category, index) {
     episodeCount: entries.length,
     latestEpisode: parsed.length ? Math.max(...parsed.map((info) => info.episode)) : null,
     episodeNumbers,
+    dualAudio: entries.length > 0 && entries.every((entry) => entry?.dualAudio === true),
   };
 }
 
@@ -1809,6 +1812,7 @@ async function listLibrary() {
         malTitle: String(data.malTitle || data.MALTitle || "").trim(),
         image: data.Image || data.image || data.poster || "",
         hidden: data.hidden === true || data.Hidden === true || data.maintainerHidden === true,
+        dualAudio: categories.some((category) => category.dualAudio === true),
         latestTime: data.LatestTime || data.latestTime || "",
         categories: categories.map(categorySummary),
       });
@@ -2146,7 +2150,11 @@ async function buildMaintenanceWork(sources, payload, { onProgress } = {}) {
           work.push(skippedMaintenanceItem(source, category, "library episode numbering is not readable", { status: "unknown", ...malCandidate }));
           continue;
         }
-        if (!missing.missing.length) {
+        const refreshEpisodes = payload?.refreshExisting === true
+          ? [...new Set((category.episodeNumbers || []).filter((episode) => Number.isInteger(episode) && episode > 0))].sort((a, b) => a - b)
+          : [];
+        const targetEpisodes = [...new Set([...missing.missing, ...refreshEpisodes])].sort((a, b) => a - b);
+        if (!targetEpisodes.length) {
           const countLabel = expectedEpisodeNumbers.length
             ? `${expectedEpisodeNumbers.length} aired episode${expectedEpisodeNumbers.length === 1 ? "" : "s"}`
             : `${expectedEpisodes} episodes`;
@@ -2160,8 +2168,8 @@ async function buildMaintenanceWork(sources, payload, { onProgress } = {}) {
         work.push({
           id: randomUUID(), sourcePath: source.path, sourceFile: source.file, title: source.title, malTitle: source.malTitle || "",
           category: category.category, state: "queued", query: "", candidate: null,
-          jobId: null, manifest: null, links: 0, error: "", missingEpisodes: missing.missing,
-          mal: { status: "missing", ...malCandidate, toodriveAudit: toodriveAudit || undefined },
+          jobId: null, manifest: null, links: 0, error: "", missingEpisodes: targetEpisodes,
+          mal: { status: refreshEpisodes.length ? "refresh" : "missing", ...malCandidate, toodriveAudit: toodriveAudit || undefined },
         });
         continue;
       }
@@ -2293,6 +2301,7 @@ async function runMaintenanceRelease(run, item, releaseState, payload) {
           replaceExisting: payload?.replaceExisting !== false,
           addMissing: payload?.addMissing !== false,
           createCategory: item.createCategory === true,
+          dualAudio: releaseHasDualAudio(release),
         },
       });
       releaseState.jobId = child.id;
@@ -2728,13 +2737,14 @@ function selectArtifacts(artifacts, maintenance, existingEntries = []) {
     .sort((a, b) => (a.episode || 0) - (b.episode || 0) || String(a.remotePath || "").localeCompare(String(b.remotePath || "")));
 }
 
-function makeEpisodeEntry(artifact, existing) {
+function makeEpisodeEntry(artifact, existing, maintenance = {}) {
   const entry = existing && typeof existing === "object" ? { ...existing } : {};
   const number = artifact.episode;
   if (!entry.title) entry.title = `Episode ${String(number).padStart(2, "0")}`;
   entry.src = normalizeToodriveUrl(artifact.url);
   if (numericValue(artifact.sizeBytes)) entry.fileSizeBytes = numericValue(artifact.sizeBytes);
   if (durationValue(artifact.durationSeconds)) entry.durationSeconds = durationValue(artifact.durationSeconds);
+  if (typeof maintenance.dualAudio === "boolean") entry.dualAudio = maintenance.dualAudio;
   return entry;
 }
 
@@ -2756,7 +2766,7 @@ async function applyMaintenance(maintenance, artifacts) {
     const categoryName = String(maintenance.categoryName || "Season 1").trim() || "Season 1";
     const incoming = selectArtifacts(artifacts, maintenance);
     if (!incoming.length) throw new Error("the torrent produced no video links");
-    const episodes = incoming.map((artifact) => makeEpisodeEntry(artifact));
+    const episodes = incoming.map((artifact) => makeEpisodeEntry(artifact, null, maintenance));
     const data = {
       title,
       categories: [{ category: categoryName, episodes }],
@@ -2796,13 +2806,13 @@ async function applyMaintenance(maintenance, artifacts) {
     const index = artifact.episode ? entries.findIndex((entry) => episodeInfo(entry?.title).episode === artifact.episode) : -1;
     if (index >= 0) {
       if (!replaceExisting) { skipped += 1; continue; }
-      entries[index] = makeEpisodeEntry(artifact, entries[index]);
+      entries[index] = makeEpisodeEntry(artifact, entries[index], maintenance);
       replaced += 1;
       changed.push(entries[index].title);
       continue;
     }
     if (!addMissing) { skipped += 1; continue; }
-    const entry = makeEpisodeEntry(artifact);
+    const entry = makeEpisodeEntry(artifact, null, maintenance);
     entries.push(entry);
     added += 1;
     changed.push(entry.title);
@@ -3011,6 +3021,9 @@ function tdAttemptArgs(job, { downloadAll, repairAttempts }) {
     "--json",
     "--cache-dir", job.cacheDir,
   );
+  if (BROWSER_COMPATIBILITY_ENABLED && job.maintenance) {
+    args.push("--cmd-after-dl", BROWSER_COMPATIBILITY_SCRIPT, "--cmd-exit", "fail");
+  }
   if (job.maintenance?.replaceExisting) args.push("--exist=overwrite");
   return args;
 }
