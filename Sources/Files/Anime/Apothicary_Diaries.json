@@ -2,7 +2,7 @@
   "title": "Apothicary Diaries",
   "malTitle": "The Apothecary Diaries",
   "Image": "./Sources/Posters/Anime/Apothicary_Diaries.webp",
-  "LatestTime": "2026-08-08T20:31:08.300Z",
+  "LatestTime": "2026-08-08T20:39:05.719Z",
   "categories": [
     {
       "category": "Season 1",
@@ -196,9 +196,10 @@
         },
         {
           "title": "Episode 03",
-          "src": "https://toodrive.xpbliss.fyi/dl/ucgdzt1sjjr8mgxr99shawc2/raw",
-          "fileSizeBytes": 483036764,
-          "durationSeconds": 1442
+          "src": "https://toodrive.xpbliss.fyi/dl/l7xtybi0wdyc8uj1e51zfw5c/raw",
+          "fileSizeBytes": 1508450543,
+          "durationSeconds": 1442,
+          "dualAudio": true
         },
         {
           "title": "Episode 04",
@@ -329,6 +330,6 @@
       ]
     }
   ],
-  "totalFileSizeBytes": 58855025940,
+  "totalFileSizeBytes": 59880439719,
   "totalDurationSeconds": 67520
 }
