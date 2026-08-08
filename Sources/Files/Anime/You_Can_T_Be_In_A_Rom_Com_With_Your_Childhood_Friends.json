@@ -1,7 +1,7 @@
 {
   "title": "You Can't Be In a Rom-Com with Your Childhood Friends!",
   "Image": "./Sources/Posters/Anime/You_Can't_Be_In_a_Rom-Com_with_Your_Childhood_Friends!.webp",
-  "LatestTime": "2026-08-08T00:03:48.000Z",
+  "LatestTime": "2026-08-08T00:10:28.152Z",
   "categories": [
     {
       "category": "Season 1",
@@ -20,8 +20,8 @@
         },
         {
           "title": "Episode 03",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/YouCantBeInARomComWithYourChildhoodFriends!/S01E03_Episode_3.mp4",
-          "fileSizeBytes": 143256500,
+          "src": "http://localhost:16169/dl/lqf0n6dfpmbxgcc6515q1cp1/raw",
+          "fileSizeBytes": 1462938433,
           "durationSeconds": 1430
         },
         {
@@ -79,5 +79,5 @@
       ]
     }
   ],
-  "totalFileSizeBytes": 4269350602
+  "totalFileSizeBytes": 5589032535
 }
