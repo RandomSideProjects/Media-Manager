@@ -80,6 +80,34 @@ function coerceSrc(value) {
   return trimmed;
 }
 
+function normalizeMigrationTarget(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return raw;
+  let parsed;
+  try {
+    parsed = new URL(raw);
+  } catch {
+    return raw;
+  }
+  if (!/^(?:localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\]):16169$/i.test(parsed.host)) return raw;
+  parsed.protocol = 'https:';
+  parsed.host = 'toodrive.xpbliss.fyi';
+  parsed.port = '';
+  return parsed.toString();
+}
+
+function normalizeMigrationTargets(mappings) {
+  let changed = false;
+  const normalized = mappings.map((mapping) => {
+    if (!mapping || typeof mapping !== 'object') return mapping;
+    const next = normalizeMigrationTarget(mapping.new);
+    if (next === mapping.new) return mapping;
+    changed = true;
+    return { ...mapping, new: next };
+  });
+  return { mappings: normalized, changed };
+}
+
 function listChildrenArrays(obj) {
   if (!obj || typeof obj !== 'object') return [];
   const out = [];
@@ -196,7 +224,7 @@ function addMappingsFromJsons(filePath, oldJson, newJson, existingPairs, mapping
     if (!newUrl) continue;
     if (oldUrl === newUrl) continue;
     const oldTrim = String(oldUrl || '').trim();
-    const newTrim = String(newUrl || '').trim();
+    const newTrim = normalizeMigrationTarget(newUrl);
     if (!oldTrim || !newTrim || oldTrim === newTrim) continue;
 
     const pairKey = `${oldTrim} -> ${newTrim}`;
@@ -277,7 +305,9 @@ function main() {
 
   const migrationsPath = migrationsFile || 'Sources/url-migrations.json';
   const payload = loadMigrationsPayload(migrationsPath);
-  const mappings = Array.isArray(payload.mappings) ? payload.mappings.filter(Boolean) : [];
+  const loadedMappings = Array.isArray(payload.mappings) ? payload.mappings.filter(Boolean) : [];
+  const normalized = normalizeMigrationTargets(loadedMappings);
+  const mappings = normalized.mappings;
   const existingPairs = new Set(
     mappings
       .filter(m => m && typeof m === 'object')
@@ -336,13 +366,13 @@ function main() {
       }
     }
 
-    if (!newlyAdded.length) {
+    if (!newlyAdded.length && !normalized.changed) {
       console.log(`[url-migrations] No src URL changes detected in last ${commitDepth} commits.`);
       return;
     }
   }
 
-  if (!newlyAdded.length) {
+  if (!newlyAdded.length && !normalized.changed) {
     console.log('[url-migrations] No src URL changes detected.');
     return;
   }
@@ -363,7 +393,10 @@ function main() {
   fs.mkdirSync(path.dirname(migrationsPath), { recursive: true });
   fs.writeFileSync(migrationsPath, nextText);
 
-  console.log(`[url-migrations] Added ${newlyAdded.length} mapping(s) to ${migrationsPath}:`);
+  const summary = newlyAdded.length
+    ? `Added ${newlyAdded.length} mapping(s)`
+    : 'Normalized legacy Toodrive targets';
+  console.log(`[url-migrations] ${summary} in ${migrationsPath}:`);
   for (const item of newlyAdded.slice(0, 50)) {
     console.log(`- ${item.filePath} :: ${item.key}`);
   }

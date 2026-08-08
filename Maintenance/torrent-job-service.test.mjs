@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { fileURLToPath } from "node:url";
 
 process.env.MEDIA_MANAGER_TEST = "1";
 const service = await import(`./torrent-job-service.mjs?test=${Date.now()}`);
@@ -215,6 +216,23 @@ test("assigns episode-less artifacts without duplicating an already parsed episo
     { remotePath: "Show/part-without-number.mp4", url: "https://example.test/6.mp4" },
   ], { categoryName: "Season 3", seasonNumber: 3, targetEpisodes: [5, 6] });
   assert.deepEqual(artifacts.map((artifact) => artifact.episode), [5, 6]);
+});
+
+test("probes a media file duration in whole seconds", async () => {
+  const fixture = fileURLToPath(new URL("../Assets/TEMPMSG.mp4", import.meta.url));
+  assert.equal(await service.probeMediaDurationSeconds(fixture), 15);
+  assert.equal(service.totalDuration({ categories: [{ episodes: [{ durationSeconds: 15 }] }] }), 15);
+});
+
+test("normalizes legacy local Toodrive links to the public host", () => {
+  assert.equal(
+    service.normalizeToodriveUrl("http://localhost:16169/dl/example/raw"),
+    "https://toodrive.xpbliss.fyi/dl/example/raw",
+  );
+  assert.equal(
+    service.normalizeToodriveUrl("https://toodrive.xpbliss.fyi/dl/example/raw"),
+    "https://toodrive.xpbliss.fyi/dl/example/raw",
+  );
 });
 
 test("serializes the maintenance and torrent settings to one job", () => {

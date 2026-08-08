@@ -92,9 +92,6 @@
           <button type="button" data-route="./Creator/index.html" class="tab-button tab-button--icon tab-button--secondary" aria-label="Create or modify a source" title="Create or modify">
             <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m15.7 4.3 4 4L9 19H5v-4L15.7 4.3Zm1.4-1.4a2 2 0 0 1 2.8 0l1.2 1.2a2 2 0 0 1 0 2.8l-.8.8-4-4 .8-.8Z"/></svg>
           </button>
-          <button type="button" data-route="./Maintenance/index.html" class="tab-button tab-button--icon tab-button--secondary" aria-label="Library maintenance" title="Library maintenance">
-            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m14.4 4.2 5.4 5.4-1.5 1.5-1.3-1.3-6.7 6.7-.5 2.6-2.6.5.5-2.6 6.7-6.7-1.3-1.3 1.3-1.3Zm-8.9 14h7v2h-7v-2Z"/></svg>
-          </button>
         </nav>
         <div class="toolbar-controls">
           <div class="toolbar-actions toolbar-actions--left">
@@ -137,13 +134,31 @@
             <button id="downloadBtn">⤓ Download Source</button>
           </div>
           <div id="playerScreen" style="display:none">
-            <div id="loadingSpinner" class="spinner"></div>
             <button id="backBtn" title="Menu (Esc)" aria-label="Menu">≡</button>
             <button id="theaterBtn" title="Theater Mode (T)" aria-pressed="false">⤴</button>
             <button id="clipBtn">Clip</button>
             <h2 id="videoTitle">Loading...</h2>
             <div id="separatedPartsBar" class="separated-parts-bar" role="group" aria-label="Part selection"></div>
             <div class="mm-video-frame">
+              <div id="loadingSpinner" class="video-loading-overlay" role="status" aria-live="polite" aria-atomic="true" hidden>
+                <div class="video-loading-card">
+                  <div class="video-loading-orbit" aria-hidden="true"><span></span><span></span><span></span></div>
+                  <span class="video-loading-kicker">Loading video</span>
+                  <strong id="videoLoadingServer" class="video-loading-server">—</strong>
+                  <span id="videoLoadingStatus" class="video-loading-status">Preparing playback</span>
+                  <div
+                    id="videoLoadingProgress"
+                    class="video-loading-progress"
+                    role="progressbar"
+                    aria-label="Video loading progress"
+                    aria-valuemin="0"
+                    aria-valuemax="100"
+                  >
+                    <span id="videoLoadingProgressFill" class="video-loading-progress-fill"></span>
+                  </div>
+                  <span id="videoLoadingProgressText" class="video-loading-progress-text">Loading…</span>
+                </div>
+              </div>
               <video id="videoPlayer" controls autoplay playsinline></video>
               <button id="nextBtn" type="button" aria-label="Next">Next</button>
             </div>
@@ -179,4 +194,3 @@
   if (customMode) renderCustomShell();
   void loadScripts(customMode ? customScripts : publicScripts);
 })();
-

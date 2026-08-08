@@ -161,36 +161,38 @@
       "episodes": [
         {
           "title": "Episode 1",
-          "src": "http://localhost:16169/dl/wyhbd6zm4e3nngbx85vfybg7/raw",
-          "fileSizeBytes": 1482273102,
+          "src": "https://files.catbox.moe/rrvgnf.m3u8",
+          "fileSizeBytes": 214196436,
           "durationSeconds": 1431
         },
         {
           "title": "Episode 2",
-          "src": "http://localhost:16169/dl/vu2x5qw0ztahq3r172oxb8vl/raw",
-          "fileSizeBytes": 1482817804,
+          "src": "https://cpr.xpbliss.fyi/MM/backrooms/The100GirlfriendsWhoReallyReallyReallyReallyReallyLoveYou/S03E02_Episode_2.mp4",
+          "fileSizeBytes": 244446775,
           "durationSeconds": 1430
         },
         {
           "title": "Episode 3",
-          "src": "http://localhost:16169/dl/jhmn13pwi78lbwexeuu0lkei/raw",
-          "fileSizeBytes": 1483475232,
+          "src": "https://files.catbox.moe/s3rvcb.mp4",
+          "fileSizeBytes": 200408036,
           "durationSeconds": 1430
         },
         {
           "title": "Episode 4",
-          "src": "http://localhost:16169/dl/v8h3helaqnisam35i9vu0x1d/raw",
-          "fileSizeBytes": 1459435136,
+          "src": "https://cpr.xpbliss.fyi/MM/backrooms/The100GirlfriendsWhoReallyReallyReallyReallyReallyLoveYou/S03E04_Episode_4.mp4",
+          "fileSizeBytes": 212588044,
           "durationSeconds": 1430
         },
         {
           "title": "Episode 05",
           "src": "https://toodrive.xpbliss.fyi/dl/irj3c8hc8khvgp7n4zhd5la0/raw",
-          "fileSizeBytes": 384917339
+          "fileSizeBytes": 384917339,
+          "durationSeconds": 1430
         }
       ]
     }
   ],
-  "totalFileSizeBytes": 10089129809,
-  "LatestTime": "2026-08-07T18:32:56.692Z"
+  "totalFileSizeBytes": 5052767826,
+  "LatestTime": "2026-08-07T03:19:05.429Z",
+  "totalDurationSeconds": 41369
 }

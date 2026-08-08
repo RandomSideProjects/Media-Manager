@@ -69,12 +69,14 @@
         {
           "title": "Episode 11",
           "src": "https://toodrive.xpbliss.fyi/dl/kv6ie7yg2jrnh2mjfuetuypx/raw",
-          "fileSizeBytes": 1501203678
+          "fileSizeBytes": 1501203678,
+          "durationSeconds": 1432
         },
         {
           "title": "Episode 12",
           "src": "https://toodrive.xpbliss.fyi/dl/rswoe6jrfhhv1zaiq2nch74c/raw",
-          "fileSizeBytes": 1500295993
+          "fileSizeBytes": 1500295993,
+          "durationSeconds": 1432
         }
       ]
     },
@@ -84,31 +86,36 @@
         {
           "title": "Episode 01",
           "src": "https://toodrive.xpbliss.fyi/dl/iwd8jozxkzetpt6n1pf1vvtv/raw",
-          "fileSizeBytes": 1517790809
+          "fileSizeBytes": 1517790809,
+          "durationSeconds": 1447
         },
         {
           "title": "Episode 02",
           "src": "https://toodrive.xpbliss.fyi/dl/g3ja7j3adpzxud02n6e8tduq/raw",
-          "fileSizeBytes": 1515851779
+          "fileSizeBytes": 1515851779,
+          "durationSeconds": 1447
         },
         {
           "title": "Episode 03",
           "src": "https://toodrive.xpbliss.fyi/dl/nsbo8fszalptopzrf3v3xqcq/raw",
-          "fileSizeBytes": 1517037757
+          "fileSizeBytes": 1517037757,
+          "durationSeconds": 1447
         },
         {
           "title": "Episode 04",
           "src": "https://toodrive.xpbliss.fyi/dl/ii85uzeubk4x21rit33mjtla/raw",
-          "fileSizeBytes": 227509151
+          "fileSizeBytes": 227509151,
+          "durationSeconds": 1447
         },
         {
           "title": "Episode 05",
           "src": "https://toodrive.xpbliss.fyi/dl/xkcvnpvlwl0ltl8tsv3heaaa/raw",
-          "fileSizeBytes": 233928609
+          "fileSizeBytes": 233928609,
+          "durationSeconds": 1447
         }
       ]
     }
   ],
   "totalFileSizeBytes": 9350655716,
-  "totalDurationSeconds": 14410
+  "totalDurationSeconds": 24509
 }

@@ -129,7 +129,7 @@ before upload as well. Bitmap-only subtitles such as PGS cannot be embedded in
 an MP4 container and require a sidecar or MKV output.
 
 The service uses `~/.deno/bin/td` by default. Override `TD_BIN`,
-`MEDIA_MANAGER_ROOT`, `TOODRIVE_BASE_URL`, `CREATOR_TORRENT_HOST`,
+`MEDIA_MANAGER_ROOT`, `TOODRIVE_BASE_URL`, `TOODRIVE_PUBLIC_BASE_URL`, `CREATOR_TORRENT_HOST`,
 `CREATOR_TORRENT_PORT` (default `6968`), `MEDIA_MANAGER_LOG_FILE`, or the
 `MEDIA_MANAGER_GITHUB_*` settings when needed. Maintenance events are persisted as
 JSONL at `~/.local/share/media-manager-maintenance/maintenance.log` by default;

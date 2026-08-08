@@ -161,68 +161,80 @@
         {
           "title": "Episode 01",
           "src": "https://toodrive.xpbliss.fyi/dl/fi9vsg9bl5j5mb6xx8wu4q47/raw",
-          "fileSizeBytes": 1508195319
+          "fileSizeBytes": 1508195319,
+          "durationSeconds": 1441
         },
         {
           "title": "Episode 02",
           "src": "https://toodrive.xpbliss.fyi/dl/rr9j9so54xm54wtvw1bf02j5/raw",
-          "fileSizeBytes": 1510139057
+          "fileSizeBytes": 1510139057,
+          "durationSeconds": 1441
         },
         {
           "title": "Episode 03",
           "src": "https://toodrive.xpbliss.fyi/dl/gjml5ofk1hsx1uab8w0dzkza/raw",
-          "fileSizeBytes": 1510722088
+          "fileSizeBytes": 1510722088,
+          "durationSeconds": 1441
         },
         {
           "title": "Episode 04",
           "src": "https://toodrive.xpbliss.fyi/dl/aj9vg0q0a9tt3sf8zkauoybh/raw",
-          "fileSizeBytes": 1507448840
+          "fileSizeBytes": 1507448840,
+          "durationSeconds": 1441
         },
         {
           "title": "Episode 05",
           "src": "https://toodrive.xpbliss.fyi/dl/u7wkyc2j415ojx2o7xct9121/raw",
-          "fileSizeBytes": 1511185961
+          "fileSizeBytes": 1511185961,
+          "durationSeconds": 1441
         },
         {
           "title": "Episode 06",
           "src": "https://toodrive.xpbliss.fyi/dl/jw0g4q9qrm6f76epxfrhw2bi/raw",
-          "fileSizeBytes": 1511744949
+          "fileSizeBytes": 1511744949,
+          "durationSeconds": 1441
         },
         {
           "title": "Episode 07",
           "src": "https://toodrive.xpbliss.fyi/dl/ggbus5jluuzf702fbajmzgrb/raw",
-          "fileSizeBytes": 1509379692
+          "fileSizeBytes": 1509379692,
+          "durationSeconds": 1441
         },
         {
           "title": "Episode 08",
           "src": "https://toodrive.xpbliss.fyi/dl/hl842nkwb9sb5xqgquqz80m5/raw",
-          "fileSizeBytes": 1511202083
+          "fileSizeBytes": 1511202083,
+          "durationSeconds": 1441
         },
         {
           "title": "Episode 09",
           "src": "https://toodrive.xpbliss.fyi/dl/z3fudg4bz7ryzsl75lgnjzzv/raw",
-          "fileSizeBytes": 1511795404
+          "fileSizeBytes": 1511795404,
+          "durationSeconds": 1441
         },
         {
           "title": "Episode 10",
           "src": "https://toodrive.xpbliss.fyi/dl/ceoftrmxvu3ty2ickrvg7f8l/raw",
-          "fileSizeBytes": 1509983016
+          "fileSizeBytes": 1509983016,
+          "durationSeconds": 1441
         },
         {
           "title": "Episode 11",
           "src": "https://toodrive.xpbliss.fyi/dl/nsk4fgi63qxwss5b4rtnf53o/raw",
-          "fileSizeBytes": 1509383352
+          "fileSizeBytes": 1509383352,
+          "durationSeconds": 1441
         },
         {
           "title": "Episode 12",
           "src": "https://toodrive.xpbliss.fyi/dl/hmn6giqndu8gqw69l8v59ts5/raw",
-          "fileSizeBytes": 1505959642
+          "fileSizeBytes": 1505959642,
+          "durationSeconds": 1436
         }
       ]
     }
   ],
   "LatestTime": "2026-08-06T20:35:02.400Z",
   "totalFileSizeBytes": 22026829183,
-  "totalDurationSeconds": 34682,
+  "totalDurationSeconds": 51969,
   "Image": "./Sources/Posters/Anime/One-Punch_Man.webp"
 }

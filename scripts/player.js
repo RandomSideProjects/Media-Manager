@@ -1155,6 +1155,12 @@ function setSeparatedPartSource(item, partIndex, options) {
   if (!meta) return;
   const targetIndex = Math.max(0, Math.min(partIndex, meta.parts.length - 1));
   const part = meta.parts[targetIndex];
+  if (typeof window !== 'undefined' && typeof window.MM_setVideoLoadingSource === 'function') {
+    window.MM_setVideoLoadingSource(part && typeof part.src === 'string' ? part.src : '');
+  }
+  if (typeof window !== 'undefined' && typeof window.MM_setVideoLoadingDurationHint === 'function') {
+    window.MM_setVideoLoadingDurationHint(part && part.durationSeconds);
+  }
   item.__activePartIndex = targetIndex;
   if (!Array.isArray(item.__separatedOffsets) || item.__separatedOffsets.length !== meta.offsets.length) {
     item.__separatedOffsets = meta.offsets.slice();
@@ -1953,6 +1959,12 @@ if (typeof window !== 'undefined' && typeof navigator !== 'undefined') {
 function loadVideo(index) {
   resetSeparatedNextPartPrefetch();
   const item = flatList[index];
+  if (typeof window !== 'undefined' && typeof window.MM_setVideoLoadingSource === 'function') {
+    window.MM_setVideoLoadingSource(item && typeof item.src === 'string' ? item.src : '');
+  }
+  if (typeof window !== 'undefined' && typeof window.MM_setVideoLoadingDurationHint === 'function') {
+    window.MM_setVideoLoadingDurationHint(item && item.durationSeconds);
+  }
   updateChaptersSelection(null);
   const resumeKey = resolveResumeKeyForItem(item);
 
@@ -1991,6 +2003,7 @@ function loadVideo(index) {
   } catch {}
 
   if (item && item.isPlaceholder) {
+    if (typeof window !== 'undefined' && typeof window.MM_hideVideoLoading === 'function') window.MM_hideVideoLoading();
     updateEpisodeTimeOverlay(null, 0);
     if (video) {
       detachActiveHls();
@@ -2011,6 +2024,7 @@ function loadVideo(index) {
   }
 
   if (isMangaVolumeItem(item)) {
+    if (typeof window !== 'undefined' && typeof window.MM_hideVideoLoading === 'function') window.MM_hideVideoLoading();
     if (placeholderNotice) placeholderNotice.style.display = 'none';
     unloadCbz();
     loadMangaVolume(item);

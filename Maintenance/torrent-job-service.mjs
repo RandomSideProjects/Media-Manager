@@ -14,9 +14,17 @@ import { fileURLToPath } from "node:url";
 
 const PORT = Number(process.env.CREATOR_TORRENT_PORT || process.env.MAINTENANCE_PORT || 6968);
 const HOST = String(process.env.CREATOR_TORRENT_HOST || process.env.MAINTENANCE_HOST || "0.0.0.0").trim() || "0.0.0.0";
-const SERVICE_PROTOCOL_VERSION = "maintenance-v4";
+const SERVICE_PROTOCOL_VERSION = "maintenance-v5";
 const TD_BIN = process.env.TD_BIN || join(homedir(), ".deno/bin/td");
+const FFPROBE_BIN = process.env.FFPROBE_BIN || "ffprobe";
 const TOODRIVE_BASE_URL = process.env.TOODRIVE_BASE_URL || "https://toodrive.xpbliss.fyi";
+const TOODRIVE_PUBLIC_BASE_URL = String(process.env.TOODRIVE_PUBLIC_BASE_URL || "https://toodrive.xpbliss.fyi").replace(/\/$/, "");
+const LEGACY_TOODRIVE_HOSTS = new Set([
+  "localhost:16169",
+  "127.0.0.1:16169",
+  "0.0.0.0:16169",
+  "[::1]:16169",
+]);
 const RELEASES_BASE_URL = String(process.env.RELEASES_BASE_URL || "https://releases.moe").replace(/\/$/, "");
 const RELEASES_API_URL = `${RELEASES_BASE_URL}/api/collections/entries/records`;
 const ANILIST_API_URL = String(process.env.ANILIST_API_URL || "https://graphql.anilist.co").replace(/\/$/, "");
@@ -61,6 +69,7 @@ const DEFAULT_MAINTENANCE_CONCURRENCY = 1;
 const MAX_MAINTENANCE_CONCURRENCY = 1;
 const DEFAULT_TORRENT_CONCURRENCY = 1;
 const MAX_TORRENT_CONCURRENCY = 1;
+const MEDIA_PROBE_TIMEOUT_MS = Math.max(5_000, Number(process.env.MEDIA_PROBE_TIMEOUT_MS) || 45_000);
 const jobs = new Map();
 const maintenanceRuns = new Map();
 const maintenanceManifestQueues = new Map();
@@ -350,7 +359,38 @@ function normalizedBasename(value) {
   return basename(String(value || "").replaceAll("\\", "/"));
 }
 
+function normalizeToodriveUrl(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return raw;
+  let parsed;
+  let publicBase;
+  try {
+    parsed = new URL(raw);
+    publicBase = new URL(TOODRIVE_PUBLIC_BASE_URL);
+  } catch {
+    return raw;
+  }
+  if (!LEGACY_TOODRIVE_HOSTS.has(parsed.host.toLowerCase())) return raw;
+  parsed.protocol = publicBase.protocol;
+  parsed.host = publicBase.host;
+  parsed.port = publicBase.port;
+  return parsed.toString();
+}
+
+function normalizeManifestSourceUrls(value) {
+  if (Array.isArray(value)) {
+    for (const item of value) normalizeManifestSourceUrls(item);
+    return value;
+  }
+  if (!value || typeof value !== "object") return value;
+  if (typeof value.src === "string") value.src = normalizeToodriveUrl(value.src);
+  for (const child of Object.values(value)) normalizeManifestSourceUrls(child);
+  return value;
+}
+
 async function cleanupUploadedArtifact(job, artifact) {
+  const durationProbe = job?.durationProbePromises?.get(artifact);
+  if (durationProbe) await durationProbe.catch(() => 0);
   const localPath = String(artifact?.localPath || "").replaceAll("\\", "/");
   const localName = normalizedBasename(artifact?.localPath);
   const remoteName = normalizedBasename(artifact?.remotePath);
@@ -1623,6 +1663,88 @@ function numericValue(value) {
   return Number.isFinite(number) && number > 0 ? number : 0;
 }
 
+function durationValue(value) {
+  const number = Number(value);
+  return Number.isFinite(number) && number > 0 ? Math.round(number) : 0;
+}
+
+function probeMediaDurationSeconds(filePath) {
+  const input = String(filePath || "").trim();
+  if (!input) return Promise.reject(new Error("media path is empty"));
+  return new Promise((resolveDuration, reject) => {
+    let output = "";
+    let errors = "";
+    let settled = false;
+    const child = spawn(FFPROBE_BIN, [
+      "-v", "error",
+      "-show_entries", "format=duration",
+      "-of", "default=noprint_wrappers=1:nokey=1",
+      input,
+    ], { stdio: ["ignore", "pipe", "pipe"] });
+    const timeout = setTimeout(() => {
+      child.kill("SIGTERM");
+      finish(new Error(`ffprobe timed out after ${MEDIA_PROBE_TIMEOUT_MS}ms`));
+    }, MEDIA_PROBE_TIMEOUT_MS);
+    const finish = (error, value = 0) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      if (error) reject(error);
+      else resolveDuration(value);
+    };
+    child.stdout.on("data", (chunk) => { output += String(chunk); });
+    child.stderr.on("data", (chunk) => { errors += String(chunk); });
+    child.on("error", (error) => finish(error));
+    child.on("close", (code) => {
+      const duration = durationValue(output.trim().split(/\s+/)[0]);
+      if (code === 0 && duration > 0) {
+        finish(null, duration);
+      } else {
+        const detail = errors.trim().replace(/\s+/g, " ").slice(-240);
+        finish(new Error(`ffprobe exited with code ${code ?? 1}${detail ? `: ${detail}` : ""}`));
+      }
+    });
+  });
+}
+
+function scheduleArtifactDurationProbe(job, artifact, event = {}) {
+  if (!artifact || typeof artifact !== "object") return;
+  const reported = durationValue(event.durationSeconds ?? event.duration ?? artifact.durationSeconds);
+  if (reported > 0) {
+    artifact.durationSeconds = reported;
+    return;
+  }
+  const input = String(artifact.localPath || "").trim();
+  if (!input) return;
+  job.durationProbePromises ||= new Map();
+  if (job.durationProbePromises.has(artifact)) return;
+  const promise = probeMediaDurationSeconds(input).then((duration) => {
+    if (duration > 0) artifact.durationSeconds = duration;
+    persistLog({
+      scope: "job",
+      event: duration > 0 ? "duration_probed" : "duration_probe_empty",
+      jobId: job.id,
+      runId: job.runId,
+      remotePath: artifact.remotePath,
+      localPath: artifact.localPath,
+      durationSeconds: duration || undefined,
+    });
+    return duration;
+  }).catch((error) => {
+    persistLog({
+      scope: "job",
+      event: "duration_probe_failed",
+      jobId: job.id,
+      runId: job.runId,
+      remotePath: artifact.remotePath,
+      localPath: artifact.localPath,
+      message: error instanceof Error ? error.message : String(error),
+    });
+    return 0;
+  });
+  job.durationProbePromises.set(artifact, promise);
+}
+
 function entrySize(entry) {
   if (!entry || typeof entry !== "object") return 0;
   if (Array.isArray(entry.sources)) return entry.sources.reduce((sum, part) => sum + entrySize(part), 0);
@@ -1630,11 +1752,33 @@ function entrySize(entry) {
   return numericValue(entry.fileSizeBytes || entry.sizeBytes || entry.FileSizeBytes);
 }
 
+function entryDuration(entry) {
+  if (!entry || typeof entry !== "object") return 0;
+  if (Array.isArray(entry.sources)) return entry.sources.reduce((sum, part) => sum + entryDuration(part), 0);
+  if (Array.isArray(entry.parts)) return entry.parts.reduce((sum, part) => sum + entryDuration(part), 0);
+  return durationValue(entry.durationSeconds || entry.DurationSeconds);
+}
+
 function totalSize(data) {
   return (Array.isArray(data?.categories) ? data.categories : []).reduce((sum, category) => {
     const { entries } = getEntries(category);
     return sum + entries.reduce((entrySum, entry) => entrySum + entrySize(entry), 0);
   }, 0);
+}
+
+function totalDuration(data) {
+  return (Array.isArray(data?.categories) ? data.categories : []).reduce((sum, category) => {
+    const { entries } = getEntries(category);
+    return sum + entries.reduce((entrySum, entry) => entrySum + entryDuration(entry), 0);
+  }, 0);
+}
+
+function hasCompleteDurations(data) {
+  const categories = Array.isArray(data?.categories) ? data.categories : [];
+  return categories.every((category) => {
+    const { entries } = getEntries(category);
+    return entries.every((entry) => entryDuration(entry) > 0);
+  });
 }
 
 function categorySummary(category, index) {
@@ -1826,6 +1970,73 @@ function checkTdSession() {
   });
 }
 
+function maintenanceToodriveAuditEnabled(payload = {}) {
+  if (payload?.toodriveAudit === false) return false;
+  if (process.env.MAINTENANCE_TOODRIVE_AUDIT === "0") return false;
+  return process.env.MEDIA_MANAGER_TEST !== "1";
+}
+
+function listToodriveFolder(remotePath) {
+  return new Promise((resolveList) => {
+    let settled = false;
+    let output = "";
+    const child = spawn(TD_BIN, ["--base-url", TOODRIVE_BASE_URL, "--json", "ls", remotePath], {
+      env: { ...process.env },
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    const timeout = setTimeout(() => {
+      child.kill("SIGTERM");
+      finish({ ok: false, code: "timeout", error: "td ls timed out" });
+    }, 15_000);
+    const finish = (result) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      resolveList(result);
+    };
+    child.stdout.on("data", (chunk) => { output += String(chunk); });
+    child.stderr.on("data", (chunk) => { output += String(chunk); });
+    child.on("error", (error) => finish({ ok: false, code: "spawn", error: error instanceof Error ? error.message : String(error) }));
+    child.on("close", (code) => {
+      const events = output.split(/\r?\n/).filter(Boolean).flatMap((line) => {
+        try { return [JSON.parse(line)]; } catch { return []; }
+      });
+      const event = events.find((candidate) => candidate?.event === "result" || candidate?.event === "error");
+      if (event?.event === "result" && Array.isArray(event.entries)) {
+        finish({ ok: true, entries: event.entries, path: event.path || remotePath });
+        return;
+      }
+      finish({
+        ok: false,
+        code: event?.code || `exit_${code ?? 1}`,
+        error: event?.message || "td could not inspect the Toodrive folder",
+      });
+    });
+  });
+}
+
+async function auditToodriveCategory(title, category) {
+  const remotePath = maintenanceFolder(title, category);
+  const result = await listToodriveFolder(remotePath);
+  if (!result.ok) return { ok: false, remotePath, error: result.error, code: result.code };
+  const files = result.entries.filter((entry) => entry?.kind === "file");
+  const readyEpisodeNumbers = new Set();
+  const incompleteEpisodeNumbers = new Set();
+  for (const file of files) {
+    const episode = episodeInfo(file.name || file.path).episode;
+    if (!episode) continue;
+    if (String(file.status || "").toLowerCase() === "ready") readyEpisodeNumbers.add(episode);
+    else incompleteEpisodeNumbers.add(episode);
+  }
+  return {
+    ok: true,
+    remotePath,
+    fileCount: files.length,
+    readyEpisodeNumbers: [...readyEpisodeNumbers].sort((a, b) => a - b),
+    incompleteEpisodeNumbers: [...incompleteEpisodeNumbers].sort((a, b) => a - b),
+  };
+}
+
 function missingEpisodesForCategory(category, expectedEpisodes, expectedEpisodeNumbers = []) {
   const expected = Number(expectedEpisodes);
   const expectedNumbers = [...new Set((Array.isArray(expectedEpisodeNumbers) ? expectedEpisodeNumbers : [])
@@ -1865,6 +2076,7 @@ async function buildMaintenanceWork(sources, payload, { onProgress } = {}) {
     ? new Set(payload.sourcePaths.map((path) => String(path)))
     : null;
   const work = [];
+  const toodriveAuditCache = new Map();
   const selectedSources = sources.filter((source) => !sourcePaths || sourcePaths.has(source.path) || sourcePaths.has(source.file));
   let preflightCompleted = 0;
   const malEnabled = maintenanceMalEnabled(payload);
@@ -1917,7 +2129,19 @@ async function buildMaintenanceWork(sources, payload, { onProgress } = {}) {
           work.push(skippedMaintenanceItem(source, category, progressReason, { status: "unknown", ...malCandidate }));
           continue;
         }
-        const missing = missingEpisodesForCategory(category, expectedEpisodes, expectedEpisodeNumbers);
+        let toodriveAudit = null;
+        if (maintenanceToodriveAuditEnabled(payload)) {
+          const auditKey = maintenanceFolder(source.title, category.category);
+          toodriveAudit = toodriveAuditCache.get(auditKey);
+          if (!toodriveAudit) {
+            toodriveAudit = await auditToodriveCategory(source.title, category.category);
+            toodriveAuditCache.set(auditKey, toodriveAudit);
+          }
+        }
+        const auditedCategory = toodriveAudit?.ok
+          ? { ...category, episodeCount: toodriveAudit.readyEpisodeNumbers.length, episodeNumbers: toodriveAudit.readyEpisodeNumbers }
+          : category;
+        const missing = missingEpisodesForCategory(auditedCategory, expectedEpisodes, expectedEpisodeNumbers);
         if (!missing.known) {
           work.push(skippedMaintenanceItem(source, category, "library episode numbering is not readable", { status: "unknown", ...malCandidate }));
           continue;
@@ -1926,14 +2150,18 @@ async function buildMaintenanceWork(sources, payload, { onProgress } = {}) {
           const countLabel = expectedEpisodeNumbers.length
             ? `${expectedEpisodeNumbers.length} aired episode${expectedEpisodeNumbers.length === 1 ? "" : "s"}`
             : `${expectedEpisodes} episodes`;
-          work.push(skippedMaintenanceItem(source, category, `MAL reports ${countLabel} and the library is complete`, { status: "complete", ...malCandidate }));
+          work.push(skippedMaintenanceItem(source, category, `MAL reports ${countLabel} and the library is complete`, {
+            status: "complete",
+            ...malCandidate,
+            toodriveAudit: toodriveAudit || undefined,
+          }));
           continue;
         }
         work.push({
           id: randomUUID(), sourcePath: source.path, sourceFile: source.file, title: source.title, malTitle: source.malTitle || "",
           category: category.category, state: "queued", query: "", candidate: null,
           jobId: null, manifest: null, links: 0, error: "", missingEpisodes: missing.missing,
-          mal: { status: "missing", ...malCandidate },
+          mal: { status: "missing", ...malCandidate, toodriveAudit: toodriveAudit || undefined },
         });
         continue;
       }
@@ -2504,8 +2732,9 @@ function makeEpisodeEntry(artifact, existing) {
   const entry = existing && typeof existing === "object" ? { ...existing } : {};
   const number = artifact.episode;
   if (!entry.title) entry.title = `Episode ${String(number).padStart(2, "0")}`;
-  entry.src = artifact.url;
+  entry.src = normalizeToodriveUrl(artifact.url);
   if (numericValue(artifact.sizeBytes)) entry.fileSizeBytes = numericValue(artifact.sizeBytes);
+  if (durationValue(artifact.durationSeconds)) entry.durationSeconds = durationValue(artifact.durationSeconds);
   return entry;
 }
 
@@ -2534,6 +2763,9 @@ async function applyMaintenance(maintenance, artifacts) {
       LatestTime: now,
       totalFileSizeBytes: totalSize({ categories: [{ episodes }] }),
     };
+    normalizeManifestSourceUrls(data);
+    const duration = totalDuration(data);
+    if (duration > 0 && hasCompleteDurations(data)) data.totalDurationSeconds = duration;
     if (String(maintenance.image || "").trim()) data.Image = String(maintenance.image).trim();
     const content = `${JSON.stringify(data, null, 2)}\n`;
     const github = await publishSourceToGithub(target.path, content, { title, category: categoryName });
@@ -2576,9 +2808,13 @@ async function applyMaintenance(maintenance, artifacts) {
     changed.push(entry.title);
   }
   entries.sort((a, b) => (episodeInfo(a?.title).episode || Number.MAX_SAFE_INTEGER) - (episodeInfo(b?.title).episode || Number.MAX_SAFE_INTEGER));
+  normalizeManifestSourceUrls(data);
   data.LatestTime = now;
   const size = totalSize(data);
   if (size > 0) data.totalFileSizeBytes = size;
+  const duration = totalDuration(data);
+  if (duration > 0 && hasCompleteDurations(data)) data.totalDurationSeconds = duration;
+  else delete data.totalDurationSeconds;
   const content = `${JSON.stringify(data, null, 2)}\n`;
   const title = data.title || target.file;
   const github = await publishSourceToGithub(target.path, content, { title, category: category.category });
@@ -2606,6 +2842,9 @@ async function finishJob(job, code, error, { cancelled = false } = {}) {
   let wasCancelled = cancelled || job.cancelled === true || job.stopRequested === true;
   if (finalCode === 0 && job.maintenance && !wasCancelled) {
     job.state = "finalizing";
+    if (job.durationProbePromises?.size) {
+      await Promise.allSettled([...job.durationProbePromises.values()]);
+    }
     try {
       job.manifest = await applyMaintenanceSerially(job.maintenance, job.artifacts);
     } catch (maintenanceError) {
@@ -2642,27 +2881,32 @@ async function finishJob(job, code, error, { cancelled = false } = {}) {
 }
 
 function recordEvent(job, event, stream) {
-  if (event.event === "metadata") job.metadataSeen = true;
-  if (event.event === "progress" && Number(event.transferredBytes) > 0) job.hasTransferProgress = true;
-  if (event.event === "link" && event.url) {
-    if (!job.links.includes(event.url)) job.links.push(event.url);
-    const artifact = job.artifacts.find((candidate) => candidate.remotePath === event.remotePath);
-    if (artifact) artifact.url = event.url;
-    else job.artifacts.push({ remotePath: event.remotePath || "", url: event.url });
+  const normalizedEvent = event?.url
+    ? { ...event, url: normalizeToodriveUrl(event.url) }
+    : event;
+  if (normalizedEvent.event === "metadata") job.metadataSeen = true;
+  if (normalizedEvent.event === "progress" && Number(normalizedEvent.transferredBytes) > 0) job.hasTransferProgress = true;
+  if (normalizedEvent.event === "link" && normalizedEvent.url) {
+    if (!job.links.includes(normalizedEvent.url)) job.links.push(normalizedEvent.url);
+    const artifact = job.artifacts.find((candidate) => candidate.remotePath === normalizedEvent.remotePath);
+    if (artifact) artifact.url = normalizedEvent.url;
+    else job.artifacts.push({ remotePath: normalizedEvent.remotePath || "", url: normalizedEvent.url });
   }
-  if (event.event === "file_result" && event.remotePath) {
-    const artifact = job.artifacts.find((candidate) => candidate.remotePath === event.remotePath);
-    if (artifact) Object.assign(artifact, { sizeBytes: event.sizeBytes, localPath: event.localPath });
-    else job.artifacts.push({ remotePath: event.remotePath, sizeBytes: event.sizeBytes, localPath: event.localPath });
-    const uploaded = String(event.outcome || "").toLowerCase() === "uploaded";
-    if (uploaded) queueUploadedArtifactCleanup(job, job.artifacts.find((candidate) => candidate.remotePath === event.remotePath));
+  if (normalizedEvent.event === "file_result" && normalizedEvent.remotePath) {
+    const artifact = job.artifacts.find((candidate) => candidate.remotePath === normalizedEvent.remotePath);
+    const target = artifact || { remotePath: normalizedEvent.remotePath, sizeBytes: normalizedEvent.sizeBytes, localPath: normalizedEvent.localPath };
+    if (artifact) Object.assign(target, { sizeBytes: normalizedEvent.sizeBytes, localPath: normalizedEvent.localPath });
+    else job.artifacts.push(target);
+    scheduleArtifactDurationProbe(job, target, normalizedEvent);
+    const uploaded = String(normalizedEvent.outcome || "").toLowerCase() === "uploaded";
+    if (uploaded) queueUploadedArtifactCleanup(job, target);
   }
-  if (event.event === "link" && event.remotePath) {
-    queueUploadedArtifactCleanup(job, job.artifacts.find((candidate) => candidate.remotePath === event.remotePath));
+  if (normalizedEvent.event === "link" && normalizedEvent.remotePath) {
+    queueUploadedArtifactCleanup(job, job.artifacts.find((candidate) => candidate.remotePath === normalizedEvent.remotePath));
   }
-  job.events.push({ at: new Date().toISOString(), stream, ...event });
+  job.events.push({ at: new Date().toISOString(), stream, ...normalizedEvent });
   if (job.events.length > 5000) job.events.shift();
-  persistLog({ scope: "job", jobId: job.id, runId: job.runId, stream, ...event });
+  persistLog({ scope: "job", jobId: job.id, runId: job.runId, stream, ...normalizedEvent });
 }
 
 function maintenanceTargetEpisodes(job) {
@@ -2891,6 +3135,7 @@ async function startJob({ torrentUrl, magnet, destination, cacheDir, runId, main
     source, destination, adaptiveFallback: Boolean(maintenance), fallbackAttempted: false,
     metadataSeen: false, hasTransferProgress: false, stopRequested: false, cancelled: false, attempt: 0,
     fileCleanupPromises: new Set(),
+    durationProbePromises: new Map(),
     done: new Promise((resolveDonePromise) => { resolveDone = resolveDonePromise; }),
   };
   job.resolveDone = resolveDone;
@@ -2921,6 +3166,7 @@ function restoreJob(saved) {
     stopRequested: saved.stopRequested === true,
     cancelled: saved.cancelled === true,
     fileCleanupPromises: new Set(),
+    durationProbePromises: new Map(),
     done: new Promise((resolveDonePromise) => { resolveDone = resolveDonePromise; }),
   };
   job.resolveDone = resolveDone;
@@ -3390,6 +3636,9 @@ export {
   releaseHasDualAudio,
   betterReleaseCandidate,
   selectArtifacts,
+  probeMediaDurationSeconds,
+  totalDuration,
+  normalizeToodriveUrl,
   processMaintenanceItem,
   startJob,
   torrentConcurrency,

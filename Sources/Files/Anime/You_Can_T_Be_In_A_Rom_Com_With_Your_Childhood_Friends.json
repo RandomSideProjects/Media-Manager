@@ -1,83 +1,86 @@
 {
   "title": "You Can't Be In a Rom-Com with Your Childhood Friends!",
   "Image": "./Sources/Posters/Anime/You_Can't_Be_In_a_Rom-Com_with_Your_Childhood_Friends!.webp",
-  "LatestTime": "2026-08-08T00:56:42.793Z",
+  "LatestTime": "2026-08-07T06:20:40.802Z",
   "categories": [
     {
       "category": "Season 1",
       "episodes": [
         {
           "title": "Episode 01",
-          "src": "http://localhost:16169/dl/xbawjf0ab2zdmttq96fsfny9/raw",
-          "fileSizeBytes": 341605216,
+          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/YouCantBeInARomComWithYourChildhoodFriends!/S01E01_Episode_1.mp4",
+          "fileSizeBytes": 172081601,
           "durationSeconds": 1430
         },
         {
           "title": "Episode 02",
-          "src": "http://localhost:16169/dl/issg1qoz272hvxugg7rtlhb5/raw",
-          "fileSizeBytes": 341519087,
+          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/YouCantBeInARomComWithYourChildhoodFriends!/S01E02_Episode_2.mp4",
+          "fileSizeBytes": 155546187,
           "durationSeconds": 1430
         },
         {
           "title": "Episode 03",
-          "src": "http://localhost:16169/dl/lqf0n6dfpmbxgcc6515q1cp1/raw",
-          "fileSizeBytes": 1462938433,
+          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/YouCantBeInARomComWithYourChildhoodFriends!/S01E03_Episode_3.mp4",
+          "fileSizeBytes": 143256500,
           "durationSeconds": 1430
         },
         {
           "title": "Episode 04",
-          "src": "http://localhost:16169/dl/k7zr1lbt8j9umlaqkg71sy9x/raw",
-          "fileSizeBytes": 1464372992,
+          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/YouCantBeInARomComWithYourChildhoodFriends!/S01E04_Episode_4.mp4",
+          "fileSizeBytes": 170311186,
           "durationSeconds": 1430
         },
         {
           "title": "Episode 05",
-          "src": "http://localhost:16169/dl/qbuu6sf1gg1w00vui39pas4j/raw",
-          "fileSizeBytes": 1463183230,
+          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/YouCantBeInARomComWithYourChildhoodFriends!/S01E05_Episode_5.mp4",
+          "fileSizeBytes": 146071348,
           "durationSeconds": 1430
         },
         {
           "title": "Episode 6",
-          "src": "http://localhost:16169/dl/zaxkmfjfwtf0qzx4a3q2935m/raw",
-          "fileSizeBytes": 1462429892,
+          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/YouCantBeInARomComWithYourChildhoodFriends!/S01E06_Episode_6.mp4",
+          "fileSizeBytes": 166037328,
           "durationSeconds": 1430
         },
         {
           "title": "Episode 7",
-          "src": "http://localhost:16169/dl/wkcpk373fcx6vb090av9go5r/raw",
-          "fileSizeBytes": 1463042460,
+          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/YouCantBeInARomComWithYourChildhoodFriends!/S01E07_Episode_7.mp4",
+          "fileSizeBytes": 160072074,
           "durationSeconds": 1430
         },
         {
           "title": "Episode 8",
-          "src": "http://localhost:16169/dl/zq9d0cwt85hchm3ek5uy2czx/raw",
-          "fileSizeBytes": 1462959409,
+          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/YouCantBeInARomComWithYourChildhoodFriends!/S01E08_Episode_8.mp4",
+          "fileSizeBytes": 198682146,
           "durationSeconds": 1430
         },
         {
           "title": "Episode 9",
-          "src": "http://localhost:16169/dl/cwx5kk9w8cguv03sr3w91gt1/raw",
-          "fileSizeBytes": 1459653947,
+          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/YouCantBeInARomComWithYourChildhoodFriends!/S01E09_Episode_9.mp4",
+          "fileSizeBytes": 151010414,
           "durationSeconds": 1430
         },
         {
           "title": "Episode 10",
-          "src": "http://localhost:16169/dl/bnh0jouwswxmogp6ipp5pk92/raw",
-          "fileSizeBytes": 1460036821,
+          "src": "https://cpr.xpbliss.fyi/pub/MM/DontTouchPls/YouCantBeInARomComWithYourChildhoodFriends!/S01E10_Episode_10.mp4",
+          "fileSizeBytes": 165056895,
           "durationSeconds": 1430
         },
         {
           "title": "Episode 11",
           "src": "https://toodrive.xpbliss.fyi/dl/v7ylkysoalup25j0uxi0wgin/raw",
-          "fileSizeBytes": 1141944570
+          "fileSizeBytes": 1141944570,
+          "durationSeconds": 1430
         },
         {
           "title": "Episode 12",
           "src": "https://toodrive.xpbliss.fyi/dl/yf9ugrkqrnhx9vz0fecfoqkn/raw",
-          "fileSizeBytes": 1143783838
+          "fileSizeBytes": 1143783838,
+          "durationSeconds": 1430
         }
       ]
     }
   ],
-  "totalFileSizeBytes": 14667469895
+  "totalFileSizeBytes": 3913854087,
+  "totalDurationSeconds": 17160
 }
