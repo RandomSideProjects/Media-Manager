@@ -2,7 +2,7 @@
   "title": "Apothicary Diaries",
   "malTitle": "The Apothecary Diaries",
   "Image": "./Sources/Posters/Anime/Apothicary_Diaries.webp",
-  "LatestTime": "2026-08-08T19:28:19.692Z",
+  "LatestTime": "2026-08-08T19:35:06.678Z",
   "categories": [
     {
       "category": "Season 1",
@@ -128,9 +128,10 @@
         },
         {
           "title": "Episode 18",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/Pain/anime_butitworksonsafarigodfuckingdamnitihatesafari/The%20Apothecary%20Diaries%20S01_H265/The%20Apothecary%20Diaries%20S01E18-%5B1080p%5D%5BBDRIP%5D%5Bx265.FLAC%5D.webm",
-          "fileSizeBytes": 230081652,
-          "durationSeconds": 1372
+          "src": "https://toodrive.xpbliss.fyi/dl/un82adn7bq1ixrr4ihf6yt4h/raw",
+          "fileSizeBytes": 1437624847,
+          "durationSeconds": 1372,
+          "dualAudio": true
         },
         {
           "title": "Episode 19",
@@ -320,6 +321,6 @@
       ]
     }
   ],
-  "totalFileSizeBytes": 48636014605,
+  "totalFileSizeBytes": 49843557800,
   "totalDurationSeconds": 67520
 }
