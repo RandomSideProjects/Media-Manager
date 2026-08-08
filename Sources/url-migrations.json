@@ -4923,6 +4923,10 @@
     {
       "old": "http://localhost:16169/dl/vu4olh7cha0zyk8jk35zs3an/raw",
       "new": "https://toodrive.xpbliss.fyi/dl/bid30irzafu0xggtmlg3fxfk/raw"
+    },
+    {
+      "old": "https://toodrive.xpbliss.fyi/dl/bid30irzafu0xggtmlg3fxfk/raw",
+      "new": "https://toodrive.xpbliss.fyi/dl/vu4olh7cha0zyk8jk35zs3an/raw"
     }
   ]
 }
