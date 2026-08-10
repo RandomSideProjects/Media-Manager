@@ -13,11 +13,11 @@
     'scripts/storage.js?v=20260727-storage',
     'Sources/scripts/constants.js',
     'Sources/scripts/utils.js',
-    'Sources/scripts/render.js?v=20260727-continue-watching-direct-item',
-    'Sources/scripts/search.js',
+    'Sources/scripts/render.js?v=20260808-motion-refresh',
+    'Sources/scripts/search.js?v=20260808-motion-refresh',
     'Sources/scripts/ui-settings.js?v=20260727-storage',
     'Sources/scripts/feedback.js',
-    'Sources/scripts/loader.js',
+    'Sources/scripts/loader.js?v=20260808-motion-refresh',
     'Sources/scripts/temp-sources.js'
   ];
 
@@ -27,7 +27,7 @@
     'scripts/alerts.js',
     'scripts/dev-core.js',
     'scripts/overlay-factory.js?v=20260727-storage-ui',
-    'scripts/dom.js',
+    'scripts/dom.js?v=20260808-motion-refresh',
     'scripts/theater.js',
     'scripts/tags.js',
     'scripts/recent-sources.js?v=20260727-continue-watching',
@@ -70,7 +70,7 @@
     document.getElementById('publicSourcesStyles')?.remove();
     const stylesheet = document.createElement('link');
     stylesheet.rel = 'stylesheet';
-    stylesheet.href = 'style.css?v=20260804-maintenance-open';
+    stylesheet.href = 'style.css?v=20260808-motion-refresh';
     document.head.appendChild(stylesheet);
     document.title = 'Media Manager';
     document.documentElement.classList.add('custom-route');

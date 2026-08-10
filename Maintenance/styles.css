@@ -94,10 +94,13 @@ input:focus, select:focus, button:focus-visible { outline: 2px solid #69b0ff; ou
 .library-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .6rem; align-items: center; padding: .7rem; border: 1px solid #2e2e36; border-radius: 8px; background: #17171b; }
 .library-row:hover { border-color: #5c6574; }
 .library-title { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dual-audio-badge { display: inline-block; margin-left: .35rem; padding: .16rem .34rem; border: 1px solid #4b8b68; border-radius: 999px; color: #b8f3ca; background: #173525; font-size: .62rem; font-weight: 800; letter-spacing: .04em; vertical-align: .12em; }
+.dual-audio-badge--pending { border-color: #8a6530; color: #ffd38a; background: #2b2418; }
 .library-meta { color: var(--muted); font-size: .78rem; margin-top: .2rem; line-height: 1.35; }
 .library-row .button { padding: .45rem .6rem; font-size: .8rem; }
 .field-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(150px, .45fr); gap: .75rem; margin-top: .8rem; align-items: end; }
 .workflow-copy { margin: .75rem 0 0; font-size: .9rem; }
+.catalog-status { margin-top: .65rem; padding: .65rem .75rem; border: 1px solid #2e3d50; border-radius: 8px; color: #c9def4; background: #151e2a; font-size: .8rem; line-height: 1.45; }
 .automation-options { margin: 1rem 0; }
 .automation-start { width: 100%; margin-top: .25rem; }
 .automation-options label { display: inline-flex; align-items: center; gap: .35rem; }

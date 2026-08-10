@@ -43,6 +43,8 @@
     seenChildEventCount: 0,
     childEventJobId: null,
     childEventCounts: {},
+    catalog: null,
+    catalogTimer: null,
   };
 
   function appendLog(line) {
@@ -315,17 +317,61 @@
     return `${when} ${scope} ${message}`;
   }
 
+  // The service keeps the complete td/ffmpeg event stream for diagnostics, but
+  // the activity panel should stay readable. Raw process logs and transfer
+  // progress already have dedicated UI, so only show milestones and failures.
+  const IMPORTANT_LOG_EVENTS = new Set([
+    "run",
+    "run_started",
+    "run_finished",
+    "job_started",
+    "job_retry",
+    "metadata",
+    "link",
+    "file_result",
+    "error",
+    "warning",
+    "job_failed",
+    "job_complete",
+    "job_cancelled",
+    "pipeline_fallback",
+    "audio_stream_probe_failed",
+    "duration_probe_failed",
+    "manifest_skipped",
+    "publication_failed",
+    "catalog_start_failed",
+    "service_started",
+  ]);
+  const IMPORTANT_STATUS_PHASES = new Set([
+    "starting",
+    "fetching_metadata",
+    "overwrite",
+    "processing",
+    "uploading",
+    "finalizing",
+    "complete",
+  ]);
+
+  function isImportantLogEntry(entry) {
+    if (!entry || typeof entry !== "object") return false;
+    const event = String(entry.event || "").trim().toLowerCase();
+    if (!event || event === "log" || event === "progress") return false;
+    if (event === "status") return IMPORTANT_STATUS_PHASES.has(String(entry.phase || "").trim().toLowerCase());
+    return IMPORTANT_LOG_EVENTS.has(event);
+  }
+
   async function reloadPersistedLog() {
-    const params = new URLSearchParams({ limit: "500" });
+    const params = new URLSearchParams({ limit: "2000" });
     if (state.jobKind === "run" && state.jobId) params.set("runId", state.jobId);
     if (state.jobKind === "job" && state.jobId) params.set("jobId", state.jobId);
     try {
       const data = await request(`/api/maintenance/logs?${params}`);
       const entries = Array.isArray(data.entries) ? data.entries : [];
+      const importantEntries = entries.filter(isImportantLogEntry);
       const log = $("jobLog");
-      log.textContent = entries.map(formatPersistedLog).join("\n");
+      log.textContent = importantEntries.map(formatPersistedLog).join("\n");
       log.scrollTop = log.scrollHeight;
-      $("logState").textContent = `${entries.length} saved log entr${entries.length === 1 ? "y" : "ies"}`;
+      $("logState").textContent = `${importantEntries.length} important entr${importantEntries.length === 1 ? "y" : "ies"}${entries.length > importantEntries.length ? ` · ${entries.length - importantEntries.length} detailed entr${entries.length - importantEntries.length === 1 ? "y" : "ies"} hidden` : ""}`;
     } catch (error) {
       $("logState").textContent = `Saved log unavailable: ${error.message}`;
     }
@@ -336,6 +382,36 @@
     element.textContent = text;
     element.style.color = error ? "#ff9da5" : "";
     element.title = `Maintenance backend: ${SERVICE}\nPress D to change it`;
+  }
+
+  function renderCatalogStatus() {
+    const element = $("catalogStatus");
+    if (!element) return;
+    const catalog = state.catalog;
+    if (!catalog) {
+      element.textContent = "Tracker catalog status is unavailable.";
+      return;
+    }
+    const indexed = Number(catalog.total) || 0;
+    const published = Number(catalog.published) || 0;
+    const queued = Number(catalog.queued) || 0;
+    const upgrades = Number(catalog.upgradeEligible) || 0;
+    const upgradeEpisodes = Number(catalog.upgradeEpisodes) || 0;
+    const unconfirmedEpisodes = Number(catalog.unconfirmedEpisodes) || 0;
+    const unavailable = Number(catalog.unavailable) || 0;
+    const scanning = catalog.scanning ? " Scanning releases.moe now." : "";
+    const pending = catalog.sourceListPending ? " Source-list publication is pending retry." : "";
+    element.textContent = `${indexed} tracker titles indexed · ${published} playable · ${queued} queued · ${upgrades} dual-audio upgrade${upgrades === 1 ? "" : "s"} (${upgradeEpisodes} episode${upgradeEpisodes === 1 ? "" : "s"})${unconfirmedEpisodes ? ` · ${unconfirmedEpisodes} unconfirmed` : ""}${unavailable ? ` · ${unavailable} unavailable` : ""}.${scanning}${pending}`;
+  }
+
+  async function refreshCatalogStatus() {
+    try {
+      state.catalog = await request("/api/catalog/status");
+      renderCatalogStatus();
+    } catch (error) {
+      const element = $("catalogStatus");
+      if (element) element.textContent = `Tracker catalog unavailable: ${error.message}`;
+    }
   }
 
   function configureMaintenanceBackend() {
@@ -395,6 +471,19 @@
       const title = document.createElement("div");
       title.className = "library-title";
       title.textContent = source.title;
+      if (source.dualAudio) {
+        const badge = document.createElement("span");
+        badge.className = "dual-audio-badge";
+        badge.textContent = "DUAL AUDIO";
+        badge.title = "Every episode currently recorded for this source is marked dual audio.";
+        title.append(" ", badge);
+      } else if (Number(source.unconfirmedAudioCount) > 0) {
+        const badge = document.createElement("span");
+        badge.className = "dual-audio-badge dual-audio-badge--pending";
+        badge.textContent = `${source.unconfirmedAudioCount} AUDIO UPGRADE${source.unconfirmedAudioCount === 1 ? "" : "S"}`;
+        badge.title = "Single-audio or unconfirmed episodes will be promoted when a dual-audio release is found.";
+        title.append(" ", badge);
+      }
       const meta = document.createElement("div");
       meta.className = "library-meta";
       const categoryText = (source.categories || []).map((category) => `${category.category}: ${category.episodeCount}`).join(" · ") || "No categories";
@@ -423,6 +512,7 @@
       state.sources = Array.isArray(data.sources) ? data.sources : [];
       renderLibrary();
       setServiceState(`${state.sources.length} shows loaded`);
+      await refreshCatalogStatus();
       if (data.errors?.length) appendLog(`Skipped ${data.errors.length} unreadable source file(s).`);
     } catch (error) {
       setServiceState(`Service unavailable: ${error.message}`, true);
@@ -508,15 +598,15 @@
     const events = Array.isArray(job.events) ? job.events : [];
     for (const event of events.slice(state.seenEventCount)) {
       const message = event.message || event.phase || event.event;
-      if (message) $("jobProgressText").textContent = message;
+      if (message && (event.event === "progress" || isImportantLogEntry(event))) $("jobProgressText").textContent = message;
       if (event.event === "progress" && event.totalBytes) {
         $("jobProgress").value = Math.min(1, event.transferredBytes / event.totalBytes);
         setProgressCount(`${formatBytes(event.transferredBytes)} / ${formatBytes(event.totalBytes)}`);
       }
-      if (message && event.event !== "progress") appendLog(event.event === "link" && event.url
+      if (message && isImportantLogEntry(event)) appendLog(event.event === "link" && event.url
         ? `${event.remotePath || "file"} → ${event.url}`
         : message);
-      if (message && event.event !== "progress") updateCurrentJob(job.state === "running" ? "Working" : job.state, "Direct new-show job", message);
+      if (message && isImportantLogEntry(event)) updateCurrentJob(job.state === "running" ? "Working" : job.state, "Direct new-show job", message);
     }
     state.seenEventCount = events.length;
   }
@@ -529,7 +619,7 @@
       const message = event.message || event.phase || event.event;
       if (event.event === "progress" && event.totalBytes) {
         setProgressCount(`${formatBytes(event.transferredBytes)} / ${formatBytes(event.totalBytes)}`);
-      } else if (message) {
+      } else if (message && isImportantLogEntry(event)) {
         appendLog(message);
       }
     }
@@ -568,11 +658,12 @@
         ? ({ searching: "Searching release sources for season", downloading: "Downloading new season", processing: "Processing new season", uploading: "Uploading new season", complete: "Season added" }[current.state] || "Adding season")
         : (stateLabels[current.state] || "Processing");
       const childJob = Array.isArray(childJobs) ? childJobs.find((job) => job) : null;
-      const childEvent = childJob?.events?.at(-1);
+      const childEvents = Array.isArray(childJob?.events) ? childJob.events : [];
+      const childEvent = [...childEvents].reverse().find(isImportantLogEntry);
       const queuedChild = childJobs.find((job) => job?.state === "queued");
       const childMessage = childQueued
         ? `Waiting for the current torrent job${queuedChild?.queuePosition > 1 ? ` (queue position ${queuedChild.queuePosition})` : ""}`
-        : childEvent?.message || (childEvent?.event === "progress" ? phaseLabel(childEvent.phase) : "");
+        : childEvent?.message || childEvent?.phase || childEvent?.event || "";
       const provider = current.provider ? ` · via ${current.provider}` : "";
       const detail = `${childMessage || `${current.category}${current.missingEpisodes?.length ? ` · downloading episodes ${formatEpisodeList(current.missingEpisodes)}` : ""}`}${provider}`;
       updateCurrentJob(label, current.title, detail);
@@ -754,6 +845,8 @@
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         sourcePaths,
+        discoverCatalog: true,
+        catalogScan: true,
         replaceExisting: $("updateReplace").checked,
         addMissing: $("updateAdd").checked,
         allCategories: $("updateAllCategories").checked,
@@ -840,5 +933,7 @@
   });
 
   void refreshLibrary();
+  void refreshCatalogStatus();
+  state.catalogTimer = window.setInterval(() => { void refreshCatalogStatus(); }, 10000);
   void reconnectToActiveWork();
 })();

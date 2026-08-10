@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>RSP Media Manager</title>
   <link rel="icon" href="Assets/Favicon.png">
-  <link rel="stylesheet" id="publicSourcesStyles" href="Sources/styles.css?v=20260804-maintenance-open">
+  <link rel="stylesheet" id="publicSourcesStyles" href="Sources/styles.css?v=20260808-motion-refresh">
 </head>
 <body>
   <header class="sources-main-toolbar">
@@ -34,7 +34,10 @@
       <h2 id="continueWatchingTitle">Continue watching</h2>
       <div id="continueWatchingGrid" class="continue-watching-grid"></div>
     </section>
-    <div class="sources-search" id="sourcesToolbar">
+    <div class="sources-search" id="sourcesToolbar" role="search">
+      <svg class="sources-search-icon" aria-hidden="true" viewBox="0 0 24 24">
+        <path d="m20.7 19.3-4.2-4.2a7.5 7.5 0 1 0-1.4 1.4l4.2 4.2 1.4-1.4ZM5 10.5a5.5 5.5 0 1 1 11 0 5.5 5.5 0 0 1-11 0Z"/>
+      </svg>
       <label class="sr-only" for="sourcesSearchInput">Search public sources</label>
       <input
         type="search"
@@ -43,6 +46,7 @@
         placeholder="Search by title, file name, or poster URL"
         autocomplete="off"
       />
+      <span id="sourcesResultCount" class="sources-result-count" aria-live="polite">Loading library…</span>
     </div>
     <div class="container" id="sourcesContainer">
       <!-- Cards will be injected here -->
@@ -71,7 +75,7 @@
   <footer class="sources-footer">
     <a href="https://github.com/RandomSideProjects/Media-Manager/blob/main/Sources/README.md" id="simpleSourceLink" target="_blank" rel="noopener">Simple Version</a>
   </footer>
-  <script src="scripts/app-router.js?v=20260727-storage-ui-continue-watching-direct-item"></script>
+  <script src="scripts/app-router.js?v=20260808-motion-refresh"></script>
   <script>
     (() => {
       const openButton = document.getElementById('customViewBtn');
@@ -187,4 +191,3 @@
   </script>
 </body>
 </html>
-

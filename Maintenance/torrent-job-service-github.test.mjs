@@ -35,7 +35,7 @@ process.env.MEDIA_MANAGER_GITHUB_REPOSITORY = "owner/repo";
 process.env.MEDIA_MANAGER_GITHUB_BRANCH = "main";
 process.env.MEDIA_MANAGER_LOG_FILE = join(tmpdir(), `media-manager-github-test-${process.pid}.log`);
 
-const { cleanupJobCache, publishSourceToGithub } = await import(`./torrent-job-service.mjs?github-test=${process.pid}`);
+const { cleanupJobCache, publishSourceToGithub, publishSourceListToGithub } = await import(`./torrent-job-service.mjs?github-test=${process.pid}`);
 
 after(async () => {
   await new Promise((resolve, reject) => githubMock.close((error) => error ? reject(error) : resolve()));
@@ -59,6 +59,17 @@ test("publishes a source manifest through the GitHub Contents API", async () => 
   assert.equal(result.provider, "github");
   assert.equal(result.commitSha, "commit-sha");
   assert.equal(result.contentSha, "new-content-sha");
+});
+
+test("publishes the source index through the GitHub Contents API", async () => {
+  requests.length = 0;
+  const result = await publishSourceListToGithub('{"sources":[]}\n');
+  assert.deepEqual(requests.map((request) => request.method), ["GET", "PUT"]);
+  assert.equal(requests[0].url.pathname, "/repos/owner/repo/contents/Sources/AnimeSourceList.json");
+  assert.equal(requests[1].body.branch, "main");
+  assert.equal(Buffer.from(requests[1].body.content, "base64").toString("utf8"), '{"sources":[]}\n');
+  assert.equal(result.path, "Sources/AnimeSourceList.json");
+  assert.equal(result.commitSha, "commit-sha");
 });
 
 test("removes the complete per-job cache after success", async () => {

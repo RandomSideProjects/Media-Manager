@@ -14,7 +14,8 @@
   function normalize(s){ return String(s || '').toLowerCase(); }
 
   function filterAndRender(query){
-    const q = normalize(query);
+    const rawQuery = String(query || '').trim();
+    const q = normalize(rawQuery);
     if (!q) { renderSourcesFromState(); return; }
     try {
       const filtered = sortMeta(
@@ -28,7 +29,17 @@
       );
       const container = document.getElementById('sourcesContainer');
       container.innerHTML = '';
-      for (const meta of filtered) container.appendChild(buildSourceCardFromMeta(meta));
+      filtered.forEach((meta, index) => {
+        const card = buildSourceCardFromMeta(meta);
+        card.style.setProperty('--source-index', String(Math.min(index, 8)));
+        container.appendChild(card);
+      });
+      if (!filtered.length && typeof renderSourcesEmptyState === 'function') {
+        renderSourcesEmptyState(container, rawQuery);
+      }
+      if (typeof updateSourcesResultCount === 'function') {
+        updateSourcesResultCount(filtered.length, rawQuery);
+      }
     } catch { renderSourcesFromState(); }
   }
 
@@ -40,6 +51,11 @@
       const v = input.value;
       if (t) cancelAnimationFrame(t);
       t = requestAnimationFrame(() => filterAndRender(v));
+    });
+    input.addEventListener('keydown', (event) => {
+      if (event.key !== 'Escape' || !input.value) return;
+      input.value = '';
+      filterAndRender('');
     });
   }
 
@@ -59,4 +75,3 @@
     }
   };
 })();
-

@@ -54,8 +54,8 @@ body {
   align-items: center;
   gap: 1rem;
   padding: 0.55rem clamp(1rem, 3vw, 2rem);
-  background: rgba(17, 17, 17, 0.96);
-  border-bottom: 1px solid #242424;
+  background: rgba(15, 16, 18, 0.88);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
   backdrop-filter: blur(14px);
 }
 
@@ -83,6 +83,14 @@ body {
   gap: 0.5rem;
 }
 
+.creator-nav {
+  gap: 0.25rem;
+  padding: 0.28rem;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
 .creator-toolbar-actions {
   justify-content: flex-end;
 }
@@ -96,12 +104,12 @@ body {
   justify-content: center;
   padding: 0;
   margin: 0;
-  border: 0;
-  border-radius: 8px;
-  background: #007bff;
-  color: #fff;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: rgba(241, 241, 241, 0.7);
   cursor: pointer;
-  transition: background 0.2s, transform 0.1s;
+  transition: color 140ms ease, background-color 140ms ease, border-color 140ms ease, transform 120ms cubic-bezier(0.165, 0.84, 0.44, 1);
 }
 
 .creator-nav-button svg {
@@ -110,18 +118,47 @@ body {
   fill: currentColor;
 }
 
-.creator-nav-button:hover {
-  background: #0056b3;
-}
-
 .creator-nav-button.active {
-  background: #f1f1f1;
+  border-color: rgba(255, 255, 255, 0.12);
+  background: #f4f6fb;
   color: #111;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.24);
 }
 
 .creator-nav-button--secondary {
   background: transparent;
-  border: 1px solid #333;
+  border-color: transparent;
+}
+
+.creator-toolbar-actions .creator-nav-button {
+  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.06);
+  color: #eef0f3;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .creator-nav-button:hover {
+    border-color: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.07);
+    color: #fff;
+  }
+
+  .creator-nav-button.active:hover {
+    background: #fff;
+    color: #111;
+  }
+
+  .creator-toolbar-actions .creator-nav-button:hover {
+    border-color: rgba(255, 255, 255, 0.28);
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .creator-nav-button {
+    transition: none;
+  }
 }
 
 .creator-layout {
@@ -139,6 +176,7 @@ body {
   width: var(--creator-width);
   max-width: none;
   margin: clamp(1.25rem, 4vh, 2.5rem) auto;
+  box-sizing: border-box;
 }
 
 .side-panel {
@@ -911,6 +949,7 @@ pre {
   align-items:center; 
   gap:0.5em;
   width: 100%;
+  box-sizing: border-box;
   background: #1f1f1f;
   padding: 1em;
   border-radius: 6px;
@@ -979,9 +1018,9 @@ pre {
   position: static;
   width: 100%;
   box-sizing: border-box;
-  background: rgba(93, 156, 255, 0.08);
+  background: rgba(255, 255, 255, 0.05);
   color: #f1f1f1;
-  border: 1px solid rgba(93, 156, 255, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 10px;
   padding: 0.6em 0.9em;
   font-size: 0.9rem;

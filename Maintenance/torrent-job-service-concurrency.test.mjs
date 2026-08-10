@@ -73,7 +73,7 @@ test("runs multiple release torrents sequentially and serializes manifest writes
       title: `Example Show S03E${String(episode).padStart(2, "0")}`,
       magnet: `magnet:?xt=urn:btih:episode${episode}`,
       targetEpisodes: [episode],
-      dualAudio: true,
+      dualAudio: false,
     })),
   };
   const run = {

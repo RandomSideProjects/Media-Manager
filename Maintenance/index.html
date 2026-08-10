@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Library Maintenance · RSP Media Manager</title>
   <link rel="icon" href="../Assets/Favicon.png" />
-  <link rel="stylesheet" href="styles.css?v=20260805-maintenance-reconnect-2" />
+  <link rel="stylesheet" href="styles.css?v=20260808-dual-audio-badge" />
 </head>
 <body>
   <header class="maintenance-toolbar">
@@ -31,7 +31,7 @@
       <div>
         <span class="eyebrow">Media library tools</span>
         <h1>Keep the library current</h1>
-        <p>Run one check for the whole library. MyAnimeList identifies missing episodes and later seasons first; existing shows are updated automatically, while the manual form below is only for a brand-new show.</p>
+        <p>Run one check for the whole library. The tracker catalog discovers new TV and movie sources automatically, while existing shows are checked for missing episodes and dual-audio upgrades.</p>
       </div>
       <div class="service-state" id="serviceState" aria-live="polite">Connecting to local service…</div>
     </section>
@@ -44,8 +44,9 @@
         </div>
         <button id="updateStartBtn" class="button button-primary" type="button">Run maintenance</button>
       </div>
-      <p class="workflow-copy">Movies are skipped. Existing episodes are kept unless the matching release needs replacing.</p>
+      <p class="workflow-copy">New tracker titles stay hidden until playable. Existing single-audio episodes are replaced when a dual-audio release becomes available.</p>
       <div id="automationSummary" class="muted-line" aria-live="polite">No automated run started.</div>
+      <div id="catalogStatus" class="catalog-status" aria-live="polite">Tracker catalog status is loading…</div>
       <details class="advanced-options">
         <summary>Advanced run options</summary>
         <div class="check-row">
@@ -135,19 +136,19 @@
       <div class="panel-heading">
         <div>
           <span class="eyebrow">Activity</span>
-          <h2 id="jobHeading">Live log</h2>
+          <h2 id="jobHeading">Important activity</h2>
         </div>
         <div class="job-actions">
-          <button id="refreshLogBtn" class="button button-secondary" type="button">Reload log</button>
+          <button id="refreshLogBtn" class="button button-secondary" type="button">Reload activity</button>
           <button id="cancelJobBtn" class="button button-danger" type="button" hidden>Cancel</button>
         </div>
       </div>
-      <div id="logState" class="muted-line" aria-live="polite">Persistent log available from the local service.</div>
+      <div id="logState" class="muted-line" aria-live="polite">Showing important milestones only; detailed process output stays in the local service log.</div>
       <pre id="jobLog" class="job-log" aria-live="polite"></pre>
       <div id="jobResult" class="job-result" aria-live="polite"></div>
     </section>
   </main>
 
-  <script src="app.js?v=20260807-custom-backend-shortcut"></script>
+  <script src="app.js?v=20260808-important-activity-1"></script>
 </body>
 </html>

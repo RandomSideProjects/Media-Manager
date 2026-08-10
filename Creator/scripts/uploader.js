@@ -702,19 +702,22 @@ async function maybeRemuxVideoForCatboxUpload(file, onProgress, options, setting
   }
   let shouldRemux = false;
   try { shouldRemux = window.mmShouldRemuxVideoFileToMp4(file) === true; } catch {}
+  let browserCompatible = true;
   let normalizeEnglishAudio = false;
-  if (!shouldRemux && typeof window.mmInspectVideoFileStreamsWithFfmpeg === 'function') {
+  if (typeof window.mmInspectVideoFileStreamsWithFfmpeg === 'function') {
     try {
       const streams = await window.mmInspectVideoFileStreamsWithFfmpeg(file);
+      browserCompatible = typeof window.mmIsBrowserCompatibleVideoStreams !== 'function'
+        || window.mmIsBrowserCompatibleVideoStreams(streams) === true;
       normalizeEnglishAudio = typeof window.mmNeedsEnglishAudioDefault === 'function'
         && window.mmNeedsEnglishAudioDefault(streams) === true;
     } catch {}
   }
-  if (!shouldRemux && !normalizeEnglishAudio) return { file, didRemux: false };
+  if (!shouldRemux && !normalizeEnglishAudio && browserCompatible) return { file, didRemux: false };
 
   const result = await window.mmRemuxVideoFileToMp4(file, {
-    forceRemux: normalizeEnglishAudio,
-    remuxMode: getRemuxMode(settings, options),
+    forceRemux: normalizeEnglishAudio || !browserCompatible,
+    remuxMode: !browserCompatible ? 'compatible' : getRemuxMode(settings, options),
     onProgress: (info) => {
       if (typeof onProgress !== 'function') return;
       const ratio = Math.max(0, Math.min(1, Number(info && info.ratio) || 0));
@@ -722,7 +725,7 @@ async function maybeRemuxVideoForCatboxUpload(file, onProgress, options, setting
     }
   });
   if (result && result.file) {
-    const outputFile = normalizeEnglishAudio && result.file.name !== file.name
+    const outputFile = (normalizeEnglishAudio || !browserCompatible) && result.file.name !== file.name
       ? new File([result.file], file.name, { type: result.file.type || 'video/mp4', lastModified: Date.now() })
       : result.file;
     return {

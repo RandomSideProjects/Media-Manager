@@ -637,8 +637,8 @@ body.light-mode .episode-button.episode--complete .episode-progress-fill {
   color: var(--muted-text);
 }
 #urlInput:focus {
-  border-color: rgba(67, 139, 255, 0.85);
-  box-shadow: 0 0 0 4px rgba(0, 123, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.34);
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.06);
   background: transparent;
 }
 .source-loader-heading {
@@ -817,8 +817,9 @@ header {
   position: sticky;
   top: 0;
   z-index: 1001;
-  background: #111;
-  border-bottom: 1px solid #1f1f1f;
+  background: rgba(15, 16, 18, 0.88);
+  border-bottom: 1px solid var(--surface-border);
+  backdrop-filter: blur(14px);
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
@@ -879,20 +880,16 @@ header {
 .toolbar-actions button {
   width: 2.5em;
   height: 2.5em;
-  border-radius: 6px;
-  background: var(--button-bg);
-  color: var(--button-text);
-  border: none;
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+  border: 1px solid var(--surface-border);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1.2em;
-  transition: background 0.2s, transform 0.1s;
-}
-
-.toolbar-actions button:hover {
-  background: var(--button-hover-bg);
+  transition: color 140ms ease, background-color 140ms ease, border-color 140ms ease, transform 120ms cubic-bezier(0.165, 0.84, 0.44, 1);
 }
 
 .toolbar-actions button:active {
@@ -939,25 +936,28 @@ header {
 /* Nav tabs and dropdown */
 .tabs {
   display: flex;
-  gap: 0.5em;
+  gap: 0.25rem;
   justify-content: center;
   align-items: center;
   flex-wrap: wrap;
   flex: 0 1 auto;
+  padding: 0.28rem;
+  border: 1px solid var(--surface-border);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.035);
 }
 .tab-button {
   padding: 0.6em 1.2em;
-  background: #007bff;
-  color: white;
+  background: transparent;
+  color: var(--muted-text);
   border: none;
-  border-radius: 6px;
+  border-radius: 10px;
   cursor: pointer;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   transition: background 0.2s, transform 0.1s;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
-.tab-button:hover { background: #0056b3; }
 .tab-button:active { transform: scale(0.98); }
 .tab-button--icon {
   width: 42px;
@@ -968,6 +968,10 @@ header {
   justify-content: center;
   padding: 0;
   margin: 0;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--muted-text);
+  transition: color 140ms ease, background-color 140ms ease, border-color 140ms ease, transform 120ms cubic-bezier(0.165, 0.84, 0.44, 1);
 }
 .tab-button--icon svg {
   width: 21px;
@@ -975,15 +979,39 @@ header {
   fill: currentColor;
 }
 .tab-button.is-active {
-  background: #f1f1f1;
+  border-color: var(--surface-border);
+  background: color-mix(in srgb, var(--text) 96%, transparent);
   color: #111;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.24);
 }
 .tab-button--secondary {
   background: transparent;
-  border: 1px solid var(--surface-border);
+  border-color: transparent;
 }
-.tab-button--secondary:hover {
-  background: var(--input-bg);
+@media (hover: hover) and (pointer: fine) {
+  .toolbar-actions button:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.24);
+    color: var(--text);
+  }
+
+  .tab-button:hover {
+    border-color: var(--surface-border);
+    background: var(--input-bg);
+    color: var(--text);
+  }
+
+  .tab-button.is-active:hover {
+    background: color-mix(in srgb, var(--text) 100%, transparent);
+    color: #111;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toolbar-actions button,
+  .tab-button--icon {
+    transition: none;
+  }
 }
 .dropdown { position: relative; }
 .dropdown-content {

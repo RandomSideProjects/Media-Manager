@@ -14,9 +14,10 @@ import { fileURLToPath } from "node:url";
 
 const PORT = Number(process.env.CREATOR_TORRENT_PORT || process.env.MAINTENANCE_PORT || 6968);
 const HOST = String(process.env.CREATOR_TORRENT_HOST || process.env.MAINTENANCE_HOST || "0.0.0.0").trim() || "0.0.0.0";
-const SERVICE_PROTOCOL_VERSION = "maintenance-v5";
+const SERVICE_PROTOCOL_VERSION = "maintenance-v6";
 const TD_BIN = process.env.TD_BIN || join(homedir(), ".deno/bin/td");
 const FFPROBE_BIN = process.env.FFPROBE_BIN || "ffprobe";
+const BROWSER_COMPATIBILITY_ENABLED = process.env.MEDIA_MANAGER_BROWSER_COMPATIBILITY !== "0";
 const TOODRIVE_BASE_URL = process.env.TOODRIVE_BASE_URL || "https://toodrive.xpbliss.fyi";
 const TOODRIVE_PUBLIC_BASE_URL = String(process.env.TOODRIVE_PUBLIC_BASE_URL || "https://toodrive.xpbliss.fyi").replace(/\/$/, "");
 const LEGACY_TOODRIVE_HOSTS = new Set([
@@ -34,9 +35,12 @@ const NYAA_BASE_URLS = [
 ].filter((base, index, all) => base && all.indexOf(base) === index)
   .map((base) => String(base).replace(/\/$/, ""));
 const SERVICE_DIR = dirname(fileURLToPath(import.meta.url));
+const BROWSER_COMPATIBILITY_SCRIPT = resolve(process.env.MEDIA_MANAGER_BROWSER_COMPATIBILITY_SCRIPT || join(SERVICE_DIR, "browser-compatible-reencode.sh"));
 const REPO_ROOT = resolve(process.env.MEDIA_MANAGER_ROOT || join(SERVICE_DIR, ".."));
 const SOURCE_DIR = resolve(REPO_ROOT, "Sources/Files/Anime");
 const SOURCE_PREFIX = "Sources/Files/Anime/";
+const SOURCE_LIST_FILE = resolve(REPO_ROOT, "Sources/AnimeSourceList.json");
+const SOURCE_LIST_PATH = "Sources/AnimeSourceList.json";
 const GITHUB_API_BASE_URL = String(process.env.MEDIA_MANAGER_GITHUB_API_URL || "https://api.github.com").replace(/\/$/, "");
 const GITHUB_REPOSITORY = String(
   process.env.MEDIA_MANAGER_GITHUB_REPOSITORY || process.env.GITHUB_REPOSITORY || "RandomSideProjects/Media-Manager",
@@ -50,6 +54,12 @@ const GITHUB_TEST_PUBLISH = process.env.MEDIA_MANAGER_TEST_GITHUB === "1";
 const DEFAULT_CACHE = join(homedir(), ".local/share/toodrive-job/creator-cache");
 const LOG_FILE = resolve(process.env.MEDIA_MANAGER_LOG_FILE || join(homedir(), ".local/share/media-manager-maintenance/maintenance.log"));
 const RESUME_FILE = resolve(process.env.MEDIA_MANAGER_RESUME_FILE || join(homedir(), ".local/share/media-manager-maintenance/resume-state.json"));
+const CATALOG_STATE_FILE = resolve(process.env.MEDIA_MANAGER_CATALOG_STATE_FILE || join(homedir(), ".local/share/media-manager-maintenance/catalog-state.json"));
+const CATALOG_STATE_VERSION = 1;
+const CATALOG_PAGE_SIZE = Math.min(500, Math.max(50, Number(process.env.MEDIA_MANAGER_CATALOG_PAGE_SIZE) || 500));
+const CATALOG_ANILIST_BATCH_SIZE = Math.min(50, Math.max(1, Number(process.env.MEDIA_MANAGER_CATALOG_ANILIST_BATCH_SIZE) || 50));
+const CATALOG_ANILIST_INTERVAL_MS = Math.max(0, Number(process.env.MEDIA_MANAGER_CATALOG_ANILIST_INTERVAL_MS) || 2_200);
+const CATALOG_SCAN_ENABLED = process.env.MEDIA_MANAGER_CATALOG_SCAN !== "0";
 // General maintenance uses Jikan's public MyAnimeList mirror as a preflight
 // check.  The cache keeps recurring runs fast and the request gate stays below
 // Jikan's public rate limit.  Set MAL_CHECK=0 (or malCheck:false in a request)
@@ -83,6 +93,74 @@ let malCacheWrite = Promise.resolve();
 let malRequestQueue = Promise.resolve();
 let malLastRequestAt = 0;
 let resumeWriteQueue = Promise.resolve();
+let catalogState = null;
+let catalogStateLoad = null;
+let catalogWriteQueue = Promise.resolve();
+let catalogScanPromise = null;
+let catalogRunId = null;
+let catalogAniListLastRequestAt = 0;
+
+function emptyCatalogState() {
+  return {
+    version: CATALOG_STATE_VERSION,
+    updatedAt: null,
+    lastScanAt: null,
+    lastScanError: "",
+    lastError: "",
+    sourceListPending: false,
+    scanning: false,
+    entries: {},
+  };
+}
+
+async function loadCatalogState() {
+  if (catalogState) return catalogState;
+  if (catalogStateLoad) return catalogStateLoad;
+  catalogStateLoad = readFile(CATALOG_STATE_FILE, "utf8")
+    .then((raw) => {
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== "object" || parsed.version !== CATALOG_STATE_VERSION) {
+        catalogState = emptyCatalogState();
+      } else {
+        catalogState = {
+          ...emptyCatalogState(),
+          ...parsed,
+          entries: parsed.entries && typeof parsed.entries === "object" && !Array.isArray(parsed.entries) ? parsed.entries : {},
+        };
+      }
+      return catalogState;
+    })
+    .catch((error) => {
+      if (error?.code !== "ENOENT") console.error(`[catalog-state] ${error instanceof Error ? error.message : String(error)}`);
+      catalogState = emptyCatalogState();
+      return catalogState;
+    });
+  return catalogStateLoad;
+}
+
+function persistCatalogState() {
+  const state = catalogState || emptyCatalogState();
+  const snapshot = JSON.stringify({
+    ...state,
+    version: CATALOG_STATE_VERSION,
+    updatedAt: new Date().toISOString(),
+    scanning: Boolean(state.scanning),
+  }, null, 2) + "\n";
+  const temporary = `${CATALOG_STATE_FILE}.${process.pid}.tmp`;
+  catalogWriteQueue = catalogWriteQueue.then(async () => {
+    await mkdir(dirname(CATALOG_STATE_FILE), { recursive: true });
+    await writeFile(temporary, snapshot, "utf8");
+    await rename(temporary, CATALOG_STATE_FILE);
+  }).catch((error) => {
+    console.error(`[catalog-state] ${error instanceof Error ? error.message : String(error)}`);
+  });
+  return catalogWriteQueue;
+}
+
+function catalogKey(alID) {
+  const id = Number(alID);
+  return Number.isInteger(id) && id > 0 ? `al:${id}` : "";
+}
 
 function resumableRun(run) {
   return {
@@ -249,8 +327,16 @@ function githubManifestPath(sourcePath) {
 
 function githubContentsUrl(sourcePath) {
   const path = githubManifestPath(sourcePath);
+  return githubContentsUrlForPath(path);
+}
+
+function githubContentsUrlForPath(path) {
+  const normalized = String(path || "").replace(/^\.\//, "");
+  if (!normalized || normalized.includes("..") || !normalized.startsWith("Sources/") || normalized.includes("\\")) {
+    throw new Error("GitHub content path must stay inside Sources");
+  }
   const { owner, name } = githubRepositoryParts();
-  const encodedPath = path.split("/").map((segment) => encodeURIComponent(segment)).join("/");
+  const encodedPath = normalized.split("/").map((segment) => encodeURIComponent(segment)).join("/");
   return `${GITHUB_API_BASE_URL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(name)}/contents/${encodedPath}`;
 }
 
@@ -284,6 +370,18 @@ async function githubRequest(method, url, body = undefined) {
 
 async function githubManifestSha(sourcePath) {
   const url = new URL(githubContentsUrl(sourcePath));
+  url.searchParams.set("ref", GITHUB_BRANCH);
+  try {
+    const body = await githubRequest("GET", url);
+    return String(body?.sha || "") || null;
+  } catch (error) {
+    if (error?.status === 404) return null;
+    throw error;
+  }
+}
+
+async function githubFileSha(path) {
+  const url = new URL(githubContentsUrlForPath(path));
   url.searchParams.set("ref", GITHUB_BRANCH);
   try {
     const body = await githubRequest("GET", url);
@@ -343,6 +441,148 @@ async function publishSourceToGithub(sourcePath, content, metadata = {}) {
     commitUrl: String(response?.commit?.html_url || ""),
     contentSha: String(response?.content?.sha || ""),
   };
+}
+
+function sourceListEntryFromData(file, data) {
+  const categories = Array.isArray(data?.categories) ? data.categories : [];
+  let categoryCount = 0;
+  let separatedCategoryCount = 0;
+  let episodeCount = 0;
+  let movieCount = 0;
+  let itemCount = 0;
+  let separatedItemCount = 0;
+  let dualAudioCount = 0;
+  for (const category of categories) {
+    const categoryName = String(category?.category || "");
+    const isMovie = /\bmovies?\b/i.test(categoryName);
+    const separated = Number(category?.separated) === 1;
+    const entries = Array.isArray(category?.episodes) ? category.episodes : Array.isArray(category?.items) ? category.items : [];
+    if (isMovie) movieCount += entries.length;
+    else if (separated) separatedCategoryCount += 1;
+    else categoryCount += 1;
+    if (isMovie) itemCount += entries.length;
+    else if (separated) {
+      separatedItemCount += entries.length;
+      itemCount += entries.length;
+    } else {
+      episodeCount += entries.length;
+      itemCount += entries.length;
+    }
+    dualAudioCount += entries.filter((entry) => entry?.dualAudio === true).length;
+  }
+  const totalFileSizeBytes = Math.round(totalSize(data));
+  const totalDurationSeconds = hasCompleteDurations(data) ? Math.round(totalDuration(data)) : 0;
+  const anilistIds = [...new Set([
+    data?.anilistId,
+    data?.rootAnilistId,
+    ...(Array.isArray(data?.anilistIds) ? data.anilistIds : []),
+    ...categories.flatMap((category) => [category?.anilistId, category?.rootAnilistId]),
+  ].map((id) => Number(id)).filter((id) => Number.isInteger(id) && id > 0))];
+  const mediaFormat = String(data?.mediaFormat || (movieCount && !episodeCount ? "MOVIE" : "TV")).toUpperCase();
+  const posterValue = data?.Image || data?.image || data?.poster || null;
+  // The source index is consumed from the repository root, while manifests
+  // conventionally store poster paths with a `./Sources/` prefix. Preserve
+  // the index's existing relative-path contract when regenerating it.
+  const poster = typeof posterValue === "string" && posterValue.startsWith("./Sources/")
+    ? `./${posterValue.slice("./Sources/".length)}`
+    : posterValue;
+  return {
+    file,
+    path: `./Files/Anime/${file}`,
+    title: String(data?.title || file.replace(/\.json$/i, "")),
+    poster,
+    categoryCount,
+    separatedCategoryCount,
+    episodeCount,
+    itemCount,
+    movieCount: movieCount || undefined,
+    separatedItemCount,
+    totalFileSizeBytes,
+    totalDurationSeconds: totalDurationSeconds || undefined,
+    LatestTime: data?.LatestTime || data?.latestTime || "",
+    anilistIds,
+    mediaFormat,
+    dualAudioCount,
+    dualAudio: itemCount > 0 && dualAudioCount === itemCount,
+  };
+}
+
+async function buildSourceListContent() {
+  let previousOrder = new Map();
+  try {
+    const previous = JSON.parse(await readFile(SOURCE_LIST_FILE, "utf8"));
+    previousOrder = new Map((Array.isArray(previous?.sources) ? previous.sources : []).map((entry, index) => [String(entry?.file || ""), index]));
+  } catch {}
+  const names = (await readdir(SOURCE_DIR))
+    .filter((name) => name.toLowerCase().endsWith(".json") && name.toLowerCase() !== "exampledir.json");
+  const entries = [];
+  for (const file of names) {
+    try {
+      const data = JSON.parse(await readFile(resolve(SOURCE_DIR, file), "utf8"));
+      if (data.hidden === true || data.Hidden === true || data.maintainerHidden === true) continue;
+      entries.push(sourceListEntryFromData(file, data));
+    } catch (error) {
+      persistLog({ scope: "source-list", event: "manifest_skipped", file, message: error instanceof Error ? error.message : String(error) });
+    }
+  }
+  entries.sort((a, b) => (previousOrder.get(a.file) ?? Number.MAX_SAFE_INTEGER) - (previousOrder.get(b.file) ?? Number.MAX_SAFE_INTEGER)
+    || a.title.localeCompare(b.title));
+  return `${JSON.stringify({ sources: entries }, null, 2)}\n`;
+}
+
+async function publishSourceListToGithub(content) {
+  const base = { provider: "github", repository: GITHUB_REPOSITORY, branch: GITHUB_BRANCH, path: SOURCE_LIST_PATH };
+  if (!GITHUB_PUBLISH_ENABLED) return { ...base, skipped: true, reason: "disabled" };
+  if (process.env.MEDIA_MANAGER_TEST === "1" && !GITHUB_TEST_PUBLISH) return { ...base, skipped: true, reason: "test" };
+  if (!GITHUB_TOKEN) throw new Error("GitHub publishing is not configured for the source list");
+  const endpoint = githubContentsUrlForPath(SOURCE_LIST_PATH);
+  const payloadBase = {
+    message: "maintenance: refresh AnimeSourceList",
+    content: Buffer.from(String(content), "utf8").toString("base64"),
+    branch: GITHUB_BRANCH,
+  };
+  let sha = await githubFileSha(SOURCE_LIST_PATH);
+  let response;
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      response = await githubRequest("PUT", endpoint, sha ? { ...payloadBase, sha } : payloadBase);
+      break;
+    } catch (error) {
+      if (error?.status !== 409 || attempt !== 0) throw error;
+      sha = await githubFileSha(SOURCE_LIST_PATH);
+    }
+  }
+  return {
+    ...base,
+    skipped: false,
+    commitSha: String(response?.commit?.sha || ""),
+    commitUrl: String(response?.commit?.html_url || ""),
+    contentSha: String(response?.content?.sha || ""),
+  };
+}
+
+async function refreshSourceListPublication() {
+  if (process.env.MEDIA_MANAGER_TEST === "1") return { skipped: true, reason: "test" };
+  const content = await buildSourceListContent();
+  const state = await loadCatalogState();
+  try {
+    if (!state.sourceListPending && await readFile(SOURCE_LIST_FILE, "utf8") === content) return { skipped: true, reason: "unchanged" };
+  } catch {}
+  await writeFile(SOURCE_LIST_FILE, content, "utf8");
+  try {
+    const github = await publishSourceListToGithub(content);
+    state.sourceListPending = false;
+    state.lastError = "";
+    await persistCatalogState();
+    return github;
+  } catch (error) {
+    const state = await loadCatalogState();
+    state.sourceListPending = true;
+    state.lastError = error instanceof Error ? error.message : String(error);
+    await persistCatalogState();
+    persistLog({ scope: "source-list", event: "publication_failed", message: error instanceof Error ? error.message : String(error) });
+    return { provider: "github", path: SOURCE_LIST_PATH, skipped: false, pending: true, error: error instanceof Error ? error.message : String(error) };
+  }
 }
 
 function cacheScopedPath(job, value) {
@@ -512,7 +752,12 @@ function readBody(req) {
 async function fetchJson(url, options, label) {
   const response = await fetch(url, options);
   const body = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(`${label} returned HTTP ${response.status}`);
+  if (!response.ok) {
+    const error = new Error(`${label} returned HTTP ${response.status}`);
+    error.status = response.status;
+    error.retryAfter = Number(response.headers.get("retry-after")) || 0;
+    throw error;
+  }
   return body;
 }
 
@@ -596,6 +841,324 @@ async function searchAniListMedia(query, categoryName = "") {
     .map(({ media }) => media);
 }
 
+function catalogMediaTitle(media) {
+  return mediaTitleText(media) || `AniList ${media?.id || "title"}`;
+}
+
+function catalogMediaAliases(media) {
+  return [...new Set(Object.values(media?.title || {}).filter(Boolean).map((value) => String(value).trim()).filter(Boolean))];
+}
+
+function catalogPrequelId(media) {
+  const edge = (media?.relations?.edges || []).find((candidate) => String(candidate?.relationType || "").toUpperCase() === "PREQUEL");
+  const id = Number(edge?.node?.id);
+  return Number.isInteger(id) && id > 0 ? id : null;
+}
+
+function catalogExplicitSeasonNumber(media) {
+  const title = Object.values(media?.title || {}).filter(Boolean).join(" ");
+  const match = title.match(/\b(?:season|series|cour|part)\s*0*(\d{1,2})\b|\b(\d{1,2})(?:st|nd|rd|th)\s+season\b/i);
+  const season = Number(match?.[1] || match?.[2] || 0);
+  return Number.isInteger(season) && season > 0 ? season : null;
+}
+
+function catalogSeasonNumbers(mediaById) {
+  const result = new Map();
+  for (const media of mediaById.values()) {
+    const explicit = catalogExplicitSeasonNumber(media);
+    if (explicit) {
+      result.set(Number(media.id), explicit);
+      continue;
+    }
+    let current = media;
+    let season = 1;
+    const seen = new Set();
+    while (current && !seen.has(Number(current.id))) {
+      seen.add(Number(current.id));
+      const prequelId = catalogPrequelId(current);
+      if (!prequelId || !mediaById.has(prequelId)) break;
+      season += 1;
+      current = mediaById.get(prequelId);
+    }
+    result.set(Number(media.id), season);
+  }
+  return result;
+}
+
+function catalogRootId(media, mediaById) {
+  let current = media;
+  const seen = new Set();
+  while (current && !seen.has(Number(current.id))) {
+    seen.add(Number(current.id));
+    const prequelId = catalogPrequelId(current);
+    if (!prequelId || !mediaById.has(prequelId)) break;
+    current = mediaById.get(prequelId);
+  }
+  const id = Number(current?.id || media?.id);
+  return Number.isInteger(id) && id > 0 ? id : Number(media?.id) || null;
+}
+
+function catalogFileEpisodeNumbers(files = []) {
+  return [...new Set(files.map((file) => {
+    const name = String(file?.name || file?.path || "");
+    if (!name || /(?:^|[\\/])(?:sample|trailer|preview|ncop|nced|opening|ending)[^\\/]*$/i.test(name)) return null;
+    return episodeInfo(name).episode;
+  }).filter((episode) => Number.isInteger(episode) && episode > 0))].sort((a, b) => a - b);
+}
+
+function catalogTorrentToRelease(torrent, record) {
+  const hash = String(torrent?.infoHash || "").trim().toLowerCase();
+  if (!/^[a-f0-9]{40}$/i.test(hash)) return null;
+  const files = Array.isArray(torrent?.files) ? torrent.files.map((file) => ({
+    name: String(file?.name || file?.path || ""),
+    length: Number(file?.length) > 0 ? Number(file.length) : 0,
+  })).filter((file) => file.name) : [];
+  const mediaFiles = files.filter((file) => /\.(?:mkv|mp4|m4v|mov|webm|avi|ts|m2ts)$/i.test(file.name));
+  const episodes = catalogFileEpisodeNumbers(mediaFiles);
+  const updatedAt = String(torrent?.updated || record?.updated || "");
+  const releaseGroup = String(torrent?.releaseGroup || "").trim();
+  const title = releaseGroup ? `[${releaseGroup}] ${releaseGroup}` : "releases.moe release";
+  return {
+    hash,
+    magnet: `magnet:?xt=urn:btih:${hash}`,
+    trackerUrl: String(torrent?.url || ""),
+    tracker: String(torrent?.tracker || ""),
+    title,
+    releaseGroup,
+    isBest: torrent?.isBest === true,
+    dualAudio: torrent?.dualAudio === true,
+    updatedAt,
+    availabilityScore: (torrent?.url ? 2 : 0) + (mediaFiles.length ? 1 : 0) + (record?.incomplete === true ? 0 : 1),
+    releaseConfidence: (releaseGroup ? 1 : 0) + (mediaFiles.length ? 1 : 0) + (torrent?.url ? 1 : 0),
+    files,
+    episodes,
+    estimatedBytes: mediaFiles.reduce((sum, file) => sum + file.length, 0),
+  };
+}
+
+function compareCatalogReleases(a, b) {
+  if (a.dualAudio !== b.dualAudio) return a.dualAudio ? -1 : 1;
+  if (a.isBest !== b.isBest) return a.isBest ? -1 : 1;
+  if (a.availabilityScore !== b.availabilityScore) return b.availabilityScore - a.availabilityScore;
+  if (a.releaseConfidence !== b.releaseConfidence) return b.releaseConfidence - a.releaseConfidence;
+  const aUpdated = Date.parse(a.updatedAt || "") || 0;
+  const bUpdated = Date.parse(b.updatedAt || "") || 0;
+  if (aUpdated !== bUpdated) return bUpdated - aUpdated;
+  if (a.estimatedBytes !== b.estimatedBytes) return b.estimatedBytes - a.estimatedBytes;
+  return String(a.hash).localeCompare(String(b.hash));
+}
+
+async function fetchCatalogReleaseRecords({ onProgress } = {}) {
+  const records = [];
+  let page = 1;
+  let totalPages = 1;
+  do {
+    const params = new URLSearchParams({ page: String(page), perPage: String(CATALOG_PAGE_SIZE), expand: "trs" });
+    const body = await fetchJson(`${RELEASES_API_URL}?${params}`, {
+      headers: { accept: "application/json", "user-agent": "Media-Manager-Maintenance/1.0" },
+    }, "releases.moe catalog lookup");
+    const items = Array.isArray(body?.items) ? body.items : [];
+    records.push(...items);
+    totalPages = Math.max(page, Number(body?.totalPages) || Math.ceil(Number(body?.totalItems || records.length) / CATALOG_PAGE_SIZE));
+    onProgress?.({ page, totalPages, records: records.length, totalItems: Number(body?.totalItems) || null });
+    page += 1;
+    if (!items.length) break;
+  } while (page <= totalPages && page <= 200);
+  return records;
+}
+
+async function fetchAniListCatalogMedia(ids, { onProgress } = {}) {
+  const mediaById = new Map();
+  const uniqueIds = [...new Set(ids.map((id) => Number(id)).filter((id) => Number.isInteger(id) && id > 0))];
+  const pending = new Set(uniqueIds);
+  const requested = new Set();
+  let completed = 0;
+  while (pending.size) {
+    const batch = [...pending].slice(0, CATALOG_ANILIST_BATCH_SIZE);
+    for (const id of batch) pending.delete(id);
+    batch.forEach((id) => requested.add(id));
+    const request = {
+      method: "POST",
+      headers: { "content-type": "application/json", "user-agent": "Media-Manager-Maintenance/1.0" },
+      body: JSON.stringify({
+        query: `query ($ids: [Int!]!) {
+          Page(page: 1, perPage: 50) {
+            media(id_in: $ids, type: ANIME) {
+              id
+              title { romaji english native userPreferred }
+              format
+              episodes
+              season
+              seasonYear
+              coverImage { large extraLarge }
+              relations {
+                edges {
+                  relationType
+                  node { id format title { romaji english native userPreferred } }
+                }
+              }
+            }
+          }
+        }`,
+        variables: { ids: batch },
+      }),
+    };
+    let body;
+    for (let attempt = 0; attempt < 4; attempt += 1) {
+      const waitMs = Math.max(0, CATALOG_ANILIST_INTERVAL_MS - (Date.now() - catalogAniListLastRequestAt));
+      if (waitMs) await new Promise((resolveWait) => setTimeout(resolveWait, waitMs));
+      catalogAniListLastRequestAt = Date.now();
+      try {
+        body = await fetchJson(ANILIST_API_URL, request, "AniList catalog lookup");
+        break;
+      } catch (error) {
+        const retryable = Number(error?.status) === 429 || Number(error?.status) >= 500;
+        if (!retryable || attempt === 3) throw error;
+        const retryMs = Math.max(5_000, Number(error?.retryAfter || 0) * 1_000, 2_500 * (attempt + 1));
+        await new Promise((resolveWait) => setTimeout(resolveWait, retryMs));
+      }
+    }
+    for (const media of body?.data?.Page?.media || []) {
+      const id = Number(media?.id);
+      if (Number.isInteger(id) && id > 0) mediaById.set(id, media);
+      for (const relation of media?.relations?.edges || []) {
+        if (String(relation?.relationType || "").toUpperCase() !== "PREQUEL") continue;
+        const prequelId = Number(relation?.node?.id);
+        if (Number.isInteger(prequelId) && prequelId > 0 && !requested.has(prequelId)) pending.add(prequelId);
+      }
+    }
+    completed += batch.length;
+    onProgress?.({ completed, total: completed + pending.size });
+  }
+  return mediaById;
+}
+
+function catalogEntryFromRecord(record, mediaById, seasonNumbers, previous = {}) {
+  const alID = Number(record?.alID);
+  const media = mediaById.get(alID);
+  const format = String(media?.format || "").toUpperCase();
+  if (!media || !["TV", "MOVIE"].includes(format)) return null;
+  const rootAlID = catalogRootId(media, mediaById);
+  const rootMedia = mediaById.get(rootAlID) || media;
+  const releases = (record?.expand?.trs || record?.expand?.torrents || record?.trs || [])
+    .map((torrent) => catalogTorrentToRelease(torrent, record))
+    .filter(Boolean)
+    .sort(compareCatalogReleases);
+  const preferred = releases[0] || null;
+  const preferredHashChanged = Boolean(previous.preferredReleaseHash && preferred?.hash
+    && String(previous.preferredReleaseHash).toLowerCase() !== String(preferred.hash).toLowerCase());
+  const trackerChanged = preferredHashChanged || Boolean(previous.trackerUpdatedAt && record?.updated
+    && String(previous.trackerUpdatedAt) !== String(record.updated));
+  const season = format === "TV" ? (seasonNumbers.get(alID) || 1) : null;
+  return {
+    ...previous,
+    key: catalogKey(alID),
+    alID,
+    rootAlID,
+    title: catalogMediaTitle(rootMedia),
+    mediaTitle: catalogMediaTitle(media),
+    aliases: [...new Set([...catalogMediaAliases(rootMedia), ...catalogMediaAliases(media)])],
+    image: media?.coverImage?.extraLarge || media?.coverImage?.large || rootMedia?.coverImage?.extraLarge || rootMedia?.coverImage?.large || "",
+    format,
+    category: format === "MOVIE" ? "Movie" : `Season ${season}`,
+    seasonNumber: season,
+    episodes: Number(media?.episodes) > 0 ? Number(media.episodes) : null,
+    trackerEntryId: String(record?.id || ""),
+    trackerUpdatedAt: String(record?.updated || ""),
+    releases: releases.slice(0, 20),
+    preferredRelease: preferred,
+    preferredReleaseHash: preferred?.hash || "",
+    preferredDualAudio: preferred?.dualAudio === true,
+    estimatedBytes: preferred?.estimatedBytes || 0,
+    discoveredAt: previous.discoveredAt || new Date().toISOString(),
+    state: trackerChanged && previous.state === "failed"
+      ? "discovered"
+      : previous.state || (preferred ? "discovered" : "unavailable"),
+    attempts: trackerChanged ? 0 : Number(previous.attempts) || 0,
+    nextRetryAt: trackerChanged ? null : (previous.nextRetryAt || null),
+    lastError: String(previous.lastError || ""),
+    sourcePath: previous.sourcePath || "",
+    publishedHash: String(previous.publishedHash || ""),
+    publishedDualAudio: previous.publishedDualAudio === true,
+    publishedAt: previous.publishedAt || null,
+    upgradeEligible: previous.upgradeEligible === true,
+    unconfirmedEpisodes: normalizedEpisodeNumbers(previous.unconfirmedEpisodes),
+    upgradeEpisodes: normalizedEpisodeNumbers(previous.upgradeEpisodes),
+    history: Array.isArray(previous.history) ? previous.history.slice(-20) : [],
+  };
+}
+
+function catalogSummary(state = catalogState || emptyCatalogState()) {
+  const entries = Object.values(state.entries || {});
+  const summary = {
+    file: CATALOG_STATE_FILE,
+    version: CATALOG_STATE_VERSION,
+    scanning: state.scanning === true,
+    lastScanAt: state.lastScanAt || null,
+    lastScanError: state.lastScanError || "",
+    sourceListPending: state.sourceListPending === true,
+    total: entries.length,
+    tv: entries.filter((entry) => entry.format === "TV").length,
+    movies: entries.filter((entry) => entry.format === "MOVIE").length,
+    published: entries.filter((entry) => entry.state === "published").length,
+    queued: entries.filter((entry) => ["discovered", "queued", "upgrade_queued"].includes(entry.state)).length,
+    active: entries.filter((entry) => entry.state === "active").length,
+    unavailable: entries.filter((entry) => entry.state === "unavailable").length,
+    review: entries.filter((entry) => entry.state === "review").length,
+    failed: entries.filter((entry) => entry.state === "failed").length,
+    dualAudio: entries.filter((entry) => entry.preferredDualAudio === true).length,
+    upgradeEligible: entries.filter((entry) => entry.upgradeEligible === true).length,
+    unconfirmedEpisodes: entries.reduce((sum, entry) => sum + normalizedEpisodeNumbers(entry.unconfirmedEpisodes).length, 0),
+    upgradeEpisodes: entries.reduce((sum, entry) => sum + normalizedEpisodeNumbers(entry.upgradeEpisodes).length, 0),
+    estimatedBytes: entries.reduce((sum, entry) => sum + (Number(entry.estimatedBytes) || 0), 0),
+    current: null,
+  };
+  if (catalogRunId) {
+    const run = maintenanceRuns.get(catalogRunId);
+    const current = run?.items?.find((item) => ["searching", "downloading", "processing", "uploading"].includes(item.state));
+    if (current) summary.current = { title: current.title, category: current.category, state: current.state, id: current.id };
+  }
+  return summary;
+}
+
+async function scanCatalog({ onProgress } = {}) {
+  if (catalogScanPromise) return catalogScanPromise;
+  catalogScanPromise = (async () => {
+    const state = await loadCatalogState();
+    if (state.scanning) state.scanning = false;
+    state.scanning = true;
+    state.lastScanError = "";
+    await persistCatalogState();
+    try {
+      const records = await fetchCatalogReleaseRecords({ onProgress });
+      const ids = records.map((record) => Number(record?.alID)).filter((id) => Number.isInteger(id) && id > 0);
+      const mediaById = await fetchAniListCatalogMedia(ids, { onProgress: (progress) => onProgress?.({ ...progress, stage: "anilist" }) });
+      const seasonNumbers = catalogSeasonNumbers(mediaById);
+      const nextEntries = {};
+      for (const record of records) {
+        const key = catalogKey(record?.alID);
+        if (!key) continue;
+        const previous = state.entries[key] || {};
+        const entry = catalogEntryFromRecord(record, mediaById, seasonNumbers, previous);
+        if (!entry) continue;
+        nextEntries[key] = entry;
+      }
+      state.entries = nextEntries;
+      state.lastScanAt = new Date().toISOString();
+      state.lastScanError = "";
+      return catalogSummary(state);
+    } catch (error) {
+      state.lastScanError = error instanceof Error ? error.message : String(error);
+      throw error;
+    } finally {
+      state.scanning = false;
+      await persistCatalogState();
+      catalogScanPromise = null;
+    }
+  })();
+  return catalogScanPromise;
+}
+
 function torrentFileSeasonNumbers(torrent) {
   const seasons = new Set();
   for (const file of Array.isArray(torrent?.files) ? torrent.files : []) {
@@ -662,7 +1225,10 @@ async function seaDexSearch(query, categoryName = "") {
   if (!items.length && lastError) throw lastError;
   return items
     .map((item, index) => ({ item, index, audioScore: releaseAudioPreferenceScore(item.title) + (item.dualAudio ? 20 : 0) }))
-    .sort((a, b) => Number(b.item.isBest) - Number(a.item.isBest) || b.audioScore - a.audioScore || a.index - b.index)
+    .sort((a, b) => Number(b.item.dualAudio) - Number(a.item.dualAudio)
+      || Number(b.item.isBest) - Number(a.item.isBest)
+      || b.audioScore - a.audioScore
+      || a.index - b.index)
     .map(({ item }) => item);
 }
 
@@ -1707,6 +2273,45 @@ function probeMediaDurationSeconds(filePath) {
   });
 }
 
+function probeMediaAudioStreamCount(filePath) {
+  const input = String(filePath || "").trim();
+  if (!input) return Promise.reject(new Error("media path is empty"));
+  return new Promise((resolveCount, reject) => {
+    let output = "";
+    let errors = "";
+    let settled = false;
+    const child = spawn(FFPROBE_BIN, [
+      "-v", "error",
+      "-select_streams", "a",
+      "-show_entries", "stream=index",
+      "-of", "csv=p=0",
+      input,
+    ], { stdio: ["ignore", "pipe", "pipe"] });
+    const timeout = setTimeout(() => {
+      child.kill("SIGTERM");
+      finish(new Error(`ffprobe audio inspection timed out after ${MEDIA_PROBE_TIMEOUT_MS}ms`));
+    }, MEDIA_PROBE_TIMEOUT_MS);
+    const finish = (error, value = 0) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      if (error) reject(error);
+      else resolveCount(value);
+    };
+    child.stdout.on("data", (chunk) => { output += String(chunk); });
+    child.stderr.on("data", (chunk) => { errors += String(chunk); });
+    child.on("error", (error) => finish(error));
+    child.on("close", (code) => {
+      const count = output.split(/\r?\n/).map((line) => line.trim()).filter(Boolean).length;
+      if (code === 0) finish(null, count);
+      else {
+        const detail = errors.trim().replace(/\s+/g, " ").slice(-240);
+        finish(new Error(`ffprobe audio inspection exited with code ${code ?? 1}${detail ? `: ${detail}` : ""}`));
+      }
+    });
+  });
+}
+
 function scheduleArtifactDurationProbe(job, artifact, event = {}) {
   if (!artifact || typeof artifact !== "object") return;
   const reported = durationValue(event.durationSeconds ?? event.duration ?? artifact.durationSeconds);
@@ -1714,7 +2319,7 @@ function scheduleArtifactDurationProbe(job, artifact, event = {}) {
     artifact.durationSeconds = reported;
     return;
   }
-  const input = String(artifact.localPath || "").trim();
+  const input = cacheScopedPath(job, artifact.localPath) || (isAbsolute(String(artifact.localPath || "").trim()) ? String(artifact.localPath).trim() : "");
   if (!input) return;
   job.durationProbePromises ||= new Map();
   if (job.durationProbePromises.has(artifact)) return;
@@ -1743,6 +2348,24 @@ function scheduleArtifactDurationProbe(job, artifact, event = {}) {
     return 0;
   });
   job.durationProbePromises.set(artifact, promise);
+}
+
+function scheduleArtifactAudioProbe(job, artifact) {
+  if (!artifact || typeof artifact !== "object") return;
+  const input = cacheScopedPath(job, artifact.localPath) || (isAbsolute(String(artifact.localPath || "").trim()) ? String(artifact.localPath).trim() : "");
+  if (!input) return;
+  job.audioProbePromises ||= new Map();
+  if (job.audioProbePromises.has(artifact)) return;
+  const promise = probeMediaAudioStreamCount(input).then((count) => {
+    artifact.audioStreamCount = count;
+    persistLog({ scope: "job", event: "audio_streams_probed", jobId: job.id, runId: job.runId, remotePath: artifact.remotePath, localPath: artifact.localPath, audioStreamCount: count });
+    return count;
+  }).catch((error) => {
+    artifact.audioStreamCount = 0;
+    persistLog({ scope: "job", event: "audio_stream_probe_failed", jobId: job.id, runId: job.runId, remotePath: artifact.remotePath, localPath: artifact.localPath, message: error instanceof Error ? error.message : String(error) });
+    return 0;
+  });
+  job.audioProbePromises.set(artifact, promise);
 }
 
 function entrySize(entry) {
@@ -1783,14 +2406,36 @@ function hasCompleteDurations(data) {
 
 function categorySummary(category, index) {
   const { entries } = getEntries(category);
-  const parsed = entries.map((entry) => episodeInfo(entry?.title)).filter((info) => info.episode);
+  const categoryName = String(category?.category || `Season ${index + 1}`);
+  const isMovie = /\bmovies?\b/i.test(categoryName);
+  // Movie manifests historically store a single item under a `Movie`
+  // category without an episode number. Give those items a stable synthetic
+  // number so the catalog can target a dual-audio replacement without
+  // appending a duplicate entry.
+  const numberedEntries = isMovie
+    ? entries.map((entry, entryIndex) => ({ entry, episode: entryIndex + 1 }))
+    : entries.map((entry) => ({ entry, episode: episodeInfo(entry?.title).episode }));
+  const parsed = numberedEntries.filter((item) => item.episode).map((item) => ({ episode: item.episode }));
   const episodeNumbers = [...new Set(parsed.map((info) => info.episode))].sort((a, b) => a - b);
+  const dualAudioEpisodeNumbers = [...new Set(numberedEntries
+    .map(({ entry, episode }) => ({ episode, dualAudio: entry?.dualAudio }))
+    .filter((entry) => entry.episode && entry.dualAudio === true)
+    .map((entry) => entry.episode))].sort((a, b) => a - b);
+  const nonDualEpisodeNumbers = [...new Set(numberedEntries
+    .map(({ entry, episode }) => ({ episode, dualAudio: entry?.dualAudio }))
+    .filter((entry) => entry.episode && entry.dualAudio !== true)
+    .map((entry) => entry.episode))].sort((a, b) => a - b);
   return {
     index,
-    category: String(category?.category || `Season ${index + 1}`),
+    category: categoryName,
     episodeCount: entries.length,
     latestEpisode: parsed.length ? Math.max(...parsed.map((info) => info.episode)) : null,
     episodeNumbers,
+    dualAudio: entries.length > 0 && entries.every((entry) => entry?.dualAudio === true),
+    dualAudioEpisodeNumbers,
+    nonDualEpisodeNumbers,
+    dualAudioCount: dualAudioEpisodeNumbers.length,
+    unconfirmedAudioCount: nonDualEpisodeNumbers.length,
   };
 }
 
@@ -1807,8 +2452,17 @@ async function listLibrary() {
         path: `${SOURCE_PREFIX}${file}`,
         title: String(data.title || file.replace(/\.json$/i, "")),
         malTitle: String(data.malTitle || data.MALTitle || "").trim(),
+        anilistIds: [...new Set([
+          data.anilistId,
+          data.rootAnilistId,
+          ...(Array.isArray(data.anilistIds) ? data.anilistIds : []),
+          ...categories.flatMap((category) => [category?.anilistId, ...(Array.isArray(category?.anilistIds) ? category.anilistIds : [])]),
+        ].map((id) => Number(id)).filter((id) => Number.isInteger(id) && id > 0))],
         image: data.Image || data.image || data.poster || "",
         hidden: data.hidden === true || data.Hidden === true || data.maintainerHidden === true,
+        dualAudio: categories.some((category) => categorySummary(category, 0).dualAudio === true),
+        dualAudioCount: categories.reduce((sum, category) => sum + categorySummary(category, 0).dualAudioCount, 0),
+        unconfirmedAudioCount: categories.reduce((sum, category) => sum + categorySummary(category, 0).unconfirmedAudioCount, 0),
         latestTime: data.LatestTime || data.latestTime || "",
         categories: categories.map(categorySummary),
       });
@@ -2071,6 +2725,253 @@ function skippedMaintenanceItem(source, category, reason, mal = null) {
   };
 }
 
+function catalogSourceMatchScore(source, entry) {
+  if (!source || !entry) return 0;
+  const ids = new Set((source.anilistIds || []).map((id) => Number(id)).filter((id) => Number.isInteger(id) && id > 0));
+  if (ids.has(Number(entry.alID)) || ids.has(Number(entry.rootAlID))) return 1000;
+  const sourceTitles = [source.title, source.malTitle].filter(Boolean).map(normalizeTitle);
+  const entryTitles = [entry.title, entry.mediaTitle, ...(entry.aliases || [])].filter(Boolean).map(normalizeTitle);
+  if (sourceTitles.some((title) => title && entryTitles.includes(title))) return 900;
+  const sourceTokens = searchTokens([source.title, source.malTitle].filter(Boolean).join(" "));
+  if (!sourceTokens.size) return 0;
+  let best = 0;
+  for (const title of entryTitles) {
+    const entryTokens = searchTokens(title);
+    const overlap = [...sourceTokens].filter((token) => entryTokens.has(token)).length;
+    const ratio = overlap / Math.max(sourceTokens.size, entryTokens.size || 1);
+    best = Math.max(best, overlap * 20 + ratio * 100);
+  }
+  return best >= 55 ? best : 0;
+}
+
+function findCatalogSource(sources, entry) {
+  const candidates = sources
+    .map((source) => ({ source, score: catalogSourceMatchScore(source, entry) }))
+    .filter((candidate) => candidate.score > 0)
+    .sort((a, b) => b.score - a.score || String(a.source.file).localeCompare(String(b.source.file)));
+  const best = candidates[0];
+  const next = candidates[1];
+  // An ID or exact title match is deterministic. For fuzzy matches, avoid
+  // silently attaching a tracker entry to the wrong similarly named source.
+  if (best && next && ((best.score < 900 && best.score - next.score < 10)
+    || (best.score === next.score && best.score >= 900))) {
+    return { ambiguous: true, candidates: candidates.slice(0, 3) };
+  }
+  return best?.source || null;
+}
+
+function catalogReleaseForMaintenance(entry) {
+  const release = entry?.preferredRelease;
+  if (!release) return null;
+  const title = `[${release.releaseGroup || "SeaDex"}] ${entry.mediaTitle || entry.title}${entry.category ? ` ${entry.category}` : ""}`;
+  return {
+    provider: "seadex",
+    title,
+    viewUrl: `${RELEASES_BASE_URL}/${entry.alID}/`,
+    trackerUrl: release.trackerUrl || "",
+    torrentUrl: "",
+    magnet: release.magnet || "",
+    hash: release.hash || "",
+    seeders: 0,
+    downloads: 0,
+    publishedAt: release.updatedAt || entry.trackerUpdatedAt || "",
+    releaseGroup: release.releaseGroup || "",
+    isBest: release.isBest === true,
+    dualAudio: release.dualAudio === true,
+    seaDex: true,
+    targetEpisodes: release.episodes || [],
+  };
+}
+
+function catalogEpisodeTargets(entry, category, release) {
+  const releaseEpisodes = normalizedEpisodeNumbers(release?.episodes);
+  const expectedEpisodes = Number(entry?.episodes) > 0
+    ? Array.from({ length: Math.min(1000, Number(entry.episodes)) }, (_, index) => index + 1)
+    : [];
+  const coverage = releaseEpisodes.length ? releaseEpisodes : expectedEpisodes;
+  if (entry?.format === "MOVIE") {
+    if (!category) return [1];
+    if (!category.episodeNumbers?.length) return [1];
+    return entry.preferredDualAudio === true
+      ? normalizedEpisodeNumbers(category.nonDualEpisodeNumbers)
+      : [];
+  }
+  if (!category) return coverage;
+  const present = new Set(category.episodeNumbers || []);
+  const nonDual = new Set(category.nonDualEpisodeNumbers || []);
+  const dualCandidate = entry.preferredDualAudio === true;
+  return coverage.filter((episode) => !present.has(episode) || (dualCandidate && nonDual.has(episode)));
+}
+
+function catalogItemAlreadyQueued(key) {
+  if (!key) return false;
+  for (const run of maintenanceRuns.values()) {
+    if (run.finishedAt || ["complete", "failed", "cancelled"].includes(run.state)) continue;
+    if ((run.items || []).some((item) => item.catalogKey === key && !["complete", "failed", "cancelled", "skipped"].includes(item.state))) return true;
+  }
+  return false;
+}
+
+async function buildCatalogMaintenanceWork(sources, payload = {}) {
+  const state = await loadCatalogState();
+  const now = Date.now();
+  const sourcePaths = Array.isArray(payload?.sourcePaths) && payload.sourcePaths.length
+    ? new Set(payload.sourcePaths.map((path) => String(path)))
+    : null;
+  const items = [];
+  const entries = Object.values(state.entries || {})
+    .filter((entry) => ["TV", "MOVIE"].includes(entry.format))
+    .sort((a, b) => {
+      const aUpgrade = a.preferredDualAudio && a.upgradeEligible ? 0 : 1;
+      const bUpgrade = b.preferredDualAudio && b.upgradeEligible ? 0 : 1;
+      if (aUpgrade !== bUpgrade) return aUpgrade - bUpgrade;
+      return (Date.parse(b.trackerUpdatedAt || "") || 0) - (Date.parse(a.trackerUpdatedAt || "") || 0);
+    });
+  const plannedGroups = new Map();
+  for (const entry of entries) {
+    if (catalogItemAlreadyQueued(entry.key)) continue;
+    if (entry.nextRetryAt && Date.parse(entry.nextRetryAt) > now) continue;
+    const source = findCatalogSource(sources, entry);
+    if (source?.ambiguous) {
+      entry.state = "review";
+      entry.lastError = `ambiguous source match: ${source.candidates.map((candidate) => candidate.source.file).join(", ")}`;
+      continue;
+    }
+    const groupKey = `${entry.format}:${entry.rootAlID || entry.alID}`;
+    const plannedPath = plannedGroups.get(groupKey) || `${SOURCE_PREFIX}${slugFileName(entry.title)}`;
+    const sourcePath = source?.path || plannedPath;
+    if (sourcePaths && !sourcePaths.has(sourcePath) && !sourcePaths.has(source?.file || "")) continue;
+    const category = source?.categories?.find((candidate) => candidate.category === entry.category)
+      || (entry.format === "TV"
+        ? source?.categories?.find((candidate) => categorySeasonNumber(candidate.category) === Number(entry.seasonNumber))
+        : source?.categories?.find((candidate) => /\bmovies?\b/i.test(String(candidate.category || ""))))
+      || null;
+    const release = catalogReleaseForMaintenance(entry);
+    if (!release) {
+      entry.state = "unavailable";
+      continue;
+    }
+    const targetEpisodes = catalogEpisodeTargets(entry, category, release);
+    // Keep a batch release as one maintenance item, but narrow the td
+    // selection to the missing/unconfirmed episodes for an existing season.
+    // This prevents a dual batch from reprocessing already confirmed episodes.
+    release.targetEpisodes = targetEpisodes;
+    const unconfirmedEpisodes = normalizedEpisodeNumbers(category?.nonDualEpisodeNumbers);
+    entry.unconfirmedEpisodes = unconfirmedEpisodes;
+    entry.upgradeEpisodes = targetEpisodes;
+    if (source) entry.upgradeEligible = entry.publishedDualAudio !== true && unconfirmedEpisodes.length > 0;
+    const isNewShow = !source && !plannedGroups.has(groupKey);
+    const categoryMissing = Boolean((source && !category) || (!source && !isNewShow));
+    const needsNew = isNewShow;
+    const needsCategory = categoryMissing;
+    const needsEpisodes = targetEpisodes.length > 0;
+    const canReplaceExisting = Boolean(source && category && entry.preferredDualAudio === true && targetEpisodes.length > 0);
+    if (!needsNew && !needsCategory && !needsEpisodes) {
+      entry.upgradeEligible = Boolean(source && entry.publishedDualAudio !== true && unconfirmedEpisodes.length);
+      if (source) {
+        entry.sourcePath = source.path;
+        entry.state = "published";
+        entry.publishedHash = entry.preferredReleaseHash || entry.publishedHash || "";
+        entry.publishedDualAudio = category?.dualAudio === true;
+      }
+      continue;
+    }
+    const action = isNewShow ? "new" : "update";
+    const item = {
+      id: randomUUID(),
+      catalogKey: entry.key,
+      sourcePath: action === "new" ? "" : sourcePath,
+      sourceFile: source?.file || basename(sourcePath),
+      title: entry.title,
+      malTitle: entry.mediaTitle || entry.title,
+      category: category?.category || entry.category,
+      state: "queued",
+      query: "",
+      candidate: { provider: "seadex", title: release.title, viewUrl: release.viewUrl },
+      release,
+      releases: [],
+      releaseStates: [],
+      jobId: null,
+      manifest: null,
+      links: 0,
+      error: "",
+      missingEpisodes: action === "new" ? [] : targetEpisodes,
+      createCategory: needsCategory,
+      newSeason: needsCategory,
+      maintenanceAction: action,
+      fileName: action === "new" ? slugFileName(entry.title) : "",
+      image: entry.image || "",
+      anilistId: entry.alID,
+      rootAnilistId: entry.rootAlID,
+      mediaFormat: entry.format,
+      catalog: {
+        preferredReleaseHash: entry.preferredReleaseHash,
+        preferredDualAudio: entry.preferredDualAudio === true,
+        targetEpisodes,
+        upgrade: canReplaceExisting,
+      },
+      mal: { status: "catalog", catalogKey: entry.key },
+      priority: canReplaceExisting ? 1 : action === "new" ? 3 : 2,
+    };
+    entry.state = canReplaceExisting ? "upgrade_queued" : "queued";
+    entry.upgradeEligible = canReplaceExisting || unconfirmedEpisodes.length > 0;
+    entry.sourcePath = sourcePath;
+    plannedGroups.set(groupKey, sourcePath);
+    items.push(item);
+  }
+  await persistCatalogState();
+  return { items, preflightTotal: entries.length };
+}
+
+async function markCatalogItem(item, result, error = null) {
+  if (!item?.catalogKey) return;
+  const state = await loadCatalogState();
+  const entry = state.entries[item.catalogKey];
+  if (!entry) return;
+  if (error) {
+    const attempts = (Number(entry.attempts) || 0) + 1;
+    const delayMs = Math.min(7 * 24 * 60 * 60 * 1000, 15 * 60 * 1000 * (2 ** Math.min(attempts - 1, 6)));
+    entry.state = "failed";
+    entry.attempts = attempts;
+    entry.lastError = error instanceof Error ? error.message : String(error);
+    entry.nextRetryAt = new Date(Date.now() + delayMs).toISOString();
+  } else {
+    const previousHash = entry.publishedHash || "";
+    const previousDualAudio = entry.publishedDualAudio === true;
+    entry.state = "published";
+    entry.attempts = 0;
+    entry.nextRetryAt = null;
+    entry.lastError = "";
+    entry.sourcePath = result?.path || entry.sourcePath || item.sourcePath || "";
+    entry.publishedHash = item.catalog?.preferredReleaseHash || entry.publishedHash || "";
+    entry.publishedDualAudio = item.catalog?.preferredDualAudio === true;
+    entry.publishedAt = new Date().toISOString();
+    // A single-audio publication is usable, but remains eligible for a later
+    // dual-audio promotion. Confirmed dual output closes that loop.
+    entry.upgradeEligible = item.catalog?.preferredDualAudio !== true;
+    entry.history = [...(Array.isArray(entry.history) ? entry.history : []), {
+      at: entry.publishedAt,
+      action: item.catalog?.upgrade ? "dual-audio-promotion" : "publication",
+      hash: entry.publishedHash,
+      dualAudio: entry.publishedDualAudio,
+      previousHash,
+      previousDualAudio,
+      targetEpisodes: normalizedEpisodeNumbers(item.catalog?.targetEpisodes),
+    }].slice(-20);
+  }
+  await persistCatalogState();
+}
+
+async function markCatalogActive(item) {
+  if (!item?.catalogKey) return;
+  const state = await loadCatalogState();
+  const entry = state.entries[item.catalogKey];
+  if (!entry) return;
+  entry.state = "active";
+  entry.lastError = "";
+  await persistCatalogState();
+}
+
 async function buildMaintenanceWork(sources, payload, { onProgress } = {}) {
   const sourcePaths = Array.isArray(payload?.sourcePaths) && payload.sourcePaths.length
     ? new Set(payload.sourcePaths.map((path) => String(path)))
@@ -2080,6 +2981,17 @@ async function buildMaintenanceWork(sources, payload, { onProgress } = {}) {
   const selectedSources = sources.filter((source) => !sourcePaths || sourcePaths.has(source.path) || sourcePaths.has(source.file));
   let preflightCompleted = 0;
   const malEnabled = maintenanceMalEnabled(payload);
+  let catalogWork = { items: [], preflightTotal: 0 };
+  if (payload?.discoverCatalog === true) {
+    if (payload?.catalogScan !== false) {
+      await scanCatalog({ onProgress: (progress) => onProgress?.({ title: "releases.moe catalog", state: progress.stage || "scanning_catalog", ...progress }) });
+    }
+    catalogWork = await buildCatalogMaintenanceWork(sources, payload);
+    if (payload?.catalogOnly === true) {
+      return { work: catalogWork.items, preflightCompleted: catalogWork.items.length, preflightTotal: catalogWork.preflightTotal, malEnabled: false };
+    }
+  }
+  if (payload?.catalogOnly !== true) {
   for (const source of selectedSources) {
     if (sourcePaths && !sourcePaths.has(source.path) && !sourcePaths.has(source.file)) continue;
     const existingCategories = Array.isArray(source?.categories) ? source.categories : [];
@@ -2146,7 +3058,11 @@ async function buildMaintenanceWork(sources, payload, { onProgress } = {}) {
           work.push(skippedMaintenanceItem(source, category, "library episode numbering is not readable", { status: "unknown", ...malCandidate }));
           continue;
         }
-        if (!missing.missing.length) {
+        const refreshEpisodes = payload?.refreshExisting === true
+          ? [...new Set((category.episodeNumbers || []).filter((episode) => Number.isInteger(episode) && episode > 0))].sort((a, b) => a - b)
+          : [];
+        const targetEpisodes = [...new Set([...missing.missing, ...refreshEpisodes])].sort((a, b) => a - b);
+        if (!targetEpisodes.length) {
           const countLabel = expectedEpisodeNumbers.length
             ? `${expectedEpisodeNumbers.length} aired episode${expectedEpisodeNumbers.length === 1 ? "" : "s"}`
             : `${expectedEpisodes} episodes`;
@@ -2160,8 +3076,8 @@ async function buildMaintenanceWork(sources, payload, { onProgress } = {}) {
         work.push({
           id: randomUUID(), sourcePath: source.path, sourceFile: source.file, title: source.title, malTitle: source.malTitle || "",
           category: category.category, state: "queued", query: "", candidate: null,
-          jobId: null, manifest: null, links: 0, error: "", missingEpisodes: missing.missing,
-          mal: { status: "missing", ...malCandidate, toodriveAudit: toodriveAudit || undefined },
+          jobId: null, manifest: null, links: 0, error: "", missingEpisodes: targetEpisodes,
+          mal: { status: refreshEpisodes.length ? "refresh" : "missing", ...malCandidate, toodriveAudit: toodriveAudit || undefined },
         });
         continue;
       }
@@ -2208,7 +3124,14 @@ async function buildMaintenanceWork(sources, payload, { onProgress } = {}) {
       }
     }
   }
-  return { work, preflightCompleted, preflightTotal: selectedSources.reduce((sum, source) => sum + automaticCategories(source, payload?.allCategories === true).length, 0), malEnabled };
+  }
+  work.push(...catalogWork.items);
+  return {
+    work,
+    preflightCompleted: preflightCompleted + catalogWork.items.length,
+    preflightTotal: selectedSources.reduce((sum, source) => sum + automaticCategories(source, payload?.allCategories === true).length, 0) + catalogWork.preflightTotal,
+    malEnabled,
+  };
 }
 
 function normalizeMaintenanceReleaseStates(item) {
@@ -2285,14 +3208,21 @@ async function runMaintenanceRelease(run, item, releaseState, payload) {
         destination: maintenanceFolder(item.title, item.category),
         runId: run.id,
         maintenance: {
-          action: "update",
-          sourcePath: item.sourcePath,
+          action: item.maintenanceAction || "update",
+          sourcePath: item.maintenanceAction === "new" ? "" : item.sourcePath,
+          fileName: item.fileName || undefined,
+          title: item.title,
+          image: item.image || undefined,
+          anilistId: item.anilistId || undefined,
+          rootAnilistId: item.rootAnilistId || undefined,
+          mediaFormat: item.mediaFormat || undefined,
           categoryName: item.category,
           seasonNumber: categorySeasonNumber(item.category) || undefined,
           targetEpisodes,
           replaceExisting: payload?.replaceExisting !== false,
           addMissing: payload?.addMissing !== false,
           createCategory: item.createCategory === true,
+          dualAudio: releaseHasDualAudio(release),
         },
       });
       releaseState.jobId = child.id;
@@ -2361,6 +3291,7 @@ async function processMaintenanceItem(run, item, payload = {}) {
 
   const source = { title: item.title, malTitle: item.malTitle || "" };
   try {
+    await markCatalogActive(item);
     if (!Array.isArray(item.releases) || !item.releases.length) {
       item.state = "searching";
       syncRunActivity(run);
@@ -2507,6 +3438,7 @@ async function processMaintenanceItem(run, item, payload = {}) {
       item.state = "complete";
       syncRunActivity(run);
       runEvent(run, `Updated ${item.title} · ${item.category} (${item.links} links from ${item.releases.length} release${item.releases.length === 1 ? "" : "s"}).`);
+      await markCatalogItem(item, item.manifest);
     }
   } catch (error) {
     item.state = "failed";
@@ -2514,6 +3446,7 @@ async function processMaintenanceItem(run, item, payload = {}) {
     run.failed += 1;
     syncRunActivity(run);
     runEvent(run, `Failed ${item.title} · ${item.category}: ${item.error}.`);
+    await markCatalogItem(item, null, error);
   }
   if (!item.counted && ["complete", "failed", "cancelled"].includes(item.state)) {
     item.counted = true;
@@ -2565,6 +3498,7 @@ async function executeMaintenanceRun(run, payload = run.payload || {}) {
   } finally {
     syncRunActivity(run);
     run.phase = "complete";
+    if (catalogRunId === run.id) catalogRunId = null;
     run.finishedAt = new Date().toISOString();
     persistLog({
       scope: "run",
@@ -2592,10 +3526,13 @@ async function startMaintenanceRun(payload = {}) {
   const requestedSources = Array.isArray(payload?.sourcePaths) && payload.sourcePaths.length
     ? new Set(payload.sourcePaths.map((path) => String(path)))
     : null;
-  run.preflightTotal = library.sources
-    .filter((source) => !requestedSources || requestedSources.has(source.path) || requestedSources.has(source.file))
-    .reduce((sum, source) => sum + automaticCategories(source, payload?.allCategories === true).length, 0);
+  run.preflightTotal = payload?.catalogOnly === true
+    ? 0
+    : library.sources
+      .filter((source) => !requestedSources || requestedSources.has(source.path) || requestedSources.has(source.file))
+      .reduce((sum, source) => sum + automaticCategories(source, payload?.allCategories === true).length, 0);
   maintenanceRuns.set(run.id, run);
+  if (payload?.discoverCatalog === true) catalogRunId = run.id;
   run.stop = () => {
     run.cancelled = true;
     const stopping = stopMaintenanceChildren(run);
@@ -2627,16 +3564,19 @@ async function startMaintenanceRun(payload = {}) {
       if (run.cancelled) {
         run.state = "cancelled";
         run.phase = "complete";
+        if (catalogRunId === run.id) catalogRunId = null;
         await persistResumeState();
       } else if (run.planOnly) {
         run.state = "complete";
         run.phase = "plan";
         run.finishedAt = new Date().toISOString();
+        if (catalogRunId === run.id) catalogRunId = null;
         runEvent(run, `Plan ready: ${run.items.filter((item) => item.state === "queued").length} category(s) need maintenance.`);
       } else if (!run.total) {
         run.state = "complete";
         run.phase = "complete";
         run.finishedAt = new Date().toISOString();
+        if (catalogRunId === run.id) catalogRunId = null;
         await persistResumeState();
       } else {
         const hasQueuedWork = run.items.some((item) => item.state === "queued");
@@ -2663,6 +3603,7 @@ async function startMaintenanceRun(payload = {}) {
       run.state = run.cancelled ? "cancelled" : "failed";
       run.phase = "complete";
       run.finishedAt = new Date().toISOString();
+      if (catalogRunId === run.id) catalogRunId = null;
       runEvent(run, error instanceof Error ? error.message : String(error));
       await persistResumeState();
     }
@@ -2728,13 +3669,16 @@ function selectArtifacts(artifacts, maintenance, existingEntries = []) {
     .sort((a, b) => (a.episode || 0) - (b.episode || 0) || String(a.remotePath || "").localeCompare(String(b.remotePath || "")));
 }
 
-function makeEpisodeEntry(artifact, existing) {
+function makeEpisodeEntry(artifact, existing, maintenance = {}) {
   const entry = existing && typeof existing === "object" ? { ...existing } : {};
   const number = artifact.episode;
-  if (!entry.title) entry.title = `Episode ${String(number).padStart(2, "0")}`;
+  if (!entry.title) entry.title = String(maintenance.mediaFormat || "").toUpperCase() === "MOVIE"
+    ? "Movie"
+    : `Episode ${String(number).padStart(2, "0")}`;
   entry.src = normalizeToodriveUrl(artifact.url);
   if (numericValue(artifact.sizeBytes)) entry.fileSizeBytes = numericValue(artifact.sizeBytes);
   if (durationValue(artifact.durationSeconds)) entry.durationSeconds = durationValue(artifact.durationSeconds);
+  if (typeof maintenance.dualAudio === "boolean") entry.dualAudio = maintenance.dualAudio;
   return entry;
 }
 
@@ -2756,13 +3700,21 @@ async function applyMaintenance(maintenance, artifacts) {
     const categoryName = String(maintenance.categoryName || "Season 1").trim() || "Season 1";
     const incoming = selectArtifacts(artifacts, maintenance);
     if (!incoming.length) throw new Error("the torrent produced no video links");
-    const episodes = incoming.map((artifact) => makeEpisodeEntry(artifact));
+    const episodes = incoming.map((artifact) => makeEpisodeEntry(artifact, null, maintenance));
+    const category = { category: categoryName, episodes };
+    if (Number.isInteger(Number(maintenance.anilistId)) && Number(maintenance.anilistId) > 0) category.anilistId = Number(maintenance.anilistId);
+    if (Number.isInteger(Number(maintenance.rootAnilistId)) && Number(maintenance.rootAnilistId) > 0) category.rootAnilistId = Number(maintenance.rootAnilistId);
+    if (String(maintenance.mediaFormat || "").trim()) category.mediaFormat = String(maintenance.mediaFormat).trim().toUpperCase();
     const data = {
       title,
-      categories: [{ category: categoryName, episodes }],
+      categories: [category],
       LatestTime: now,
-      totalFileSizeBytes: totalSize({ categories: [{ episodes }] }),
+      totalFileSizeBytes: totalSize({ categories: [category] }),
     };
+    if (Number.isInteger(Number(maintenance.anilistId)) && Number(maintenance.anilistId) > 0) data.anilistId = Number(maintenance.anilistId);
+    if (Number.isInteger(Number(maintenance.rootAnilistId)) && Number(maintenance.rootAnilistId) > 0) data.rootAnilistId = Number(maintenance.rootAnilistId);
+    if (String(maintenance.mediaFormat || "").trim()) data.mediaFormat = String(maintenance.mediaFormat).trim().toUpperCase();
+    data.anilistIds = [...new Set([data.anilistId, data.rootAnilistId].filter((id) => Number.isInteger(id) && id > 0))];
     normalizeManifestSourceUrls(data);
     const duration = totalDuration(data);
     if (duration > 0 && hasCompleteDurations(data)) data.totalDurationSeconds = duration;
@@ -2770,7 +3722,8 @@ async function applyMaintenance(maintenance, artifacts) {
     const content = `${JSON.stringify(data, null, 2)}\n`;
     const github = await publishSourceToGithub(target.path, content, { title, category: categoryName });
     await writeFile(target.absolute, content);
-    return { action, path: target.path, file: target.file, title, category: categoryName, added: episodes.length, replaced: 0, skipped: 0, github };
+    const sourceList = await refreshSourceListPublication();
+    return { action, path: target.path, file: target.file, title, category: categoryName, added: episodes.length, replaced: 0, skipped: 0, github, sourceList };
   }
 
   const target = sourceFileFromInput(maintenance.sourcePath);
@@ -2783,6 +3736,20 @@ async function applyMaintenance(maintenance, artifacts) {
     data.categories.push(category);
   }
   if (!category) throw new Error(`category not found: ${categoryName}`);
+  if (Number.isInteger(Number(maintenance.anilistId)) && Number(maintenance.anilistId) > 0) category.anilistId = Number(maintenance.anilistId);
+  if (Number.isInteger(Number(maintenance.rootAnilistId)) && Number(maintenance.rootAnilistId) > 0) category.rootAnilistId = Number(maintenance.rootAnilistId);
+  if (String(maintenance.mediaFormat || "").trim()) category.mediaFormat = String(maintenance.mediaFormat).trim().toUpperCase();
+  const existingAnilistIds = Array.isArray(data.anilistIds) ? data.anilistIds : [];
+  data.anilistIds = [...new Set([
+    data.anilistId,
+    data.rootAnilistId,
+    ...existingAnilistIds,
+    maintenance.anilistId,
+    maintenance.rootAnilistId,
+  ].map((id) => Number(id)).filter((id) => Number.isInteger(id) && id > 0))];
+  if (!data.anilistId && Number.isInteger(Number(maintenance.anilistId)) && Number(maintenance.anilistId) > 0) data.anilistId = Number(maintenance.anilistId);
+  if (!data.rootAnilistId && Number.isInteger(Number(maintenance.rootAnilistId)) && Number(maintenance.rootAnilistId) > 0) data.rootAnilistId = Number(maintenance.rootAnilistId);
+  if (!data.mediaFormat && String(maintenance.mediaFormat || "").trim()) data.mediaFormat = String(maintenance.mediaFormat).trim().toUpperCase();
   const { key, entries } = getEntries(category);
   const incoming = selectArtifacts(artifacts, maintenance, entries);
   if (!incoming.length) throw new Error("the torrent produced no matching video links");
@@ -2792,17 +3759,23 @@ async function applyMaintenance(maintenance, artifacts) {
   let replaced = 0;
   let skipped = 0;
   const changed = [];
+  const isMovieCategory = /\bmovies?\b/i.test(String(category.category || ""));
   for (const artifact of incoming) {
-    const index = artifact.episode ? entries.findIndex((entry) => episodeInfo(entry?.title).episode === artifact.episode) : -1;
+    let index = artifact.episode ? entries.findIndex((entry) => episodeInfo(entry?.title).episode === artifact.episode) : -1;
+    if (index < 0 && isMovieCategory && entries.length === 1) index = 0;
     if (index >= 0) {
+      if (entries[index]?.dualAudio === true && maintenance.dualAudio !== true && maintenance.allowAudioDowngrade !== true) {
+        skipped += 1;
+        continue;
+      }
       if (!replaceExisting) { skipped += 1; continue; }
-      entries[index] = makeEpisodeEntry(artifact, entries[index]);
+      entries[index] = makeEpisodeEntry(artifact, entries[index], maintenance);
       replaced += 1;
       changed.push(entries[index].title);
       continue;
     }
     if (!addMissing) { skipped += 1; continue; }
-    const entry = makeEpisodeEntry(artifact);
+    const entry = makeEpisodeEntry(artifact, null, maintenance);
     entries.push(entry);
     added += 1;
     changed.push(entry.title);
@@ -2819,7 +3792,8 @@ async function applyMaintenance(maintenance, artifacts) {
   const title = data.title || target.file;
   const github = await publishSourceToGithub(target.path, content, { title, category: category.category });
   await writeFile(target.absolute, content);
-  return { action, path: target.path, file: target.file, title, category: category.category, added, replaced, skipped, changed, github };
+  const sourceList = await refreshSourceListPublication();
+  return { action, path: target.path, file: target.file, title, category: category.category, added, replaced, skipped, changed, github, sourceList };
 }
 
 async function applyMaintenanceSerially(maintenance, artifacts) {
@@ -2845,8 +3819,18 @@ async function finishJob(job, code, error, { cancelled = false } = {}) {
     if (job.durationProbePromises?.size) {
       await Promise.allSettled([...job.durationProbePromises.values()]);
     }
+    if (job.audioProbePromises?.size) {
+      await Promise.allSettled([...job.audioProbePromises.values()]);
+    }
+    if (job.maintenance.dualAudio === true) {
+      const probedArtifacts = job.artifacts.filter((artifact) => artifact?.remotePath || artifact?.localPath || artifact?.url);
+      if (!probedArtifacts.length || probedArtifacts.some((artifact) => !Number.isInteger(Number(artifact.audioStreamCount)) || Number(artifact.audioStreamCount) < 2)) {
+        finalCode = 1;
+        error = new Error("dual-audio release failed post-conversion audio validation (every artifact must contain at least two audio streams)");
+      }
+    }
     try {
-      job.manifest = await applyMaintenanceSerially(job.maintenance, job.artifacts);
+      if (finalCode === 0) job.manifest = await applyMaintenanceSerially(job.maintenance, job.artifacts);
     } catch (maintenanceError) {
       finalCode = 1;
       error = maintenanceError;
@@ -2898,6 +3882,7 @@ function recordEvent(job, event, stream) {
     if (artifact) Object.assign(target, { sizeBytes: normalizedEvent.sizeBytes, localPath: normalizedEvent.localPath });
     else job.artifacts.push(target);
     scheduleArtifactDurationProbe(job, target, normalizedEvent);
+    if (job.maintenance?.dualAudio === true) scheduleArtifactAudioProbe(job, target);
     const uploaded = String(normalizedEvent.outcome || "").toLowerCase() === "uploaded";
     if (uploaded) queueUploadedArtifactCleanup(job, target);
   }
@@ -3011,6 +3996,9 @@ function tdAttemptArgs(job, { downloadAll, repairAttempts }) {
     "--json",
     "--cache-dir", job.cacheDir,
   );
+  if (BROWSER_COMPATIBILITY_ENABLED && job.maintenance) {
+    args.push("--cmd-after-dl", BROWSER_COMPATIBILITY_SCRIPT, "--cmd-exit", "fail");
+  }
   if (job.maintenance?.replaceExisting) args.push("--exist=overwrite");
   return args;
 }
@@ -3136,6 +4124,7 @@ async function startJob({ torrentUrl, magnet, destination, cacheDir, runId, main
     metadataSeen: false, hasTransferProgress: false, stopRequested: false, cancelled: false, attempt: 0,
     fileCleanupPromises: new Set(),
     durationProbePromises: new Map(),
+    audioProbePromises: new Map(),
     done: new Promise((resolveDonePromise) => { resolveDone = resolveDonePromise; }),
   };
   job.resolveDone = resolveDone;
@@ -3167,6 +4156,7 @@ function restoreJob(saved) {
     cancelled: saved.cancelled === true,
     fileCleanupPromises: new Set(),
     durationProbePromises: new Map(),
+    audioProbePromises: new Map(),
     done: new Promise((resolveDonePromise) => { resolveDone = resolveDonePromise; }),
   };
   job.resolveDone = resolveDone;
@@ -3178,6 +4168,7 @@ function restoreJob(saved) {
 
 async function resumeMaintenanceRun(run) {
   const payload = run.payload || {};
+  if (payload.discoverCatalog === true) catalogRunId = run.id;
   if (run.items.length && run.state !== "checking") {
     run.state = "running";
     run.phase = "maintenance";
@@ -3209,6 +4200,7 @@ async function resumeMaintenanceRun(run) {
     run.state = "complete";
     run.phase = "plan";
     run.finishedAt = new Date().toISOString();
+    if (catalogRunId === run.id) catalogRunId = null;
     runEvent(run, `Plan ready: ${run.items.filter((item) => item.state === "queued").length} category(s) need maintenance.`);
     return;
   }
@@ -3216,6 +4208,7 @@ async function resumeMaintenanceRun(run) {
     run.state = "complete";
     run.phase = "complete";
     run.finishedAt = new Date().toISOString();
+    if (catalogRunId === run.id) catalogRunId = null;
     await persistResumeState();
     return;
   }
@@ -3438,10 +4431,34 @@ async function restorePersistedWork() {
       run.state = "failed";
       run.phase = "complete";
       run.finishedAt = new Date().toISOString();
+      if (catalogRunId === run.id) catalogRunId = null;
       runEvent(run, error instanceof Error ? error.message : String(error));
       await persistResumeState();
     });
   }
+}
+
+async function startAutomaticCatalogRun(reason = "automatic") {
+  if (!CATALOG_SCAN_ENABLED) return null;
+  if (catalogRunId) {
+    const existing = maintenanceRuns.get(catalogRunId);
+    if (existing && !existing.finishedAt && !["complete", "failed", "cancelled"].includes(existing.state)) return existing;
+    catalogRunId = null;
+  }
+  const state = await loadCatalogState();
+  if (state.sourceListPending === true) await refreshSourceListPublication();
+  const run = await startMaintenanceRun({
+    discoverCatalog: true,
+    catalogScan: true,
+    catalogOnly: true,
+    catalogReason: reason,
+    malCheck: false,
+    replaceExisting: true,
+    addMissing: true,
+    tdPreflight: true,
+  });
+  catalogRunId = run.id;
+  return run;
 }
 
 function publicJob(job) {
@@ -3540,6 +4557,7 @@ const server = createServer(async (req, res) => {
         port: PORT,
         address: `http://${HOST}:${PORT}`,
         manifestPublisher: "github-contents-api",
+        catalog: catalogSummary(await loadCatalogState()),
         github: githubConfiguration(),
         scheduler: {
           concurrency: 1,
@@ -3550,6 +4568,39 @@ const server = createServer(async (req, res) => {
     }
     if (req.method === "GET" && url.pathname === "/api/maintenance/active") {
       return json(res, 200, publicActiveWork());
+    }
+    if (req.method === "GET" && url.pathname === "/api/catalog/status") {
+      return json(res, 200, catalogSummary(await loadCatalogState()));
+    }
+    if (req.method === "GET" && url.pathname === "/api/catalog/items") {
+      const state = await loadCatalogState();
+      const requestedState = String(url.searchParams.get("state") || "").trim();
+      const limit = Math.min(500, Math.max(1, Number(url.searchParams.get("limit")) || 100));
+      const items = Object.values(state.entries || {})
+        .filter((entry) => !requestedState || entry.state === requestedState)
+        .sort((a, b) => (Date.parse(b.trackerUpdatedAt || "") || 0) - (Date.parse(a.trackerUpdatedAt || "") || 0))
+        .slice(0, limit)
+        .map((entry) => ({
+          key: entry.key,
+          alID: entry.alID,
+          title: entry.title,
+          mediaTitle: entry.mediaTitle,
+          format: entry.format,
+          category: entry.category,
+          state: entry.state,
+          sourcePath: entry.sourcePath || "",
+          preferredReleaseHash: entry.preferredReleaseHash || "",
+          preferredDualAudio: entry.preferredDualAudio === true,
+          publishedHash: entry.publishedHash || "",
+          publishedDualAudio: entry.publishedDualAudio === true,
+          upgradeEligible: entry.upgradeEligible === true,
+          unconfirmedEpisodes: normalizedEpisodeNumbers(entry.unconfirmedEpisodes),
+          upgradeEpisodes: normalizedEpisodeNumbers(entry.upgradeEpisodes),
+          attempts: Number(entry.attempts) || 0,
+          nextRetryAt: entry.nextRetryAt || null,
+          lastError: entry.lastError || "",
+        }));
+      return json(res, 200, { items, total: Object.values(state.entries || {}).filter((entry) => !requestedState || entry.state === requestedState).length });
     }
     if (req.method === "GET" && ["/api/releases/search", "/api/seadex/search"].includes(url.pathname)) {
       const query = url.searchParams.get("q")?.trim();
@@ -3568,6 +4619,17 @@ const server = createServer(async (req, res) => {
     }
     if (req.method === "POST" && (url.pathname === "/api/maintenance/runs" || url.pathname === "/api/maintenance/scan")) {
       return json(res, 202, publicRun(await startMaintenanceRun(await readBody(req))));
+    }
+    if (req.method === "POST" && url.pathname === "/api/catalog/scan") {
+      const payload = await readBody(req);
+      const run = await startMaintenanceRun({
+        ...payload,
+        discoverCatalog: true,
+        catalogScan: true,
+        catalogOnly: true,
+        malCheck: false,
+      });
+      return json(res, 202, publicRun(run));
     }
     const runMatch = url.pathname.match(/^\/api\/maintenance\/runs\/([^/]+)$/);
     if (runMatch && req.method === "GET") {
@@ -3614,11 +4676,22 @@ async function startServer() {
     console.log(`Using td: ${TD_BIN}`);
     console.log(`Using Toodrive: ${TOODRIVE_BASE_URL}`);
     persistLog({ scope: "service", event: "service_started", port: PORT, repository: REPO_ROOT, td: TD_BIN });
+    if (CATALOG_SCAN_ENABLED && !catalogRunId) {
+      void startAutomaticCatalogRun("startup").catch((error) => {
+        persistLog({ scope: "service", event: "catalog_start_failed", message: error instanceof Error ? error.message : String(error) });
+      });
+    }
   });
 }
 
 export {
   buildMaintenanceWork,
+  buildCatalogMaintenanceWork,
+  catalogEntryFromRecord,
+  catalogSummary,
+  fetchAniListCatalogMedia,
+  fetchCatalogReleaseRecords,
+  scanCatalog,
   maintenanceConcurrency,
   parseMalEpisodeProgress,
   parseRssItems,
@@ -3636,13 +4709,18 @@ export {
   releaseHasDualAudio,
   betterReleaseCandidate,
   selectArtifacts,
+  applyMaintenance,
   probeMediaDurationSeconds,
+  probeMediaAudioStreamCount,
   totalDuration,
   normalizeToodriveUrl,
   processMaintenanceItem,
   startJob,
   torrentConcurrency,
   publishSourceToGithub,
+  publishSourceListToGithub,
+  buildSourceListContent,
+  refreshSourceListPublication,
   cleanupJobCache,
 };
 

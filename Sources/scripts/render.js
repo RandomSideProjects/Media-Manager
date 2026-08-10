@@ -8,6 +8,38 @@ function setCountParagraph(p, count, singular, plural) {
   p.style.display = count > 0 ? 'block' : 'none';
 }
 
+function updateSourcesResultCount(count, query) {
+  const resultCount = document.getElementById('sourcesResultCount');
+  if (!resultCount) return;
+  const safeCount = Math.max(0, Number(count) || 0);
+  const hasQuery = typeof query === 'string' && query.trim() !== '';
+  resultCount.textContent = hasQuery
+    ? `${safeCount} ${safeCount === 1 ? 'match' : 'matches'}`
+    : `${safeCount} ${safeCount === 1 ? 'source' : 'sources'}`;
+}
+
+function renderSourcesEmptyState(container, query) {
+  if (!container) return;
+  const state = document.createElement('section');
+  state.className = 'sources-state-card';
+
+  const icon = document.createElement('span');
+  icon.className = 'sources-state-icon';
+  icon.setAttribute('aria-hidden', 'true');
+  icon.textContent = '⌕';
+
+  const heading = document.createElement('h2');
+  heading.textContent = 'No sources found';
+
+  const copy = document.createElement('p');
+  copy.textContent = query
+    ? `Nothing in the library matches “${query}”.`
+    : 'There are no sources to show yet.';
+
+  state.append(icon, heading, copy);
+  container.appendChild(state);
+}
+
 function isMovieCategory(category) {
   return /\bmovie\b/i.test(String(category && category.category || '').trim());
 }
@@ -87,7 +119,8 @@ function getContinueWatchingState(entry) {
   return {
     index,
     title: readContinueWatchingString(`${sourceKey}:itemTitle:${index}`) || entry.title || `Item ${index + 1}`,
-    detail
+    detail,
+    progress: duration > 0 ? Math.max(0, Math.min(1, watched / duration)) : 0
   };
 }
 
@@ -135,7 +168,19 @@ function renderContinueWatching() {
     detail.className = 'continue-watching-card-detail';
     detail.textContent = state.detail;
 
-    card.append(poster, title, detail);
+    const play = document.createElement('span');
+    play.className = 'continue-watching-card-play';
+    play.setAttribute('aria-hidden', 'true');
+    play.innerHTML = '<svg viewBox="0 0 24 24"><path d="M9 7.7v8.6L16 12 9 7.7Z"/></svg>';
+
+    const progress = document.createElement('span');
+    progress.className = 'continue-watching-progress';
+    progress.setAttribute('aria-hidden', 'true');
+    const progressFill = document.createElement('span');
+    progressFill.style.setProperty('--continue-progress', String(state.progress));
+    progress.appendChild(progressFill);
+
+    card.append(poster, title, play, detail, progress);
     card.addEventListener('click', () => {
       const params = new URLSearchParams();
       params.set('source', entry.path);
@@ -206,6 +251,8 @@ function buildSourceCardFromMeta(meta) {
   const p1 = document.createElement('p');
   const p2 = document.createElement('p');
   const p3 = document.createElement('p');
+  const stats = document.createElement('div');
+  stats.className = 'source-card-stats';
   const isSingleMovie = (!isManga && categoryCount === 0 && episodeCount === 0 && (separatedCategoryCount === 1 || movieCount === 1));
   if (isManga) {
     setCountParagraph(p1, volumeCount, 'Volume', 'Volumes');
@@ -271,8 +318,9 @@ function buildSourceCardFromMeta(meta) {
   };
   makeSourceCardInteractive(card, btn, title, openSource);
 
-  right.append(h3, p1, p2);
-  if (hasSeparatedMeta) right.appendChild(p3);
+  stats.append(p1, p2);
+  if (hasSeparatedMeta || movieCount > 0) stats.appendChild(p3);
+  right.append(h3, stats);
   right.append(timeP, sizeP, durP, btn);
   card.appendChild(right);
 
@@ -315,12 +363,16 @@ function buildSourceCardFromMeta(meta) {
 
 function renderSourcesFromState() {
   const container = document.getElementById('sourcesContainer');
+  if (!container) return;
   container.innerHTML = '';
   const sorted = sortMeta(SOURCES_META, SOURCES_SORT);
-  for (const meta of sorted) {
+  sorted.forEach((meta, index) => {
     const card = buildSourceCardFromMeta(meta);
+    card.style.setProperty('--source-index', String(Math.min(index, 8)));
     container.appendChild(card);
-  }
+  });
+  if (!sorted.length) renderSourcesEmptyState(container, '');
+  updateSourcesResultCount(sorted.length, '');
   renderContinueWatching();
 }
 
@@ -402,6 +454,8 @@ function buildSourceCard(data, openSourceParam, fileNameForFallback) {
   const p1 = document.createElement('p');
   const p2 = document.createElement('p');
   const p3 = document.createElement('p');
+  const stats = document.createElement('div');
+  stats.className = 'source-card-stats';
   const isSingleMovie = (!isManga && seasons === 0 && episodes === 0 && (separatedCategoryCount === 1 || movieCount === 1));
   if (isManga) {
     setCountParagraph(p1, volumeCount, 'Volume', 'Volumes');
@@ -451,8 +505,9 @@ function buildSourceCard(data, openSourceParam, fileNameForFallback) {
   if (totalBytes) sizeP.textContent = 'Size: ' + formatBytes(totalBytes);
   if (totalSecs) durP.textContent = 'Duration: ' + formatDur(totalSecs);
 
-  right.append(h3, p1, p2);
-  if (hasSeparatedMeta) right.appendChild(p3);
+  stats.append(p1, p2);
+  if (hasSeparatedMeta || movieCount > 0) stats.appendChild(p3);
+  right.append(h3, stats);
   right.append(sizeP, durP, btn);
   card.appendChild(right);
 

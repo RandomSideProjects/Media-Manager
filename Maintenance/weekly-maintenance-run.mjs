@@ -2,6 +2,8 @@
 
 const backendUrl = String(process.env.MAINTENANCE_BACKEND_URL || "http://127.0.0.1:6968").replace(/\/+$/, "");
 const payload = JSON.stringify({
+  discoverCatalog: true,
+  catalogScan: true,
   replaceExisting: true,
   addMissing: true,
   allCategories: false,
