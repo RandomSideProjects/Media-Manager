@@ -166,7 +166,7 @@
       notice.appendChild(titleEl);
     }
 
-    const messageEl = document.createElement('p');
+    const messageEl = document.createElement(typeof messageHtml === 'string' ? 'div' : 'p');
     messageEl.className = 'storage-notice__message';
     if (typeof messageHtml === 'string') {
       messageEl.innerHTML = messageHtml;
