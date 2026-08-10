@@ -2393,6 +2393,39 @@ body.mm-notice-open {
   line-height: 1.35;
   white-space: pre-line;
 }
+.storage-notice__message p,
+.storage-notice__message h1,
+.storage-notice__message h2,
+.storage-notice__message h3,
+.storage-notice__message h4,
+.storage-notice__message h5,
+.storage-notice__message h6,
+.storage-notice__message ul,
+.storage-notice__message ol,
+.storage-notice__message blockquote,
+.storage-notice__message pre {
+  margin: 0 0 0.65rem;
+}
+.storage-notice__message > :last-child {
+  margin-bottom: 0;
+}
+.storage-notice__message img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin-top: 0.4rem;
+}
+.storage-notice__message a {
+  color: inherit;
+  text-decoration: underline;
+}
+.storage-notice__message pre {
+  overflow-x: auto;
+  padding: 0.55rem;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.25);
+}
 .storage-notice__qr {
   display: flex;
   flex-direction: column;

@@ -617,6 +617,7 @@ let posterPreviewObjectUrl = '';
 const UI_GITHUB_WORKER_ROOT = 'https://mm.alexspac.es/gh';
 const PREVIOUS_GITHUB_WORKER_ROOT = 'https://mm.littlehacker303.workers.dev/gh';
 const UI_DEFAULT_GITHUB_WORKER_URL = (typeof window !== 'undefined' && typeof window.MM_DEFAULT_GITHUB_WORKER_URL === 'string') ? window.MM_DEFAULT_GITHUB_WORKER_URL : UI_GITHUB_WORKER_ROOT;
+const UI_DEFAULT_PLAYBACK_ALERT_WORKER_URL = (typeof window !== 'undefined' && typeof window.MM_DEFAULT_PLAYBACK_ALERT_WORKER_URL === 'string') ? window.MM_DEFAULT_PLAYBACK_ALERT_WORKER_URL : 'https://mm.alexspac.es/playback-alert';
 const LEGACY_GITHUB_WORKER_ROOT = 'https://mmback.littlehacker303.workers.dev/gh';
 const CREATOR_PLAYLIST_DIR = 'Sources/Files/Playlists';
 const githubUploadComboKeys = new Set(['g', 'h']);
@@ -775,6 +776,64 @@ function getGithubToken() {
     const raw = settings.githubToken;
     return (typeof raw === 'string') ? raw.trim() : '';
   } catch { return ''; }
+}
+
+function getPlaybackAlertWorkerUrl() {
+  try {
+    const settings = getUploadSettingsSafe();
+    const raw = settings.playbackAlertWorkerUrl;
+    return (typeof raw === 'string' && raw.trim()) ? raw.trim() : UI_DEFAULT_PLAYBACK_ALERT_WORKER_URL;
+  } catch { return UI_DEFAULT_PLAYBACK_ALERT_WORKER_URL; }
+}
+
+function parsePlaybackAlertAsset(text) {
+  const source = String(text || '').replace(/^\uFEFF/, '');
+  const match = source.match(/^---\s*\r?\n([\s\S]*?)\r?\n---\s*(?:\r?\n|$)([\s\S]*)$/);
+  if (!match) return null;
+  const expiresMatch = match[1].match(/^\s*expiresAt\s*:\s*(.*?)\s*$/m);
+  if (!expiresMatch) return null;
+  const expiresAt = expiresMatch[1].replace(/^(?:['"])(.*)\1$/, '$1').trim();
+  return { message: match[2].trim(), expiresAt };
+}
+
+function formatPlaybackAlertDateTimeInput(value) {
+  const timestamp = typeof value === 'number' ? value : Date.parse(String(value || ''));
+  if (!Number.isFinite(timestamp)) return '';
+  const date = new Date(timestamp);
+  const pad = (part) => String(part).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function setPlaybackAlertStatus(message, tone = 'info') {
+  const status = document.getElementById('devPlaybackAlertStatus');
+  if (!status) return;
+  status.textContent = String(message || '');
+  status.dataset.tone = tone;
+}
+
+function initializePlaybackAlertControls() {
+  const configured = (typeof window !== 'undefined' && window.MM_PLAYBACK_ALERT && typeof window.MM_PLAYBACK_ALERT === 'object')
+    ? window.MM_PLAYBACK_ALERT
+    : {};
+  const messageInput = document.getElementById('devPlaybackAlertMessage');
+  const expiresInput = document.getElementById('devPlaybackAlertExpiresAt');
+  if (messageInput) messageInput.value = typeof configured.message === 'string' ? configured.message : '';
+  if (expiresInput) expiresInput.value = formatPlaybackAlertDateTimeInput(configured.expiresAt);
+  if (messageInput || expiresInput) {
+    fetch('../Assets/playback-alert.md', { cache: 'no-store' })
+      .then((response) => response.ok ? response.text() : '')
+      .then((text) => {
+        const asset = parsePlaybackAlertAsset(text);
+        if (!asset) return;
+        if (messageInput) messageInput.value = asset.message;
+        if (expiresInput) expiresInput.value = formatPlaybackAlertDateTimeInput(asset.expiresAt);
+      })
+      .catch(() => {});
+  }
+}
+
+if (typeof window !== 'undefined') {
+  window.mm_initializePlaybackAlertControls = initializePlaybackAlertControls;
 }
 
 function getUploadWebhookOverride() {
@@ -3661,6 +3720,7 @@ if (loadBtn) {
 }
 
 updateLoadFileSummary();
+initializePlaybackAlertControls();
 
 // Button handlers
 addCategoryBtn.addEventListener('click', () => addCategory());
@@ -4021,6 +4081,82 @@ async function uploadDirectoryToGithub() {
     isGithubUploadInFlight = false;
   }
 }
+
+let isPlaybackAlertPublishInFlight = false;
+
+async function publishPlaybackAlert() {
+  if (isPlaybackAlertPublishInFlight) return;
+
+  const workerUrlRaw = getPlaybackAlertWorkerUrl();
+  if (!workerUrlRaw) {
+    setPlaybackAlertStatus('Set the separate Playback Alert Publisher URL in Developer Settings first.', 'warning');
+    return;
+  }
+  const githubToken = getGithubToken();
+  if (!githubToken) {
+    setPlaybackAlertStatus('Set the GitHub token in Upload Settings before publishing.', 'warning');
+    return;
+  }
+
+  const messageInput = document.getElementById('devPlaybackAlertMessage');
+  const expiresInput = document.getElementById('devPlaybackAlertExpiresAt');
+  const publishBtn = document.getElementById('devPublishPlaybackAlertBtn');
+  const message = messageInput ? messageInput.value.trim() : '';
+  const expirationValue = expiresInput ? expiresInput.value : '';
+  const expirationDate = expirationValue ? new Date(expirationValue) : null;
+  if (!message) {
+    setPlaybackAlertStatus('Enter a playback alert message.', 'warning');
+    return;
+  }
+  if (!expirationValue || !expirationDate || !Number.isFinite(expirationDate.getTime()) || expirationDate.getTime() <= Date.now()) {
+    setPlaybackAlertStatus('Choose a future expiration date and time before publishing.', 'warning');
+    return;
+  }
+
+  let workerUrl;
+  try {
+    workerUrl = new URL(workerUrlRaw);
+  } catch {
+    setPlaybackAlertStatus('GitHub Worker URL is not a valid URL.', 'error');
+    return;
+  }
+
+  const expiresAt = expirationDate.toISOString();
+  isPlaybackAlertPublishInFlight = true;
+  if (publishBtn) publishBtn.disabled = true;
+  setPlaybackAlertStatus('Publishing Assets/playback-alert.md to GitHub…', 'info');
+  try {
+    const response = await fetch(workerUrl.toString(), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${githubToken}`
+      },
+      body: JSON.stringify({ message, expiresAt })
+    });
+    const data = await response.json().catch(() => null);
+    if (!response.ok || !data || data.ok !== true) {
+      const messageText = data && data.error ? data.error : `HTTP ${response.status}`;
+      setPlaybackAlertStatus(`Publish failed: ${messageText}`, 'error');
+      return;
+    }
+    if (typeof window !== 'undefined') {
+      window.MM_PLAYBACK_ALERT = Object.freeze({ message, expiresAt });
+    }
+    const commitLabel = data.commitUrl ? 'Assets/playback-alert.md committed to GitHub.' : 'Playback alert asset published to GitHub.';
+    setPlaybackAlertStatus(commitLabel, 'success');
+  } catch (err) {
+    setPlaybackAlertStatus(`Publish failed: ${err && err.message ? err.message : 'network error'}`, 'error');
+  } finally {
+    isPlaybackAlertPublishInFlight = false;
+    if (publishBtn) publishBtn.disabled = false;
+  }
+}
+
+if (typeof window !== 'undefined') {
+  window.mm_publishPlaybackAlert = publishPlaybackAlert;
+}
+
 document.addEventListener('keydown', (e) => {
   const key = (e.key || '').toLowerCase();
   const tag = ((e.target && e.target.tagName) || '').toUpperCase();

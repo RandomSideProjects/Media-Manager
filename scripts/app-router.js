@@ -5,7 +5,9 @@
   const customMode = (params.get('source') || '').trim() !== '';
 
   const publicScripts = [
+    'alerts.js?v=20260810-playback-alert-asset',
     'scripts/alerts.js',
+    'scripts/playback-alert.js?v=20260810-playback-alert-asset',
     'scripts/dev-core.js',
     'scripts/tags.js',
     'scripts/overlay-factory.js?v=20260727-storage-ui',
@@ -24,7 +26,9 @@
   const customScripts = [
     'scripts/jszip/jszip.min.js',
     'scripts/constants.js',
+    'alerts.js?v=20260810-playback-alert-asset',
     'scripts/alerts.js',
+    'scripts/playback-alert.js?v=20260810-playback-alert-asset',
     'scripts/dev-core.js',
     'scripts/overlay-factory.js?v=20260727-storage-ui',
     'scripts/dom.js?v=20260808-motion-refresh',

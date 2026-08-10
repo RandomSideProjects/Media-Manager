@@ -9,6 +9,7 @@ const LS_SETTINGS_KEY = 'mm_upload_settings';
 const SETTINGS_CURRENT_GITHUB_WORKER_ROOT = 'https://mm.alexspac.es/gh';
 const SETTINGS_PREVIOUS_GITHUB_WORKER_ROOT = 'https://mm.littlehacker303.workers.dev/gh';
 const SETTINGS_DEFAULT_GITHUB_WORKER_URL = (typeof window !== 'undefined' && typeof window.MM_DEFAULT_GITHUB_WORKER_URL === 'string') ? window.MM_DEFAULT_GITHUB_WORKER_URL : SETTINGS_CURRENT_GITHUB_WORKER_ROOT;
+const SETTINGS_DEFAULT_PLAYBACK_ALERT_WORKER_URL = (typeof window !== 'undefined' && typeof window.MM_DEFAULT_PLAYBACK_ALERT_WORKER_URL === 'string') ? window.MM_DEFAULT_PLAYBACK_ALERT_WORKER_URL : 'https://mm.alexspac.es/playback-alert';
 const SETTINGS_LEGACY_GITHUB_WORKER_ROOT = 'https://mmback.littlehacker303.workers.dev/gh';
 const SETTINGS_CATBOX_DIRECT_URL = 'https://catbox.moe/user/api.php';
 const SETTINGS_DEFAULT_COPYPARTY_HOST = 'cpr.xpbliss.fyi';
@@ -92,6 +93,7 @@ function loadUploadSettings(){
         anonymous: true,
         useRandomCatboxUserhash: false,
         githubWorkerUrl: normalizeGithubWorkerUrlValue(SETTINGS_DEFAULT_GITHUB_WORKER_URL),
+        playbackAlertWorkerUrl: SETTINGS_DEFAULT_PLAYBACK_ALERT_WORKER_URL,
         catboxUploadUrl: '',
         catboxOverrideMode: 'auto',
         copypartyThresholdMb: 100,
@@ -115,6 +117,9 @@ function loadUploadSettings(){
     const compress = (typeof p.compressPosters === 'boolean') ? p.compressPosters : (typeof p.posterCompress === 'boolean' ? p.posterCompress : true);
     const storedGithubRaw = (typeof p.githubWorkerUrl === 'string') ? p.githubWorkerUrl.trim() : '';
     const normalizedGithubUrl = normalizeGithubWorkerUrlValue(storedGithubRaw || SETTINGS_DEFAULT_GITHUB_WORKER_URL);
+    const playbackAlertWorkerUrl = (typeof p.playbackAlertWorkerUrl === 'string' && p.playbackAlertWorkerUrl.trim())
+      ? p.playbackAlertWorkerUrl.trim()
+      : SETTINGS_DEFAULT_PLAYBACK_ALERT_WORKER_URL;
     const result = {
       anonymous: typeof p.anonymous==='boolean' ? p.anonymous : true,
       useRandomCatboxUserhash: typeof p.useRandomCatboxUserhash === 'boolean' ? p.useRandomCatboxUserhash : false,
@@ -129,6 +134,7 @@ function loadUploadSettings(){
       autoArchiveOversize: (typeof p.autoArchiveOversize === 'boolean') ? p.autoArchiveOversize : false,
       remuxMode: normalizeRemuxMode(p.remuxMode),
       githubWorkerUrl: normalizedGithubUrl,
+      playbackAlertWorkerUrl,
       githubToken: (typeof p.githubToken === 'string') ? p.githubToken : '',
       catboxUploadUrl: (typeof p.catboxUploadUrl === 'string' && p.catboxUploadUrl.trim()) ? p.catboxUploadUrl.trim() : '',
       catboxOverrideMode: normalizeCatboxMode(p.catboxOverrideMode),
@@ -152,6 +158,7 @@ function loadUploadSettings(){
     anonymous: true,
     useRandomCatboxUserhash: false,
     githubWorkerUrl: normalizeGithubWorkerUrlValue(SETTINGS_DEFAULT_GITHUB_WORKER_URL),
+    playbackAlertWorkerUrl: SETTINGS_DEFAULT_PLAYBACK_ALERT_WORKER_URL,
     githubToken: '',
     catboxUploadUrl: '',
     catboxOverrideMode: 'auto',
@@ -188,6 +195,7 @@ function saveUploadSettings(s){
     autoArchiveOversize: (typeof s.autoArchiveOversize === 'boolean') ? s.autoArchiveOversize : false,
     remuxMode: normalizeRemuxMode(s.remuxMode),
     githubWorkerUrl: normalizeGithubWorkerUrlValue((typeof s.githubWorkerUrl === 'string') ? s.githubWorkerUrl.trim() : ''),
+    playbackAlertWorkerUrl: (typeof s.playbackAlertWorkerUrl === 'string' && s.playbackAlertWorkerUrl.trim()) ? s.playbackAlertWorkerUrl.trim() : SETTINGS_DEFAULT_PLAYBACK_ALERT_WORKER_URL,
     githubToken: (typeof s.githubToken === 'string') ? s.githubToken.trim() : '',
     catboxUploadUrl: (typeof s.catboxUploadUrl === 'string') ? s.catboxUploadUrl.trim() : '',
     catboxOverrideMode: normalizeCatboxMode(s.catboxOverrideMode),

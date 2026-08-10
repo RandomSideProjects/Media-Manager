@@ -1090,6 +1090,16 @@ window.OverlayFactory = (function() {
               createElement('p', { className: 'dev-menu-hint' }, ['URL for the GitHub worker service.'])
             ]),
             createElement('div', { className: 'dev-field' }, [
+              createElement('label', { for: 'devPlaybackAlertWorkerUrl' }, ['Playback Alert Publisher URL']),
+              createElement('input', {
+                type: 'text',
+                id: 'devPlaybackAlertWorkerUrl',
+                className: 'dev-field-input',
+                placeholder: 'Separate endpoint for Assets/playback-alert.md'
+              }),
+              createElement('p', { className: 'dev-menu-hint' }, ['Separate from the JSON source upload worker.'])
+            ]),
+            createElement('div', { className: 'dev-field' }, [
               createElement('label', { for: 'devGithubToken' }, ['GitHub Token']),
               createElement('input', { 
                 type: 'password', 
@@ -1109,6 +1119,27 @@ window.OverlayFactory = (function() {
               }),
               createElement('p', { className: 'dev-menu-hint' }, ['Optional Discord webhook for upload summaries.'])
             ])
+          ]),
+
+          createElement('div', { className: 'dev-menu-section' }, [
+            createElement('h4', {}, ['Playback Alert']),
+            createElement('div', { className: 'dev-field' }, [
+              createElement('label', { for: 'devPlaybackAlertMessage' }, ['Message (Markdown supported)']),
+              createElement('textarea', {
+                id: 'devPlaybackAlertMessage',
+                className: 'dev-field-input',
+                rows: '4',
+                maxLength: '1000',
+                placeholder: 'Enter the playback notice'
+              }),
+              createElement('p', { className: 'dev-menu-hint' }, ['Supports formatting, links, and images. HTML is not accepted.'])
+            ]),
+            createElement('div', { className: 'dev-field' }, [
+              createElement('label', { for: 'devPlaybackAlertExpiresAt' }, ['Expiration date and time (required)']),
+              createElement('input', { type: 'datetime-local', id: 'devPlaybackAlertExpiresAt', className: 'dev-field-input', required: true })
+            ]),
+            createElement('button', { id: 'devPublishPlaybackAlertBtn', type: 'button' }, ['Publish Assets/playback-alert.md to GitHub']),
+            createElement('p', { className: 'dev-menu-hint', id: 'devPlaybackAlertStatus', 'aria-live': 'polite' }, [''])
           ]),
           
           createElement('div', { className: 'dev-menu-section' }, [

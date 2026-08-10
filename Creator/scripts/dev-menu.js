@@ -18,8 +18,10 @@
   let uploadConcurrencyResetBtn = null;
   let hiddenControlToggle = null;
   let githubWorkerUrlInput = null;
+  let playbackAlertWorkerUrlInput = null;
   let githubTokenInput = null;
   let webhookUrlInput = null;
+  let playbackAlertPublishBtn = null;
   let catboxUrlInput = null;
   let catboxModeSelect = null;
   let catboxForceProxyUnder100MbToggle = null;
@@ -47,8 +49,10 @@
     uploadConcurrencyResetBtn = document.getElementById("devUploadConcurrencyResetBtn");
     hiddenControlToggle = document.getElementById("devHiddenSourceToggle");
     githubWorkerUrlInput = document.getElementById("devGithubWorkerUrl");
+    playbackAlertWorkerUrlInput = document.getElementById("devPlaybackAlertWorkerUrl");
     githubTokenInput = document.getElementById("devGithubToken");
     webhookUrlInput = document.getElementById("devWebhookUrl");
+    playbackAlertPublishBtn = document.getElementById("devPublishPlaybackAlertBtn");
     catboxUrlInput = document.getElementById("devCatboxUploadUrl");
     catboxModeSelect = document.getElementById("devCatboxMode");
     catboxForceProxyUnder100MbToggle = document.getElementById("devCatboxForceProxyUnder100Mb");
@@ -343,6 +347,9 @@
         if (githubWorkerUrlInput && settings.githubWorkerUrl !== undefined) {
           githubWorkerUrlInput.value = settings.githubWorkerUrl || '';
         }
+        if (playbackAlertWorkerUrlInput && settings.playbackAlertWorkerUrl !== undefined) {
+          playbackAlertWorkerUrlInput.value = settings.playbackAlertWorkerUrl || '';
+        }
         if (githubTokenInput && settings.githubToken !== undefined) {
           githubTokenInput.value = settings.githubToken || '';
         }
@@ -383,6 +390,9 @@
       } catch (err) {
         console.warn('[CreatorDevMenu] Failed to load settings', err);
       }
+    }
+    if (typeof window.mm_initializePlaybackAlertControls === "function") {
+      window.mm_initializePlaybackAlertControls();
     }
   }
 
@@ -465,6 +475,20 @@
       githubWorkerUrlInput.addEventListener('change', commitGithubUrl);
       githubWorkerUrlInput.addEventListener('blur', commitGithubUrl);
     }
+
+    if (playbackAlertWorkerUrlInput) {
+      const commitPlaybackAlertWorkerUrl = () => {
+        if (typeof saveSettingsPartial === 'function') {
+          try {
+            saveSettingsPartial({ playbackAlertWorkerUrl: playbackAlertWorkerUrlInput.value.trim() });
+          } catch (err) {
+            console.warn('[CreatorDevMenu] Failed to save Playback Alert Worker URL', err);
+          }
+        }
+      };
+      playbackAlertWorkerUrlInput.addEventListener('change', commitPlaybackAlertWorkerUrl);
+      playbackAlertWorkerUrlInput.addEventListener('blur', commitPlaybackAlertWorkerUrl);
+    }
     
     if (githubTokenInput) {
       const commitGithubToken = () => {
@@ -492,6 +516,15 @@
       };
       webhookUrlInput.addEventListener('change', commitWebhookUrl);
       webhookUrlInput.addEventListener('blur', commitWebhookUrl);
+    }
+
+    if (playbackAlertPublishBtn && !playbackAlertPublishBtn.dataset.bound) {
+      playbackAlertPublishBtn.addEventListener("click", () => {
+        if (typeof window.mm_publishPlaybackAlert === "function") {
+          void window.mm_publishPlaybackAlert();
+        }
+      });
+      playbackAlertPublishBtn.dataset.bound = "1";
     }
     
     if (catboxUrlInput) {
