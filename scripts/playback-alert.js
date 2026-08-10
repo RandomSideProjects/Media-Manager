@@ -226,13 +226,46 @@
     const message = match[2].trim();
     const expirationMs = Date.parse(expiresAt);
     if (!message || !Number.isFinite(expirationMs) || expirationMs <= Date.now()) return null;
-    return { message, expiresAt, expirationMs };
+    const canonicalVersionSource = `${new Date(expirationMs).toISOString()}\n${message}`;
+    let hash = 2166136261;
+    for (let index = 0; index < canonicalVersionSource.length; index += 1) {
+      hash ^= canonicalVersionSource.charCodeAt(index);
+      hash = Math.imul(hash, 16777619);
+    }
+    const version = `v1-${(hash >>> 0).toString(16).padStart(8, '0')}`;
+    return { message, expiresAt, expirationMs, version };
+  }
+
+  const ACKNOWLEDGED_VERSIONS_KEY = 'mm.playbackAlertAcknowledgedVersions';
+
+  function getAcknowledgedPlaybackAlertVersions() {
+    try {
+      const stored = window.localStorage.getItem(ACKNOWLEDGED_VERSIONS_KEY);
+      const versions = stored ? JSON.parse(stored) : [];
+      return Array.isArray(versions) ? versions.filter((version) => typeof version === 'string') : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function hasAcknowledgedPlaybackAlert(version) {
+    return Boolean(version) && getAcknowledgedPlaybackAlertVersions().includes(version);
+  }
+
+  function acknowledgePlaybackAlert(version) {
+    if (!version) return;
+    try {
+      const versions = getAcknowledgedPlaybackAlertVersions().filter((storedVersion) => storedVersion !== version);
+      versions.push(version);
+      window.localStorage.setItem(ACKNOWLEDGED_VERSIONS_KEY, JSON.stringify(versions.slice(-20)));
+    } catch {}
   }
 
   let loaded = false;
   let active = false;
   let message = '';
   let expirationMs = NaN;
+  let alertVersion = '';
   let releaseGate = null;
   const gatePromise = new Promise((resolve) => { releaseGate = resolve; });
   let noticeHandle = null;
@@ -255,17 +288,19 @@
     expirationTimer = setTimeout(scheduleExpiration, Math.min(remaining, 2147483647));
   }
 
-  function releasePlayback() {
+  function releasePlayback({ closeNotice = true } = {}) {
     if (!active) return;
     active = false;
     if (expirationTimer) {
       clearTimeout(expirationTimer);
       expirationTimer = null;
     }
-    if (noticeHandle && typeof noticeHandle.close === "function") {
-      try { noticeHandle.close(); } catch {}
+    if (closeNotice && noticeHandle && typeof noticeHandle.close === "function") {
+      const handle = noticeHandle;
+      noticeHandle = null;
+      try { handle.close(); } catch {}
     }
-    noticeHandle = null;
+    if (!closeNotice) noticeHandle = null;
     resolveGate();
   }
 
@@ -273,10 +308,19 @@
     if (!active) return;
     active = false;
     if (noticeHandle && typeof noticeHandle.close === "function") {
-      try { noticeHandle.close(); } catch {}
+      const handle = noticeHandle;
+      noticeHandle = null;
+      try { handle.close(); } catch {}
     }
-    noticeHandle = null;
     resolveGate();
+  }
+
+  function handlePlaybackNoticeClose(reason) {
+    if (reason === 'user-dismiss' || reason === 'action' || reason === 'dismiss' || reason === 'escape') {
+      acknowledgePlaybackAlert(alertVersion);
+    }
+    if (active) releasePlayback({ closeNotice: false });
+    noticeHandle = null;
   }
 
   window.MM_playbackAlert = {
@@ -326,6 +370,8 @@
       if (parsed) {
         message = parsed.message;
         expirationMs = parsed.expirationMs;
+        alertVersion = parsed.version;
+        if (hasAcknowledgedPlaybackAlert(alertVersion)) return;
         active = true;
         try { document.querySelectorAll('video, audio').forEach(guardMedia); } catch {}
         scheduleExpiration();
@@ -337,10 +383,14 @@
             persistent: true,
             autoCloseMs: null,
             dismissLabel: null,
+            onClose: handlePlaybackNoticeClose,
             actions: [{
               label: 'Continue to playback',
               className: 'primary',
-              onClick: releasePlayback
+              onClick: () => {
+                acknowledgePlaybackAlert(alertVersion);
+                releasePlayback({ closeNotice: false });
+              }
             }]
           });
         }

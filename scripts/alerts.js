@@ -30,7 +30,7 @@
 
         overlayEl.addEventListener('click', (event) => {
           if (event.target === overlayEl) {
-            hideAllNotices();
+            hideAllNotices('user-dismiss');
           }
         });
 
@@ -59,7 +59,7 @@
     document.body.classList.toggle('mm-notice-open', shouldShow);
   }
 
-  function removeNotice(notice, onClose) {
+  function removeNotice(notice, onClose, reason = 'programmatic') {
     if (!notice) return;
     const meta = noticeMetadata.get(notice);
     const closeHandler = typeof onClose === 'function'
@@ -78,7 +78,7 @@
     }
     noticeMetadata.delete(notice);
     try {
-      if (typeof closeHandler === 'function') closeHandler();
+      if (typeof closeHandler === 'function') closeHandler(reason);
     } catch (err) {
       console.error('[Alerts] onClose handler failed', err);
     }
@@ -87,11 +87,11 @@
     }
   }
 
-  function hideAllNotices() {
+  function hideAllNotices(reason = 'programmatic') {
     if (!overlayEl) return;
     const notices = Array.from(activeNotices);
     for (const notice of notices) {
-      removeNotice(notice);
+      removeNotice(notice, null, reason);
     }
     activeNotices.clear();
     updateOverlayVisibility();
@@ -236,7 +236,7 @@
             }
           }
           if (action.closeOnClick !== false) {
-            removeNotice(notice, onClose);
+            removeNotice(notice, onClose, 'action');
           }
         });
         actionsRow.appendChild(actionBtn);
@@ -249,7 +249,7 @@
       dismissBtn.type = 'button';
       dismissBtn.className = 'storage-notice__btn';
       dismissBtn.textContent = dismissLabel || 'Close';
-      dismissBtn.addEventListener('click', () => removeNotice(notice, onClose));
+      dismissBtn.addEventListener('click', () => removeNotice(notice, onClose, 'dismiss'));
       actionsRow.appendChild(dismissBtn);
       hasActionButtons = true;
     }
@@ -265,14 +265,14 @@
 
     if (Number.isFinite(resolvedAutoCloseMs) && resolvedAutoCloseMs > 0) {
       const timeoutId = setTimeout(() => {
-        removeNotice(notice, onClose);
+        removeNotice(notice, onClose, 'timeout');
       }, resolvedAutoCloseMs);
       noticeTimeouts.set(notice, timeoutId);
     }
 
     return {
       notice,
-      close: () => removeNotice(notice, onClose)
+      close: (reason = 'programmatic') => removeNotice(notice, onClose, reason)
     };
   }
 
@@ -284,7 +284,7 @@
     const lastNotice = notices[notices.length - 1];
     const meta = noticeMetadata.get(lastNotice);
     if (meta && meta.persistent) return;
-    removeNotice(lastNotice);
+    removeNotice(lastNotice, null, 'escape');
   });
 
   window.mmNotices = {
