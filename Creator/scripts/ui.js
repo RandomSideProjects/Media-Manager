@@ -3050,9 +3050,10 @@ function addEpisode(container, data) {
             const imgBlob = await zip.files[name].async('blob');
             const ext = (() => { const m = name.toLowerCase().match(/\.(jpe?g|png|gif|webp|bmp)$/); return m ? m[0] : '.png'; })();
             const pageFile = new File([imgBlob], `${i + 1}${ext}`, { type: imgBlob.type || 'application/octet-stream' });
-    if (totalSteps > 1) {
+            let pageUrl = '';
+            if (totalSteps > 1) {
               const base = (i / totalSteps) * 100;
-              url = await uploadToCatboxWithProgress(pageFile, (pct, info) => {
+              pageUrl = await uploadToCatboxWithProgress(pageFile, (pct, info) => {
                 const adj = Math.max(0, Math.min(100, base + pct / totalSteps));
                 progressBar.value = adj;
                 const stage = (info && info.phase) || 'upload';
@@ -3062,7 +3063,7 @@ function addEpisode(container, data) {
                 if (pct >= 100) { try { startHangTimer(); } catch {} }
               }, { context: 'manual', allowProxy: false });
             } else {
-              url = await uploadToCatboxWithProgress(pageFile, (pct, info) => {
+              pageUrl = await uploadToCatboxWithProgress(pageFile, (pct, info) => {
                 progressBar.value = pct;
                 const stage = (info && info.phase) || 'upload';
                 const label = (stage === 'remux' || stage === 'remuxing') ? 'Remuxing' : 'Processing';
@@ -3071,7 +3072,7 @@ function addEpisode(container, data) {
                 if (pct >= 100) { try { startHangTimer(); } catch {} }
               }, { context: 'manual', allowProxy: false });
             }
-            pageUrls.push(url);
+            pageUrls.push(pageUrl);
           }
           const pagesMap = {};
           for (let i = 0; i < pageUrls.length; i++) pagesMap[`Page ${i + 1}`] = pageUrls[i];
@@ -3081,7 +3082,7 @@ function addEpisode(container, data) {
           let volNum = 1;
           try { const m = (epTitle.value||'').match(/(\d+)/); if (m) volNum = parseInt(m[1], 10) || 1; } catch {}
           const volFile = new File([volBlob], `${volNum}.json`, { type: 'application/json' });
-          const url = await uploadToCatboxWithProgress(volFile, (pct, info) => {
+          const volumeUrl = await uploadToCatboxWithProgress(volFile, (pct, info) => {
             if (totalSteps > 1) {
               const base = ((names.length) / totalSteps) * 100;
               const adj = Math.max(0, Math.min(100, base + pct / totalSteps));
@@ -3099,7 +3100,7 @@ function addEpisode(container, data) {
             if (pct >= 100) { try { startHangTimer(); } catch {} }
           }, { context: 'manual', allowProxy: false });
           try { stopHangTimer(); } catch {}
-          epSrc.value = url;
+          epSrc.value = volumeUrl;
           try { epDiv.dataset.VolumePageCount = String(pageUrls.length); epDiv.dataset.volumePageCount = String(pageUrls.length); } catch {}
           epError.textContent = '';
         } catch (err) {

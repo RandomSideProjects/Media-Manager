@@ -100,11 +100,14 @@ async function handleExtractedFiles(files) {
   let localId = json.LocalID || json.localId || json.sourceId || json.id;
   if (!localId) {
     try {
-      // Generate 6-digit numeric id and prefix with "Local"
-      const n = Math.floor((Date.now() + Math.random() * 1000000)) % 1000000;
-      localId = `Local${String(n).padStart(6, '0')}`;
+      // Keep progress stable when the same folder is selected again. A random
+      // id made local manga progress disappear on every folder re-open.
+      const indexPath = String((indexFile.webkitRelativePath || indexFile.relativePath || indexFile.name || '')).replace(/\\/g, '/');
+      const stableSeed = `${dirTitle || 'Source'}::${rootPrefix}::${indexPath}`;
+      if (typeof hashStringToKey === 'function') localId = `Local${hashStringToKey(stableSeed)}`;
+      else localId = `Local${stableSeed.replace(/[^A-Za-z0-9_-]+/g, '-').slice(0, 48)}`;
     } catch {
-      localId = 'Local000000';
+      localId = 'LocalSource';
     }
   }
   try { setSourceKey(localId || 'local', { prefix: 'local' }); } catch {}

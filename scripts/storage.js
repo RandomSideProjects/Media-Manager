@@ -693,7 +693,17 @@
         const lowerName = String(item.fileName || '').toLowerCase();
         if (/\.(cbz|json)(?:$|[?#])/i.test(lowerSrc)) return true;
         if (lowerName.endsWith('.cbz') || lowerName.endsWith('.json')) return true;
-        return typeof item.VolumePageCount === 'number';
+        const pageCount = item.VolumePageCount ?? item.volumePageCount;
+        if (pageCount !== '' && pageCount !== null && pageCount !== undefined
+            && Number.isFinite(Number(pageCount)) && Number(pageCount) >= 0) return true;
+        const explicitType = [item.mediaType, item.kind, item.format, item.type, item.mimeType]
+          .filter(value => typeof value === 'string')
+          .join(' ');
+        return /manga|comic|cbz|application\/json/i.test(explicitType)
+          || ['pages', 'images', 'urls', 'files'].some((field) => {
+            const value = item[field];
+            return Array.isArray(value) || (value && typeof value === 'object' && Object.keys(value).length > 0);
+          });
       } catch {
         return false;
       }

@@ -10,6 +10,7 @@ let cbzObjectUrls = [];
 let cbzCache = new Map(); // key -> { pages: string[] }
 let cbzCurrentKey = '';
 let cbzProgressBase = 0; // base percent before extraction phase
+let cbzLoadGeneration = 0;
 
 // Adjust this to change how many pages are preloaded ahead/behind the current page.
 let cbzPreloadAheadCount = 20;
@@ -24,13 +25,60 @@ function isMangaVolumeItem(item) {
   const hasCbzInName = fileName.endsWith('.cbz');
   const hasJsonInSrc = /\.(json)(?:$|[?#])/i.test(lowerSrc);
   const hasJsonInName = fileName.endsWith('.json');
-  return hasCbzInSrc || hasCbzInName || hasJsonInSrc || hasJsonInName;
+  const explicitType = [item.mediaType, item.kind, item.format, item.type, item.mimeType]
+    .filter(value => typeof value === 'string')
+    .join(' ')
+    .toLowerCase();
+  const pageCount = item.VolumePageCount ?? item.volumePageCount;
+  const hasPageCount = pageCount !== '' && pageCount !== null && pageCount !== undefined
+    && Number.isFinite(Number(pageCount)) && Number(pageCount) >= 0;
+  const hasPageData = ['pages', 'images', 'urls', 'files'].some((field) => {
+    const value = item[field];
+    return Array.isArray(value) || (value && typeof value === 'object' && Object.keys(value).length > 0);
+  });
+  return hasCbzInSrc || hasCbzInName || hasJsonInSrc || hasJsonInName
+    || /(?:manga|comic|cbz|zip|application\/json)/i.test(explicitType)
+    || hasPageCount || hasPageData;
+}
+
+function getMangaVolumeFormat(item) {
+  if (!item || typeof item !== 'object') return '';
+  const explicitType = [item.mediaType, item.kind, item.format, item.type, item.mimeType]
+    .filter(value => typeof value === 'string')
+    .join(' ')
+    .toLowerCase();
+  if (/json|application\/json|index/.test(explicitType)) return 'json';
+  if (/cbz|zip|comic/.test(explicitType)) return 'cbz';
+
+  const values = [item.src, item.fileName, item.name]
+    .filter(value => typeof value === 'string')
+    .map(value => value.toLowerCase());
+  if (values.some(value => /\.json(?:$|[?#])/.test(value) || value.startsWith('data:application/json'))) return 'json';
+  if (values.some(value => /\.(?:cbz|zip)(?:$|[?#])/.test(value))) return 'cbz';
+
+  const fileType = item.file && typeof item.file.type === 'string' ? item.file.type.toLowerCase() : '';
+  if (fileType.includes('json')) return 'json';
+  if (fileType.includes('zip') || fileType.includes('comic')) return 'cbz';
+
+  const pageCount = item.VolumePageCount ?? item.volumePageCount;
+  if (pageCount !== '' && pageCount !== null && pageCount !== undefined
+      && Number.isFinite(Number(pageCount)) && Number(pageCount) >= 0) return 'json';
+  if (['pages', 'images', 'urls', 'files'].some((field) => {
+    const value = item[field];
+    return Array.isArray(value) || (value && typeof value === 'object' && Object.keys(value).length > 0);
+  })) return 'json';
+  return '';
+}
+
+function revokeObjectUrls(urls) {
+  if (!Array.isArray(urls)) return;
+  urls.forEach((url) => {
+    try { URL.revokeObjectURL(url); } catch {}
+  });
 }
 
 function clearCbzUrls() {
-  try {
-    cbzObjectUrls.forEach(u => { try { URL.revokeObjectURL(u); } catch {} });
-  } catch {}
+  revokeObjectUrls(cbzObjectUrls);
   cbzObjectUrls = [];
 }
 
@@ -1342,10 +1390,11 @@ function updateCbzPageInfo() {
   try {
     const curItem = (typeof currentIndex === 'number' && flatList && flatList[currentIndex]) ? flatList[currentIndex] : null;
     const src = curItem && curItem.src ? curItem.src : '';
-    if (src) {
-      localStorage.setItem(src + ':cbzPage', String(cbzState.index + 1));
-      localStorage.setItem(src + ':cbzPages', String(cbzState.pages.length));
-    }
+    const progressKey = curItem && curItem.progressKey ? String(curItem.progressKey) : '';
+    [src, progressKey].filter((key, idx, keys) => key && keys.indexOf(key) === idx).forEach((key) => {
+      localStorage.setItem(key + ':cbzPage', String(cbzState.index + 1));
+      localStorage.setItem(key + ':cbzPages', String(cbzState.pages.length));
+    });
   } catch {}
 }
 
@@ -1388,7 +1437,7 @@ function fetchBlobWithProgress(url, onProgress) {
       xhr.onprogress = (e) => { try { onProgress && onProgress(e.loaded, e.lengthComputable ? e.total : undefined); } catch {} };
       xhr.onerror = () => reject(new Error('Network error'));
       xhr.onload = () => {
-        if (xhr.status === 200 || xhr.status === 0) resolve(xhr.response);
+        if (xhr.status === 200 || xhr.status === 206 || xhr.status === 0) resolve(xhr.response);
         else reject(new Error(`HTTP ${xhr.status}`));
       };
       xhr.send();
@@ -1422,38 +1471,45 @@ function getCbzCacheKey(item) {
 function parseMangaJsonToPages(json) {
   try {
     if (!json || typeof json !== 'object') return [];
-    // Prefer explicit array fields
-    if (Array.isArray(json.pages)) {
-      return json.pages.map(p => {
-        if (typeof p === 'string') return p;
-        if (p && typeof p === 'object') return p.src || p.url || p.data || '';
-        return '';
-      }).filter(Boolean);
+    const getPageSource = (page) => {
+      if (typeof page === 'string') return page.trim();
+      if (!page || typeof page !== 'object') return '';
+      return [page.src, page.url, page.href, page.data, page.path, page.file, page.image]
+        .find(value => typeof value === 'string' && value.trim())?.trim() || '';
+    };
+    const parseCollection = (collection, { requireNumber = false } = {}) => {
+      if (Array.isArray(collection)) return collection.map(getPageSource).filter(Boolean);
+      if (!collection || typeof collection !== 'object') return [];
+      const entries = Object.entries(collection)
+        .map(([key, value], index) => {
+          const match = String(key).match(/(\d+)/);
+          return { index, number: match ? Number.parseInt(match[1], 10) : NaN, source: getPageSource(value) };
+        })
+        .filter(entry => entry.source && (!requireNumber || Number.isFinite(entry.number)));
+      if (entries.some(entry => Number.isFinite(entry.number))) {
+        // Page maps commonly carry metadata beside numbered pages. Once a
+        // numeric page key exists, ignore non-page keys instead of loading
+        // arbitrary strings as images.
+        const numberedEntries = entries.filter(entry => Number.isFinite(entry.number));
+        numberedEntries.sort((a, b) => a.number - b.number || a.index - b.index);
+        return numberedEntries.map(entry => entry.source);
+      }
+      return entries.map(entry => entry.source);
+    };
+
+    for (const field of ['pages', 'images', 'urls', 'files']) {
+      const pages = parseCollection(json[field]);
+      if (pages.length) return pages;
     }
-    if (Array.isArray(json.images)) {
-      return json.images.map(p => (typeof p === 'string') ? p : (p && (p.src || p.url || p.data) || '')).filter(Boolean);
-    }
-    // Fallback: object mapping like { "Page 1": "1.png", ... } or { "1": "..." }
-    const candidates = json.pages && typeof json.pages === 'object' ? json.pages : json;
-    const entries = Object.entries(candidates)
-      .map(([k, v]) => {
-        let n = NaN;
-        try {
-          const m = String(k).match(/(\d+)/);
-          if (m) n = parseInt(m[1], 10);
-        } catch {}
-        let url = '';
-        if (typeof v === 'string') url = v;
-        else if (v && typeof v === 'object') url = v.src || v.url || v.data || '';
-        return { n, url };
-      })
-      .filter(e => Number.isFinite(e.n) && e.n >= 1 && e.url);
-    entries.sort((a, b) => a.n - b.n);
-    return entries.map(e => e.url);
+
+    // Last-resort object mapping like { "Page 1": "1.png", ... }.
+    return parseCollection(json, { requireNumber: true });
   } catch { return []; }
 }
 
 async function loadMangaVolume(item) {
+  const loadToken = ++cbzLoadGeneration;
+  const loadObjectUrls = [];
   cbzState = { active: true, pages: [], index: 0 };
   cbzPreloadedImages.clear();
   // Use progress overlay instead of spinner
@@ -1467,7 +1523,7 @@ async function loadMangaVolume(item) {
     if (cbzCache.has(cacheKey)) {
       const cached = cbzCache.get(cacheKey);
       cbzState.pages = cached.pages.slice();
-      cbzObjectUrls = cached.pages; // current reference for convenience
+      cbzObjectUrls = cached.pages.slice(); // current reference for cleanup on page unload
       cbzState.index = 0;
       // Restore saved page and persist total pages
       try {
@@ -1495,17 +1551,23 @@ async function loadMangaVolume(item) {
         showCbzProgress('Loading...', undefined);
       }
     };
-    let isJson = false;
-    try {
-      const srcLower = (item && item.src ? String(item.src) : '').toLowerCase();
-      const nameLower = (item && item.fileName ? String(item.fileName) : '').toLowerCase();
-      isJson = /\.json(?:$|[?#])/.test(srcLower) || nameLower.endsWith('.json');
-    } catch {}
-
     if (item.file && typeof item.file.arrayBuffer === 'function') {
       blob = await readFileWithProgress(item.file, onNetProgress);
     } else {
       blob = await fetchBlobWithProgress(item.src, onNetProgress);
+    }
+
+    if (loadToken !== cbzLoadGeneration) {
+      return;
+    }
+
+    const formatHint = getMangaVolumeFormat(item);
+    let isJson = formatHint === 'json';
+    if (!formatHint) {
+      try {
+        const prefix = await blob.slice(0, 512).text();
+        isJson = /^\s*(?:\uFEFF)?[\[{]/.test(prefix);
+      } catch {}
     }
 
     let pages = [];
@@ -1523,7 +1585,7 @@ async function loadMangaVolume(item) {
         const isLocal = !!(item && item.file);
         const filesIndex = item && item.filesIndex ? item.filesIndex : null;
         const baseDir = item && typeof item.fileBaseDirRel === 'string' ? item.fileBaseDirRel : '';
-        if (isLocal && filesIndex && baseDir) {
+        if (isLocal && filesIndex) {
           const resolved = [];
           const lowerIndex = filesIndex; // object mapping lowercased relative path -> File
           function joinRel(base, rel) {
@@ -1552,7 +1614,7 @@ async function loadMangaVolume(item) {
             const f = lowerIndex[relPath] || null;
             if (f) {
               const url = URL.createObjectURL(f);
-              cbzObjectUrls.push(url);
+              loadObjectUrls.push(url);
               resolved.push(url);
             } else {
               // Also try without first folder segment (in case of differing roots)
@@ -1561,7 +1623,7 @@ async function loadMangaVolume(item) {
               const f2 = lowerIndex[alt] || null;
               if (f2) {
                 const url = URL.createObjectURL(f2);
-                cbzObjectUrls.push(url);
+                loadObjectUrls.push(url);
                 resolved.push(url);
               } else {
                 resolved.push(p);
@@ -1600,13 +1662,19 @@ async function loadMangaVolume(item) {
         showCbzProgress(undefined, cbzProgressBase + (20 * ((i) / Math.max(1, fileNames.length))));
         const data = await zip.files[name].async('blob');
         const url = URL.createObjectURL(data);
-        cbzObjectUrls.push(url);
+        loadObjectUrls.push(url);
         pages.push(url);
       }
       showCbzProgress(undefined, 99);
       if (pages.length === 0) throw new Error('No images found in CBZ');
     }
 
+    if (loadToken !== cbzLoadGeneration) {
+      revokeObjectUrls(loadObjectUrls);
+      return;
+    }
+
+    cbzObjectUrls = loadObjectUrls;
     cbzState.pages = pages;
     cbzState.index = 0;
     // Save total pages and restore saved page if present
@@ -1625,16 +1693,19 @@ async function loadMangaVolume(item) {
     cbzCache.set(cacheKey, { pages });
     updateCbzPageInfo();
   } catch (e) {
+    const stale = loadToken !== cbzLoadGeneration;
+    revokeObjectUrls(loadObjectUrls);
+    if (stale) return;
     cbzState.active = false;
-    clearCbzUrls();
     if (cbzViewer) cbzViewer.style.display = 'none';
     showPlayerAlert((e && e.message) ? e.message : 'Failed to load volume');
   } finally {
-    hideCbzProgress();
+    if (loadToken === cbzLoadGeneration) hideCbzProgress();
   }
 }
 
 function unloadCbz() {
+  cbzLoadGeneration += 1;
   cbzState.active = false;
   cbzPreloadedImages.clear();
   if (cbzViewer) cbzViewer.style.display = 'none';
@@ -1642,6 +1713,7 @@ function unloadCbz() {
 }
 
 function clearAllCbzCache() {
+  cbzLoadGeneration += 1;
   try {
     // Revoke all cached pages
     cbzCache.forEach(entry => {
@@ -1956,6 +2028,14 @@ if (typeof window !== 'undefined' && typeof navigator !== 'undefined') {
   }
 }
 
+function setPlayerItemUrl(index) {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    params.set('item', index + 1);
+    window.history.replaceState(null, '', `${window.location.pathname}?${params.toString()}`);
+  } catch {}
+}
+
 function loadVideo(index) {
   resetSeparatedNextPartPrefetch();
   const item = flatList[index];
@@ -2020,6 +2100,7 @@ function loadVideo(index) {
     if (theaterBtn) theaterBtn.style.display = 'none';
     unloadCbz();
     showPlayerAlert(getUnavailableMessage(item));
+    setPlayerItemUrl(index);
     return;
   }
 
@@ -2038,7 +2119,9 @@ function loadVideo(index) {
       video.style.display = 'none';
     }
     updateEpisodeTimeOverlay(null, 0);
+    title.textContent = item.title || 'Volume';
     if (theaterBtn) theaterBtn.style.display = 'none';
+    setPlayerItemUrl(index);
     return;
   }
 
@@ -2150,9 +2233,7 @@ function loadVideo(index) {
     }
   }
 
-  const params = new URLSearchParams(window.location.search);
-  params.set('item', index + 1);
-  window.history.replaceState(null, '', `${window.location.pathname}?${params.toString()}`);
+  setPlayerItemUrl(index);
 }
 
 function showPlayerAlert(message) {

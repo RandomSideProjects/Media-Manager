@@ -397,7 +397,12 @@ function buildSourceCard(data, openSourceParam, fileNameForFallback) {
     if (Array.isArray(cat.episodes)) separatedItemCount += cat.episodes.length;
   });
   const itemCount = isManga ? 0 : (episodes + separatedItemCount);
-  const volumeCount = isManga ? categories.length : 0;
+  const volumeEntries = isManga
+    ? categories.flatMap(category => Array.isArray(category && category.episodes) ? category.episodes : [])
+    : [];
+  const volumeCount = isManga
+    ? volumeEntries.filter(entry => !/\bchapter\b/i.test(String(entry && entry.title || ''))).length
+    : 0;
   let pageCount = isManga ? (Number.isFinite(Number(data.totalPagecount)) ? Number(data.totalPagecount) : 0) : 0;
   if (isManga && pageCount === 0) {
     for (const c of categories) {
