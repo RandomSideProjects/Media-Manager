@@ -5,7 +5,7 @@
   const customMode = (params.get('source') || '').trim() !== '';
 
   const publicScripts = [
-    'alerts.js?v=20260810-playback-alert-asset',
+    'scripts/playback-alert-config.js?v=20260810-playback-alert-asset',
     'scripts/alerts.js',
     'scripts/playback-alert.js?v=20260810-playback-alert-asset',
     'scripts/dev-core.js',
@@ -25,7 +25,7 @@
 
   const customScripts = [
     'scripts/constants.js',
-    'alerts.js?v=20260810-playback-alert-asset',
+    'scripts/playback-alert-config.js?v=20260810-playback-alert-asset',
     'scripts/alerts.js',
     'scripts/playback-alert.js?v=20260810-playback-alert-asset',
     'scripts/dev-core.js',
