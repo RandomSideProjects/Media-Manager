@@ -89,6 +89,10 @@ const ANILIST_CACHE_VERSION = 1;
 const LOG_PROGRESS_INTERVAL_MS = 30_000;
 const LEGACY_RECOVERY_MAX_AGE_MS = 48 * 60 * 60 * 1000;
 const LEGACY_RECOVERY_LOG_BYTES = 16 * 1024 * 1024;
+// The activity endpoint only needs recent milestones. Reading the entire
+// lifetime JSONL file can exceed V8's maximum string length before the caller's
+// entry limit is applied.
+const LOG_READ_BYTES = 8 * 1024 * 1024;
 const DEFAULT_TD_REPAIR_ATTEMPTS = 20;
 const MAINTENANCE_TD_REPAIR_ATTEMPTS = 3;
 const DEFAULT_MAINTENANCE_CONCURRENCY = 1;
@@ -292,11 +296,24 @@ function persistLog(entry) {
 async function readPersistedLogs({ runId = "", jobId = "", limit = 500 } = {}) {
   await logQueue;
   let raw;
+  let handle;
   try {
-    raw = await readFile(LOG_FILE, "utf8");
+    handle = await open(LOG_FILE, "r");
+    const { size } = await handle.stat();
+    const start = Math.max(0, Number(size) - LOG_READ_BYTES);
+    const buffer = Buffer.alloc(Math.max(0, Number(size) - start));
+    const { bytesRead } = await handle.read(buffer, 0, buffer.length, start);
+    raw = buffer.subarray(0, bytesRead).toString("utf8");
+    // The first line in a bounded tail may be partial; discard it.
+    if (start > 0) {
+      const firstNewline = raw.indexOf("\n");
+      raw = firstNewline >= 0 ? raw.slice(firstNewline + 1) : "";
+    }
   } catch (error) {
     if (error?.code === "ENOENT") return [];
     throw error;
+  } finally {
+    await handle?.close().catch(() => {});
   }
   const max = Math.min(2_000, Math.max(1, Number(limit) || 500));
   return raw.split(/\r?\n/).filter(Boolean).map((line) => {
