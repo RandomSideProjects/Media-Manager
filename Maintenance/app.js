@@ -1,8 +1,22 @@
 "use strict";
 
 (function initMaintenanceApp() {
-  const DEFAULT_SERVICE = "http://127.0.0.1:6968";
-  const SERVICE_STORAGE_KEY = "media-manager.maintenance.backend";
+  const DEFAULT_LOCAL_SERVICE = "http://127.0.0.1:6968";
+  const DEFAULT_REMOTE_SERVICE = "http://100.68.0.2:6968";
+  const SERVER_STORAGE_KEY = "media-manager.maintenance.server.v1";
+  const LOCAL_OPERATION_STORAGE_KEY = "media-manager.maintenance.operation.local.v1";
+  const REMOTE_OPERATION_STORAGE_KEY = "media-manager.maintenance.operation.remote.v1";
+  // Start the simplified UI at the requested 20-job setting instead of
+  // carrying forward the older, lower per-server value.
+  const LOCAL_TORRENT_CONCURRENCY_STORAGE_KEY = "media-manager.maintenance.torrent-concurrency.local.v2";
+  const REMOTE_TORRENT_CONCURRENCY_STORAGE_KEY = "media-manager.maintenance.torrent-concurrency.remote.v2";
+  const LOCAL_SERVICE_STORAGE_KEY = "media-manager.maintenance.local-service.v1";
+  const REMOTE_SERVICE_STORAGE_KEY = "media-manager.maintenance.remote-service.v1";
+  // Keep the old key readable so an existing browser selection is not lost
+  // when it opens the new mode picker for the first time.
+  const LEGACY_SERVICE_STORAGE_KEY = "media-manager.maintenance.backend.v2";
+  const DEFAULT_TORRENT_CONCURRENCY = 20;
+  const MAX_TORRENT_CONCURRENCY = 20;
 
   function normalizeServiceUrl(value) {
     const raw = String(value || "").trim();
@@ -18,21 +32,96 @@
     }
   }
 
-  function storedServiceUrl() {
+  function storedValue(key) {
     try {
-      return normalizeServiceUrl(window.localStorage.getItem(SERVICE_STORAGE_KEY));
+      return String(window.localStorage.getItem(key) || "").trim();
     } catch {
       return "";
     }
   }
 
+  function storedServiceUrl(key) {
+    return normalizeServiceUrl(storedValue(key));
+  }
+
+  function storedServer() {
+    const value = storedValue(SERVER_STORAGE_KEY).toLowerCase();
+    return ["local", "remote"].includes(value) ? value : "";
+  }
+
+  function operationStorageKey(server) {
+    return server === "remote" ? REMOTE_OPERATION_STORAGE_KEY : LOCAL_OPERATION_STORAGE_KEY;
+  }
+
+  function storedOperation(server) {
+    const value = storedValue(operationStorageKey(server)).toLowerCase();
+    return ["update", "add"].includes(value) ? value : "";
+  }
+
+  function torrentConcurrencyStorageKey(server) {
+    return server === "remote" ? REMOTE_TORRENT_CONCURRENCY_STORAGE_KEY : LOCAL_TORRENT_CONCURRENCY_STORAGE_KEY;
+  }
+
+  function normalizeTorrentConcurrency(value) {
+    const requested = Number(value);
+    if (!Number.isFinite(requested)) return DEFAULT_TORRENT_CONCURRENCY;
+    return Math.min(MAX_TORRENT_CONCURRENCY, Math.max(1, Math.floor(requested)));
+  }
+
+  function storedTorrentConcurrency(server) {
+    const value = storedValue(torrentConcurrencyStorageKey(server));
+    return value ? normalizeTorrentConcurrency(value) : DEFAULT_TORRENT_CONCURRENCY;
+  }
+
   const serviceFromUrl = normalizeServiceUrl(new URLSearchParams(window.location.search).get("service"));
-  const SERVICE = storedServiceUrl()
+  const localService = storedServiceUrl(LOCAL_SERVICE_STORAGE_KEY)
     || normalizeServiceUrl(window.MAINTENANCE_SERVICE)
-    || serviceFromUrl
-    || DEFAULT_SERVICE;
+    || DEFAULT_LOCAL_SERVICE;
+  const remoteService = storedServiceUrl(REMOTE_SERVICE_STORAGE_KEY)
+    || normalizeServiceUrl(window.MAINTENANCE_REMOTE_SERVICE)
+    || DEFAULT_REMOTE_SERVICE;
+  const legacyService = storedServiceUrl(LEGACY_SERVICE_STORAGE_KEY);
+  const initialServer = storedServer()
+    || (serviceFromUrl && serviceFromUrl !== localService ? "remote" : "")
+    || (legacyService && legacyService !== localService ? "remote" : "local");
+  const initialOperation = storedOperation(initialServer) || "update";
+  const initialTorrentConcurrency = storedTorrentConcurrency(initialServer);
+  const initialService = serviceFromUrl || legacyService || (initialServer === "remote" ? remoteService : localService);
+  const SERVER_CONFIG = {
+    local: {
+      label: "This Mac",
+      service: localService,
+      description: "Uses the maintenance service running on this Mac.",
+    },
+    remote: {
+      label: "Remote",
+      service: remoteService,
+      description: "Uses the remote maintenance service.",
+    },
+  };
+  const OPERATION_CONFIG = {
+    update: {
+      label: "Update current ones",
+      description: "Check known sources for missing episodes and better dual-audio releases.",
+      hint: "Existing sources only · AniList + release sources",
+      startLabel: "Run",
+    },
+    add: {
+      label: "Add new shows",
+      description: "Scan the tracker catalog and add playable shows that are not in the library yet.",
+      hint: "New shows only · Tracker catalog",
+      startLabel: "Run",
+    },
+  };
   const $ = (id) => document.getElementById(id);
   const state = {
+    server: initialServer,
+    operation: initialOperation,
+    torrentConcurrency: initialTorrentConcurrency,
+    runPaused: false,
+    serviceUrl: initialService,
+    localService,
+    remoteService,
     sources: [],
     addRelease: null,
     jobId: null,
@@ -46,6 +135,124 @@
     catalog: null,
     catalogTimer: null,
   };
+
+  function serverConfig(server = state.server) {
+    return SERVER_CONFIG[server] || SERVER_CONFIG.local;
+  }
+
+  function operationConfig(operation = state.operation) {
+    return OPERATION_CONFIG[operation] || OPERATION_CONFIG.update;
+  }
+
+  function serviceForServer(server = state.server) {
+    return server === "remote" ? state.remoteService : state.localService;
+  }
+
+  function saveStoredValue(key, value) {
+    try {
+      if (value) window.localStorage.setItem(key, value);
+      else window.localStorage.removeItem(key);
+    } catch {
+      // A blocked storage area should not stop a run in the current tab.
+    }
+  }
+
+  function renderSelection() {
+    const operation = operationConfig();
+    document.querySelectorAll("[data-server]").forEach((button) => {
+      const selected = button.dataset.server === state.server;
+      button.classList.toggle("is-selected", selected);
+      button.setAttribute("aria-pressed", String(selected));
+    });
+    document.querySelectorAll("[data-operation]").forEach((button) => {
+      const selected = button.dataset.operation === state.operation;
+      button.classList.toggle("is-selected", selected);
+      button.setAttribute("aria-pressed", String(selected));
+    });
+    const description = $("modeDescription");
+    if (description) description.textContent = operation.description;
+    const start = $("updateStartBtn");
+    if (start) start.textContent = operation.startLabel;
+    const localInput = $("localServiceUrl");
+    if (localInput && document.activeElement !== localInput) localInput.value = state.localService;
+    const remoteInput = $("remoteServiceUrl");
+    if (remoteInput && document.activeElement !== remoteInput) remoteInput.value = state.remoteService;
+    const torrentInput = $("updateTorrentConcurrency");
+    if (torrentInput && document.activeElement !== torrentInput) torrentInput.value = String(state.torrentConcurrency);
+    renderCatalogStatus();
+  }
+
+  function resetIdlePanel() {
+    clearInterval(state.pollTimer);
+    state.pollTimer = null;
+    state.pollInFlight = false;
+    state.jobId = null;
+    state.jobKind = null;
+    state.seenEventCount = 0;
+    state.seenChildEventCount = 0;
+    state.childEventCounts = {};
+    state.runPaused = false;
+    if ($("jobProgress")) $("jobProgress").value = 0;
+    if ($("jobProgressText")) $("jobProgressText").textContent = "No job running.";
+    setProgressCount("0/0");
+    clearTorrentProgress();
+    if ($("automationSummary")) $("automationSummary").textContent = "No automated run started.";
+    if ($("jobResult")) $("jobResult").textContent = "";
+    if ($("jobLog")) $("jobLog").textContent = "";
+    if ($("logState")) $("logState").textContent = "Showing important milestones only; detailed process output stays in the local service log.";
+    updateCurrentJob("Idle", "Nothing running", "Choose a mode, then start a check to see progress here.");
+  }
+
+  async function selectServer(server) {
+    if (!SERVER_CONFIG[server] || server === state.server) return;
+    state.server = server;
+    state.operation = storedOperation(server) || "update";
+    state.torrentConcurrency = storedTorrentConcurrency(server);
+    state.serviceUrl = serviceForServer(server);
+    saveStoredValue(SERVER_STORAGE_KEY, server);
+    resetIdlePanel();
+    state.sources = [];
+    renderLibrary();
+    renderSelection();
+    setServiceState("Connecting…");
+    await refreshLibrary();
+    await refreshCatalogStatus();
+    await reconnectToActiveWork();
+  }
+
+  function selectOperation(operation) {
+    if (!OPERATION_CONFIG[operation] || operation === state.operation) return;
+    state.operation = operation;
+    saveStoredValue(operationStorageKey(state.server), operation);
+    resetIdlePanel();
+    renderSelection();
+  }
+
+  function saveTorrentConcurrency() {
+    const input = $("updateTorrentConcurrency");
+    state.torrentConcurrency = normalizeTorrentConcurrency(input?.value);
+    saveStoredValue(torrentConcurrencyStorageKey(state.server), String(state.torrentConcurrency));
+    renderSelection();
+  }
+
+  function saveConnections() {
+    const local = normalizeServiceUrl($("localServiceUrl")?.value);
+    const remote = normalizeServiceUrl($("remoteServiceUrl")?.value);
+    if (!local || !remote) {
+      window.alert("Enter a valid http:// or https:// address for both services.");
+      return;
+    }
+    state.localService = local;
+    state.remoteService = remote;
+    state.serviceUrl = serviceForServer();
+    saveStoredValue(LOCAL_SERVICE_STORAGE_KEY, local);
+    saveStoredValue(REMOTE_SERVICE_STORAGE_KEY, remote);
+    saveStoredValue(LEGACY_SERVICE_STORAGE_KEY, "");
+    renderSelection();
+    setServiceState("Connecting…");
+    void refreshLibrary();
+    void refreshCatalogStatus();
+  }
 
   function appendLog(line) {
     const log = $("jobLog");
@@ -243,7 +450,7 @@
       : `${activeLabel} · waiting for transfer statistics…`;
     details.classList.toggle("is-stalled", Boolean(primary.stalled));
     setTorrentDetail("torrentProgressPrimary", primary.job.state === "queued"
-      ? `${activeLabel}${primary.job.queuePosition > 1 ? ` · queue position ${primary.job.queuePosition}` : ""} · waiting for the single torrent slot.`
+      ? `${activeLabel}${primary.job.queuePosition > 1 ? ` · queue position ${primary.job.queuePosition}` : ""} · waiting for a transfer slot.`
       : primary.stalled
       ? `${activeLabel} · ${phaseLabel(primary.phase)} · no file-byte movement for ${formatDuration(primary.byteAgeSeconds)} — waiting on a piece. Swarm ${formatRate(primary.swarmBytesPerSecond)}.`
       : primaryMessage);
@@ -281,7 +488,7 @@
       const meta = document.createElement("span");
       meta.className = "torrent-progress-job-meta";
       meta.textContent = snapshot.job.state === "queued"
-        ? `queue position ${snapshot.job.queuePosition || "?"} · waiting for the single torrent slot`
+        ? `queue position ${snapshot.job.queuePosition || "?"} · waiting for a transfer slot`
         : snapshot.event
         ? `${snapshot.percent.toFixed(1)}% · file ${formatRate(snapshot.fileBytesPerSecond)} · swarm ${formatRate(snapshot.swarmBytesPerSecond)} · ${snapshot.stalled ? `STALLED (${formatDuration(snapshot.byteAgeSeconds)})` : formatAge(snapshot.lastByteAt)}`
         : "waiting for transfer stats";
@@ -297,7 +504,7 @@
   }
 
   async function request(path, options) {
-    const response = await fetch(`${SERVICE}${path}`, options);
+    const response = await fetch(`${state.serviceUrl}${path}`, options);
     const body = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(body.error || `HTTP ${response.status}`);
     return body;
@@ -361,7 +568,9 @@
   }
 
   async function reloadPersistedLog() {
-    const params = new URLSearchParams({ limit: "2000" });
+    // Keep the browser payload bounded; the service retains the full stream,
+    // while this panel only needs recent milestones and failures.
+    const params = new URLSearchParams({ limit: "300" });
     if (state.jobKind === "run" && state.jobId) params.set("runId", state.jobId);
     if (state.jobKind === "job" && state.jobId) params.set("jobId", state.jobId);
     try {
@@ -379,14 +588,20 @@
 
   function setServiceState(text, error = false) {
     const element = $("serviceState");
+    if (!element) return;
     element.textContent = text;
     element.style.color = error ? "#ff9da5" : "";
-    element.title = `Maintenance backend: ${SERVICE}\nPress D to change it`;
+    element.title = `${serverConfig().label} · ${state.serviceUrl}`;
   }
 
   function renderCatalogStatus() {
     const element = $("catalogStatus");
     if (!element) return;
+    element.hidden = state.operation !== "add";
+    if (state.operation === "update") {
+      element.textContent = "Catalog discovery is off in this mode. Existing sources only; AniList checks missing episodes and dual-audio upgrades.";
+      return;
+    }
     const catalog = state.catalog;
     if (!catalog) {
       element.textContent = "Tracker catalog status is unavailable.";
@@ -410,14 +625,19 @@
       renderCatalogStatus();
     } catch (error) {
       const element = $("catalogStatus");
-      if (element) element.textContent = `Tracker catalog unavailable: ${error.message}`;
+      if (element) {
+        element.hidden = state.operation !== "add";
+        element.textContent = state.operation === "update"
+          ? "Catalog discovery is off in this mode. Existing-source checks are still available when the selected server is online."
+          : `Tracker catalog unavailable: ${error.message}`;
+      }
     }
   }
 
   function configureMaintenanceBackend() {
     const entered = window.prompt(
-      "Maintenance backend URL (without /api).\nLeave blank to return to the launcher/default backend.",
-      SERVICE,
+      `${serverConfig().label} service URL (without /api).\nLeave blank to use the saved default.`,
+      state.serviceUrl,
     );
     if (entered === null) return;
     const value = normalizeServiceUrl(entered);
@@ -426,21 +646,24 @@
         window.alert("Enter a valid http:// or https:// maintenance backend URL.");
         return;
       }
-      try {
-        window.localStorage.removeItem(SERVICE_STORAGE_KEY);
-      } catch {
-        // A blocked storage area should not prevent returning to the default backend.
-      }
-      window.location.reload();
+      state.serviceUrl = serviceForServer();
+      renderSelection();
+      void refreshLibrary();
+      void refreshCatalogStatus();
       return;
     }
-    try {
-      window.localStorage.setItem(SERVICE_STORAGE_KEY, value);
-    } catch {
-      window.alert("The backend URL could not be saved in this browser.");
-      return;
+    if (state.server === "remote") {
+      state.remoteService = value;
+      saveStoredValue(REMOTE_SERVICE_STORAGE_KEY, value);
+    } else {
+      state.localService = value;
+      saveStoredValue(LOCAL_SERVICE_STORAGE_KEY, value);
     }
-    window.location.reload();
+    state.serviceUrl = value;
+    saveStoredValue(LEGACY_SERVICE_STORAGE_KEY, "");
+    renderSelection();
+    void refreshLibrary();
+    void refreshCatalogStatus();
   }
 
   function isTypingTarget(target) {
@@ -492,8 +715,8 @@
       const button = document.createElement("button");
       button.className = "button button-secondary";
       button.type = "button";
-      button.textContent = "Maintain automatically";
-      button.title = `Automatically search, process, and update ${source.title}`;
+      button.textContent = "Check this show";
+      button.title = `Search, process, and update ${source.title}`;
       button.addEventListener("click", () => startAutomatedMaintenance([source.path], source.title).catch((error) => {
         setJobBusy(false);
         appendLog(`Start failed: ${error.message}`);
@@ -511,7 +734,7 @@
       const data = await request("/api/library");
       state.sources = Array.isArray(data.sources) ? data.sources : [];
       renderLibrary();
-      setServiceState(`${state.sources.length} shows loaded`);
+      setServiceState(`${serverConfig().label} · ${state.sources.length} shows`);
       await refreshCatalogStatus();
       if (data.errors?.length) appendLog(`Skipped ${data.errors.length} unreadable source file(s).`);
     } catch (error) {
@@ -558,11 +781,49 @@
     appendLog(`Selected new-show release${release.provider ? ` [${release.provider}]` : ""}: ${release.title}`);
   }
 
-  function setJobBusy(busy) {
+  function setJobBusy(busy, allowRunSettings = false) {
+    const editableWhilePaused = new Set([
+      "updateTorrentConcurrency",
+      "updateReplace",
+      "updateAdd",
+      "updateAllCategories",
+    ]);
     document.querySelectorAll("#maintenanceWorkspace button, #maintenanceWorkspace input, #maintenanceWorkspace select").forEach((element) => {
-      if (!["cancelJobBtn", "refreshLogBtn"].includes(element.id)) element.disabled = busy;
+      if (["cancelJobBtn", "refreshLogBtn", "pauseJobBtn"].includes(element.id)) return;
+      if (allowRunSettings && editableWhilePaused.has(element.id)) {
+        element.disabled = false;
+        return;
+      }
+      element.disabled = busy;
     });
     $("cancelJobBtn").hidden = !busy;
+    const pauseButton = $("pauseJobBtn");
+    if (pauseButton) {
+      pauseButton.hidden = !busy || state.jobKind !== "run" || !state.jobId;
+      pauseButton.disabled = false;
+    }
+  }
+
+  function updateRunPauseButton(run) {
+    const button = $("pauseJobBtn");
+    if (!button) return;
+    const stateName = String(run?.state || "");
+    const isRun = state.jobKind === "run" && Boolean(state.jobId);
+    button.hidden = !isRun || ["complete", "complete_with_errors", "failed", "cancelled"].includes(stateName);
+    if (!isRun) return;
+    if (stateName === "pausing") {
+      button.textContent = "Pausing…";
+      button.disabled = true;
+    } else if (stateName === "paused" && run?.pauseDraining) {
+      button.textContent = "Finishing…";
+      button.disabled = true;
+    } else if (stateName === "paused") {
+      button.textContent = "Resume";
+      button.disabled = false;
+    } else {
+      button.textContent = "Pause";
+      button.disabled = false;
+    }
   }
 
   function addPayload() {
@@ -591,7 +852,7 @@
     $("jobResult").textContent = "";
     $("jobLog").textContent = "";
     $("logState").textContent = "Waiting for persisted events…";
-    updateCurrentJob("Starting", "Preparing maintenance", "Waiting for the local service to create a run.");
+    updateCurrentJob("Starting", "Preparing maintenance", `Waiting for the ${operationConfig().label.toLowerCase()} service to create a run.`);
   }
 
   function handleEvents(job) {
@@ -627,17 +888,33 @@
   }
 
   function renderRunProgress(run, childJobs = []) {
+    updateRunPauseButton(run);
     if (run.state === "checking") {
-      clearTorrentProgress("MAL preflight in progress — no torrent transfer yet.");
+      clearTorrentProgress("AniList preflight in progress — no torrent transfer yet.");
       const checked = Number(run.preflightCompleted) || 0;
       const checkTotal = Number(run.preflightTotal) || 0;
       $("jobProgress").value = checkTotal ? Math.min(1, checked / checkTotal) : 0;
       setProgressCount(`${checked}/${checkTotal || "?"}`);
       const current = run.preflightCurrent || {};
       const latest = run.events?.at(-1)?.message || "Looking up episode counts…";
-      updateCurrentJob("Checking MAL", current.title || "Scanning the library", current.category ? `${current.category} · ${latest}` : latest);
-      $("jobProgressText").textContent = "Checking MyAnimeList for missing episodes…";
-      $("automationSummary").textContent = "MAL preflight is deciding which categories actually need maintenance.";
+      updateCurrentJob("Checking AniList", current.title || "Scanning the library", current.category ? `${current.category} · ${latest}` : latest);
+      $("jobProgressText").textContent = "Checking AniList for missing episodes…";
+      $("automationSummary").textContent = `${operationConfig().label} is checking AniList before searching release sources.`;
+      return;
+    }
+    if (["pausing", "paused"].includes(run.state)) {
+      if ($("advancedRunOptions")) $("advancedRunOptions").open = true;
+      renderTorrentProgress(childJobs, run);
+      const completed = Number(run.completed) || 0;
+      const total = Number(run.total) || 0;
+      const pausing = run.state === "pausing" || run.pauseDraining === true;
+      const message = pausing
+        ? "Current transfer work is finishing before the run pauses."
+        : "Run paused. Change the maintenance settings above, then resume.";
+      updateCurrentJob(pausing ? "Pausing" : "Paused", "Automatic maintenance", message);
+      $("jobProgressText").textContent = pausing ? "Finishing current transfer work…" : "Paused — ready to resume.";
+      $("automationSummary").textContent = `${operationConfig().label} ${pausing ? "pausing" : "paused"}: ${completed}/${total} categories finished.`;
+      setProgressCount(`${completed}/${total}`);
       return;
     }
     renderTorrentProgress(childJobs, run);
@@ -668,7 +945,7 @@
       const detail = `${childMessage || `${current.category}${current.missingEpisodes?.length ? ` · downloading episodes ${formatEpisodeList(current.missingEpisodes)}` : ""}`}${provider}`;
       updateCurrentJob(label, current.title, detail);
       $("jobProgressText").textContent = `${label}: ${current.title} · ${current.category}`;
-      $("automationSummary").textContent = `Automatic run in progress: ${completed} of ${total} categories finished${activeSuffix}.`;
+      $("automationSummary").textContent = `${operationConfig().label} in progress: ${completed} of ${total} categories finished${activeSuffix}.`;
     } else {
       const latest = run.events?.at(-1)?.message || "Preparing the next category…";
       updateCurrentJob("Working", "Automatic maintenance", latest);
@@ -692,11 +969,47 @@
     const skipped = items.filter((item) => item.state === "skipped").length;
     const cancelled = items.filter((item) => item.state === "cancelled").length;
     const errors = items.filter((item) => item.error).slice(0, 5).map((item) => `${item.title} · ${item.category}: ${item.error}`);
-    $("automationSummary").textContent = `Automatic run finished: ${updated} updated, ${failed} failed, ${skipped} skipped${cancelled ? `, ${cancelled} cancelled` : ""}.`;
+    $("automationSummary").textContent = `${operationConfig().label} finished: ${updated} updated, ${failed} failed, ${skipped} skipped${cancelled ? `, ${cancelled} cancelled` : ""}.`;
     $("jobResult").textContent = $("automationSummary").textContent;
     setProgressCount(`${run.completed || 0}/${run.total || 0}`);
     updateCurrentJob(run.state === "complete" ? "Complete" : run.state, "Automatic maintenance", $("automationSummary").textContent);
     for (const error of errors) appendLog(error);
+  }
+
+  function currentRunSettings() {
+    const torrentConcurrency = normalizeTorrentConcurrency($("updateTorrentConcurrency")?.value || state.torrentConcurrency);
+    state.torrentConcurrency = torrentConcurrency;
+    saveStoredValue(torrentConcurrencyStorageKey(state.server), String(torrentConcurrency));
+    const checked = (id, fallback) => {
+      const input = $(id);
+      return input ? Boolean(input.checked) : fallback;
+    };
+    return {
+      torrentConcurrency,
+      replaceExisting: checked("updateReplace", true),
+      addMissing: checked("updateAdd", true),
+      allCategories: checked("updateAllCategories", false),
+    };
+  }
+
+  async function toggleRunPause() {
+    if (!state.jobId || state.jobKind !== "run") return;
+    const button = $("pauseJobBtn");
+    if (button) button.disabled = true;
+    const action = state.runPaused ? "resume" : "pause";
+    const options = { method: "POST" };
+    if (action === "resume") {
+      options.headers = { "content-type": "application/json" };
+      options.body = JSON.stringify(currentRunSettings());
+    }
+    let succeeded = false;
+    try {
+      await request(`/api/maintenance/runs/${encodeURIComponent(state.jobId)}/${action}`, options);
+      await pollJob();
+      succeeded = true;
+    } finally {
+      if (!succeeded && button && !button.hidden) button.disabled = false;
+    }
   }
 
   async function pollJob() {
@@ -714,10 +1027,13 @@
           : (job.currentJobId ? [job.currentJobId] : []);
         const childJobs = await Promise.all(activeJobIds.map((jobId) => request(`/api/maintenance/jobs/${encodeURIComponent(jobId)}`).catch(() => null)));
         childJobs.filter(Boolean).forEach(handleChildEvents);
+        state.runPaused = job.state === "paused";
+        setJobBusy(true, job.state === "paused");
         renderRunProgress(job, childJobs.filter(Boolean));
         const done = ["complete", "complete_with_errors", "failed", "cancelled"].includes(job.state);
         if (done) {
           clearInterval(state.pollTimer);
+          state.runPaused = false;
           setJobBusy(false);
           renderRunResult(job);
           if (job.items?.some((item) => item.state === "complete")) await refreshLibrary();
@@ -837,26 +1153,40 @@
 
   async function startAutomatedMaintenance(sourcePaths = [], title = "the library") {
     if (!state.sources.length) throw new Error("the library is empty or has not loaded yet");
+    const singleSource = sourcePaths.length > 0;
+    const addNewShows = state.operation === "add" && !singleSource;
+    const torrentConcurrency = normalizeTorrentConcurrency($("updateTorrentConcurrency")?.value || state.torrentConcurrency);
+    state.torrentConcurrency = torrentConcurrency;
+    saveStoredValue(torrentConcurrencyStorageKey(state.server), String(torrentConcurrency));
+    state.jobId = null;
+    state.jobKind = "run";
+    state.runPaused = false;
     setJobBusy(true);
     resetJobPanel();
-    $("automationSummary").textContent = `Queuing automatic maintenance for ${title}…`;
+    $("automationSummary").textContent = `Queuing ${singleSource ? title : operationConfig().label.toLowerCase()}…`;
     const run = await request("/api/maintenance/runs", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         sourcePaths,
-        discoverCatalog: true,
-        catalogScan: true,
-        replaceExisting: $("updateReplace").checked,
-        addMissing: $("updateAdd").checked,
-        allCategories: $("updateAllCategories").checked,
+        operation: singleSource ? "update" : state.operation,
+        discoverCatalog: addNewShows,
+        catalogScan: addNewShows,
+        catalogOnly: addNewShows,
+        newShowsOnly: addNewShows,
+        anilistCheck: !addNewShows,
+        replaceExisting: $("updateReplace")?.checked ?? true,
+        addMissing: $("updateAdd")?.checked ?? true,
+        addNewSeasons: false,
+        allCategories: $("updateAllCategories")?.checked ?? false,
         concurrency: 1,
-        torrentConcurrency: 1,
+        torrentConcurrency,
       }),
     });
     state.jobId = run.id;
     state.jobKind = "run";
-    appendLog(`Started automated maintenance run ${run.id}`);
+    setJobBusy(true);
+    appendLog(`Started ${singleSource ? `single-show update for ${title}` : operationConfig().label.toLowerCase()} run ${run.id}`);
     void reloadPersistedLog();
     state.pollTimer = setInterval(() => { void pollJob(); }, 2000);
     await pollJob();
@@ -868,6 +1198,9 @@
     const title = $("addTitle").value.trim();
     const category = $("addCategory").value.trim() || "Season 1";
     const destination = $("addDestination").value.trim() || folderFor(title, category);
+    state.jobId = null;
+    state.jobKind = "job";
+    state.runPaused = false;
     setJobBusy(true);
     resetJobPanel();
     const job = await request("/api/maintenance/jobs", {
@@ -898,12 +1231,25 @@
     }
   }
 
+  document.querySelectorAll("[data-server]").forEach((button) => {
+    button.addEventListener("click", () => {
+      void selectServer(button.dataset.server).catch((error) => {
+        appendLog(`Server switch failed: ${error.message}`);
+      });
+    });
+  });
+  document.querySelectorAll("[data-operation]").forEach((button) => {
+    button.addEventListener("click", () => selectOperation(button.dataset.operation));
+  });
+  $("saveConnectionBtn")?.addEventListener("click", saveConnections);
+  $("updateTorrentConcurrency")?.addEventListener("change", saveTorrentConcurrency);
   $("maintenanceTab")?.addEventListener("click", () => setTab("maintenance"));
   $("addTab")?.addEventListener("click", () => setTab("add"));
   $("refreshLibraryBtn")?.addEventListener("click", () => { void refreshLibrary(); });
   $("refreshLogBtn")?.addEventListener("click", () => { void reloadPersistedLog(); });
   $("libraryFilter")?.addEventListener("input", renderLibrary);
   $("updateStartBtn")?.addEventListener("click", () => startAutomatedMaintenance().catch((error) => { setJobBusy(false); appendLog(`Start failed: ${error.message}`); }));
+  $("pauseJobBtn")?.addEventListener("click", () => toggleRunPause().catch((error) => appendLog(`Pause/resume failed: ${error.message}`)));
   $("addSearchBtn")?.addEventListener("click", () => searchReleases($("addQuery"), $("addResults"), selectAddRelease).catch((error) => { $("addResults").textContent = `Search failed: ${error.message}`; }));
   $("addTitle")?.addEventListener("input", () => {
     if (!$("addQuery").value.trim() || $("addQuery").value === $("addTitle").dataset.previousTitle) $("addQuery").value = $("addTitle").value;
@@ -932,6 +1278,7 @@
     configureMaintenanceBackend();
   });
 
+  renderSelection();
   void refreshLibrary();
   void refreshCatalogStatus();
   state.catalogTimer = window.setInterval(() => { void refreshCatalogStatus(); }, 10000);

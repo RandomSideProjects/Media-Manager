@@ -82,7 +82,22 @@ p { color: var(--muted); max-width: 720px; line-height: 1.55; }
 input:focus, select:focus, button:focus-visible { outline: 2px solid #69b0ff; outline-offset: 2px; }
 .quick-run-panel { margin-bottom: 1rem; }
 .quick-run-panel .panel-heading { margin-bottom: .25rem; }
-.quick-run-panel .button-primary { min-width: 170px; }
+.mode-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .55rem; margin: .8rem 0 .65rem; }
+.mode-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: .7rem; width: 100%; min-height: 68px; padding: .75rem .85rem; border: 1px solid #343742; border-radius: 9px; color: var(--text); background: #17171b; text-align: left; transition: border-color .15s ease, background .15s ease; }
+.mode-card:hover:not(:disabled) { border-color: #5c7fa8; background: #1c222c; }
+.mode-card.is-selected { border-color: var(--blue); background: #142a46; box-shadow: 0 0 0 1px rgba(8,127,245,.18); }
+.mode-card:disabled { cursor: not-allowed; }
+.mode-card-copy { display: grid; gap: .18rem; min-width: 0; }
+.mode-card-copy strong { font-size: .94rem; line-height: 1.25; }
+.mode-card-copy small { color: var(--muted); font-size: .78rem; line-height: 1.4; }
+.mode-card-check { color: #9fd0ff; font-size: 1rem; font-weight: 900; opacity: 0; }
+.mode-card.is-selected .mode-card-check { opacity: 1; }
+.mode-description { color: var(--muted); font-size: .82rem; line-height: 1.45; }
+.run-settings { display: flex; align-items: end; gap: .75rem; margin-top: .8rem; }
+.run-settings .torrent-concurrency-control { display: flex; align-items: center; gap: .55rem; color: #d9d9e0; font-size: .84rem; }
+.run-settings .torrent-concurrency-control input { width: 4.4rem; min-height: 34px; }
+.run-action-row { display: flex; align-items: center; gap: .75rem; margin-top: .85rem; }
+.run-action-row .button-primary { min-width: 190px; }
 .advanced-options, .advanced-tools { margin-top: .9rem; border-top: 1px solid #2e2e36; padding-top: .75rem; }
 .advanced-options summary, .advanced-tools summary { cursor: pointer; color: #b9d9ff; font-size: .82rem; font-weight: 700; }
 .advanced-options .check-row { margin-top: .7rem; }
@@ -118,6 +133,7 @@ label { display: grid; gap: .35rem; color: #d9d9e0; font-size: .86rem; }
 .check-row { display: flex; flex-wrap: wrap; gap: .75rem 1rem; color: #d7e2ef; font-size: .83rem; }
 .check-row label { display: inline-flex; align-items: center; gap: .35rem; }
 .check-row input { width: auto; min-height: auto; }
+.check-row .torrent-concurrency-control input { width: 4.5rem; min-height: 32px; }
 .job-panel { margin-top: 1rem; }
 .job-actions { display: flex; flex-wrap: wrap; gap: .45rem; justify-content: flex-end; }
 .current-panel { min-height: 380px; }
@@ -154,6 +170,9 @@ progress { width: 100%; height: 12px; margin: .65rem 0; accent-color: var(--blue
   .maintenance-hero { display: block; }
   .service-state { display: inline-block; margin-top: .8rem; }
   .field-grid { grid-template-columns: 1fr; }
+  .mode-grid { grid-template-columns: 1fr; }
+  .run-settings, .run-action-row { align-items: stretch; flex-direction: column; }
+  .run-action-row .button-primary { width: 100%; }
   .align-end { width: 100%; }
   .torrent-progress-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .torrent-progress-job { grid-template-columns: 1fr; gap: .15rem; }

@@ -5,33 +5,31 @@ import { fileURLToPath } from "node:url";
 process.env.MEDIA_MANAGER_TEST = "1";
 const service = await import(`./torrent-job-service.mjs?test=${Date.now()}`);
 
-test("parses MAL airing episode progress", () => {
-  const html = `
-    <h2 class="h2_overwrite">Episodes</h2><span class="di-ib pl4 fw-n fs10">(4/Unknown)</span>
-    <table class="episode_list"><tbody>
-      <tr class="episode-list-data"><td class="episode-number nowrap" data-raw="1">1</td></tr>
-      <tr class="episode-list-data"><td class="episode-number nowrap" data-raw="2">2</td></tr>
-      <tr class="episode-list-data"><td class="episode-number nowrap" data-raw="3">3</td></tr>
-      <tr class="episode-list-data"><td class="episode-number nowrap" data-raw="4">4</td></tr>
-    </tbody></table>`;
-  assert.deepEqual(service.parseMalEpisodeProgress(html), {
+test("parses AniList aired episode progress", () => {
+  assert.deepEqual(service.aniListAiringProgress({
+    status: "RELEASING",
+    episodes: null,
+    nextAiringEpisode: { airingAt: 2, episode: 5 },
+    airingSchedule: { nodes: [1, 2, 3, 4].map((episode) => ({ airingAt: 1, episode })) },
+  }), {
     airedEpisodes: 4,
     knownEpisodeNumbers: [1, 2, 3, 4],
-    episodeCountSource: "mal-episode-list",
+    episodeCountSource: "anilist-airing-schedule",
     airing: true,
+    episodeProgressError: "",
   });
 });
 
-test("recognizes a completed MAL episode list as final", () => {
-  const html = `
-    <h2>Episodes</h2><span>(19/19)</span>
-    <table class="episode_list"><tbody>
-      <tr class="episode-list-data"><td class="episode-number" data-raw="19">19</td></tr>
-    </tbody></table>`;
-  assert.equal(service.parseMalEpisodeProgress(html).airing, false);
+test("recognizes a completed AniList schedule as final", () => {
+  assert.equal(service.aniListAiringProgress({
+    status: "FINISHED",
+    episodes: 19,
+    nextAiringEpisode: null,
+    airingSchedule: { nodes: [{ airingAt: 1, episode: 19 }] },
+  }).airing, false);
 });
 
-test("computes only the MAL episodes missing from the library", () => {
+test("computes only the AniList episodes missing from the library", () => {
   const category = { episodeNumbers: [1, 2, 3, 4], episodeCount: 4 };
   assert.deepEqual(service.missingEpisodesForCategory(category, 5), { known: true, missing: [5] });
   assert.deepEqual(service.missingEpisodesForCategory(category, null, [1, 2, 3, 4, 5]), { known: true, missing: [5] });
@@ -235,13 +233,14 @@ test("normalizes legacy local Toodrive links to the public host", () => {
   );
 });
 
-test("serializes the maintenance and torrent settings to one job", () => {
+test("caps maintenance and torrent settings to safe limits", () => {
   assert.equal(service.maintenanceConcurrency({ concurrency: 1 }), 1);
   assert.equal(service.maintenanceConcurrency({ concurrency: 3 }), 1);
   assert.equal(service.maintenanceConcurrency({ concurrency: 99 }), 1);
   assert.equal(service.torrentConcurrency({ torrentConcurrency: 1 }), 1);
-  assert.equal(service.torrentConcurrency({ torrentConcurrency: 3 }), 1);
-  assert.equal(service.torrentConcurrency({ torrentConcurrency: 99 }), 1);
+  assert.equal(service.torrentConcurrency({ torrentConcurrency: 3 }), 3);
+  assert.equal(service.torrentConcurrency({ torrentConcurrency: 20 }), 20);
+  assert.equal(service.torrentConcurrency({ torrentConcurrency: 99 }), 20);
 });
 
 test("checks only seasonal categories when every season is selected", async () => {

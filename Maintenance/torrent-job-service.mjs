@@ -5,7 +5,7 @@
 // Run from the repository with: node Maintenance/torrent-job-service.mjs
 
 import { createServer } from "node:http";
-import { appendFile, mkdir, readFile, readdir, rename, rm, unlink, writeFile } from "node:fs/promises";
+import { appendFile, chmod, mkdir, open, readFile, readdir, rename, rm, unlink, writeFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import { spawn } from "node:child_process";
 import { homedir } from "node:os";
@@ -20,6 +20,19 @@ const FFPROBE_BIN = process.env.FFPROBE_BIN || "ffprobe";
 const BROWSER_COMPATIBILITY_ENABLED = process.env.MEDIA_MANAGER_BROWSER_COMPATIBILITY !== "0";
 const TOODRIVE_BASE_URL = process.env.TOODRIVE_BASE_URL || "https://toodrive.xpbliss.fyi";
 const TOODRIVE_PUBLIC_BASE_URL = String(process.env.TOODRIVE_PUBLIC_BASE_URL || "https://toodrive.xpbliss.fyi").replace(/\/$/, "");
+const TOODRIVE_USERNAME = String(
+  process.env.MEDIA_MANAGER_TOODRIVE_USERNAME || process.env.TOODRIVE_USERNAME || "",
+).trim();
+const TOODRIVE_PASSWORD = String(
+  process.env.MEDIA_MANAGER_TOODRIVE_PASSWORD || process.env.TOODRIVE_PASSWORD || "",
+);
+const TOODRIVE_KEYCHAIN_SERVICE = String(
+  process.env.MEDIA_MANAGER_TOODRIVE_KEYCHAIN_SERVICE || "media-manager-toodrive",
+).trim();
+const TOODRIVE_AUTO_LOGIN = process.env.MEDIA_MANAGER_TOODRIVE_AUTO_LOGIN !== "0";
+const TOODRIVE_CONFIG_DIR = resolve(process.env.TOODRIVE_CONFIG_DIR || join(homedir(), ".config/toodrive"));
+const TOODRIVE_CONFIG_FILE = join(TOODRIVE_CONFIG_DIR, "config.json");
+const TOODRIVE_SESSION_FILE = join(TOODRIVE_CONFIG_DIR, "session.json");
 const LEGACY_TOODRIVE_HOSTS = new Set([
   "localhost:16169",
   "127.0.0.1:16169",
@@ -56,42 +69,49 @@ const LOG_FILE = resolve(process.env.MEDIA_MANAGER_LOG_FILE || join(homedir(), "
 const RESUME_FILE = resolve(process.env.MEDIA_MANAGER_RESUME_FILE || join(homedir(), ".local/share/media-manager-maintenance/resume-state.json"));
 const CATALOG_STATE_FILE = resolve(process.env.MEDIA_MANAGER_CATALOG_STATE_FILE || join(homedir(), ".local/share/media-manager-maintenance/catalog-state.json"));
 const CATALOG_STATE_VERSION = 1;
+const MAINTENANCE_ROLE = String(process.env.MEDIA_MANAGER_MAINTENANCE_ROLE || "all").trim().toLowerCase() === "general"
+  ? "general"
+  : "all";
 const CATALOG_PAGE_SIZE = Math.min(500, Math.max(50, Number(process.env.MEDIA_MANAGER_CATALOG_PAGE_SIZE) || 500));
 const CATALOG_ANILIST_BATCH_SIZE = Math.min(50, Math.max(1, Number(process.env.MEDIA_MANAGER_CATALOG_ANILIST_BATCH_SIZE) || 50));
 const CATALOG_ANILIST_INTERVAL_MS = Math.max(0, Number(process.env.MEDIA_MANAGER_CATALOG_ANILIST_INTERVAL_MS) || 2_200);
 const CATALOG_SCAN_ENABLED = process.env.MEDIA_MANAGER_CATALOG_SCAN !== "0";
-// General maintenance uses Jikan's public MyAnimeList mirror as a preflight
-// check.  The cache keeps recurring runs fast and the request gate stays below
-// Jikan's public rate limit.  Set MAL_CHECK=0 (or malCheck:false in a request)
-// only for an explicitly forced run.
-const MAL_API_BASE_URL = String(process.env.MAL_API_BASE_URL || "https://api.jikan.moe/v4").replace(/\/$/, "");
-const MAL_HTML_BASE_URL = String(process.env.MAL_HTML_BASE_URL || "https://myanimelist.net").replace(/\/$/, "");
-const MAL_CACHE_FILE = resolve(process.env.MAL_CACHE_FILE || join(homedir(), ".local/share/media-manager-maintenance/mal-cache.json"));
-const MAL_CACHE_TTL_MS = Math.max(60_000, Number(process.env.MAL_CACHE_TTL_MS) || 30 * 60_000);
-const MAL_ERROR_CACHE_TTL_MS = Math.max(15_000, Number(process.env.MAL_ERROR_CACHE_TTL_MS) || 2 * 60_000);
-const MAL_REQUEST_TIMEOUT_MS = Math.max(2_000, Number(process.env.MAL_REQUEST_TIMEOUT_MS) || 12_000);
-const MAL_REQUEST_INTERVAL_MS = Math.max(250, Number(process.env.MAL_REQUEST_INTERVAL_MS) || 400);
-const MAL_CACHE_VERSION = 13;
+// General maintenance uses AniList's public GraphQL API as its preflight
+// check. AniList exposes the aired schedule and next episode directly, so a
+// releasing season can be checked without scraping a second site. The cache
+// and request gate keep recurring runs below AniList's public rate limit.
+const ANILIST_CACHE_FILE = resolve(process.env.ANILIST_CACHE_FILE || join(homedir(), ".local/share/media-manager-maintenance/anilist-cache.json"));
+const ANILIST_CACHE_TTL_MS = Math.max(60_000, Number(process.env.ANILIST_CACHE_TTL_MS) || 30 * 60_000);
+const ANILIST_ERROR_CACHE_TTL_MS = Math.max(15_000, Number(process.env.ANILIST_ERROR_CACHE_TTL_MS) || 2 * 60_000);
+const ANILIST_REQUEST_TIMEOUT_MS = Math.max(2_000, Number(process.env.ANILIST_REQUEST_TIMEOUT_MS) || 12_000);
+const ANILIST_REQUEST_INTERVAL_MS = Math.max(0, Number(process.env.ANILIST_REQUEST_INTERVAL_MS) || 700);
+const ANILIST_CACHE_VERSION = 1;
 const LOG_PROGRESS_INTERVAL_MS = 30_000;
+const LEGACY_RECOVERY_MAX_AGE_MS = 48 * 60 * 60 * 1000;
+const LEGACY_RECOVERY_LOG_BYTES = 16 * 1024 * 1024;
 const DEFAULT_TD_REPAIR_ATTEMPTS = 20;
 const MAINTENANCE_TD_REPAIR_ATTEMPTS = 3;
 const DEFAULT_MAINTENANCE_CONCURRENCY = 1;
 const MAX_MAINTENANCE_CONCURRENCY = 1;
-const DEFAULT_TORRENT_CONCURRENCY = 1;
-const MAX_TORRENT_CONCURRENCY = 1;
+// Keep the default conservative while allowing the UI to raise the number of
+// independent td processes when the machine has enough resources. Each process
+// still owns one transfer; this is job-level concurrency, not parallel chunks.
+const DEFAULT_TORRENT_CONCURRENCY = 2;
+const MAX_TORRENT_CONCURRENCY = 20;
 const MEDIA_PROBE_TIMEOUT_MS = Math.max(5_000, Number(process.env.MEDIA_PROBE_TIMEOUT_MS) || 45_000);
 const jobs = new Map();
 const maintenanceRuns = new Map();
 const maintenanceManifestQueues = new Map();
 const pipelineQueue = [];
 let activePipelineJob = null;
+const activePipelineJobs = new Set();
 const logProgressAt = new Map();
 let logQueue = Promise.resolve();
-let malCache = null;
-let malCacheLoad = null;
-let malCacheWrite = Promise.resolve();
-let malRequestQueue = Promise.resolve();
-let malLastRequestAt = 0;
+let aniListCache = null;
+let aniListCacheLoad = null;
+let aniListCacheWrite = Promise.resolve();
+let aniListRequestQueue = Promise.resolve();
+let aniListLastRequestAt = 0;
 let resumeWriteQueue = Promise.resolve();
 let catalogState = null;
 let catalogStateLoad = null;
@@ -184,6 +204,9 @@ function resumableRun(run) {
     events: run.events,
     startedAt: run.startedAt,
     finishedAt: run.finishedAt,
+    paused: run.paused === true,
+    pauseRequested: run.pauseRequested === true,
+    pauseDraining: run.pauseDraining === true,
     cancelled: run.cancelled === true,
     planOnly: run.planOnly === true,
     payload: run.payload || {},
@@ -811,25 +834,24 @@ function mediaMatchesRequestedSeason(media, categoryName) {
 async function searchAniListMedia(query, categoryName = "") {
   const titleQuery = seaDexSearchTitle(query);
   if (!titleQuery) return [];
-  const body = await fetchJson(ANILIST_API_URL, {
-    method: "POST",
-    headers: { "content-type": "application/json", "user-agent": "Media-Manager-Maintenance/1.0" },
-    body: JSON.stringify({
-      query: `query ($search: String!) {
-        Page(page: 1, perPage: 8) {
-          media(search: $search, type: ANIME) {
-            id
-            title { romaji english native userPreferred }
-            format
-            season
-            seasonYear
-            episodes
-          }
-        }
-      }`,
-      variables: { search: titleQuery },
-    }),
-  }, "AniList title search");
+  const body = await fetchAniListGraphql(`query ($search: String!) {
+    Page(page: 1, perPage: 8) {
+      media(search: $search, type: ANIME) {
+        id
+        idMal
+        title { romaji english native userPreferred }
+        synonyms
+        format
+        season
+        seasonYear
+        episodes
+        status
+        nextAiringEpisode { airingAt episode }
+        airingSchedule(notYetAired: false, perPage: 50) { nodes { airingAt episode } }
+        siteUrl
+      }
+    }
+  }`, { search: titleQuery }, "AniList title search");
   const queryTokens = searchTokens(titleQuery);
   return (body?.data?.Page?.media || [])
     .map((media, index) => {
@@ -1351,84 +1373,6 @@ function normalizeTitle(value) {
     .trim();
 }
 
-function malCacheKey(title) {
-  return normalizeTitle(title) || String(title || "").trim().toLowerCase();
-}
-
-async function loadMalCache() {
-  if (malCache) return malCache;
-  if (malCacheLoad) return malCacheLoad;
-  malCacheLoad = readFile(MAL_CACHE_FILE, "utf8")
-    .then((raw) => {
-      const parsed = JSON.parse(raw);
-      malCache = parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
-      return malCache;
-    })
-    .catch((error) => {
-      if (error?.code !== "ENOENT") console.error(`[mal-cache] ${error instanceof Error ? error.message : String(error)}`);
-      malCache = {};
-      return malCache;
-    });
-  return malCacheLoad;
-}
-
-function queueMalCacheWrite() {
-  const snapshot = JSON.stringify(malCache || {}, null, 2);
-  malCacheWrite = malCacheWrite.then(async () => {
-    try {
-      await mkdir(dirname(MAL_CACHE_FILE), { recursive: true });
-      await writeFile(MAL_CACHE_FILE, `${snapshot}\n`, "utf8");
-    } catch (error) {
-      console.error(`[mal-cache] ${error instanceof Error ? error.message : String(error)}`);
-    }
-  });
-  return malCacheWrite;
-}
-
-function queueMalRequest(task) {
-  const next = malRequestQueue.then(async () => {
-    const waitMs = Math.max(0, MAL_REQUEST_INTERVAL_MS - (Date.now() - malLastRequestAt));
-    if (waitMs) await new Promise((resolveWait) => setTimeout(resolveWait, waitMs));
-    malLastRequestAt = Date.now();
-    return task();
-  }, async () => task());
-  // A failed request must not poison the queue for every later show.
-  malRequestQueue = next.catch(() => {});
-  return next;
-}
-
-async function fetchMalText(url) {
-  return queueMalRequest(async () => {
-    let lastError = null;
-    for (let attempt = 0; attempt < 3; attempt += 1) {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), MAL_REQUEST_TIMEOUT_MS);
-      try {
-        const response = await fetch(url, {
-          headers: { "user-agent": "Media-Manager-Maintenance/1.0" },
-          signal: controller.signal,
-        });
-        if (response.status === 429 || response.status >= 500) {
-          const retryAfter = Number(response.headers.get("retry-after")) || 0;
-          throw new Error(`MAL returned HTTP ${response.status}${retryAfter ? ` (retry after ${retryAfter}s)` : ""}`);
-        }
-        if (!response.ok) throw new Error(`MAL returned HTTP ${response.status}`);
-        return await response.text();
-      } catch (error) {
-        lastError = error;
-        if (attempt < 2) await new Promise((resolveWait) => setTimeout(resolveWait, 500 * (attempt + 1)));
-      } finally {
-        clearTimeout(timeout);
-      }
-    }
-    throw lastError || new Error("MAL request failed");
-  });
-}
-
-async function fetchMalJson(url) {
-  return JSON.parse(await fetchMalText(url));
-}
-
 function decodeHtml(value) {
   return String(value || "")
     .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCodePoint(Number.parseInt(hex, 16)))
@@ -1446,133 +1390,102 @@ function stripHtml(value) {
   return decodeHtml(String(value || "").replace(/<[^>]*>/g, " "));
 }
 
-function parseMalHtml(html) {
-  const items = [];
-  for (const match of String(html || "").matchAll(/<tr\b[\s\S]*?<\/tr>/gi)) {
-    const row = match[0];
-    const idMatch = row.match(/(?:https?:\/\/myanimelist\.net)?\/anime\/(\d+)\/[^"'\s<]+/i);
-    const urlMatch = row.match(/(?:https?:\/\/myanimelist\.net)?(\/anime\/\d+\/[^"'\s<]+)/i);
-    const titleMatch = row.match(/<strong>([\s\S]*?)<\/strong>/i);
-    if (!idMatch || !titleMatch) continue;
-    const cells = [...row.matchAll(/<td\b[^>]*>([\s\S]*?)<\/td>/gi)].map((cell) => stripHtml(cell[1]));
-    const type = cells[2] || "";
-    const episodeMatch = String(cells[3] || "").match(/\d+/);
-    items.push({
-      mal_id: Number(idMatch[1]),
-      title: stripHtml(titleMatch[1]),
-      url: urlMatch?.[1] ? `${MAL_HTML_BASE_URL}${urlMatch[1]}` : `${MAL_HTML_BASE_URL}/anime/${Number(idMatch[1])}`,
-      type,
-      episodes: episodeMatch ? Number(episodeMatch[0]) : null,
-      status: "",
-      airing: false,
+// AniList maintenance lookup. All maintenance planning uses this API and
+// never calls the former MAL endpoints.
+function aniListCacheKey(title) {
+  return normalizeTitle(title) || String(title || "").trim().toLowerCase();
+}
+
+async function loadAniListCache() {
+  if (aniListCache) return aniListCache;
+  if (aniListCacheLoad) return aniListCacheLoad;
+  aniListCacheLoad = readFile(ANILIST_CACHE_FILE, "utf8")
+    .then((raw) => {
+      const parsed = JSON.parse(raw);
+      aniListCache = parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+      return aniListCache;
+    })
+    .catch((error) => {
+      if (error?.code !== "ENOENT") console.error(`[anilist-cache] ${error instanceof Error ? error.message : String(error)}`);
+      aniListCache = {};
+      return aniListCache;
     });
-  }
-  return items;
+  return aniListCacheLoad;
 }
 
-function malDetailValue(html, label) {
-  const match = String(html || "").match(new RegExp(`<span class=["']dark_text["']>${label}:<\\/span>([\\s\\S]*?)<\\/div>`, "i"));
-  return match ? stripHtml(match[1]) : "";
-}
-
-function applyMalDetail(item, html) {
-  const english = malDetailValue(html, "English");
-  const japanese = malDetailValue(html, "Japanese");
-  const synonyms = malDetailValue(html, "Synonyms");
-  const episodes = malDetailValue(html, "Episodes").match(/\d+/)?.[0];
-  const status = malDetailValue(html, "Status");
-  const type = malDetailValue(html, "Type");
-  return {
-    ...item,
-    title_english: english || item.title_english || "",
-    title_japanese: japanese || item.title_japanese || "",
-    titles: synonyms ? [{ title: synonyms }] : item.titles,
-    episodes: episodes ? Number(episodes) : item.episodes,
-    status: status || item.status || "",
-    type: type || item.type || "",
-  };
-}
-
-function parseMalEpisodeProgress(html) {
-  const source = String(html || "");
-  const progressMatch = source.match(/<h2\b[^>]*>\s*Episodes\s*<\/h2>\s*<span\b[^>]*>\s*\(\s*(\d+)\s*\/\s*([^)]*)\)/i);
-  const knownEpisodeNumbers = [];
-  for (const rowMatch of source.matchAll(/<tr\b[^>]*class=["'][^"']*\bepisode-list-data\b[^"']*["'][\s\S]*?<\/tr>/gi)) {
-    const row = rowMatch[0];
-    const numberCell = row.match(/<td\b[^>]*class=["'][^"']*\bepisode-number\b[^"']*["'][^>]*>[\s\S]*?<\/td>/i);
-    if (!numberCell) continue;
-    const raw = numberCell[0].match(/data-raw=["'](\d+)["']/i)?.[1]
-      || stripHtml(numberCell[0]).match(/\d+/)?.[0];
-    const number = Number(raw);
-    if (Number.isInteger(number) && number > 0) knownEpisodeNumbers.push(number);
-  }
-  const uniqueNumbers = [...new Set(knownEpisodeNumbers)].sort((a, b) => a - b);
-  const progressCount = Number(progressMatch?.[1]);
-  const airedEpisodes = Number.isInteger(progressCount) && progressCount > 0
-    ? progressCount
-    : (uniqueNumbers.length ? Math.max(...uniqueNumbers) : null);
-  const knownTotal = Number(progressMatch?.[2]);
-  const airing = Number.isInteger(knownTotal) && knownTotal > 0
-    ? Number.isInteger(airedEpisodes) && airedEpisodes < knownTotal
-    : Boolean(uniqueNumbers.length || airedEpisodes);
-  return {
-    airedEpisodes,
-    knownEpisodeNumbers: uniqueNumbers,
-    episodeCountSource: uniqueNumbers.length || airedEpisodes
-      ? "mal-episode-list"
-      : (Number.isInteger(knownTotal) && knownTotal > 0 ? "mal-total" : "unknown"),
-    airing,
-  };
-}
-
-async function enrichMalCandidates(items, source, categoryName) {
-  const requestedSeason = categorySeasonNumber(categoryName);
-  const isUsable = (item) => malTitleConfidence(item, source) && malCandidateStartsWithSource(item, source)
-    && (!requestedSeason || malSeasonMarker(item) === requestedSeason || requestedSeason === 1 && !malSeasonMarker(item));
-  if (items.some(isUsable)) return items;
-  // MAL's search table uses the native title only. Resolve the first five
-  // results so translated titles can be scored without discarding later
-  // seasons from the same search response.
-  const enriched = [];
-  for (let index = 0; index < items.length; index += 1) {
-    const item = items[index];
-    if (index >= 5) {
-      enriched.push(item);
-      continue;
-    }
-    if (!item?.mal_id) {
-      enriched.push(item);
-      continue;
-    }
+function queueAniListCacheWrite() {
+  const snapshot = JSON.stringify(aniListCache || {}, null, 2);
+  aniListCacheWrite = aniListCacheWrite.then(async () => {
     try {
-      const detail = await fetchMalText(`${MAL_HTML_BASE_URL}/anime/${item.mal_id}`);
-      const candidate = applyMalDetail(item, detail);
-      enriched.push(candidate);
-    } catch {
-      enriched.push(item);
+      await mkdir(dirname(ANILIST_CACHE_FILE), { recursive: true });
+      await writeFile(ANILIST_CACHE_FILE, `${snapshot}\n`, "utf8");
+    } catch (error) {
+      console.error(`[anilist-cache] ${error instanceof Error ? error.message : String(error)}`);
     }
-  }
-  return enriched.length ? enriched : items;
+  });
+  return aniListCacheWrite;
 }
 
-async function searchMalHtml(query, source, categoryName) {
-  const html = await fetchMalText(`${MAL_HTML_BASE_URL}/anime.php?q=${encodeURIComponent(query)}&cat=anime`);
-  return enrichMalCandidates(parseMalHtml(html), source, categoryName);
+function queueAniListRequest(task) {
+  const next = aniListRequestQueue.then(async () => {
+    const waitMs = Math.max(0, ANILIST_REQUEST_INTERVAL_MS - (Date.now() - aniListLastRequestAt));
+    if (waitMs) await new Promise((resolveWait) => setTimeout(resolveWait, waitMs));
+    aniListLastRequestAt = Date.now();
+    return task();
+  }, async () => task());
+  aniListRequestQueue = next.catch(() => {});
+  return next;
 }
 
-function malTitles(item) {
+async function fetchAniListGraphql(query, variables = {}, label = "AniList query") {
+  return queueAniListRequest(async () => {
+    let lastError = null;
+    for (let attempt = 0; attempt < 4; attempt += 1) {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), ANILIST_REQUEST_TIMEOUT_MS);
+      try {
+        const body = await fetchJson(ANILIST_API_URL, {
+          method: "POST",
+          headers: { "content-type": "application/json", "user-agent": "Media-Manager-Maintenance/1.0" },
+          body: JSON.stringify({ query, variables }),
+          signal: controller.signal,
+        }, label);
+        if (Array.isArray(body?.errors) && body.errors.length) {
+          const error = new Error(`${label}: ${body.errors.map((entry) => entry?.message || "GraphQL error").join("; ")}`);
+          error.status = Number(body?.errors?.[0]?.status) || 0;
+          throw error;
+        }
+        return body;
+      } catch (error) {
+        lastError = error;
+        const retryable = Number(error?.status) === 429 || Number(error?.status) >= 500 || error?.name === "AbortError";
+        if (!retryable || attempt === 3) break;
+        const retryMs = Math.max(2_000, Number(error?.retryAfter || 0) * 1_000, 1_500 * (attempt + 1));
+        await new Promise((resolveWait) => setTimeout(resolveWait, retryMs));
+      } finally {
+        clearTimeout(timeout);
+      }
+    }
+    throw lastError || new Error(`${label} failed`);
+  });
+}
+
+function aniListTitles(item) {
+  const title = item?.title && typeof item.title === "object" ? Object.values(item.title) : [];
   return [
+    ...title,
     item?.title,
-    item?.title_english,
     item?.titleEnglish,
-    item?.title_japanese,
+    item?.title_english,
     item?.titleJapanese,
-    ...(Array.isArray(item?.titles) ? item.titles.map((title) => title?.title) : []),
+    item?.title_japanese,
+    ...(Array.isArray(item?.synonyms) ? item.synonyms : []),
+    ...(Array.isArray(item?.titles) ? item.titles.map((entry) => entry?.title || entry) : []),
   ].filter(Boolean).map(String);
 }
 
-function malTitleQueries(source) {
-  const title = String(source?.malTitle || source?.title || "").trim();
+function aniListTitleQueries(source) {
+  const title = String(source?.anilistTitle || source?.malTitle || source?.title || "").trim();
   const fileTitle = String(source?.file || "")
     .replace(/\.json$/i, "")
     .replace(/[._-]+/g, " ")
@@ -1582,157 +1495,115 @@ function malTitleQueries(source) {
     .filter((query, index, all) => all.findIndex((candidate) => normalizeTitle(candidate) === normalizeTitle(query)) === index);
 }
 
-function malSeasonMarker(item) {
-  const text = malTitles(item).join(" ");
-  const numbered = text.match(/\b(?:season|s)\s*0*(\d{1,2})\b/i);
+function aniListSeasonMarker(item) {
+  const text = aniListTitles(item).join(" ");
+  const numbered = text.match(/\b(?:season|series|cour|part|s)\s*0*(\d{1,2})\b/i);
   if (numbered) return Number(numbered[1]);
   const ordinal = text.match(/\b0*(\d{1,2})(?:st|nd|rd|th)\s+season\b/i);
-  if (ordinal) return Number(ordinal[1]);
-  const suffix = text.match(/(?:^|[\s:])0*(\d{1,2})\s*$/i);
-  return suffix ? Number(suffix[1]) : null;
+  return ordinal ? Number(ordinal[1]) : null;
 }
 
-function malCandidateScore(item, source, categoryName) {
-  const sourceTokens = malSearchTokens(source?.malTitle || source?.title);
-  const titleTokens = malSearchTokens(malTitles(item).join(" "));
+function aniListCandidateScore(item, source, categoryName) {
+  const sourceTokens = aniListSearchTokens(source?.anilistTitle || source?.malTitle || source?.title);
+  const titleTokens = aniListSearchTokens(aniListTitles(item).join(" "));
   const overlap = [...sourceTokens].filter((token) => titleTokens.has(token)).length;
   if (!overlap) return Number.NEGATIVE_INFINITY;
   const requestedSeason = categorySeasonNumber(categoryName);
-  const marker = malSeasonMarker(item);
+  const marker = aniListSeasonMarker(item);
   let score = overlap * 20;
   if (sourceTokens.size && overlap === sourceTokens.size) score += 35;
   if (requestedSeason && marker === requestedSeason) score += 55;
   else if (requestedSeason > 1 && marker && marker !== requestedSeason) score -= 70;
   else if (requestedSeason === 1 && marker && marker > 1) score -= 50;
-  if (String(item?.type || "").toUpperCase() === "TV") score += 8;
-  if (/\b(?:movie|special|ona|ova)\b/i.test(String(item?.type || ""))) score -= 15;
+  if (String(item?.format || item?.type || "").toUpperCase() === "TV") score += 8;
+  if (/\b(?:movie|special|ona|ova)\b/i.test(String(item?.format || item?.type || ""))) score -= 15;
   if (Number(item?.episodes) > 0) score += 3;
   return score;
 }
 
-function summarizeMalCandidate(item, score) {
+function aniListAiringProgress(item) {
+  const now = Math.floor(Date.now() / 1000);
+  const schedule = Array.isArray(item?.airingSchedule?.nodes) ? item.airingSchedule.nodes : [];
+  const knownEpisodeNumbers = [...new Set(schedule
+    .filter((entry) => Number(entry?.episode) > 0 && (!Number(entry?.airingAt) || Number(entry.airingAt) <= now))
+    .map((entry) => Number(entry.episode)))].sort((a, b) => a - b);
+  const nextEpisode = Number(item?.nextAiringEpisode?.episode) || null;
+  const airedEpisodes = knownEpisodeNumbers.length
+    ? Math.max(...knownEpisodeNumbers)
+    : nextEpisode && nextEpisode > 1 ? nextEpisode - 1 : null;
+  const status = String(item?.status || "").toUpperCase();
+  const airing = status === "RELEASING" || Boolean(nextEpisode);
+  const totalEpisodes = Number(item?.episodes) > 0 ? Number(item.episodes) : null;
+  const episodeCountSource = knownEpisodeNumbers.length
+    ? "anilist-airing-schedule"
+    : (!airing && totalEpisodes ? "anilist-total" : "unknown");
   return {
-    malId: Number(item?.mal_id) || null,
-    malUrl: String(item?.url || item?.malUrl || "").trim(),
-    title: String(item?.title || item?.title_english || "").trim(),
-    titleEnglish: String(item?.title_english || "").trim(),
-    type: String(item?.type || ""),
+    airedEpisodes,
+    knownEpisodeNumbers,
+    episodeCountSource,
+    airing,
+    episodeProgressError: episodeCountSource === "unknown"
+      ? "AniList did not expose an aired episode schedule"
+      : "",
+  };
+}
+
+function summarizeAniListCandidate(item, score) {
+  const progress = aniListAiringProgress(item);
+  const status = String(item?.status || "").toUpperCase();
+  const statusLabel = status === "RELEASING" ? "Currently Airing"
+    : status === "FINISHED" ? "Finished Airing"
+      : status === "NOT_YET_RELEASED" ? "Not Yet Aired" : status;
+  return {
+    anilistId: Number(item?.id) || null,
+    anilistUrl: String(item?.siteUrl || (Number(item?.id) ? `https://anilist.co/anime/${Number(item.id)}` : "")).trim(),
+    malId: Number(item?.idMal) || null,
+    malUrl: Number(item?.idMal) ? `https://myanimelist.net/anime/${Number(item.idMal)}` : "",
+    title: String(mediaTitleText(item) || aniListTitles(item)[0] || "").trim(),
+    titleEnglish: String(item?.title?.english || "").trim(),
+    type: String(item?.format || ""),
     episodes: Number(item?.episodes) > 0 ? Number(item.episodes) : null,
-    airedEpisodes: Number(item?.airedEpisodes) > 0 ? Number(item.airedEpisodes) : null,
-    knownEpisodeNumbers: Array.isArray(item?.knownEpisodeNumbers)
-      ? item.knownEpisodeNumbers.filter((number) => Number.isInteger(number) && number > 0)
-      : [],
-    episodeCountSource: String(item?.episodeCountSource || (Number(item?.episodes) > 0 ? "mal-total" : "unknown")),
-    episodeProgressCheckedAt: Number(item?.episodeProgressCheckedAt) || 0,
-    episodeProgressError: String(item?.episodeProgressError || ""),
-    status: String(item?.status || ""),
-    airing: item?.airing === true,
-    seasonMarker: malSeasonMarker(item),
+    airedEpisodes: Number(progress.airedEpisodes) > 0 ? Number(progress.airedEpisodes) : null,
+    knownEpisodeNumbers: progress.knownEpisodeNumbers,
+    episodeCountSource: progress.episodeCountSource,
+    episodeProgressCheckedAt: Date.now(),
+    episodeProgressError: progress.episodeProgressError,
+    status: statusLabel,
+    airing: progress.airing,
+    seasonMarker: aniListSeasonMarker(item),
     score,
   };
 }
 
-function malCandidateIsCurrentlyAiring(candidate) {
+function aniListCandidateIsCurrentlyAiring(candidate) {
   const status = String(candidate?.status || "").trim();
-  return candidate?.airing === true || /\bcurrently\s+airing\b/i.test(status) || /^airing$/i.test(status);
+  return candidate?.airing === true || /currently\s+airing/i.test(status);
 }
 
-function replaceCachedMalCandidate(source, candidate) {
-  const key = malCacheKey(source?.malTitle || source?.title);
-  const record = malCache?.[key];
-  if (!record || !Array.isArray(record.candidates) || !candidate?.malId) return;
-  const index = record.candidates.findIndex((entry) => Number(entry?.malId) === Number(candidate.malId));
-  if (index >= 0) record.candidates[index] = candidate;
-  queueMalCacheWrite();
-}
-
-async function hydrateMalCandidateProgress(malResult, source, categoryName) {
-  const candidate = chooseMalCandidate(malResult?.candidates, source, categoryName);
-  if (!candidate) return null;
-  const currentlyAiring = malCandidateIsCurrentlyAiring(candidate);
-  const statusKnown = /\b(?:currently\s+airing|finished\s+airing|finished|not\s+yet\s+aired)\b/i.test(String(candidate.status || ""));
-  if (!currentlyAiring && statusKnown && (Number(candidate.episodes) > 0 || Array.isArray(candidate.knownEpisodeNumbers) && candidate.knownEpisodeNumbers.length)) return candidate;
-  if (Number(candidate.episodeProgressCheckedAt) > 0) return candidate;
-
-  const checkedAt = Date.now();
-  let hydrated;
-  try {
-    if (!candidate.malId) throw new Error("MAL candidate has no id");
-    const detailUrl = String(candidate.malUrl || `${MAL_HTML_BASE_URL}/anime/${candidate.malId}`).replace(/\/$/, "");
-    const html = await fetchMalText(`${detailUrl}/episode`);
-    const progress = parseMalEpisodeProgress(html);
-    hydrated = {
-      ...candidate,
-      ...progress,
-      airing: candidate.airing === true || progress.airing === true,
-      episodeProgressCheckedAt: checkedAt,
-      episodeProgressError: progress.episodeCountSource === "unknown"
-        ? "MAL episode list did not expose aired episode numbers"
-        : "",
-    };
-  } catch (error) {
-    hydrated = {
-      ...candidate,
-      // If MAL did not provide a trusted status, do not turn a failed
-      // episode-page request into a guessed final-season count.
-      airing: candidate.airing === true || !statusKnown,
-      episodeProgressCheckedAt: checkedAt,
-      episodeProgressError: error instanceof Error ? error.message : String(error),
-      episodeCountSource: "unknown",
-    };
-  }
-  const index = Array.isArray(malResult?.candidates)
-    ? malResult.candidates.findIndex((entry) => Number(entry?.malId) === Number(hydrated.malId))
-    : -1;
-  if (index >= 0) malResult.candidates[index] = hydrated;
-  malResult.candidate = hydrated;
-  replaceCachedMalCandidate(source, hydrated);
-  return hydrated;
-}
-
-function malTitleConfidence(candidate, source) {
-  const sourceTokens = malSearchTokens(source?.malTitle || source?.title);
-  const titleTokens = malSearchTokens(malTitles(candidate).join(" "));
+function aniListTitleConfidence(candidate, source) {
+  const sourceTokens = aniListSearchTokens(source?.anilistTitle || source?.malTitle || source?.title);
+  const titleTokens = aniListSearchTokens(aniListTitles(candidate).join(" "));
   const overlap = [...sourceTokens].filter((token) => titleTokens.has(token)).length;
   if (!sourceTokens.size) return false;
-  // A one-token title can still be a distinctive show name (Aharen, Frieren).
-  // Two-token titles may use a distinctive first token (Aharen-san) when the
-  // English alias differs, but longer titles require at least 60% overlap;
-  // this avoids matches such as "Ghost Stories" -> "Monster Hunter Stories"
-  // or "Hazbin Hotel" -> "Sparrow's Hotel".
-  const required = sourceTokens.size === 1
-    ? 1
-    : sourceTokens.size === 2
-      ? 1
-      : Math.max(2, Math.ceil(sourceTokens.size * 0.6));
+  const required = sourceTokens.size === 1 ? 1 : sourceTokens.size === 2 ? 1 : Math.max(2, Math.ceil(sourceTokens.size * 0.6));
   if (overlap < required) return false;
-  if (sourceTokens.size === 2 && overlap === 1) {
-    const firstSourceToken = [...sourceTokens][0];
-    const firstTitleToken = [...titleTokens][0];
-    return firstTitleToken === firstSourceToken;
-  }
+  if (sourceTokens.size === 2 && overlap === 1) return [...sourceTokens][0] === [...titleTokens][0];
   return true;
 }
 
-function malCandidateStartsWithSource(candidate, source) {
-  const sourceFirst = [...malSearchTokens(source?.malTitle || source?.title)][0];
+function aniListCandidateStartsWithSource(candidate, source) {
+  const sourceFirst = [...aniListSearchTokens(source?.anilistTitle || source?.malTitle || source?.title)][0];
   if (!sourceFirst) return false;
-  const nativeFirst = [...malSearchTokens(candidate?.title)][0];
-  if (nativeFirst === sourceFirst) return true;
-  const aliases = [candidate?.title_english, candidate?.titleEnglish, candidate?.title_japanese, candidate?.titleJapanese]
-    .filter(Boolean);
-  return aliases.some((alias) => [...malSearchTokens(alias)][0] === sourceFirst);
+  return aniListTitles(candidate).some((title) => [...aniListSearchTokens(title)][0] === sourceFirst);
 }
 
-function chooseMalCandidate(candidates, source, categoryName) {
+function chooseAniListCandidate(candidates, source, categoryName) {
   const requestedSeason = categorySeasonNumber(categoryName);
   return (Array.isArray(candidates) ? candidates : [])
-    .map((candidate) => ({ candidate, score: malCandidateScore(candidate, source, categoryName) }))
+    .map((candidate) => ({ candidate, score: aniListCandidateScore(candidate, source, categoryName) }))
     .filter((entry) => {
-      if (!Number.isFinite(entry.score) || !malTitleConfidence(entry.candidate, source) || !malCandidateStartsWithSource(entry.candidate, source)) return false;
-      const marker = malSeasonMarker(entry.candidate);
-      // Never use a base/other-season MAL record to decide whether a later
-      // season is complete. An unmarked result is safe only for Season 1.
+      if (!Number.isFinite(entry.score) || !aniListTitleConfidence(entry.candidate, source) || !aniListCandidateStartsWithSource(entry.candidate, source)) return false;
+      const marker = Number(entry.candidate?.seasonMarker) || aniListSeasonMarker(entry.candidate);
       if (requestedSeason > 1 && marker !== requestedSeason) return false;
       if (requestedSeason === 1 && marker && marker > 1) return false;
       return true;
@@ -1740,86 +1611,86 @@ function chooseMalCandidate(candidates, source, categoryName) {
     .sort((a, b) => b.score - a.score)[0]?.candidate || null;
 }
 
-async function findMalAnime(source, categoryName) {
-  const cache = await loadMalCache();
-  const key = malCacheKey(source?.malTitle || source?.title);
+async function hydrateAniListCandidateProgress(aniListResult, source, categoryName) {
+  const candidate = chooseAniListCandidate(aniListResult?.candidates, source, categoryName);
+  return candidate || null;
+}
+
+async function findAniListAnime(source, categoryName) {
+  const cache = await loadAniListCache();
+  const key = aniListCacheKey(source?.anilistTitle || source?.malTitle || source?.title);
   const cached = cache[key];
   const now = Date.now();
-  const cacheTtl = cached?.error ? MAL_ERROR_CACHE_TTL_MS : MAL_CACHE_TTL_MS;
-  if (cached?.version === MAL_CACHE_VERSION && Number.isFinite(Number(cached.checkedAt)) && now - Number(cached.checkedAt) < cacheTtl) {
-    const candidate = chooseMalCandidate(cached.candidates, source, categoryName);
+  const cacheTtl = cached?.error ? ANILIST_ERROR_CACHE_TTL_MS : ANILIST_CACHE_TTL_MS;
+  if (cached?.version === ANILIST_CACHE_VERSION && Number.isFinite(Number(cached.checkedAt)) && now - Number(cached.checkedAt) < cacheTtl) {
+    const candidate = chooseAniListCandidate(cached.candidates, source, categoryName);
     return { ...cached, candidate: candidate ? { ...candidate } : null, cached: true };
   }
 
-  let lastError = null;
   const candidatesById = new Map();
-  for (const query of malTitleQueries(source)) {
-    let items = [];
+  let lastError = null;
+  const queries = aniListTitleQueries(source);
+  for (const query of queries) {
     try {
-      // MAL's HTML search is available without credentials and is used first;
-      // Jikan remains a structured fallback when MAL changes its markup.
-      items = await searchMalHtml(query, source, categoryName);
+      const body = await fetchAniListGraphql(`query ($search: String!) {
+        Page(page: 1, perPage: 10) {
+          media(search: $search, type: ANIME) {
+            id
+            idMal
+            title { romaji english native userPreferred }
+            synonyms
+            format
+            status
+            episodes
+            nextAiringEpisode { airingAt episode }
+            airingSchedule(notYetAired: false, perPage: 50) { nodes { airingAt episode } }
+            siteUrl
+          }
+        }
+      }`, { search: query }, "AniList maintenance lookup");
+      for (const media of body?.data?.Page?.media || []) {
+        const score = aniListCandidateScore(media, source, categoryName);
+        if (!Number.isFinite(score)) continue;
+        const candidate = summarizeAniListCandidate(media, score);
+        const candidateKey = candidate.anilistId || `${candidate.title}|${candidate.titleEnglish}`;
+        const previous = candidatesById.get(candidateKey);
+        if (!previous || candidate.score > previous.score) candidatesById.set(candidateKey, candidate);
+      }
     } catch (error) {
       lastError = error;
     }
-    if (!items.length) {
-      try {
-        const payload = await fetchMalJson(`${MAL_API_BASE_URL}/anime?q=${encodeURIComponent(query)}&limit=10`);
-        items = Array.isArray(payload?.data) ? payload.data : [];
-      } catch (error) {
-        lastError = error;
-      }
-    }
-    for (const item of items) {
-      const score = malCandidateScore(item, source, categoryName);
-      if (!Number.isFinite(score)) continue;
-      const candidate = summarizeMalCandidate(item, score);
-      const key = candidate.malId || `${candidate.title}|${candidate.titleEnglish}`;
-      const previous = candidatesById.get(key);
-      if (!previous || candidate.score > previous.score) candidatesById.set(key, candidate);
-    }
   }
-  const candidates = [...candidatesById.values()];
-  candidates.sort((a, b) => b.score - a.score);
+  const candidates = [...candidatesById.values()].sort((a, b) => b.score - a.score).slice(0, 10);
   const record = {
-    version: MAL_CACHE_VERSION,
+    version: ANILIST_CACHE_VERSION,
     checkedAt: now,
-    query: malTitleQueries(source)[0] || "",
-    candidates: candidates.slice(0, 10),
+    query: queries[0] || "",
+    candidates,
     error: candidates.length ? "" : (lastError ? (lastError instanceof Error ? lastError.message : String(lastError)) : ""),
   };
   cache[key] = record;
-  queueMalCacheWrite();
-  return { ...record, candidate: chooseMalCandidate(candidates, source, categoryName), cached: false };
+  queueAniListCacheWrite();
+  return { ...record, candidate: chooseAniListCandidate(candidates, source, categoryName), cached: false };
 }
 
-function discoverMalSeasons(source, existingCategories, malResult) {
-  const knownSeasons = new Set(
-    (Array.isArray(existingCategories) ? existingCategories : [])
-      .map((category) => categorySeasonNumber(category?.category))
-      .filter((season) => Number.isInteger(season) && season > 0),
-  );
+function discoverAniListSeasons(source, existingCategories, aniListResult) {
+  const knownSeasons = new Set((Array.isArray(existingCategories) ? existingCategories : [])
+    .map((category) => categorySeasonNumber(category?.category))
+    .filter((season) => Number.isInteger(season) && season > 0));
   const latestKnownSeason = Math.max(0, ...knownSeasons);
-  const candidates = Array.isArray(malResult?.candidates) ? malResult.candidates : [];
+  const candidates = Array.isArray(aniListResult?.candidates) ? aniListResult.candidates : [];
   const bestBySeason = new Map();
   for (const candidate of candidates) {
     if (String(candidate?.type || "").toUpperCase() !== "TV") continue;
     const episodes = Number(candidate?.episodes);
-    if ((!Number.isInteger(episodes) || episodes <= 0) && !malCandidateIsCurrentlyAiring(candidate)) continue;
-    if (!malTitleConfidence(candidate, source) || !malCandidateStartsWithSource(candidate, source)) continue;
-    const season = malSeasonMarker(candidate) || 1;
-    // General maintenance adds later seasons to an existing show. An
-    // unmarked base MAL result is treated as Season 1, but is not allowed to
-    // backfill an older season when the library already starts later.
+    if ((!Number.isInteger(episodes) || episodes <= 0) && !aniListCandidateIsCurrentlyAiring(candidate)) continue;
+    if (!aniListTitleConfidence(candidate, source) || !aniListCandidateStartsWithSource(candidate, source)) continue;
+    const season = Number(candidate?.seasonMarker) || aniListSeasonMarker(candidate) || 1;
     if (knownSeasons.has(season) || season <= latestKnownSeason) continue;
     const previous = bestBySeason.get(season);
-    if (!previous || Number(candidate?.score || 0) > Number(previous?.score || 0)) {
-      bestBySeason.set(season, candidate);
-    }
+    if (!previous || Number(candidate?.score || 0) > Number(previous?.score || 0)) bestBySeason.set(season, candidate);
   }
-  return [...bestBySeason.entries()]
-    .sort(([a], [b]) => a - b)
-    .map(([season, candidate]) => ({ season, candidate }));
+  return [...bestBySeason.entries()].sort(([a], [b]) => a - b).map(([season, candidate]) => ({ season, candidate }));
 }
 
 const SEARCH_STOP_WORDS = new Set([
@@ -1837,18 +1708,18 @@ function searchTokens(value) {
     .filter((token) => token.length >= 2 && !SEARCH_STOP_WORDS.has(token)));
 }
 
-const MAL_GENERIC_TOKENS = new Set([
+const ANILIST_GENERIC_TOKENS = new Set([
   ...SEARCH_STOP_WORDS,
   "gals", "girl", "girls", "hotel", "love", "lovely", "night", "stories", "story", "super",
 ]);
 
-function malSearchTokens(value) {
+function aniListSearchTokens(value) {
   return new Set(String(value || "")
     .normalize("NFKD")
     .toLowerCase()
     .split(/[^\p{L}\p{N}]+/u)
     .map((token) => token.trim())
-    .filter((token) => token.length >= 2 && !MAL_GENERIC_TOKENS.has(token)));
+    .filter((token) => token.length >= 2 && !ANILIST_GENERIC_TOKENS.has(token)));
 }
 
 function categorySeasonNumber(categoryName) {
@@ -2452,6 +2323,7 @@ async function listLibrary() {
         path: `${SOURCE_PREFIX}${file}`,
         title: String(data.title || file.replace(/\.json$/i, "")),
         malTitle: String(data.malTitle || data.MALTitle || "").trim(),
+        anilistTitle: String(data.anilistTitle || data.AniListTitle || "").trim(),
         anilistIds: [...new Set([
           data.anilistId,
           data.rootAnilistId,
@@ -2479,7 +2351,7 @@ function automaticCategories(source, allCategories = false) {
   const seasonal = usable.filter((category) => categorySeasonNumber(category.category));
   // Maintenance is episode/season based.  Non-season categories such as
   // Shorts, Specials, OVAs, and custom movie collections must not be mapped
-  // onto a regular MAL TV entry just because the source also has a season.
+  // onto a regular AniList TV entry just because the source also has a season.
   if (!seasonal.length) return [];
   if (allCategories) return seasonal;
   const latest = Math.max(...seasonal.map((category) => categorySeasonNumber(category.category)));
@@ -2531,6 +2403,62 @@ function syncRunActivity(run) {
   run.currentJobId = active[0]?.jobId || null;
 }
 
+function maintenanceRunIsTerminal(run) {
+  return Boolean(run?.finishedAt) || ["complete", "complete_with_errors", "failed", "cancelled"].includes(run?.state);
+}
+
+function markMaintenanceRunPaused(run, message = "Maintenance paused. Active transfer work has finished; update settings and resume when ready.") {
+  run.paused = true;
+  run.pauseRequested = false;
+  run.pauseDraining = false;
+  run.state = "paused";
+  run.phase = "paused";
+  syncRunActivity(run);
+  runEvent(run, message);
+}
+
+function requestMaintenancePause(run) {
+  if (maintenanceRunIsTerminal(run)) throw new Error("maintenance run is already finished");
+  if (run.paused || run.state === "paused") return run;
+  run.pauseRequested = true;
+  run.paused = true;
+  run.pauseDraining = Boolean(run.planningActive || run.executionActive);
+  run.state = "paused";
+  run.phase = "pausing";
+  runEvent(run, run.pauseDraining
+    ? "Pause requested. The current operation is finishing; no new maintenance work will be scheduled."
+    : "Maintenance paused. Update settings and resume when ready.");
+  if (!run.pauseDraining) markMaintenanceRunPaused(run);
+  void persistResumeState();
+  return run;
+}
+
+function updateMaintenanceRunSettings(run, settings = {}) {
+  if (!settings || typeof settings !== "object") return;
+  const next = { ...(run.payload || {}) };
+  for (const key of ["torrentConcurrency", "replaceExisting", "addMissing", "allCategories"]) {
+    if (Object.prototype.hasOwnProperty.call(settings, key)) next[key] = settings[key];
+  }
+  run.payload = next;
+  run.concurrency = maintenanceConcurrency(next);
+  run.torrentConcurrency = torrentConcurrency(next);
+}
+
+async function resumePausedMaintenanceRun(run, settings = {}) {
+  if (maintenanceRunIsTerminal(run)) throw new Error("maintenance run is already finished");
+  if (!run.paused || run.state !== "paused") throw new Error("maintenance run is not paused yet");
+  if (run.pauseDraining) throw new Error("maintenance run is still finishing its current operation");
+  updateMaintenanceRunSettings(run, settings);
+  run.paused = false;
+  run.pauseRequested = false;
+  run.state = "running";
+  run.phase = "maintenance";
+  runEvent(run, `Resuming maintenance with up to ${run.torrentConcurrency} torrent job${run.torrentConcurrency === 1 ? "" : "s"} at a time.`);
+  await persistResumeState();
+  startExecuteMaintenanceRun(run, run.payload);
+  return run;
+}
+
 function stopMaintenanceChildren(run) {
   const activeItemJobs = (run.items || [])
     .filter((item) => ["searching", "downloading", "processing", "uploading"].includes(item.state))
@@ -2575,14 +2503,17 @@ function publicRun(run) {
     events: run.events,
     startedAt: run.startedAt,
     finishedAt: run.finishedAt,
+    paused: run.paused === true,
+    pauseRequested: run.pauseRequested === true,
+    pauseDraining: run.pauseDraining === true,
   };
 }
 
-function maintenanceMalEnabled(payload) {
-  return process.env.MAL_CHECK !== "0" && payload?.malCheck !== false;
+function maintenanceAniListEnabled(payload) {
+  return process.env.ANILIST_CHECK !== "0" && payload?.anilistCheck !== false && payload?.malCheck !== false;
 }
 
-function checkTdSession() {
+function runTdInfo() {
   return new Promise((resolveCheck) => {
     let settled = false;
     let output = "";
@@ -2622,6 +2553,97 @@ function checkTdSession() {
       });
     });
   });
+}
+
+function readCommandSecret(command, args) {
+  return new Promise((resolveSecret) => {
+    let output = "";
+    const child = spawn(command, args, { stdio: ["ignore", "pipe", "ignore"] });
+    const finish = (value = "") => resolveSecret(String(value || "").trim());
+    child.stdout.on("data", (chunk) => { output += String(chunk); });
+    child.on("error", () => finish());
+    child.on("close", (code) => finish(code === 0 ? output : ""));
+  });
+}
+
+async function toodriveCredentials() {
+  if (!TOODRIVE_USERNAME) return { username: "", password: "" };
+  if (TOODRIVE_PASSWORD) return { username: TOODRIVE_USERNAME, password: TOODRIVE_PASSWORD };
+  if (process.platform === "darwin") {
+    const password = await readCommandSecret("/usr/bin/security", [
+      "find-generic-password",
+      "-s", TOODRIVE_KEYCHAIN_SERVICE,
+      "-a", TOODRIVE_USERNAME,
+      "-w",
+    ]);
+    if (password) return { username: TOODRIVE_USERNAME, password };
+  }
+  return { username: TOODRIVE_USERNAME, password: "" };
+}
+
+function responseSetCookies(response) {
+  if (typeof response.headers.getSetCookie === "function") return response.headers.getSetCookie();
+  const value = response.headers.get("set-cookie");
+  return value ? [value] : [];
+}
+
+async function saveToodriveFileSession(jwt) {
+  await mkdir(TOODRIVE_CONFIG_DIR, { recursive: true, mode: 0o700 });
+  await writeFile(TOODRIVE_SESSION_FILE, `${JSON.stringify({ jwt })}\n`, { mode: 0o600 });
+  await chmod(TOODRIVE_SESSION_FILE, 0o600);
+  await writeFile(TOODRIVE_CONFIG_FILE, `${JSON.stringify({ baseUrl: TOODRIVE_BASE_URL, authBackend: "file" }, null, 2)}\n`, { mode: 0o600 });
+  await chmod(TOODRIVE_CONFIG_FILE, 0o600);
+}
+
+async function loginToodrive() {
+  const credentials = await toodriveCredentials();
+  if (!credentials.username || !credentials.password) {
+    return {
+      ok: false,
+      code: "credentials_unavailable",
+      message: "Automatic Toodrive login needs MEDIA_MANAGER_TOODRIVE_USERNAME and a password in the OS keychain or MEDIA_MANAGER_TOODRIVE_PASSWORD.",
+    };
+  }
+  let response;
+  try {
+    response = await fetch(`${TOODRIVE_BASE_URL}/api/auth/login`, {
+      method: "POST",
+      headers: { "content-type": "application/json", origin: TOODRIVE_BASE_URL },
+      body: JSON.stringify({ username: credentials.username, password: credentials.password }),
+      signal: AbortSignal.timeout(15_000),
+    });
+  } catch (error) {
+    return { ok: false, code: "login_network_error", message: error instanceof Error ? error.message : String(error) };
+  }
+  if (!response.ok) {
+    return { ok: false, code: `login_http_${response.status}`, message: `Toodrive login returned HTTP ${response.status}.` };
+  }
+  const cookie = responseSetCookies(response).find((value) => /^toodrive_jwt=/.test(value));
+  const jwt = cookie ? /^toodrive_jwt=([^;]+)/.exec(cookie)?.[1] : "";
+  if (!jwt) return { ok: false, code: "missing_session_cookie", message: "Toodrive login did not return a session cookie." };
+  try {
+    await saveToodriveFileSession(jwt);
+  } catch (error) {
+    return { ok: false, code: "session_save_failed", message: error instanceof Error ? error.message : String(error) };
+  }
+  return { ok: true, relogged: true };
+}
+
+let toodriveReloginPromise = null;
+function reloginToodrive() {
+  if (!toodriveReloginPromise) {
+    toodriveReloginPromise = loginToodrive().finally(() => { toodriveReloginPromise = null; });
+  }
+  return toodriveReloginPromise;
+}
+
+async function checkTdSession() {
+  const initial = await runTdInfo();
+  if (initial.ok || !TOODRIVE_AUTO_LOGIN || !["session_expired", "not_logged_in"].includes(initial.code)) return initial;
+  const login = await reloginToodrive();
+  if (!login.ok) return { ...initial, relogin: login };
+  const verified = await runTdInfo();
+  return verified.ok ? { ...verified, relogged: true } : verified;
 }
 
 function maintenanceToodriveAuditEnabled(payload = {}) {
@@ -2718,10 +2740,10 @@ function missingEpisodesForCategory(category, expectedEpisodes, expectedEpisodeN
   return { known: true, missing };
 }
 
-function skippedMaintenanceItem(source, category, reason, mal = null) {
+function skippedMaintenanceItem(source, category, reason, anilist = null) {
   return {
-    id: randomUUID(), sourcePath: source.path, sourceFile: source.file, title: source.title, malTitle: source.malTitle || "",
-    category: category?.category || "", state: "skipped", reason, mal,
+    id: randomUUID(), sourcePath: source.path, sourceFile: source.file, title: source.title, malTitle: source.malTitle || "", anilistTitle: source.anilistTitle || "",
+    category: category?.category || "", state: "skipped", reason, anilist,
   };
 }
 
@@ -2729,10 +2751,10 @@ function catalogSourceMatchScore(source, entry) {
   if (!source || !entry) return 0;
   const ids = new Set((source.anilistIds || []).map((id) => Number(id)).filter((id) => Number.isInteger(id) && id > 0));
   if (ids.has(Number(entry.alID)) || ids.has(Number(entry.rootAlID))) return 1000;
-  const sourceTitles = [source.title, source.malTitle].filter(Boolean).map(normalizeTitle);
+  const sourceTitles = [source.title, source.malTitle, source.anilistTitle].filter(Boolean).map(normalizeTitle);
   const entryTitles = [entry.title, entry.mediaTitle, ...(entry.aliases || [])].filter(Boolean).map(normalizeTitle);
   if (sourceTitles.some((title) => title && entryTitles.includes(title))) return 900;
-  const sourceTokens = searchTokens([source.title, source.malTitle].filter(Boolean).join(" "));
+  const sourceTokens = searchTokens([source.title, source.malTitle, source.anilistTitle].filter(Boolean).join(" "));
   if (!sourceTokens.size) return 0;
   let best = 0;
   for (const title of entryTitles) {
@@ -2837,6 +2859,7 @@ async function buildCatalogMaintenanceWork(sources, payload = {}) {
       entry.lastError = `ambiguous source match: ${source.candidates.map((candidate) => candidate.source.file).join(", ")}`;
       continue;
     }
+    if (payload?.newShowsOnly === true && source) continue;
     const groupKey = `${entry.format}:${entry.rootAlID || entry.alID}`;
     const plannedPath = plannedGroups.get(groupKey) || `${SOURCE_PREFIX}${slugFileName(entry.title)}`;
     const sourcePath = source?.path || plannedPath;
@@ -2980,7 +3003,7 @@ async function buildMaintenanceWork(sources, payload, { onProgress } = {}) {
   const toodriveAuditCache = new Map();
   const selectedSources = sources.filter((source) => !sourcePaths || sourcePaths.has(source.path) || sourcePaths.has(source.file));
   let preflightCompleted = 0;
-  const malEnabled = maintenanceMalEnabled(payload);
+  const aniListEnabled = maintenanceAniListEnabled(payload);
   let catalogWork = { items: [], preflightTotal: 0 };
   if (payload?.discoverCatalog === true) {
     if (payload?.catalogScan !== false) {
@@ -2988,7 +3011,7 @@ async function buildMaintenanceWork(sources, payload, { onProgress } = {}) {
     }
     catalogWork = await buildCatalogMaintenanceWork(sources, payload);
     if (payload?.catalogOnly === true) {
-      return { work: catalogWork.items, preflightCompleted: catalogWork.items.length, preflightTotal: catalogWork.preflightTotal, malEnabled: false };
+      return { work: catalogWork.items, preflightCompleted: catalogWork.items.length, preflightTotal: catalogWork.preflightTotal, aniListEnabled: false };
     }
   }
   if (payload?.catalogOnly !== true) {
@@ -3001,44 +3024,44 @@ async function buildMaintenanceWork(sources, payload, { onProgress } = {}) {
       continue;
     }
 
-    let malResult = null;
-    if (malEnabled) {
+    let aniListResult = null;
+    if (aniListEnabled) {
       try {
-        onProgress?.({ title: source.title, state: "checking_mal" });
-        malResult = await findMalAnime(source, categories[0].category);
+        onProgress?.({ title: source.title, state: "checking_anilist" });
+        aniListResult = await findAniListAnime(source, categories[0].category);
       } catch (error) {
-        malResult = { candidate: null, candidates: [], error: error instanceof Error ? error.message : String(error) };
+        aniListResult = { candidate: null, candidates: [], error: error instanceof Error ? error.message : String(error) };
       }
     }
     for (const category of categories) {
       preflightCompleted += 1;
       onProgress?.({ title: source.title, category: category.category, completed: preflightCompleted });
-      if (malEnabled) {
-        let malCandidate = chooseMalCandidate(malResult?.candidates, source, category.category);
-        if (!malCandidate) {
-          const reason = malResult?.error
-            ? `MAL check unavailable: ${malResult.error}`
-            : "MAL did not return a confident matching anime";
-          work.push(skippedMaintenanceItem(source, category, reason, { status: "unavailable", error: malResult?.error || "" }));
+      if (aniListEnabled) {
+        let aniListCandidate = chooseAniListCandidate(aniListResult?.candidates, source, category.category);
+        if (!aniListCandidate) {
+          const reason = aniListResult?.error
+            ? `AniList check unavailable: ${aniListResult.error}`
+            : "AniList did not return a confident matching anime";
+          work.push(skippedMaintenanceItem(source, category, reason, { status: "unavailable", error: aniListResult?.error || "" }));
           continue;
         }
-        malCandidate = await hydrateMalCandidateProgress(malResult, source, category.category);
-        const expectedEpisodeNumbers = Array.isArray(malCandidate?.knownEpisodeNumbers)
-          ? malCandidate.knownEpisodeNumbers
+        aniListCandidate = await hydrateAniListCandidateProgress(aniListResult, source, category.category);
+        const expectedEpisodeNumbers = Array.isArray(aniListCandidate?.knownEpisodeNumbers)
+          ? aniListCandidate.knownEpisodeNumbers
           : [];
-        const currentlyAiring = malCandidateIsCurrentlyAiring(malCandidate);
+        const currentlyAiring = aniListCandidateIsCurrentlyAiring(aniListCandidate);
         const expectedEpisodes = expectedEpisodeNumbers.length
           ? Math.max(...expectedEpisodeNumbers)
           : currentlyAiring
-            ? Number(malCandidate?.airedEpisodes) > 0 ? Number(malCandidate.airedEpisodes) : null
-            : Number(malCandidate?.episodes) > 0
-              ? Number(malCandidate.episodes)
-              : Number(malCandidate?.airedEpisodes) > 0 ? Number(malCandidate.airedEpisodes) : null;
+            ? Number(aniListCandidate?.airedEpisodes) > 0 ? Number(aniListCandidate.airedEpisodes) : null
+            : Number(aniListCandidate?.episodes) > 0
+              ? Number(aniListCandidate.episodes)
+              : Number(aniListCandidate?.airedEpisodes) > 0 ? Number(aniListCandidate.airedEpisodes) : null;
         if ((!Number.isInteger(expectedEpisodes) || expectedEpisodes <= 0) && !expectedEpisodeNumbers.length) {
-          const progressReason = malCandidate?.episodeProgressError
-            ? `MAL aired episode list unavailable: ${malCandidate.episodeProgressError}`
-            : "MAL episode count is not available yet";
-          work.push(skippedMaintenanceItem(source, category, progressReason, { status: "unknown", ...malCandidate }));
+          const progressReason = aniListCandidate?.episodeProgressError
+            ? `AniList aired episode schedule unavailable: ${aniListCandidate.episodeProgressError}`
+            : "AniList episode count is not available yet";
+          work.push(skippedMaintenanceItem(source, category, progressReason, { status: "unknown", ...aniListCandidate }));
           continue;
         }
         let toodriveAudit = null;
@@ -3055,7 +3078,7 @@ async function buildMaintenanceWork(sources, payload, { onProgress } = {}) {
           : category;
         const missing = missingEpisodesForCategory(auditedCategory, expectedEpisodes, expectedEpisodeNumbers);
         if (!missing.known) {
-          work.push(skippedMaintenanceItem(source, category, "library episode numbering is not readable", { status: "unknown", ...malCandidate }));
+          work.push(skippedMaintenanceItem(source, category, "library episode numbering is not readable", { status: "unknown", ...aniListCandidate }));
           continue;
         }
         const refreshEpisodes = payload?.refreshExisting === true
@@ -3066,34 +3089,34 @@ async function buildMaintenanceWork(sources, payload, { onProgress } = {}) {
           const countLabel = expectedEpisodeNumbers.length
             ? `${expectedEpisodeNumbers.length} aired episode${expectedEpisodeNumbers.length === 1 ? "" : "s"}`
             : `${expectedEpisodes} episodes`;
-          work.push(skippedMaintenanceItem(source, category, `MAL reports ${countLabel} and the library is complete`, {
+          work.push(skippedMaintenanceItem(source, category, `AniList reports ${countLabel} and the library is complete`, {
             status: "complete",
-            ...malCandidate,
+            ...aniListCandidate,
             toodriveAudit: toodriveAudit || undefined,
           }));
           continue;
         }
         work.push({
-          id: randomUUID(), sourcePath: source.path, sourceFile: source.file, title: source.title, malTitle: source.malTitle || "",
+          id: randomUUID(), sourcePath: source.path, sourceFile: source.file, title: source.title, malTitle: source.malTitle || "", anilistTitle: source.anilistTitle || "",
           category: category.category, state: "queued", query: "", candidate: null,
           jobId: null, manifest: null, links: 0, error: "", missingEpisodes: targetEpisodes,
-          mal: { status: refreshEpisodes.length ? "refresh" : "missing", ...malCandidate, toodriveAudit: toodriveAudit || undefined },
+          anilist: { status: refreshEpisodes.length ? "refresh" : "missing", ...aniListCandidate, toodriveAudit: toodriveAudit || undefined },
         });
         continue;
       }
       work.push({
-        id: randomUUID(), sourcePath: source.path, sourceFile: source.file, title: source.title, malTitle: source.malTitle || "",
+        id: randomUUID(), sourcePath: source.path, sourceFile: source.file, title: source.title, malTitle: source.malTitle || "", anilistTitle: source.anilistTitle || "",
         category: category.category, state: "queued", query: "", candidate: null,
         jobId: null, manifest: null, links: 0, error: "", missingEpisodes: [],
-        mal: { status: "disabled" },
+        anilist: { status: "disabled" },
       });
     }
 
-    if (malEnabled && payload?.addNewSeasons !== false && payload?.addMissing !== false) {
-      for (const { season, candidate } of discoverMalSeasons(source, existingCategories, malResult)) {
+    if (aniListEnabled && payload?.addNewSeasons !== false && payload?.addMissing !== false) {
+      for (const { season, candidate } of discoverAniListSeasons(source, existingCategories, aniListResult)) {
         const categoryName = `Season ${season}`;
-        const hydratedCandidate = await hydrateMalCandidateProgress(malResult, source, categoryName) || candidate;
-        const currentlyAiring = malCandidateIsCurrentlyAiring(hydratedCandidate);
+        const hydratedCandidate = await hydrateAniListCandidateProgress(aniListResult, source, categoryName) || candidate;
+        const currentlyAiring = aniListCandidateIsCurrentlyAiring(hydratedCandidate);
         const knownEpisodeNumbers = Array.isArray(hydratedCandidate?.knownEpisodeNumbers)
           ? hydratedCandidate.knownEpisodeNumbers.filter((number) => Number.isInteger(number) && number > 0)
           : [];
@@ -3107,19 +3130,19 @@ async function buildMaintenanceWork(sources, payload, { onProgress } = {}) {
             source,
             { category: categoryName },
             hydratedCandidate?.episodeProgressError
-              ? `MAL aired episode list unavailable: ${hydratedCandidate.episodeProgressError}`
-              : "MAL episode count is not available yet",
+              ? `AniList aired episode schedule unavailable: ${hydratedCandidate.episodeProgressError}`
+              : "AniList episode count is not available yet",
             { status: "unknown", ...hydratedCandidate, seasonMarker: season },
           ));
           continue;
         }
         work.push({
-          id: randomUUID(), sourcePath: source.path, sourceFile: source.file, title: source.title, malTitle: source.malTitle || "",
-          category: categoryName, state: "queued", query: malResult?.query || "", candidate: null,
+          id: randomUUID(), sourcePath: source.path, sourceFile: source.file, title: source.title, malTitle: source.malTitle || "", anilistTitle: source.anilistTitle || "",
+          category: categoryName, state: "queued", query: aniListResult?.query || "", candidate: null,
           jobId: null, manifest: null, links: 0, error: "", missingEpisodes: Array.from(
             { length: episodes.length }, (_, index) => episodes[index],
           ), createCategory: true, newSeason: true,
-          mal: { status: "new_season", ...hydratedCandidate, seasonMarker: season },
+          anilist: { status: "new_season", ...hydratedCandidate, seasonMarker: season },
         });
       }
     }
@@ -3130,7 +3153,7 @@ async function buildMaintenanceWork(sources, payload, { onProgress } = {}) {
     work,
     preflightCompleted: preflightCompleted + catalogWork.items.length,
     preflightTotal: selectedSources.reduce((sum, source) => sum + automaticCategories(source, payload?.allCategories === true).length, 0) + catalogWork.preflightTotal,
-    malEnabled,
+    aniListEnabled,
   };
 }
 
@@ -3289,7 +3312,7 @@ async function processMaintenanceItem(run, item, payload = {}) {
     return;
   }
 
-  const source = { title: item.title, malTitle: item.malTitle || "" };
+  const source = { title: item.title, malTitle: item.malTitle || "", anilistTitle: item.anilistTitle || "" };
   try {
     await markCatalogActive(item);
     if (!Array.isArray(item.releases) || !item.releases.length) {
@@ -3425,7 +3448,7 @@ async function processMaintenanceItem(run, item, payload = {}) {
     item.state = "downloading";
     syncMaintenanceReleaseSummary(item);
     syncRunActivity(run);
-    runEvent(run, `Running one torrent job at a time for ${item.title} · ${item.category}; ${pending.length} release${pending.length === 1 ? "" : "s"} queued.`);
+    runEvent(run, `Running up to ${workerCount} torrent job${workerCount === 1 ? "" : "s"} at a time for ${item.title} · ${item.category}; ${pending.length} release${pending.length === 1 ? "" : "s"} queued.`);
     await Promise.all(Array.from({ length: workerCount }, () => worker()));
     const finalStates = syncMaintenanceReleaseSummary(item);
     if (cancelled || run.cancelled || finalStates.some((release) => release.state === "cancelled")) {
@@ -3456,6 +3479,17 @@ async function processMaintenanceItem(run, item, payload = {}) {
   await persistResumeState();
 }
 
+function startExecuteMaintenanceRun(run, payload = run.payload || {}) {
+  run.executionActive = true;
+  const promise = executeMaintenanceRun(run, payload);
+  run.executionPromise = promise;
+  promise.then(
+    () => { if (run.executionPromise === promise) run.executionPromise = null; },
+    () => { if (run.executionPromise === promise) run.executionPromise = null; },
+  );
+  return promise;
+}
+
 async function executeMaintenanceRun(run, payload = run.payload || {}) {
   try {
     syncRunActivity(run);
@@ -3469,15 +3503,15 @@ async function executeMaintenanceRun(run, payload = run.payload || {}) {
     const groupList = [...groups.values()];
     const concurrency = maintenanceConcurrency(payload);
     const workerCount = Math.min(concurrency, Math.max(1, groupList.length));
-    runEvent(run, `Running one show job at a time and one torrent process at a time; ${groupList.length} show group${groupList.length === 1 ? "" : "s"} queued. Seasons from the same source stay ordered.`);
+    runEvent(run, `Running one show job at a time and up to ${maintenancePayload.torrentConcurrency} torrent job${maintenancePayload.torrentConcurrency === 1 ? "" : "s"} at a time; ${groupList.length} show group${groupList.length === 1 ? "" : "s"} queued. Seasons from the same source stay ordered.`);
     let nextGroup = 0;
     const worker = async () => {
-      while (!run.cancelled) {
+      while (!run.cancelled && !run.pauseRequested) {
         const groupIndex = nextGroup;
         nextGroup += 1;
         if (groupIndex >= groupList.length) return;
         for (const item of groupList[groupIndex]) {
-          if (run.cancelled) break;
+          if (run.cancelled || run.pauseRequested) break;
           await processMaintenanceItem(run, item, maintenancePayload);
         }
       }
@@ -3488,6 +3522,8 @@ async function executeMaintenanceRun(run, payload = run.payload || {}) {
         item.state = "cancelled";
       }
       run.state = "cancelled";
+    } else if (run.pauseRequested) {
+      markMaintenanceRunPaused(run);
     } else {
       run.state = run.failed ? "complete_with_errors" : "complete";
     }
@@ -3496,31 +3532,50 @@ async function executeMaintenanceRun(run, payload = run.payload || {}) {
     run.state = "failed";
     runEvent(run, error instanceof Error ? error.message : String(error));
   } finally {
+    run.executionActive = false;
+    if (run.pauseRequested || run.pauseDraining) {
+      markMaintenanceRunPaused(run, "Maintenance is paused and ready to resume with updated settings.");
+    }
     syncRunActivity(run);
-    run.phase = "complete";
-    if (catalogRunId === run.id) catalogRunId = null;
-    run.finishedAt = new Date().toISOString();
-    persistLog({
-      scope: "run",
-      event: "run_finished",
-      runId: run.id,
-      state: run.state,
-      completed: run.completed,
-      total: run.total,
-      failed: run.failed,
-      skipped: run.skipped,
-    });
+    if (!run.paused && !run.pauseRequested) {
+      run.phase = "complete";
+      if (catalogRunId === run.id) catalogRunId = null;
+      run.finishedAt = new Date().toISOString();
+      persistLog({
+        scope: "run",
+        event: "run_finished",
+        runId: run.id,
+        state: run.state,
+        completed: run.completed,
+        total: run.total,
+        failed: run.failed,
+        skipped: run.skipped,
+      });
+    }
     await persistResumeState();
   }
 }
 
 async function startMaintenanceRun(payload = {}) {
+  payload = payload && typeof payload === "object" ? payload : {};
+  const operation = String(payload.operation || "").trim().toLowerCase();
+  if (MAINTENANCE_ROLE === "general" && operation !== "add") {
+    // The general worker defaults to upkeep for manifests that already exist.
+    // An explicit add operation from the mode picker may opt into catalog work.
+    payload = {
+      ...payload,
+      discoverCatalog: false,
+      catalogScan: false,
+      catalogOnly: false,
+      addNewSeasons: false,
+    };
+  }
   const library = await listLibrary();
   const run = {
-    id: randomUUID(), state: "checking", phase: maintenanceMalEnabled(payload) ? "mal" : "planning",
+    id: randomUUID(), state: "checking", phase: maintenanceAniListEnabled(payload) ? "anilist" : "planning",
     total: 0, completed: 0, failed: 0, skipped: 0, preflightCompleted: 0, preflightTotal: 0, preflightCurrent: null,
     current: null, currentJobId: null, active: [], activeJobIds: [], concurrency: maintenanceConcurrency(payload), torrentConcurrency: torrentConcurrency(payload), items: [], events: [], startedAt: new Date().toISOString(),
-    finishedAt: null, cancelled: false, planOnly: payload?.dryRun === true || payload?.planOnly === true,
+    finishedAt: null, cancelled: false, paused: false, pauseRequested: false, pauseDraining: false, planningActive: true, executionActive: false, planOnly: payload?.dryRun === true || payload?.planOnly === true,
     payload,
   };
   const requestedSources = Array.isArray(payload?.sourcePaths) && payload.sourcePaths.length
@@ -3534,6 +3589,8 @@ async function startMaintenanceRun(payload = {}) {
   maintenanceRuns.set(run.id, run);
   if (payload?.discoverCatalog === true) catalogRunId = run.id;
   run.stop = () => {
+    run.pauseRequested = false;
+    run.paused = false;
     run.cancelled = true;
     const stopping = stopMaintenanceChildren(run);
     syncRunActivity(run);
@@ -3544,9 +3601,9 @@ async function startMaintenanceRun(payload = {}) {
   void persistResumeState();
   void (async () => {
     try {
-      runEvent(run, maintenanceMalEnabled(payload)
-        ? "Checking MyAnimeList for missing episodes before searching release sources."
-        : "MAL preflight disabled; planning all selected categories.");
+      runEvent(run, maintenanceAniListEnabled(payload)
+        ? "Checking AniList for missing episodes before searching release sources."
+        : "AniList preflight disabled; planning all selected categories.");
       const planned = await buildMaintenanceWork(library.sources, payload, {
         onProgress: (progress) => {
           if (progress?.completed) run.preflightCompleted = progress.completed;
@@ -3566,6 +3623,9 @@ async function startMaintenanceRun(payload = {}) {
         run.phase = "complete";
         if (catalogRunId === run.id) catalogRunId = null;
         await persistResumeState();
+      } else if (run.pauseRequested) {
+        markMaintenanceRunPaused(run, "Maintenance paused after planning. Update settings and resume when ready.");
+        await persistResumeState();
       } else if (run.planOnly) {
         run.state = "complete";
         run.phase = "plan";
@@ -3584,6 +3644,7 @@ async function startMaintenanceRun(payload = {}) {
           run.phase = "auth";
           runEvent(run, "Checking the Toodrive session before starting maintenance jobs.");
           const tdSession = await checkTdSession();
+          if (tdSession.relogged) runEvent(run, "Toodrive session expired; logged in again automatically.");
           if (!tdSession.ok) {
             const loginHint = /\btd login\b/.test(String(tdSession.message || ""))
               ? ""
@@ -3593,10 +3654,16 @@ async function startMaintenanceRun(payload = {}) {
             );
           }
         }
-        run.state = "running";
-        run.phase = "maintenance";
-        await persistResumeState();
-        void executeMaintenanceRun(run, payload);
+        if (run.pauseRequested) {
+          markMaintenanceRunPaused(run, "Maintenance paused before starting transfers. Update settings and resume when ready.");
+          await persistResumeState();
+        } else {
+          run.planningActive = false;
+          run.state = "running";
+          run.phase = "maintenance";
+          await persistResumeState();
+          startExecuteMaintenanceRun(run, payload);
+        }
       }
     } catch (error) {
       run.failed += 1;
@@ -3606,6 +3673,15 @@ async function startMaintenanceRun(payload = {}) {
       if (catalogRunId === run.id) catalogRunId = null;
       runEvent(run, error instanceof Error ? error.message : String(error));
       await persistResumeState();
+    } finally {
+      run.planningActive = false;
+      if (run.paused && run.pauseDraining && !run.executionActive) {
+        run.pauseDraining = false;
+        run.state = "paused";
+        run.phase = "paused";
+        runEvent(run, "Maintenance is paused and ready to resume with updated settings.");
+        await persistResumeState();
+      }
     }
   })();
   return run;
@@ -3917,31 +3993,29 @@ function removeQueuedJob(job) {
 }
 
 function releasePipelineSlot(job) {
-  if (activePipelineJob !== job) return;
-  activePipelineJob = null;
+  if (!activePipelineJobs.delete(job)) return;
+  if (activePipelineJob === job) activePipelineJob = activePipelineJobs.values().next().value || null;
   drainPipelineQueue();
 }
 
 function drainPipelineQueue() {
-  if (activePipelineJob) return;
-  const entry = pipelineQueue.shift();
-  if (!entry) return;
-  const job = entry.job;
-  job.queueEntry = null;
-  if (job.finishedAt) {
-    drainPipelineQueue();
-    return;
-  }
-  if (job.stopRequested || job.cancelled) {
-    void finishJob(job, 1, new Error("Job stopped before it started."), { cancelled: true })
-      .finally(() => drainPipelineQueue());
-    return;
-  }
-  activePipelineJob = job;
-  try {
-    spawnTdAttempt(job, entry.options, () => releasePipelineSlot(job));
-  } catch (error) {
-    void finishJob(job, 1, error).finally(() => releasePipelineSlot(job));
+  while (activePipelineJobs.size < MAX_TORRENT_CONCURRENCY && pipelineQueue.length) {
+    const entry = pipelineQueue.shift();
+    const job = entry.job;
+    job.queueEntry = null;
+    if (job.finishedAt) continue;
+    if (job.stopRequested || job.cancelled) {
+      void finishJob(job, 1, new Error("Job stopped before it started."), { cancelled: true })
+        .finally(() => drainPipelineQueue());
+      continue;
+    }
+    activePipelineJobs.add(job);
+    activePipelineJob ||= job;
+    try {
+      spawnTdAttempt(job, entry.options, () => releasePipelineSlot(job));
+    } catch (error) {
+      void finishJob(job, 1, error).finally(() => releasePipelineSlot(job));
+    }
   }
 }
 
@@ -4114,13 +4188,25 @@ function spawnTdAttempt(job, { downloadAll, repairAttempts, retry = false }, rel
 async function startJob({ torrentUrl, magnet, destination, cacheDir, runId, maintenance }) {
   if (!torrentUrl && !magnet) throw new Error("torrentUrl or magnet is required");
   if (!destination || typeof destination !== "string") throw new Error("destination is required");
+  const normalizedMaintenance = maintenance
+    ? {
+      ...maintenance,
+      targetEpisodes: Array.isArray(maintenance.targetEpisodes) ? [...maintenance.targetEpisodes] : maintenance.targetEpisodes,
+    }
+    : null;
+  if (normalizedMaintenance?.title && normalizedMaintenance?.categoryName) {
+    const expectedDestination = maintenanceFolder(normalizedMaintenance.title, normalizedMaintenance.categoryName);
+    if (expectedDestination !== destination) {
+      throw new Error(`maintenance job destination mismatch: expected ${expectedDestination}, received ${destination}`);
+    }
+  }
   const id = randomUUID();
   let resolveDone;
   const source = torrentUrl || magnet;
   const job = {
     id, state: "starting", events: [], links: [], artifacts: [], manifest: null,
-    runId: runId || maintenance?.runId || null, maintenance: maintenance || null, cacheDir: null, startedAt: new Date().toISOString(),
-    source, destination, adaptiveFallback: Boolean(maintenance), fallbackAttempted: false,
+    runId: runId || normalizedMaintenance?.runId || null, maintenance: normalizedMaintenance, cacheDir: null, startedAt: new Date().toISOString(),
+    source, destination, adaptiveFallback: Boolean(normalizedMaintenance), fallbackAttempted: false,
     metadataSeen: false, hasTransferProgress: false, stopRequested: false, cancelled: false, attempt: 0,
     fileCleanupPromises: new Set(),
     durationProbePromises: new Map(),
@@ -4135,11 +4221,11 @@ async function startJob({ torrentUrl, magnet, destination, cacheDir, runId, main
   await mkdir(cache, { recursive: true });
   job.cacheDir = cache;
   await clearStalePipelineLock(cache);
-  const repairAttempts = maintenance ? MAINTENANCE_TD_REPAIR_ATTEMPTS : DEFAULT_TD_REPAIR_ATTEMPTS;
-  const downloadAll = !maintenance || maintenance.action === "new";
-  if (maintenance) await persistResumeState();
+  const repairAttempts = normalizedMaintenance ? MAINTENANCE_TD_REPAIR_ATTEMPTS : DEFAULT_TD_REPAIR_ATTEMPTS;
+  const downloadAll = !normalizedMaintenance || normalizedMaintenance.action === "new";
+  if (normalizedMaintenance) await persistResumeState();
   enqueueTdAttempt(job, { downloadAll, repairAttempts });
-  if (maintenance) await persistResumeState();
+  if (normalizedMaintenance) await persistResumeState();
   return job;
 }
 
@@ -4167,19 +4253,28 @@ function restoreJob(saved) {
 }
 
 async function resumeMaintenanceRun(run) {
+  if (run.paused || run.state === "paused" || run.pauseRequested) {
+    run.paused = true;
+    run.pauseRequested = false;
+    run.state = "paused";
+    run.phase = "paused";
+    syncRunActivity(run);
+    await persistResumeState();
+    return;
+  }
   const payload = run.payload || {};
   if (payload.discoverCatalog === true) catalogRunId = run.id;
   if (run.items.length && run.state !== "checking") {
     run.state = "running";
     run.phase = "maintenance";
     await persistResumeState();
-    void executeMaintenanceRun(run, payload);
+    startExecuteMaintenanceRun(run, payload);
     return;
   }
 
   const library = await listLibrary();
   run.state = "checking";
-  run.phase = maintenanceMalEnabled(payload) ? "mal" : "planning";
+  run.phase = maintenanceAniListEnabled(payload) ? "anilist" : "planning";
   runEvent(run, "Resuming maintenance planning after a service restart.");
   const planned = await buildMaintenanceWork(library.sources, payload, {
     onProgress: (progress) => {
@@ -4217,6 +4312,7 @@ async function resumeMaintenanceRun(run) {
     run.phase = "auth";
     runEvent(run, "Checking the Toodrive session before resuming maintenance jobs.");
     const tdSession = await checkTdSession();
+    if (tdSession.relogged) runEvent(run, "Toodrive session expired; logged in again automatically.");
     if (!tdSession.ok) {
       const loginHint = /\btd login\b/.test(String(tdSession.message || ""))
         ? ""
@@ -4227,7 +4323,7 @@ async function resumeMaintenanceRun(run) {
   run.state = "running";
   run.phase = "maintenance";
   await persistResumeState();
-  void executeMaintenanceRun(run, payload);
+  startExecuteMaintenanceRun(run, payload);
 }
 
 function processIsAlive(pid) {
@@ -4244,7 +4340,18 @@ function processIsAlive(pid) {
 async function recoverLegacyMaintenanceWork(knownRunIds, knownJobIds) {
   let raw;
   try {
-    raw = await readFile(LOG_FILE, "utf8");
+    const handle = await open(LOG_FILE, "r");
+    try {
+      const { size } = await handle.stat();
+      const start = Math.max(0, size - LEGACY_RECOVERY_LOG_BYTES);
+      const buffer = Buffer.alloc(Number(size - start));
+      const { bytesRead } = await handle.read(buffer, 0, buffer.length, start);
+      // If the tail starts in the middle of a JSON line, split/filter below
+      // safely discards that one partial line.
+      raw = buffer.subarray(0, bytesRead).toString("utf8");
+    } finally {
+      await handle.close();
+    }
   } catch (error) {
     if (error?.code === "ENOENT") return;
     throw error;
@@ -4269,19 +4376,41 @@ async function recoverLegacyMaintenanceWork(knownRunIds, knownJobIds) {
   }
   const library = await listLibrary();
   for (const [jobId, jobStart] of started) {
+    const startedAt = Date.parse(jobStart.at || "");
+    if (Number.isFinite(startedAt) && Date.now() - startedAt > LEGACY_RECOVERY_MAX_AGE_MS) continue;
     if (knownJobIds.has(jobId) || completedJobs.has(jobId) || processIsAlive(jobStart.pid)) continue;
     const runId = jobStart.runId;
     if (!runId || knownRunIds.has(runId)) continue;
     const events = runEntries.get(runId) || [];
-    const searching = events.find((entry) => /Searching (?:Nyaa|SeaDex|release sources) automatically for /i.test(entry.message || ""));
-    const match = String(searching?.message || "").match(/^Searching (?:Nyaa|SeaDex|release sources) automatically for (.+?) · (.+)\.$/);
-    if (!match) continue;
-    const [, title, category] = match;
-    const source = library.sources.find((candidate) => candidate.title === title);
+    // Older recovery used the first "Searching" event in a run. A run can
+    // contain several shows, so that paired an unrelated torrent with the
+    // first title after a restart. Resolve the item from the job's persisted
+    // destination first; the torrent destination is the authoritative pair.
+    const destination = String(jobStart.destination || "").trim();
+    let source = null;
+    let category = "";
+    for (const candidate of library.sources) {
+      const matchedCategory = (candidate.categories || []).find((entry) => maintenanceFolder(candidate.title, entry.category) === destination);
+      if (matchedCategory) {
+        source = candidate;
+        category = matchedCategory.category;
+        break;
+      }
+    }
+    if (!source) {
+      const searching = events.find((entry) => /Searching (?:Nyaa|SeaDex|release sources) automatically for /i.test(entry.message || ""));
+      const match = String(searching?.message || "").match(/^Searching (?:Nyaa|SeaDex|release sources) automatically for (.+?) · (.+)\.$/);
+      if (!match) continue;
+      const [, title, searchedCategory] = match;
+      source = library.sources.find((candidate) => candidate.title === title);
+      category = searchedCategory;
+    }
     if (!source || !source.categories.some((candidate) => candidate.category === category)) continue;
+    const title = source.title;
     const cacheDir = jobMetadata.get(jobId)?.cachePath;
     if (!cacheDir) continue;
-    const selected = events.find((entry) => /Selected .+ for /i.test(entry.message || ""));
+    const selectedPrefix = `for ${title} · ${category}`;
+    const selected = events.find((entry) => /^Selected .+ for /i.test(entry.message || "") && String(entry.message).includes(selectedPrefix));
     const selectedTitle = String(selected?.message || "").match(/^Selected (.+?) for /)?.[1] || "";
     const itemId = `recovered-${jobId}`;
     const run = {
@@ -4341,6 +4470,8 @@ async function recoverLegacyMaintenanceWork(knownRunIds, knownJobIds) {
         action: "update",
         sourcePath: source.path,
         categoryName: category,
+        title,
+        image: source.image || undefined,
         seasonNumber: categorySeasonNumber(category) || undefined,
         replaceExisting: true,
         addMissing: true,
@@ -4391,8 +4522,12 @@ async function restorePersistedWork() {
       torrentConcurrency: torrentConcurrency(saved.payload || {}),
       payload: saved.payload || {},
       cancelled: saved.cancelled === true,
+      paused: saved.paused === true || saved.pauseRequested === true || ["paused", "pausing"].includes(saved.state),
+      pauseRequested: false,
     };
     run.stop = () => {
+      run.pauseRequested = false;
+      run.paused = false;
       run.cancelled = true;
       const stopping = stopMaintenanceChildren(run);
       syncRunActivity(run);
@@ -4415,6 +4550,7 @@ async function restorePersistedWork() {
 
   for (const job of jobs.values()) {
     if (!job.maintenance || job.finishedAt) continue;
+    if (job.runId && maintenanceRuns.get(job.runId)?.paused) continue;
     await mkdir(job.cacheDir, { recursive: true });
     await clearStalePipelineLock(job.cacheDir);
     const downloadAll = job.maintenance.action === "new" && job.downloadAll !== false;
@@ -4425,6 +4561,12 @@ async function restorePersistedWork() {
     });
   }
   for (const run of maintenanceRuns.values()) {
+    if (run.paused) {
+      run.state = "paused";
+      run.phase = "paused";
+      syncRunActivity(run);
+      continue;
+    }
     runEvent(run, "Found unfinished maintenance work after service restart.");
     void resumeMaintenanceRun(run).catch(async (error) => {
       run.failed += 1;
@@ -4439,7 +4581,7 @@ async function restorePersistedWork() {
 }
 
 async function startAutomaticCatalogRun(reason = "automatic") {
-  if (!CATALOG_SCAN_ENABLED) return null;
+  if (!CATALOG_SCAN_ENABLED || MAINTENANCE_ROLE === "general") return null;
   if (catalogRunId) {
     const existing = maintenanceRuns.get(catalogRunId);
     if (existing && !existing.finishedAt && !["complete", "failed", "cancelled"].includes(existing.state)) return existing;
@@ -4532,8 +4674,9 @@ function publicActiveWork() {
     runs,
     jobs: activeJobs,
     scheduler: {
-      concurrency: 1,
+      concurrency: MAX_TORRENT_CONCURRENCY,
       activeJobId: activePipelineJob?.id || null,
+      activeJobIds: [...activePipelineJobs].map((job) => job.id),
       queuedJobs: pipelineQueue.length,
     },
   };
@@ -4557,11 +4700,13 @@ const server = createServer(async (req, res) => {
         port: PORT,
         address: `http://${HOST}:${PORT}`,
         manifestPublisher: "github-contents-api",
+        role: MAINTENANCE_ROLE,
         catalog: catalogSummary(await loadCatalogState()),
         github: githubConfiguration(),
         scheduler: {
-          concurrency: 1,
+          concurrency: MAX_TORRENT_CONCURRENCY,
           activeJobId: activePipelineJob?.id || null,
+          activeJobIds: [...activePipelineJobs].map((job) => job.id),
           queuedJobs: pipelineQueue.length,
         },
       });
@@ -4631,6 +4776,23 @@ const server = createServer(async (req, res) => {
       });
       return json(res, 202, publicRun(run));
     }
+    const runActionMatch = url.pathname.match(/^\/api\/maintenance\/runs\/([^/]+)\/(pause|resume)$/);
+    if (runActionMatch && req.method === "POST") {
+      const run = maintenanceRuns.get(runActionMatch[1]);
+      if (!run) return json(res, 404, { error: "maintenance run not found" });
+      if (runActionMatch[2] === "pause") {
+        try {
+          return json(res, 202, publicRun(requestMaintenancePause(run)));
+        } catch (error) {
+          return json(res, 409, { error: error instanceof Error ? error.message : String(error) });
+        }
+      }
+      try {
+        return json(res, 202, publicRun(await resumePausedMaintenanceRun(run, await readBody(req))));
+      } catch (error) {
+        return json(res, 409, { error: error instanceof Error ? error.message : String(error) });
+      }
+    }
     const runMatch = url.pathname.match(/^\/api\/maintenance\/runs\/([^/]+)$/);
     if (runMatch && req.method === "GET") {
       const run = maintenanceRuns.get(runMatch[1]);
@@ -4693,7 +4855,7 @@ export {
   fetchCatalogReleaseRecords,
   scanCatalog,
   maintenanceConcurrency,
-  parseMalEpisodeProgress,
+  aniListAiringProgress,
   parseRssItems,
   releaseSearch,
   releaseSearchQueries,
@@ -4722,11 +4884,13 @@ export {
   buildSourceListContent,
   refreshSourceListPublication,
   cleanupJobCache,
+  checkTdSession,
+  loginToodrive,
 };
 
 if (process.env.MEDIA_MANAGER_TEST !== "1") {
   startServer().catch((error) => {
-    console.error(`Maintenance service failed to start: ${error instanceof Error ? error.message : String(error)}`);
+    console.error(`Maintenance service failed to start: ${error instanceof Error ? error.stack || error.message : String(error)}`);
     process.exitCode = 1;
   });
 }

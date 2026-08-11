@@ -48,6 +48,12 @@ The maintenance app is available from the normal navigation and directly at
 `Maintenance/index.html`. The page keeps the automated run, current-job
 progress, and persistent log visible while manual release searching stays
 collapsed until you choose **Add a show manually**.
+The page applies a simple mode to the active maintenance service: **Update
+current ones** is the default and checks existing sources for missing episodes
+and dual-audio upgrades; **Add new shows** runs catalog-only discovery for
+playable tracker titles that are not in the library yet. The selected mode is
+saved for the active service in the browser; connection settings remain
+available when the service address needs to change.
 The default General maintenance view runs an automated upkeep pass: it searches
 SeaDex first and falls back to Nyaa/RSS mirrors when no suitable curated release
 exists, selects the strongest release for each show’s latest season or missing
@@ -67,11 +73,13 @@ On macOS, you can double-click `Maintenance/Library Maintenance.command` instead
 Use `--no-open` when you want to start the servers without opening a browser.
 `node Maintenance/service.mjs` remains available as the direct API-service
 entrypoint for advanced/manual setups. The automated pass skips movie-only
-sources and runs one torrent pipeline at a time across General maintenance and
-manual jobs; queued work waits for the current job to finish. Seasons within a
+sources and lets you choose one to twenty active torrent jobs in the
+maintenance run options. The default is two. Queued work waits for an
+available slot, while seasons within a
 manifest remain sequential, and
-can optionally check every season. It can replace matching episode links and/or
-append missing episodes. New shows are written as a new
+can optionally check every season. An active maintenance run can be paused so
+you can adjust its run options and resume after current transfers finish. It
+can replace matching episode links and/or append missing episodes. New shows are written as a new
 `Sources/Files/Anime/*.json` manifest. Episode numbers are read from the
 uploaded torrent paths, and each release is processed by
 `td --video-pipeline --download-all --repair` before links are saved. Manifest
@@ -108,15 +116,14 @@ VPN firewall. For a checkout that already exists, run
 `bash Maintenance/install-linux.sh` from that checkout instead.
 
 Before a General maintenance run searches release sources, it checks each
-selected season against MyAnimeList. The service uses MAL's public HTML search
-first and Jikan as a fallback, then reads MAL's published episode list when an
-airing season still reports `Episodes: Unknown`. It queues only missing aired
-episode numbers and never guesses future episodes. A successful lookup is cached
-for 30 minutes at
-`~/.local/share/media-manager-maintenance/mal-cache.json` (override with
-`MAL_CACHE_FILE`); an unavailable lookup is reported and skipped rather than
-guessing. Add `"malTitle": "..."` to a manifest when its display title is an
-abbreviation or typo that MAL cannot match automatically. A dry planning pass
+selected season against AniList. The service uses AniList's public GraphQL API,
+including the aired episode schedule and next airing episode, to queue only
+missing aired episode numbers and never guess future episodes. A successful
+lookup is cached for 30 minutes at
+`~/.local/share/media-manager-maintenance/anilist-cache.json` (override with
+`ANILIST_CACHE_FILE`); an unavailable lookup is reported and skipped rather than
+guessing. Add `"anilistTitle": "..."` to a manifest when its display title is an
+abbreviation or typo that AniList cannot match automatically. A dry planning pass
 is available to API callers with `{ "dryRun": true }`; it returns the skipped
 and queued categories without starting torrent jobs.
 

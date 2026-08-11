@@ -2,13 +2,16 @@
 
 const backendUrl = String(process.env.MAINTENANCE_BACKEND_URL || "http://127.0.0.1:6968").replace(/\/+$/, "");
 const payload = JSON.stringify({
-  discoverCatalog: true,
-  catalogScan: true,
+  operation: "update",
+  discoverCatalog: false,
+  catalogScan: false,
+  anilistCheck: true,
   replaceExisting: true,
   addMissing: true,
+  addNewSeasons: false,
   allCategories: false,
   concurrency: 1,
-  torrentConcurrency: 1,
+  torrentConcurrency: 2,
 });
 let lastError = null;
 for (let attempt = 1; attempt <= 6; attempt += 1) {

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Library Maintenance · RSP Media Manager</title>
   <link rel="icon" href="../Assets/Favicon.png" />
-  <link rel="stylesheet" href="styles.css?v=20260808-dual-audio-badge" />
+  <link rel="stylesheet" href="styles.css?v=20260811-maintenance-simple-11" />
 </head>
 <body>
   <header class="maintenance-toolbar">
@@ -30,8 +30,8 @@
     <section class="maintenance-hero">
       <div>
         <span class="eyebrow">Media library tools</span>
-        <h1>Keep the library current</h1>
-        <p>Run one check for the whole library. The tracker catalog discovers new TV and movie sources automatically, while existing shows are checked for missing episodes and dual-audio upgrades.</p>
+        <h1>Library maintenance</h1>
+        <p>Keep existing sources current or add new playable shows from the tracker.</p>
       </div>
       <div class="service-state" id="serviceState" aria-live="polite">Connecting to local service…</div>
     </section>
@@ -39,23 +39,41 @@
     <section class="panel quick-run-panel" aria-labelledby="updateHeading">
       <div class="panel-heading">
         <div>
-          <span class="eyebrow">Automatic upkeep</span>
-          <h2 id="updateHeading">Check and update the library</h2>
+          <span class="eyebrow">Run maintenance</span>
+          <h2 id="updateHeading">What do you want to do?</h2>
         </div>
-        <button id="updateStartBtn" class="button button-primary" type="button">Run maintenance</button>
       </div>
-      <p class="workflow-copy">New tracker titles stay hidden until playable. Existing single-audio episodes are replaced when a dual-audio release becomes available.</p>
+      <div id="operationGrid" class="mode-grid" role="group" aria-label="Maintenance modes">
+        <button class="mode-card is-selected" type="button" data-operation="update" aria-pressed="true">
+          <span class="mode-card-copy"><strong>Update current sources</strong><small>Missing episodes and dual-audio upgrades</small></span>
+          <span class="mode-card-check" aria-hidden="true">✓</span>
+        </button>
+        <button class="mode-card" type="button" data-operation="add" aria-pressed="false">
+          <span class="mode-card-copy"><strong>Add new shows</strong><small>Find playable titles not in the library</small></span>
+          <span class="mode-card-check" aria-hidden="true">✓</span>
+        </button>
+      </div>
+      <div id="modeDescription" class="mode-description" aria-live="polite">Checks known sources for missing episodes and better dual-audio releases.</div>
+      <div class="run-settings" aria-label="Run settings">
+        <label class="torrent-concurrency-control" for="updateTorrentConcurrency">Active torrent jobs
+          <input id="updateTorrentConcurrency" type="number" min="1" max="20" step="1" value="20" inputmode="numeric" aria-describedby="torrentConcurrencyHelp" />
+        </label>
+        <span id="torrentConcurrencyHelp" class="muted-line">1–20 simultaneous transfers</span>
+      </div>
+      <div class="run-action-row">
+        <button id="updateStartBtn" class="button button-primary" type="button">Run</button>
+        <button id="pauseJobBtn" class="button button-secondary" type="button" hidden>Pause</button>
+      </div>
       <div id="automationSummary" class="muted-line" aria-live="polite">No automated run started.</div>
-      <div id="catalogStatus" class="catalog-status" aria-live="polite">Tracker catalog status is loading…</div>
-      <details class="advanced-options">
-        <summary>Advanced run options</summary>
+      <details id="advancedRunOptions" class="advanced-options">
+        <summary>More settings</summary>
         <div class="check-row">
-          <label><input id="updateReplace" type="checkbox" checked /> Replace matching episodes</label>
-          <label><input id="updateAdd" type="checkbox" checked /> Add missing episodes</label>
           <label><input id="updateAllCategories" type="checkbox" /> Check every season</label>
-          <span class="muted-line">Execution is serialized: one torrent job at a time.</span>
+          <input id="updateReplace" type="checkbox" checked hidden />
+          <input id="updateAdd" type="checkbox" checked hidden />
         </div>
       </details>
+      <div id="catalogStatus" class="catalog-status" aria-live="polite" hidden></div>
     </section>
 
     <div class="maintenance-columns">
@@ -108,30 +126,6 @@
       </section>
     </div>
 
-    <details id="manualTools" class="advanced-tools">
-      <summary>Add a show manually</summary>
-      <section id="addPane" class="panel add-panel" aria-labelledby="addHeading">
-        <span class="eyebrow">Explicit new-source workflow</span>
-        <h2 id="addHeading">Add a new show</h2>
-        <div class="field-grid">
-          <label>Title<input id="addTitle" type="text" placeholder="Series title" /></label>
-          <label>JSON filename<input id="addFile" type="text" placeholder="Auto-generated from title" /></label>
-          <label>Category<input id="addCategory" type="text" value="Season 1" /></label>
-          <label>Poster URL<input id="addImage" type="url" placeholder="Optional image URL" /></label>
-        </div>
-        <div class="field-grid">
-          <label class="wide-label">Release search<input id="addQuery" type="search" placeholder="Show or release name" /></label>
-          <button id="addSearchBtn" class="button button-primary align-end" type="button">Search releases</button>
-        </div>
-        <div id="addResults" class="search-results"></div>
-        <div id="addSelection" class="selected-release" hidden>
-          <div class="selected-release-title" id="addSelectedTitle"></div>
-          <label>Toodrive folder<input id="addDestination" type="text" placeholder="Show/Season 01" /></label>
-          <button id="addStartBtn" class="button button-primary" type="button">Download, process, and create source</button>
-        </div>
-      </section>
-    </details>
-
     <section class="panel job-panel" aria-labelledby="jobHeading">
       <div class="panel-heading">
         <div>
@@ -149,6 +143,6 @@
     </section>
   </main>
 
-  <script src="app.js?v=20260808-important-activity-1"></script>
+  <script src="app.js?v=20260811-maintenance-simple-11"></script>
 </body>
 </html>

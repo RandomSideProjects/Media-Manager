@@ -155,6 +155,18 @@ test("catalog work never replaces a fully dual-audio season", async () => {
   assert.equal(planned.items.length, 0);
 });
 
+test("new-show mode ignores catalog entries already attached to a source", async () => {
+  const sources = [{
+    file: "Example_Show.json",
+    path: "Sources/Files/Anime/Example_Show.json",
+    title: "Example Show",
+    anilistIds: [100],
+    categories: [{ category: "Season 1", episodeNumbers: [], nonDualEpisodeNumbers: [] }],
+  }];
+  const planned = await service.buildCatalogMaintenanceWork(sources, { newShowsOnly: true });
+  assert.equal(planned.items.length, 0);
+});
+
 test("movie promotions replace the existing item and never downgrade confirmed dual audio", async () => {
   const replacement = await service.applyMaintenance({
     action: "update",

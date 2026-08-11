@@ -58,7 +58,7 @@ test.after(async () => {
   await rm(root, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
 });
 
-test("runs multiple release torrents sequentially and serializes manifest writes", async () => {
+test("overlaps torrent transfers while serializing manifest writes", async () => {
   const item = {
     id: "maintenance-item",
     sourcePath,
@@ -109,17 +109,19 @@ test("runs multiple release torrents sequentially and serializes manifest writes
   assert.ok(args.some((line) => line.includes("--only-episodes 5")));
   assert.ok(args.some((line) => line.includes("--only-episodes 6")));
   assert.ok(args.some((line) => line.includes("--only-episodes 7")));
-  assert.deepEqual(trace.filter((line) => line.startsWith("after-upload ")), [
+  assert.deepEqual(trace.filter((line) => line.startsWith("after-upload ")).sort(), [
     "after-upload 5 source=0 recode=0",
     "after-upload 6 source=0 recode=0",
     "after-upload 7 source=0 recode=0",
   ]);
   const lifecycle = trace.filter((line) => /^(start|finish) /.test(line));
-  assert.deepEqual(lifecycle, [
-    "start 5", "finish 5",
-    "start 6", "finish 6",
-    "start 7", "finish 7",
-  ]);
+  assert.equal(lifecycle.filter((line) => line.startsWith("start ")).length, 3);
+  assert.equal(lifecycle.filter((line) => line.startsWith("finish ")).length, 3);
+  const firstFinish = lifecycle.findIndex((line) => line.startsWith("finish "));
+  assert.equal(lifecycle.slice(0, firstFinish).filter((line) => line.startsWith("start ")).length, 3);
+  assert.deepEqual(new Set(lifecycle), new Set([
+    "start 5", "finish 5", "start 6", "finish 6", "start 7", "finish 7",
+  ]));
 
   const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
   const episodes = manifest.categories[0].episodes.map((episode) => Number(episode.title.match(/\d+/)?.[0]));
@@ -131,7 +133,7 @@ test("runs multiple release torrents sequentially and serializes manifest writes
   ]);
 });
 
-test("keeps manually submitted jobs behind the existing pipeline and cleans stopped jobs", async () => {
+test("allows manually submitted jobs to share the transfer slots and cleans stopped jobs", async () => {
   await writeFile(tracePath, "");
   const first = await service.startJob({
     magnet: "magnet:?xt=urn:btih:episode8",
@@ -144,10 +146,9 @@ test("keeps manually submitted jobs behind the existing pipeline and cleans stop
   const results = await Promise.all([first.done, second.done]);
   assert.deepEqual(results.map((job) => job.state), ["complete", "complete"]);
   const trace = (await readFile(tracePath, "utf8")).trim().split(/\r?\n/);
-  assert.deepEqual(trace.filter((line) => /^(start|finish) /.test(line)), [
-    "start 8", "finish 8",
-    "start 9", "finish 9",
-  ]);
+  const lifecycle = trace.filter((line) => /^(start|finish) /.test(line));
+  assert.deepEqual(new Set(lifecycle), new Set(["start 8", "finish 8", "start 9", "finish 9"]));
+  assert.equal(lifecycle.slice(0, lifecycle.findIndex((line) => line.startsWith("finish "))).filter((line) => line.startsWith("start ")).length, 2);
   assert.equal(first.cleanup.state, "removed");
   assert.equal(second.cleanup.state, "removed");
   await assert.rejects(access(first.cacheDir));
