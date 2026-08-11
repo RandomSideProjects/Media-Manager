@@ -365,13 +365,17 @@ function renderSourcesFromState() {
   const container = document.getElementById('sourcesContainer');
   if (!container) return;
   container.innerHTML = '';
+  const fragment = document.createDocumentFragment();
   const sorted = sortMeta(SOURCES_META, SOURCES_SORT);
   sorted.forEach((meta, index) => {
     const card = buildSourceCardFromMeta(meta);
     card.style.setProperty('--source-index', String(Math.min(index, 8)));
-    container.appendChild(card);
+    fragment.appendChild(card);
   });
-  if (!sorted.length) renderSourcesEmptyState(container, '');
+  if (!sorted.length) {
+    renderSourcesEmptyState(fragment, '');
+  }
+  container.appendChild(fragment);
   updateSourcesResultCount(sorted.length, '');
   renderContinueWatching();
 }

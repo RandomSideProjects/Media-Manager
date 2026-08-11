@@ -201,7 +201,7 @@ async function loadSource(rawInput) {
   try {
     let json = directJson;
     if (!json) {
-      const response = await fetch(srcUrl, { cache: 'no-store' });
+      const response = await fetch(srcUrl, { cache: 'default' });
       if (!response) throw new Error('No response');
       const statusPart = response.status;
       const allowStatus0 = statusPart === 0; // file:// or opaque (CORS) – attempt parse anyway

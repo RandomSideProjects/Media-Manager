@@ -24,7 +24,6 @@
   ];
 
   const customScripts = [
-    'scripts/jszip/jszip.min.js',
     'scripts/constants.js',
     'alerts.js?v=20260810-playback-alert-asset',
     'scripts/alerts.js',
@@ -45,8 +44,9 @@
     'scripts/settings.js',
     'scripts/dev-menu.js',
     'scripts/theme.js',
-    'scripts/init.js?v=20260727-continue-watching',
+    'scripts/jszip/jszip.min.js',
     'scripts/local-folder.js?v=20260810-manga-repair',
+    'scripts/init.js?v=20260727-continue-watching',
     'scripts/zxing-lib.min.js',
     'scripts/jsqr.min.js',
     'scripts/qrcode.min.js',
@@ -54,6 +54,8 @@
     'scripts/storage.js?v=20260810-manga-repair',
     'scripts/version.js?v=20260725-layout'
   ];
+
+  const customBootScriptIndex = customScripts.findIndex((src) => src.startsWith('scripts/init.js'));
 
   function loadScript(src) {
     return new Promise((resolve) => {
@@ -68,6 +70,22 @@
 
   async function loadScripts(sources) {
     for (const src of sources) await loadScript(src);
+  }
+
+  function scheduleDeferredCustomScripts(sources) {
+    if (!sources.length) return;
+    const start = () => { void loadScripts(sources); };
+    if (typeof window.requestIdleCallback === 'function') {
+      window.requestIdleCallback(start, { timeout: 1500 });
+    } else {
+      window.setTimeout(start, 250);
+    }
+  }
+
+  async function loadCustomScripts() {
+    const bootEnd = customBootScriptIndex >= 0 ? customBootScriptIndex + 1 : customScripts.length;
+    await loadScripts(customScripts.slice(0, bootEnd));
+    scheduleDeferredCustomScripts(customScripts.slice(bootEnd));
   }
 
   function renderCustomShell() {
@@ -196,5 +214,5 @@
   }
 
   if (customMode) renderCustomShell();
-  void loadScripts(customMode ? customScripts : publicScripts);
+  void (customMode ? loadCustomScripts() : loadScripts(publicScripts));
 })();

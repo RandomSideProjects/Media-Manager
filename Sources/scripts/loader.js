@@ -90,7 +90,7 @@ async function loadSources() {
   try {
     const manifestName = (typeof SOURCES_MODE !== 'undefined' && SOURCES_MODE === 'manga') ? 'MangaSourceList.json' : 'AnimeSourceList.json';
     const manifestUrl = new URL(`Sources/${manifestName}`, window.location.href).href;
-    const response = await fetch(manifestUrl, { cache: 'no-store' });
+    const response = await fetch(manifestUrl, { cache: 'default' });
     const text = await response.text();
     const manifest = JSON.parse(text);
     console.log('Loaded', manifestName + ':', manifestUrl);

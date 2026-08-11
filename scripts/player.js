@@ -2739,7 +2739,11 @@ if (backBtn) {
       const st = (directoryTitle && directoryTitle.textContent ? directoryTitle.textContent.trim() : '') || 'Source';
       document.title = `${st} on RSP Media Manager`;
     } catch {}
-    renderEpisodeList();
+    if (episodeList && !episodeList.childElementCount) {
+      renderEpisodeList();
+    } else if (typeof refreshEpisodeMetaFromStorage === 'function') {
+      refreshEpisodeMetaFromStorage();
+    }
     const params = new URLSearchParams(window.location.search);
     params.delete('item'); params.delete('?item');
     const query = params.toString();

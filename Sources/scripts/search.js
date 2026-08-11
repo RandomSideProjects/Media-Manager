@@ -29,14 +29,16 @@
       );
       const container = document.getElementById('sourcesContainer');
       container.innerHTML = '';
+      const fragment = document.createDocumentFragment();
       filtered.forEach((meta, index) => {
         const card = buildSourceCardFromMeta(meta);
         card.style.setProperty('--source-index', String(Math.min(index, 8)));
-        container.appendChild(card);
+        fragment.appendChild(card);
       });
       if (!filtered.length && typeof renderSourcesEmptyState === 'function') {
-        renderSourcesEmptyState(container, rawQuery);
+        renderSourcesEmptyState(fragment, rawQuery);
       }
+      container.appendChild(fragment);
       if (typeof updateSourcesResultCount === 'function') {
         updateSourcesResultCount(filtered.length, rawQuery);
       }

@@ -324,6 +324,7 @@ function attachLongTitleTooltip(button, text) {
 function renderEpisodeList() {
   episodeList.innerHTML = '';
   flatList = [];
+  const fragment = document.createDocumentFragment();
   const hasMultipleCategories = Array.isArray(videoList) && videoList.length > 1;
   const showCategoryTitle = hasMultipleCategories;
   let separatedGroupCounter = 0;
@@ -391,7 +392,7 @@ function renderEpisodeList() {
       const catTitle = document.createElement('div');
       catTitle.className = 'category-title';
       catTitle.textContent = categoryTitle;
-      episodeList.appendChild(catTitle);
+      fragment.appendChild(catTitle);
     }
 
     if (useSeparated) {
@@ -487,7 +488,7 @@ function renderEpisodeList() {
         theaterBtn.style.display = 'inline-block';
         loadVideo(currentIndex);
       });
-      episodeList.appendChild(button);
+      fragment.appendChild(button);
       return;
     }
 
@@ -600,7 +601,7 @@ function renderEpisodeList() {
         theaterBtn.style.display = 'inline-block';
         loadVideo(currentIndex);
       });
-      episodeList.appendChild(button);
+      fragment.appendChild(button);
     });
   });
 
@@ -608,8 +609,10 @@ function renderEpisodeList() {
     const empty = document.createElement('div');
     empty.className = 'empty-state';
     empty.textContent = 'No items available in this source yet.';
-    episodeList.appendChild(empty);
+    fragment.appendChild(empty);
   }
+
+  episodeList.appendChild(fragment);
 
   if (longTitleQueue.length) {
     requestAnimationFrame(() => {
