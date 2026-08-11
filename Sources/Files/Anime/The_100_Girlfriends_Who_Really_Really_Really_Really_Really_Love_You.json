@@ -187,11 +187,17 @@
           "title": "Episode 05",
           "src": "https://toodrive.xpbliss.fyi/dl/irj3c8hc8khvgp7n4zhd5la0/raw",
           "fileSizeBytes": 384917339
+        },
+        {
+          "title": "Episode 06",
+          "src": "https://toodrive.xpbliss.fyi/dl/pqxa6roduw9ugl7eppjvhx23/raw",
+          "fileSizeBytes": 459211435,
+          "dualAudio": false
         }
       ]
     }
   ],
-  "totalFileSizeBytes": 10089129809,
-  "LatestTime": "2026-08-11T17:11:11.535Z",
+  "totalFileSizeBytes": 10548341244,
+  "LatestTime": "2026-08-11T19:04:09.385Z",
   "anilistIds": []
 }
