@@ -193,11 +193,17 @@
           "src": "https://toodrive.xpbliss.fyi/dl/pqxa6roduw9ugl7eppjvhx23/raw",
           "fileSizeBytes": 459211435,
           "dualAudio": false
+        },
+        {
+          "title": "Episode 07",
+          "src": "https://toodrive.xpbliss.fyi/dl/jk6kd39fs2eofhk8h29sd32n/raw",
+          "fileSizeBytes": 1447323890,
+          "dualAudio": false
         }
       ]
     }
   ],
-  "totalFileSizeBytes": 10548341244,
-  "LatestTime": "2026-08-11T19:04:09.385Z",
+  "totalFileSizeBytes": 11995665134,
+  "LatestTime": "2026-08-16T17:38:21.955Z",
   "anilistIds": []
 }
