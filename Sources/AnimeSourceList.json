@@ -6,11 +6,17 @@
       "title": "A Condition Called Love",
       "poster": "./Posters/Anime/A_Condition_Called_Love.webp",
       "categoryCount": 1,
+      "separatedCategoryCount": 0,
       "episodeCount": 12,
       "itemCount": 12,
+      "separatedItemCount": 0,
       "totalFileSizeBytes": 713864585,
       "totalDurationSeconds": 17025,
-      "LatestTime": "2025-08-11T12:36:00"
+      "LatestTime": "2025-08-11T12:36:00",
+      "anilistIds": [],
+      "mediaFormat": "TV",
+      "dualAudioCount": 0,
+      "dualAudio": false
     },
     {
       "file": "Cuckoos.json",
@@ -18,11 +24,16 @@
       "title": "A Couple Of Cuckoos",
       "poster": "./Posters/Anime/A_Couple_Of_Cuckoos.webp",
       "categoryCount": 2,
+      "separatedCategoryCount": 0,
       "episodeCount": 36,
       "itemCount": 36,
+      "separatedItemCount": 0,
       "totalFileSizeBytes": 15529485046,
-      "totalDurationSeconds": 41691,
-      "LatestTime": "2026-08-05T17:21:45.000Z"
+      "LatestTime": "2026-08-05T17:21:45.000Z",
+      "anilistIds": [],
+      "mediaFormat": "TV",
+      "dualAudioCount": 0,
+      "dualAudio": false
     },
     {
       "file": "Aharen.json",
@@ -30,11 +41,17 @@
       "title": "Aharen Is Indecipherable",
       "poster": "./Posters/Anime/Aharen_Is_Indecipherable.webp",
       "categoryCount": 2,
+      "separatedCategoryCount": 0,
       "episodeCount": 24,
       "itemCount": 24,
+      "separatedItemCount": 0,
       "totalFileSizeBytes": 3148753748,
       "totalDurationSeconds": 34833,
-      "LatestTime": "2025-09-07T06:49:49.243Z"
+      "LatestTime": "2025-09-07T06:49:49.243Z",
+      "anilistIds": [],
+      "mediaFormat": "TV",
+      "dualAudioCount": 0,
+      "dualAudio": false
     },
     {
       "file": "NeverThoughtGirlOnline.json",
@@ -42,11 +59,17 @@
       "title": "And You Thought There Is Never A Girl Online?",
       "poster": "./Posters/Anime/And_You_Thought_There_Is_Never_A_Girl_Online_.webp",
       "categoryCount": 1,
+      "separatedCategoryCount": 0,
       "episodeCount": 12,
       "itemCount": 12,
+      "separatedItemCount": 0,
       "totalFileSizeBytes": 1664642548,
       "totalDurationSeconds": 17412,
-      "LatestTime": "2025-08-24T04:59:43.415Z"
+      "LatestTime": "2025-08-24T04:59:43.415Z",
+      "anilistIds": [],
+      "mediaFormat": "TV",
+      "dualAudioCount": 0,
+      "dualAudio": false
     },
     {
       "file": "Apothicary_Diaries.json",
@@ -54,11 +77,17 @@
       "title": "Apothicary Diaries",
       "poster": "./Posters/Anime/Apothicary_Diaries.webp",
       "categoryCount": 2,
+      "separatedCategoryCount": 0,
       "episodeCount": 48,
       "itemCount": 48,
+      "separatedItemCount": 0,
       "totalFileSizeBytes": 69253304885,
       "totalDurationSeconds": 67520,
-      "LatestTime": "2026-08-08T23:33:07.445Z"
+      "LatestTime": "2026-08-08T23:33:07.445Z",
+      "anilistIds": [],
+      "mediaFormat": "TV",
+      "dualAudioCount": 48,
+      "dualAudio": true
     },
     {
       "file": "Backrooms.json",
@@ -66,12 +95,18 @@
       "title": "Backrooms",
       "poster": "./Posters/Anime/Backrooms.webp",
       "categoryCount": 0,
+      "separatedCategoryCount": 0,
       "episodeCount": 0,
       "itemCount": 1,
       "movieCount": 1,
+      "separatedItemCount": 0,
       "totalFileSizeBytes": 2186284601,
       "totalDurationSeconds": 6629,
-      "LatestTime": "2026-07-22T17:53:46.432Z"
+      "LatestTime": "2026-07-22T17:53:46.432Z",
+      "anilistIds": [],
+      "mediaFormat": "MOVIE",
+      "dualAudioCount": 0,
+      "dualAudio": false
     },
     {
       "file": "Bloom_Into_You.json",
@@ -79,11 +114,17 @@
       "title": "Bloom Into You",
       "poster": "./Posters/Anime/Bloom_Into_You.webp",
       "categoryCount": 1,
+      "separatedCategoryCount": 0,
       "episodeCount": 13,
       "itemCount": 13,
+      "separatedItemCount": 0,
       "totalFileSizeBytes": 6249917153,
       "totalDurationSeconds": 24019,
-      "LatestTime": "2025-10-27T13:09:59.506Z"
+      "LatestTime": "2025-10-27T13:09:59.506Z",
+      "anilistIds": [],
+      "mediaFormat": "TV",
+      "dualAudioCount": 0,
+      "dualAudio": false
     },
     {
       "file": "Call_Of_The_Night.json",
@@ -91,11 +132,17 @@
       "title": "Call Of The Night",
       "poster": "./Posters/Anime/Call_Of_The_Night.webp",
       "categoryCount": 2,
+      "separatedCategoryCount": 0,
       "episodeCount": 25,
       "itemCount": 25,
+      "separatedItemCount": 0,
       "totalFileSizeBytes": 3301840883,
       "totalDurationSeconds": 34793,
-      "LatestTime": "2025-11-05T20:12:58.906Z"
+      "LatestTime": "2025-11-05T20:12:58.906Z",
+      "anilistIds": [],
+      "mediaFormat": "TV",
+      "dualAudioCount": 0,
+      "dualAudio": false
     },
     {
       "file": "Campfire_Cooking_In_Another_World_With_My_Absurd_Skill.json",
@@ -103,11 +150,16 @@
       "title": "Campfire Cooking in Another World with My Absurd Skill",
       "poster": "./Posters/Anime/Campfire_Cooking_in_Another_World_with_My_Absurd_Skill.webp",
       "categoryCount": 2,
+      "separatedCategoryCount": 0,
       "episodeCount": 24,
       "itemCount": 24,
+      "separatedItemCount": 0,
       "totalFileSizeBytes": 18989486962,
-      "totalDurationSeconds": 34457,
-      "LatestTime": "2026-08-06T13:22:49.577Z"
+      "LatestTime": "2026-08-06T13:22:49.577Z",
+      "anilistIds": [],
+      "mediaFormat": "TV",
+      "dualAudioCount": 0,
+      "dualAudio": false
     },
     {
       "file": "ChillinLvl2SCP.json",
@@ -115,11 +167,17 @@
       "title": "Chillin' In A World With Level 2 Super Powers",
       "poster": "./Posters/Anime/Chillin'_In_A_World_With_Level_2_Super_Powers.webp",
       "categoryCount": 1,
+      "separatedCategoryCount": 0,
       "episodeCount": 12,
       "itemCount": 12,
+      "separatedItemCount": 0,
       "totalFileSizeBytes": 1301085726,
       "totalDurationSeconds": 17292,
-      "LatestTime": "2025-08-15T00:45:40.890Z"
+      "LatestTime": "2025-08-15T00:45:40.890Z",
+      "anilistIds": [],
+      "mediaFormat": "TV",
+      "dualAudioCount": 0,
+      "dualAudio": false
     },
     {
       "file": "DanDaDan.json",
@@ -127,11 +185,17 @@
       "title": "DanDaDan",
       "poster": "./Posters/Anime/DanDaDan.webp",
       "categoryCount": 2,
+      "separatedCategoryCount": 0,
       "episodeCount": 24,
       "itemCount": 24,
+      "separatedItemCount": 0,
       "totalFileSizeBytes": 3369972016,
       "totalDurationSeconds": 34428,
-      "LatestTime": "2025-09-18T20:18:57.760Z"
+      "LatestTime": "2025-09-18T20:18:57.760Z",
+      "anilistIds": [],
+      "mediaFormat": "TV",
+      "dualAudioCount": 0,
+      "dualAudio": false
     },
     {
       "file": "Franxx.json",
@@ -139,11 +203,17 @@
       "title": "DARLING in the FRANXX",
       "poster": "./Posters/Anime/DARLING_in_the_FRANXX.webp",
       "categoryCount": 1,
+      "separatedCategoryCount": 0,
       "episodeCount": 24,
       "itemCount": 24,
+      "separatedItemCount": 0,
       "totalFileSizeBytes": 2275740927,
       "totalDurationSeconds": 34559,
-      "LatestTime": "2025-09-05T05:25:34.010Z"
+      "LatestTime": "2025-09-05T05:25:34.010Z",
+      "anilistIds": [],
+      "mediaFormat": "TV",
+      "dualAudioCount": 0,
+      "dualAudio": false
     },
     {
       "file": "Dealing_With_Mikadono_Sisters_Is_A_Breeze.json",
@@ -151,11 +221,17 @@
       "title": "Dealing With Mikadono Sisters Is A Breeze",
       "poster": "./Posters/Anime/Dealing_With_Mikadono_Sisters_Is_A_Breeze.webp",
       "categoryCount": 1,
+      "separatedCategoryCount": 0,
       "episodeCount": 12,
       "itemCount": 12,
+      "separatedItemCount": 0,
       "totalFileSizeBytes": 1918180857,
       "totalDurationSeconds": 17100,
-      "LatestTime": "2025-10-08T23:40:29.119Z"
+      "LatestTime": "2025-10-08T23:40:29.119Z",
+      "anilistIds": [],
+      "mediaFormat": "TV",
+      "dualAudioCount": 0,
+      "dualAudio": false
     },
     {
       "file": "Easygoing_Territory_Defense_By_The_Optimistic_Lord_Production.json",
@@ -163,11 +239,16 @@
       "title": "Easygoing Territory Defense by the Optimistic Lord",
       "poster": "./Posters/Anime/Easygoing_Territory_Defense_by_the_Optimistic_Lord.webp",
       "categoryCount": 1,
+      "separatedCategoryCount": 0,
       "episodeCount": 12,
       "itemCount": 12,
-      "totalFileSizeBytes": 12270945800,
-      "totalDurationSeconds": 17040,
-      "LatestTime": "2026-08-06T14:27:21.053Z"
+      "separatedItemCount": 0,
+      "totalFileSizeBytes": 13579348529,
+      "LatestTime": "2026-08-07T17:44:32.046Z",
+      "anilistIds": [],
+      "mediaFormat": "TV",
+      "dualAudioCount": 0,
+      "dualAudio": false
     },
     {
       "file": "Failure_Frame.json",
@@ -175,11 +256,17 @@
       "title": "Failure Frame",
       "poster": "./Posters/Anime/Failure_Frame.webp",
       "categoryCount": 1,
+      "separatedCategoryCount": 0,
       "episodeCount": 12,
       "itemCount": 12,
+      "separatedItemCount": 0,
       "totalFileSizeBytes": 1904872376,
       "totalDurationSeconds": 17397,
-      "LatestTime": "2025-08-15T00:33:47.052Z"
+      "LatestTime": "2025-08-15T00:33:47.052Z",
+      "anilistIds": [],
+      "mediaFormat": "TV",
+      "dualAudioCount": 0,
+      "dualAudio": false
     },
     {
       "file": "Farming_Life_In_Another_World.json",
@@ -187,11 +274,16 @@
       "title": "Farming Life In Another World",
       "poster": "./Posters/Anime/Farming_Life_In_Another_World.webp",
       "categoryCount": 2,
+      "separatedCategoryCount": 0,
       "episodeCount": 24,
       "itemCount": 24,
+      "separatedItemCount": 0,
       "totalFileSizeBytes": 14053246578,
-      "totalDurationSeconds": 34366,
-      "LatestTime": "2026-08-06T16:02:36.162Z"
+      "LatestTime": "2026-08-06T16:02:36.162Z",
+      "anilistIds": [],
+      "mediaFormat": "TV",
+      "dualAudioCount": 0,
+      "dualAudio": false
     },
     {
       "file": "Frieren.json",
@@ -199,11 +291,16 @@
       "title": "Frieren: Beyond Journey's End",
       "poster": "./Posters/Anime/Frieren_Beyond_Journey's_End.webp",
       "categoryCount": 2,
+      "separatedCategoryCount": 0,
       "episodeCount": 38,
       "itemCount": 38,
+      "separatedItemCount": 0,
       "totalFileSizeBytes": 13188195227,
-      "totalDurationSeconds": 54363,
-      "LatestTime": "2026-08-08T01:09:28.711Z"
+      "LatestTime": "2026-08-07T17:56:09.656Z",
+      "anilistIds": [],
+      "mediaFormat": "TV",
+      "dualAudioCount": 0,
+      "dualAudio": false
     },
     {
       "file": "Gamers.json",
@@ -211,11 +308,17 @@
       "title": "Gamers!",
       "poster": "./Posters/Anime/Gamers!.webp",
       "categoryCount": 1,
+      "separatedCategoryCount": 0,
       "episodeCount": 12,
       "itemCount": 12,
+      "separatedItemCount": 0,
       "totalFileSizeBytes": 913931868,
       "totalDurationSeconds": 17118,
-      "LatestTime": "2025-09-05T07:20:01.007Z"
+      "LatestTime": "2025-09-05T07:20:01.007Z",
+      "anilistIds": [],
+      "mediaFormat": "TV",
+      "dualAudioCount": 0,
+      "dualAudio": false
     },
     {
       "file": "Ghost_Stories.json",
@@ -223,11 +326,17 @@
       "title": "Ghost Stories",
       "poster": "./Posters/Anime/Ghost_Stories.webp",
       "categoryCount": 1,
+      "separatedCategoryCount": 0,
       "episodeCount": 20,
       "itemCount": 20,
+      "separatedItemCount": 0,
       "totalFileSizeBytes": 4943094769,
       "totalDurationSeconds": 28305,
-      "LatestTime": "2026-03-25T17:35:23.282Z"
+      "LatestTime": "2026-03-25T17:35:23.282Z",
+      "anilistIds": [],
+      "mediaFormat": "TV",
+      "dualAudioCount": 0,
+      "dualAudio": false
     },
     {
       "file": "GGLR.json",
@@ -235,11 +344,17 @@
       "title": "GO! GO! LOSER RANGER!",
       "poster": "./Posters/Anime/GO!_GO!_LOSER_RANGER!.webp",
       "categoryCount": 2,
+      "separatedCategoryCount": 0,
       "episodeCount": 24,
       "itemCount": 24,
+      "separatedItemCount": 0,
       "totalFileSizeBytes": 4054815404,
       "totalDurationSeconds": 34362,
-      "LatestTime": "2025-09-07T05:59:36.421Z"
+      "LatestTime": "2025-09-07T05:59:36.421Z",
+      "anilistIds": [],
+      "mediaFormat": "TV",
+      "dualAudioCount": 0,
+      "dualAudio": false
     },
     {
       "file": "Hokkaido!.json",
@@ -247,11 +362,17 @@
       "title": "Hokkaido Gals Are Super Adorable!",
       "poster": "./Posters/Anime/Hokkaido_Gals_Are_Super_Adorable!.webp",
       "categoryCount": 1,
+      "separatedCategoryCount": 0,
       "episodeCount": 12,
       "itemCount": 12,
+      "separatedItemCount": 0,
       "totalFileSizeBytes": 1469343927,
       "totalDurationSeconds": 17280,
-      "LatestTime": "2025-09-05T05:11:52.044Z"
+      "LatestTime": "2025-09-05T05:11:52.044Z",
+      "anilistIds": [],
+      "mediaFormat": "TV",
+      "dualAudioCount": 0,
+      "dualAudio": false
     },
     {
       "file": "Horimiya.json",
@@ -259,11 +380,17 @@
       "title": "Horimiya",
       "poster": "./Posters/Anime/Horimiya.webp",
       "categoryCount": 2,
+      "separatedCategoryCount": 0,
       "episodeCount": 26,
       "itemCount": 26,
+      "separatedItemCount": 0,
       "totalFileSizeBytes": 2827094047,
       "totalDurationSeconds": 37173,
-      "LatestTime": "2025-08-14T00:45:54.033Z"
+      "LatestTime": "2025-08-14T00:45:54.033Z",
+      "anilistIds": [],
+      "mediaFormat": "TV",
+      "dualAudioCount": 0,
+      "dualAudio": false
     },
     {
       "file": "I_Want_To_Eat_Your_Pancreas.json",
@@ -271,12 +398,18 @@
       "title": "I Want To Eat Your Pancreas",
       "poster": "./Posters/Anime/I_Want_To_Eat_Your_Pancreas.webp",
       "categoryCount": 0,
+      "separatedCategoryCount": 0,
       "episodeCount": 0,
       "itemCount": 1,
       "movieCount": 1,
+      "separatedItemCount": 0,
       "totalFileSizeBytes": 606034088,
       "totalDurationSeconds": 6523,
-      "LatestTime": "2025-11-28T05:17:08.886Z"
+      "LatestTime": "2025-11-28T05:17:08.886Z",
+      "anilistIds": [],
+      "mediaFormat": "MOVIE",
+      "dualAudioCount": 0,
+      "dualAudio": false
     },
     {
       "file": "AnotherWorldSmartphone.json",
@@ -284,11 +417,17 @@
       "title": "In Another World With My Smartphone",
       "poster": "./Posters/Anime/In_Another_World_With_My_Smartphone.webp",
       "categoryCount": 2,
+      "separatedCategoryCount": 0,
       "episodeCount": 24,
       "itemCount": 24,
+      "separatedItemCount": 0,
       "totalFileSizeBytes": 3130241596,
       "totalDurationSeconds": 34224,
-      "LatestTime": "2025-09-05T04:01:07.498Z"
+      "LatestTime": "2025-09-05T04:01:07.498Z",
+      "anilistIds": [],
+      "mediaFormat": "TV",
+      "dualAudioCount": 0,
+      "dualAudio": false
     },
     {
       "file": "LoveIsWar.json",
@@ -296,11 +435,16 @@
       "title": "Kaguya-Sama: Love Is War",
       "poster": "./Posters/Anime/Kaguya-Sama_Love_Is_War.webp",
       "categoryCount": 4,
+      "separatedCategoryCount": 0,
       "episodeCount": 41,
       "itemCount": 41,
+      "separatedItemCount": 0,
       "totalFileSizeBytes": 4767720497,
-      "totalDurationSeconds": 57018,
-      "LatestTime": "2025-08-22T03:48:20.383Z"
+      "LatestTime": "2025-08-22T03:48:20.383Z",
+      "anilistIds": [],
+      "mediaFormat": "TV",
+      "dualAudioCount": 0,
+      "dualAudio": false
     },
     {
       "file": "Kill_La_Kill.json",
@@ -308,11 +452,17 @@
       "title": "Kill la Kill",
       "poster": "./Posters/Anime/Kill_la_Kill.webp",
       "categoryCount": 1,
+      "separatedCategoryCount": 0,
       "episodeCount": 24,
       "itemCount": 24,
+      "separatedItemCount": 0,
       "totalFileSizeBytes": 5223177254,
       "totalDurationSeconds": 35291,
-      "LatestTime": "2025-12-01T00:13:33.409Z"
+      "LatestTime": "2025-12-01T00:13:33.409Z",
+      "anilistIds": [],
+      "mediaFormat": "TV",
+      "dualAudioCount": 0,
+      "dualAudio": false
     },
     {
       "file": "Konosuba_God_S_Blessing_On_This_Wonderful_World.json",
@@ -320,12 +470,17 @@
       "title": "KONOSUBA",
       "poster": "./Posters/Anime/KONOSUBA.webp",
       "categoryCount": 3,
+      "separatedCategoryCount": 0,
       "episodeCount": 31,
       "itemCount": 32,
       "movieCount": 1,
+      "separatedItemCount": 0,
       "totalFileSizeBytes": 12543581603,
-      "totalDurationSeconds": 50091,
-      "LatestTime": "2026-08-06T17:56:39.679Z"
+      "LatestTime": "2026-08-06T17:56:39.679Z",
+      "anilistIds": [],
+      "mediaFormat": "TV",
+      "dualAudioCount": 0,
+      "dualAudio": false
     },
     {
       "file": "Love_Flops.json",
@@ -333,11 +488,17 @@
       "title": "Love Flops",
       "poster": "./Posters/Anime/Love_Flops.webp",
       "categoryCount": 1,
+      "separatedCategoryCount": 0,
       "episodeCount": 12,
       "itemCount": 12,
+      "separatedItemCount": 0,
       "totalFileSizeBytes": 2286419019,
       "totalDurationSeconds": 17052,
-      "LatestTime": "2025-09-07T07:04:35.767Z"
+      "LatestTime": "2025-09-07T07:04:35.767Z",
+      "anilistIds": [],
+      "mediaFormat": "TV",
+      "dualAudioCount": 0,
+      "dualAudio": false
     },
     {
       "file": "Love_Chunibyo_Other_Delusions.json",
@@ -345,11 +506,17 @@
       "title": "Love, Chunibyo & Other Delusions",
       "poster": "./Posters/Anime/Love,_Chunibyo_&_Other_Delusions.webp",
       "categoryCount": 1,
+      "separatedCategoryCount": 0,
       "episodeCount": 12,
       "itemCount": 12,
+      "separatedItemCount": 0,
       "totalFileSizeBytes": 1425910903,
       "totalDurationSeconds": 16992,
-      "LatestTime": "2025-10-11T05:39:02.686Z"
+      "LatestTime": "2025-10-11T05:39:02.686Z",
+      "anilistIds": [],
+      "mediaFormat": "TV",
+      "dualAudioCount": 0,
+      "dualAudio": false
     },
     {
       "file": "Lucky_Star.json",
@@ -357,11 +524,17 @@
       "title": "Lucky Star",
       "poster": "./Posters/Anime/Lucky_Star.webp",
       "categoryCount": 1,
+      "separatedCategoryCount": 0,
       "episodeCount": 24,
       "itemCount": 24,
+      "separatedItemCount": 0,
       "totalFileSizeBytes": 9513956325,
       "totalDurationSeconds": 34115,
-      "LatestTime": "2026-03-25T17:33:38.176Z"
+      "LatestTime": "2026-03-25T17:33:38.176Z",
+      "anilistIds": [],
+      "mediaFormat": "TV",
+      "dualAudioCount": 0,
+      "dualAudio": false
     },
     {
       "file": "Makine_Too_Many_Losing_Heroines.json",
@@ -369,11 +542,17 @@
       "title": "Makine: Too Many Losing Heroines",
       "poster": "./Posters/Anime/Makine_Too_Many_Losing_Heroines.webp",
       "categoryCount": 1,
+      "separatedCategoryCount": 0,
       "episodeCount": 12,
       "itemCount": 12,
+      "separatedItemCount": 0,
       "totalFileSizeBytes": 1772382732,
       "totalDurationSeconds": 17340,
-      "LatestTime": "2026-06-10T15:45:08.490Z"
+      "LatestTime": "2026-06-10T15:45:08.490Z",
+      "anilistIds": [],
+      "mediaFormat": "TV",
+      "dualAudioCount": 0,
+      "dualAudio": false
     },
     {
       "file": "MarriedNotLovers.json",
@@ -381,11 +560,17 @@
       "title": "More Than a Married Couple, But Not Lovers",
       "poster": "./Posters/Anime/More_Than_a_Married_Couple,_But_Not_Lovers.webp",
       "categoryCount": 1,
+      "separatedCategoryCount": 0,
       "episodeCount": 12,
       "itemCount": 12,
+      "separatedItemCount": 0,
       "totalFileSizeBytes": 1264865331,
       "totalDurationSeconds": 17426,
-      "LatestTime": "2025-08-11T12:36:00"
+      "LatestTime": "2025-08-11T12:36:00",
+      "anilistIds": [],
+      "mediaFormat": "TV",
+      "dualAudioCount": 0,
+      "dualAudio": false
     },
     {
       "file": "My_Deer_Friend_Nokotan.json",
@@ -393,11 +578,17 @@
       "title": "My Deer Friend Nokotan",
       "poster": "./Posters/Anime/My_Deer_Friend_Nokotan.webp",
       "categoryCount": 1,
+      "separatedCategoryCount": 0,
       "episodeCount": 12,
       "itemCount": 12,
+      "separatedItemCount": 0,
       "totalFileSizeBytes": 1959815768,
       "totalDurationSeconds": 16992,
-      "LatestTime": "2025-09-05T02:57:26.963Z"
+      "LatestTime": "2025-09-05T02:57:26.963Z",
+      "anilistIds": [],
+      "mediaFormat": "TV",
+      "dualAudioCount": 0,
+      "dualAudio": false
     },
     {
       "file": "My_Dress_Up_Darling.json",
@@ -405,11 +596,17 @@
       "title": "My Dress-up Darling",
       "poster": "./Posters/Anime/My_Dress-up_Darling.webp",
       "categoryCount": 2,
+      "separatedCategoryCount": 0,
       "episodeCount": 24,
       "itemCount": 24,
+      "separatedItemCount": 0,
       "totalFileSizeBytes": 3377862336,
       "totalDurationSeconds": 34147,
-      "LatestTime": "2025-10-05T06:13:35.816Z"
+      "LatestTime": "2025-10-05T06:13:35.816Z",
+      "anilistIds": [],
+      "mediaFormat": "TV",
+      "dualAudioCount": 0,
+      "dualAudio": false
     },
     {
       "file": "My Love Story With Yamada-kun At Lv999.json",
@@ -417,11 +614,17 @@
       "title": "My Love Story With Yamada-kun At Lv999",
       "poster": "./Posters/Anime/My_Love_Story_With_Yamada-kun_At_Lv999.webp",
       "categoryCount": 1,
+      "separatedCategoryCount": 0,
       "episodeCount": 13,
       "itemCount": 13,
+      "separatedItemCount": 0,
       "totalFileSizeBytes": 1838483814,
       "totalDurationSeconds": 18550,
-      "LatestTime": "2025-09-06T05:20:44.454Z"
+      "LatestTime": "2025-09-06T05:20:44.454Z",
+      "anilistIds": [],
+      "mediaFormat": "TV",
+      "dualAudioCount": 0,
+      "dualAudio": false
     },
     {
       "file": "TinySenpai.json",
@@ -429,11 +632,17 @@
       "title": "My Tiny Senpai",
       "poster": "./Posters/Anime/My_Tiny_Senpai.webp",
       "categoryCount": 1,
+      "separatedCategoryCount": 0,
       "episodeCount": 12,
       "itemCount": 12,
+      "separatedItemCount": 0,
       "totalFileSizeBytes": 1412942619,
       "totalDurationSeconds": 16551,
-      "LatestTime": "2025-08-11T12:36:00"
+      "LatestTime": "2025-08-11T12:36:00",
+      "anilistIds": [],
+      "mediaFormat": "TV",
+      "dualAudioCount": 0,
+      "dualAudio": false
     },
     {
       "file": "Nyaight_Of_The_Living_Cat.json",
@@ -441,11 +650,17 @@
       "title": "Nyaight Of The Living Cat",
       "poster": "./Posters/Anime/Nyaight_Of_The_Living_Cat.webp",
       "categoryCount": 1,
+      "separatedCategoryCount": 0,
       "episodeCount": 12,
       "itemCount": 12,
+      "separatedItemCount": 0,
       "totalFileSizeBytes": 1495600829,
       "totalDurationSeconds": 17250,
-      "LatestTime": "2025-10-19T03:10:54.126Z"
+      "LatestTime": "2025-10-19T03:10:54.126Z",
+      "anilistIds": [],
+      "mediaFormat": "TV",
+      "dualAudioCount": 0,
+      "dualAudio": false
     },
     {
       "file": "One-Punch_Man.json",
@@ -453,11 +668,16 @@
       "title": "One-Punch Man",
       "poster": "./Posters/Anime/One-Punch_Man.webp",
       "categoryCount": 3,
+      "separatedCategoryCount": 0,
       "episodeCount": 36,
       "itemCount": 36,
+      "separatedItemCount": 0,
       "totalFileSizeBytes": 22026829183,
-      "totalDurationSeconds": 51969,
-      "LatestTime": "2026-08-06T20:35:02.400Z"
+      "LatestTime": "2026-08-06T20:35:02.400Z",
+      "anilistIds": [],
+      "mediaFormat": "TV",
+      "dualAudioCount": 0,
+      "dualAudio": false
     },
     {
       "file": "Quintuplets.json",
@@ -465,12 +685,18 @@
       "title": "Quintessential Quintuplets",
       "poster": "./Posters/Anime/Quintessential_Quintuplets.webp",
       "categoryCount": 2,
+      "separatedCategoryCount": 0,
       "episodeCount": 24,
       "itemCount": 25,
       "movieCount": 1,
+      "separatedItemCount": 0,
       "totalFileSizeBytes": 4732678956,
       "totalDurationSeconds": 42855,
-      "LatestTime": "2025-08-15T00:53:37.020Z"
+      "LatestTime": "2025-08-15T00:53:37.020Z",
+      "anilistIds": [],
+      "mediaFormat": "TV",
+      "dualAudioCount": 0,
+      "dualAudio": false
     },
     {
       "file": "Ranma_1_2_2024.json",
@@ -478,11 +704,17 @@
       "title": "Ranma ½ (2024)",
       "poster": "./Posters/Anime/Ranma_½_(2024).webp",
       "categoryCount": 2,
+      "separatedCategoryCount": 0,
       "episodeCount": 24,
       "itemCount": 24,
+      "separatedItemCount": 0,
       "totalFileSizeBytes": 5175695952,
       "totalDurationSeconds": 35111,
-      "LatestTime": "2025-12-23T06:59:19.496Z"
+      "LatestTime": "2025-12-23T06:59:19.496Z",
+      "anilistIds": [],
+      "mediaFormat": "TV",
+      "dualAudioCount": 0,
+      "dualAudio": false
     },
     {
       "file": "Rascal_Does_Not_Dream_Of_A_Bunny_Girl_Senpai.json",
@@ -490,11 +722,17 @@
       "title": "Rascal Does Not Dream Of A Bunny Girl Senpai",
       "poster": "./Posters/Anime/Rascal_Does_Not_Dream_Of_A_Bunny_Girl_Senpai.webp",
       "categoryCount": 5,
+      "separatedCategoryCount": 0,
       "episodeCount": 29,
       "itemCount": 29,
+      "separatedItemCount": 0,
       "totalFileSizeBytes": 4045025043,
       "totalDurationSeconds": 53625,
-      "LatestTime": "2025-12-07T20:35:47.574Z"
+      "LatestTime": "2025-12-07T20:35:47.574Z",
+      "anilistIds": [],
+      "mediaFormat": "TV",
+      "dualAudioCount": 0,
+      "dualAudio": false
     },
     {
       "file": "Re_Zero.json",
@@ -502,11 +740,16 @@
       "title": "Re: Zero",
       "poster": "./Posters/Anime/Re_Zero.webp",
       "categoryCount": 4,
-      "episodeCount": 77,
-      "itemCount": 77,
-      "totalFileSizeBytes": 25969021468,
-      "totalDurationSeconds": 124341,
-      "LatestTime": "2026-08-07T08:29:15.650Z"
+      "separatedCategoryCount": 0,
+      "episodeCount": 78,
+      "itemCount": 78,
+      "separatedItemCount": 0,
+      "totalFileSizeBytes": 26473651795,
+      "LatestTime": "2026-08-16T17:29:05.509Z",
+      "anilistIds": [],
+      "mediaFormat": "TV",
+      "dualAudioCount": 0,
+      "dualAudio": false
     },
     {
       "file": "Roshidere.json",
@@ -514,11 +757,17 @@
       "title": "Roshidere (Alya Hides Her Feelings In Russian)",
       "poster": "./Posters/Anime/Roshidere_(Alya_Hides_Her_Feelings_In_Russian).webp",
       "categoryCount": 1,
+      "separatedCategoryCount": 0,
       "episodeCount": 12,
       "itemCount": 12,
+      "separatedItemCount": 0,
       "totalFileSizeBytes": 2062491393,
       "totalDurationSeconds": 17640,
-      "LatestTime": "2025-08-11T12:36:00"
+      "LatestTime": "2025-08-11T12:36:00",
+      "anilistIds": [],
+      "mediaFormat": "TV",
+      "dualAudioCount": 0,
+      "dualAudio": false
     },
     {
       "file": "Science_Fell_in_Love,_So_I_Tried_to_Prove_it.json",
@@ -526,11 +775,17 @@
       "title": "Science Fell in Love, So I Tried to Prove it",
       "poster": "./Posters/Anime/Science_Fell_in_Love,_So_I_Tried_to_Prove_it.webp",
       "categoryCount": 2,
+      "separatedCategoryCount": 0,
       "episodeCount": 24,
       "itemCount": 24,
+      "separatedItemCount": 0,
       "totalFileSizeBytes": 5097343718,
       "totalDurationSeconds": 34080,
-      "LatestTime": "2026-06-10T15:44:22.141Z"
+      "LatestTime": "2026-06-10T15:44:22.141Z",
+      "anilistIds": [],
+      "mediaFormat": "TV",
+      "dualAudioCount": 0,
+      "dualAudio": false
     },
     {
       "file": "Shikimori.json",
@@ -538,11 +793,17 @@
       "title": "Shikimori's Not Just a Cutie",
       "poster": "./Posters/Anime/Shikimori's_Not_Just_a_Cutie.webp",
       "categoryCount": 1,
+      "separatedCategoryCount": 0,
       "episodeCount": 12,
       "itemCount": 12,
+      "separatedItemCount": 0,
       "totalFileSizeBytes": 1538838962,
       "totalDurationSeconds": 16860,
-      "LatestTime": "2025-09-05T05:01:05.937Z"
+      "LatestTime": "2025-09-05T05:01:05.937Z",
+      "anilistIds": [],
+      "mediaFormat": "TV",
+      "dualAudioCount": 0,
+      "dualAudio": false
     },
     {
       "file": "So_I_M_A_Spider_So_What.json",
@@ -550,11 +811,17 @@
       "title": "So I'm a Spider, So What?",
       "poster": "./Posters/Anime/So_I'm_a_Spider,_So_What_.webp",
       "categoryCount": 1,
+      "separatedCategoryCount": 0,
       "episodeCount": 24,
       "itemCount": 24,
+      "separatedItemCount": 0,
       "totalFileSizeBytes": 3400620656,
       "totalDurationSeconds": 34152,
-      "LatestTime": "2025-11-29T06:07:30.123Z"
+      "LatestTime": "2025-11-29T06:07:30.123Z",
+      "anilistIds": [],
+      "mediaFormat": "TV",
+      "dualAudioCount": 0,
+      "dualAudio": false
     },
     {
       "file": "Solo_Leveling.json",
@@ -562,11 +829,17 @@
       "title": "Solo Leveling",
       "poster": "./Posters/Anime/Solo_Leveling.webp",
       "categoryCount": 2,
+      "separatedCategoryCount": 0,
       "episodeCount": 25,
       "itemCount": 25,
+      "separatedItemCount": 0,
       "totalFileSizeBytes": 3131550331,
       "totalDurationSeconds": 35500,
-      "LatestTime": "2025-09-28T01:18:29.309Z"
+      "LatestTime": "2025-09-28T01:18:29.309Z",
+      "anilistIds": [],
+      "mediaFormat": "TV",
+      "dualAudioCount": 0,
+      "dualAudio": false
     },
     {
       "file": "The_100_Girlfriends_Who_Really_Really_Really_Really_Really_Love_You.json",
@@ -574,11 +847,16 @@
       "title": "The 100 Girlfriends Who Really, Really, Really, Really, Really Love You",
       "poster": "./Posters/Anime/The_100_Girlfriends_Who_Really,_Really,_Really,_Really,_Really_Love_You.webp",
       "categoryCount": 3,
+      "separatedCategoryCount": 0,
       "episodeCount": 30,
       "itemCount": 30,
+      "separatedItemCount": 0,
       "totalFileSizeBytes": 10548341244,
-      "totalDurationSeconds": 39939,
-      "LatestTime": "2026-08-11T19:04:09.385Z"
+      "LatestTime": "2026-08-11T19:04:09.385Z",
+      "anilistIds": [],
+      "mediaFormat": "TV",
+      "dualAudioCount": 0,
+      "dualAudio": false
     },
     {
       "file": "The_Dreaming_Boy_is_a_Realist.json",
@@ -586,11 +864,17 @@
       "title": "The Dreaming Boy is a Realist",
       "poster": "./Posters/Anime/The_Dreaming_Boy_is_a_Realist.webp",
       "categoryCount": 1,
+      "separatedCategoryCount": 0,
       "episodeCount": 12,
       "itemCount": 12,
+      "separatedItemCount": 0,
       "totalFileSizeBytes": 1001234277,
       "totalDurationSeconds": 17064,
-      "LatestTime": "2025-09-13T17:25:08.637Z"
+      "LatestTime": "2025-09-13T17:25:08.637Z",
+      "anilistIds": [],
+      "mediaFormat": "TV",
+      "dualAudioCount": 0,
+      "dualAudio": false
     },
     {
       "file": "IceGuy.json",
@@ -598,11 +882,17 @@
       "title": "The Ice Guy and His Cool Female Colleague",
       "poster": "./Posters/Anime/The_Ice_Guy_and_His_Cool_Female_Colleague.webp",
       "categoryCount": 1,
+      "separatedCategoryCount": 0,
       "episodeCount": 12,
       "itemCount": 12,
+      "separatedItemCount": 0,
       "totalFileSizeBytes": 949573746,
       "totalDurationSeconds": 17040,
-      "LatestTime": "2025-09-05T05:35:15.833Z"
+      "LatestTime": "2025-09-05T05:35:15.833Z",
+      "anilistIds": [],
+      "mediaFormat": "TV",
+      "dualAudioCount": 0,
+      "dualAudio": false
     },
     {
       "file": "Shiunji_Children.json",
@@ -610,11 +900,17 @@
       "title": "The Shiunji Family Children",
       "poster": "./Posters/Anime/The_Shiunji_Family_Children.webp",
       "categoryCount": 1,
+      "separatedCategoryCount": 0,
       "episodeCount": 12,
       "itemCount": 12,
+      "separatedItemCount": 0,
       "totalFileSizeBytes": 1506263286,
       "totalDurationSeconds": 17060,
-      "LatestTime": "2025-09-05T05:07:12.860Z"
+      "LatestTime": "2025-09-05T05:07:12.860Z",
+      "anilistIds": [],
+      "mediaFormat": "TV",
+      "dualAudioCount": 0,
+      "dualAudio": false
     },
     {
       "file": "Tomochan.json",
@@ -622,11 +918,17 @@
       "title": "Tomo-chan Is A Girl!",
       "poster": "./Posters/Anime/Tomo-chan_Is_A_Girl!.webp",
       "categoryCount": 1,
+      "separatedCategoryCount": 0,
       "episodeCount": 13,
       "itemCount": 13,
+      "separatedItemCount": 0,
       "totalFileSizeBytes": 1088823358,
       "totalDurationSeconds": 18486,
-      "LatestTime": "2025-09-05T05:26:32.932Z"
+      "LatestTime": "2025-09-05T05:26:32.932Z",
+      "anilistIds": [],
+      "mediaFormat": "TV",
+      "dualAudioCount": 0,
+      "dualAudio": false
     },
     {
       "file": "Toradora.json",
@@ -634,11 +936,17 @@
       "title": "Toradora!",
       "poster": "./Posters/Anime/Toradora!.webp",
       "categoryCount": 3,
+      "separatedCategoryCount": 0,
       "episodeCount": 30,
       "itemCount": 30,
+      "separatedItemCount": 0,
       "totalFileSizeBytes": 2722012564,
       "totalDurationSeconds": 38386,
-      "LatestTime": "2025-09-06T05:24:17.927Z"
+      "LatestTime": "2025-09-06T05:24:17.927Z",
+      "anilistIds": [],
+      "mediaFormat": "TV",
+      "dualAudioCount": 0,
+      "dualAudio": false
     },
     {
       "file": "Tune_In_To_The_Midnight_Heart.json",
@@ -646,11 +954,16 @@
       "title": "Tune In to the Midnight Heart",
       "poster": "./Posters/Anime/Tune_In_to_the_Midnight_Heart.webp",
       "categoryCount": 1,
+      "separatedCategoryCount": 0,
       "episodeCount": 12,
       "itemCount": 12,
-      "totalFileSizeBytes": 4471581570,
-      "totalDurationSeconds": 17040,
-      "LatestTime": "2026-08-06T23:29:25.040Z"
+      "separatedItemCount": 0,
+      "totalFileSizeBytes": 17855788498,
+      "LatestTime": "2026-08-07T20:03:17.890Z",
+      "anilistIds": [],
+      "mediaFormat": "TV",
+      "dualAudioCount": 0,
+      "dualAudio": false
     },
     {
       "file": "Watari_Kun_S_Is_About_To_Collapse.json",
@@ -658,11 +971,16 @@
       "title": "Watari-kun's ****** Is About To Collapse",
       "poster": "./Posters/Anime/Watari-kun's_Is_About_To_Collapse.webp",
       "categoryCount": 1,
+      "separatedCategoryCount": 0,
       "episodeCount": 26,
       "itemCount": 26,
-      "totalFileSizeBytes": 23678495162,
-      "totalDurationSeconds": 36920,
-      "LatestTime": "2026-08-07T05:01:03.622Z"
+      "separatedItemCount": 0,
+      "totalFileSizeBytes": 38662459694,
+      "LatestTime": "2026-08-07T23:57:35.246Z",
+      "anilistIds": [],
+      "mediaFormat": "TV",
+      "dualAudioCount": 0,
+      "dualAudio": false
     },
     {
       "file": "Wise_Man_S_Grandchild.json",
@@ -670,11 +988,17 @@
       "title": "Wise Man's Grandchild",
       "poster": "./Posters/Anime/Wise_Man's_Grandchild.webp",
       "categoryCount": 1,
+      "separatedCategoryCount": 0,
       "episodeCount": 12,
       "itemCount": 12,
+      "separatedItemCount": 0,
       "totalFileSizeBytes": 1663738722,
       "totalDurationSeconds": 17145,
-      "LatestTime": "2025-09-28T04:27:33.010Z"
+      "LatestTime": "2025-09-28T04:27:33.010Z",
+      "anilistIds": [],
+      "mediaFormat": "TV",
+      "dualAudioCount": 0,
+      "dualAudio": false
     },
     {
       "file": "You_And_I_Are_Polar_Opposites.json",
@@ -682,11 +1006,16 @@
       "title": "You And I Are Polar Opposites",
       "poster": "./Posters/Anime/You_And_I_Are_Polar_Opposites.webp",
       "categoryCount": 2,
+      "separatedCategoryCount": 0,
       "episodeCount": 17,
       "itemCount": 17,
+      "separatedItemCount": 0,
       "totalFileSizeBytes": 9350655716,
-      "totalDurationSeconds": 24509,
-      "LatestTime": "2026-08-07T05:55:01.338Z"
+      "LatestTime": "2026-08-07T05:55:01.338Z",
+      "anilistIds": [],
+      "mediaFormat": "TV",
+      "dualAudioCount": 0,
+      "dualAudio": false
     },
     {
       "file": "MeidoSama.json",
@@ -694,11 +1023,17 @@
       "title": "You are Ms. Servent (Kimi-wa Meido sama)",
       "poster": "./Posters/Anime/You_are_Ms__Servent_(Kimi-wa_Meido_sama).webp",
       "categoryCount": 1,
+      "separatedCategoryCount": 0,
       "episodeCount": 12,
       "itemCount": 12,
+      "separatedItemCount": 0,
       "totalFileSizeBytes": 1662931471,
       "totalDurationSeconds": 16560,
-      "LatestTime": "2025-08-11T12:36:00"
+      "LatestTime": "2025-08-11T12:36:00",
+      "anilistIds": [],
+      "mediaFormat": "TV",
+      "dualAudioCount": 0,
+      "dualAudio": false
     },
     {
       "file": "You_Can_T_Be_In_A_Rom_Com_With_Your_Childhood_Friends.json",
@@ -706,11 +1041,16 @@
       "title": "You Can't Be In a Rom-Com with Your Childhood Friends!",
       "poster": "./Posters/Anime/You_Can't_Be_In_a_Rom-Com_with_Your_Childhood_Friends!.webp",
       "categoryCount": 1,
+      "separatedCategoryCount": 0,
       "episodeCount": 12,
       "itemCount": 12,
-      "totalFileSizeBytes": 3913854087,
-      "totalDurationSeconds": 17160,
-      "LatestTime": "2026-08-07T06:20:40.802Z"
+      "separatedItemCount": 0,
+      "totalFileSizeBytes": 14667469895,
+      "LatestTime": "2026-08-08T00:56:42.793Z",
+      "anilistIds": [],
+      "mediaFormat": "TV",
+      "dualAudioCount": 0,
+      "dualAudio": false
     },
     {
       "file": "Your_Lie_In_April.json",
@@ -718,11 +1058,17 @@
       "title": "Your Lie in April",
       "poster": "./Posters/Anime/Your_Lie_in_April.webp",
       "categoryCount": 1,
+      "separatedCategoryCount": 0,
       "episodeCount": 22,
       "itemCount": 22,
+      "separatedItemCount": 0,
       "totalFileSizeBytes": 2884046983,
       "totalDurationSeconds": 30187,
-      "LatestTime": "2026-03-31T02:50:21.036Z"
+      "LatestTime": "2026-03-31T02:50:21.036Z",
+      "anilistIds": [],
+      "mediaFormat": "TV",
+      "dualAudioCount": 0,
+      "dualAudio": false
     },
     {
       "file": "Yuri_On_Ice.json",
@@ -730,11 +1076,17 @@
       "title": "Yuri!!! On ICE",
       "poster": "./Posters/Anime/Yuri!!!_On_ICE.webp",
       "categoryCount": 1,
+      "separatedCategoryCount": 0,
       "episodeCount": 12,
       "itemCount": 12,
+      "separatedItemCount": 0,
       "totalFileSizeBytes": 2315674275,
       "totalDurationSeconds": 16913,
-      "LatestTime": "2026-03-31T03:31:44.265Z"
+      "LatestTime": "2026-03-31T03:31:44.265Z",
+      "anilistIds": [],
+      "mediaFormat": "TV",
+      "dualAudioCount": 0,
+      "dualAudio": false
     }
   ]
 }
