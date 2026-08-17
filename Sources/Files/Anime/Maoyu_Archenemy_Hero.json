@@ -33,6 +33,12 @@
           "src": "https://toodrive.xpbliss.fyi/dl/o3t8olvh3u2mfel0q5i6s0ev/raw",
           "fileSizeBytes": 32418913,
           "dualAudio": false
+        },
+        {
+          "title": "Episode 12",
+          "src": "https://toodrive.xpbliss.fyi/dl/jj4y5lp4r6fzr5efc5c3cipb/raw",
+          "fileSizeBytes": 40264786,
+          "dualAudio": false
         }
       ],
       "anilistId": 14833,
@@ -40,13 +46,13 @@
       "mediaFormat": "TV"
     }
   ],
-  "LatestTime": "2026-08-17T11:12:50.547Z",
-  "totalFileSizeBytes": 1711205329,
+  "LatestTime": "2026-08-17T11:26:59.873Z",
+  "totalFileSizeBytes": 1751470115,
   "anilistId": 14833,
   "rootAnilistId": 14833,
   "mediaFormat": "TV",
   "anilistIds": [
     14833
   ],
-  "Image": "./Sources/Posters/Anime/Maoyu_Archenemy_&_Hero.webp"
+  "Image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx14833-6M3yEmu4SJkH.png"
 }
