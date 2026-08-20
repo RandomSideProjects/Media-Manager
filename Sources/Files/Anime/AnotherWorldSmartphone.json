@@ -6,74 +6,74 @@
       "episodes": [
         {
           "title": "Episode 1",
-          "src": "https://files.catbox.moe/7u6on1.mp4",
-          "fileSizeBytes": 104017869,
+          "src": "https://toodrive.xpbliss.fyi/dl/qcsb98ufplwymxo1dr4a01s0/raw",
+          "fileSizeBytes": 412361740,
           "durationSeconds": 1422
         },
         {
           "title": "Episode 2",
-          "src": "https://files.catbox.moe/wq3ep7.mp4",
-          "fileSizeBytes": 139500418,
+          "src": "https://toodrive.xpbliss.fyi/dl/wmysf8o2dbkkannzstrvibrc/raw",
+          "fileSizeBytes": 469452767,
           "durationSeconds": 1422
         },
         {
           "title": "Episode 3",
-          "src": "https://files.catbox.moe/nkgk8m.mp4",
-          "fileSizeBytes": 158253020,
+          "src": "https://toodrive.xpbliss.fyi/dl/ugk9qkabyz0mdtwmm4n8x11c/raw",
+          "fileSizeBytes": 513584662,
           "durationSeconds": 1422
         },
         {
           "title": "Episode 4",
-          "src": "https://files.catbox.moe/ljxwct.mp4",
-          "fileSizeBytes": 126204671,
+          "src": "https://toodrive.xpbliss.fyi/dl/b1czjoo6hfjvgcnp97puwy4s/raw",
+          "fileSizeBytes": 432229252,
           "durationSeconds": 1422
         },
         {
           "title": "Episode 5",
-          "src": "https://files.catbox.moe/vwne1s.mp4",
-          "fileSizeBytes": 121831884,
+          "src": "https://toodrive.xpbliss.fyi/dl/q8l89ybuslhz5m55vpatk6ow/raw",
+          "fileSizeBytes": 417656627,
           "durationSeconds": 1422
         },
         {
           "title": "Episode 6",
-          "src": "https://files.catbox.moe/wd32r2.mp4",
-          "fileSizeBytes": 126705310,
+          "src": "https://toodrive.xpbliss.fyi/dl/d2065cdfjxc848fr4d1f9dh6/raw",
+          "fileSizeBytes": 434026195,
           "durationSeconds": 1422
         },
         {
           "title": "Episode 7",
-          "src": "https://files.catbox.moe/a3uh6b.mp4",
-          "fileSizeBytes": 111361521,
+          "src": "https://toodrive.xpbliss.fyi/dl/om590scbm8m9290tgvp1wdbc/raw",
+          "fileSizeBytes": 388726489,
           "durationSeconds": 1422
         },
         {
           "title": "Episode 8",
-          "src": "https://files.catbox.moe/minngq.mp4",
-          "fileSizeBytes": 119849535,
+          "src": "https://toodrive.xpbliss.fyi/dl/l4nbrqmxcxs60l5utw6p78xf/raw",
+          "fileSizeBytes": 406378852,
           "durationSeconds": 1422
         },
         {
           "title": "Episode 9",
-          "src": "https://files.catbox.moe/ii1pl0.mp4",
-          "fileSizeBytes": 111696439,
+          "src": "https://toodrive.xpbliss.fyi/dl/kgqvnhwszt43wfgbbzazt50m/raw",
+          "fileSizeBytes": 406376602,
           "durationSeconds": 1422
         },
         {
           "title": "Episode 10",
-          "src": "https://files.catbox.moe/yezlp7.mp4",
-          "fileSizeBytes": 137918601,
+          "src": "https://toodrive.xpbliss.fyi/dl/fzko3ziny34cbydqxzz6aoi7/raw",
+          "fileSizeBytes": 468224729,
           "durationSeconds": 1422
         },
         {
           "title": "Episode 11",
-          "src": "https://files.catbox.moe/9mm3s5.mp4",
-          "fileSizeBytes": 113951629,
+          "src": "https://toodrive.xpbliss.fyi/dl/sr2p1d5hz8y32ua6rh6kp29q/raw",
+          "fileSizeBytes": 404773000,
           "durationSeconds": 1422
         },
         {
           "title": "Episode 12",
-          "src": "https://files.catbox.moe/ypfkvr.mp4",
-          "fileSizeBytes": 106832427,
+          "src": "https://toodrive.xpbliss.fyi/dl/qzkjg9dhmu2v0tmbvncmnacq/raw",
+          "fileSizeBytes": 387485574,
           "durationSeconds": 1422
         }
       ]
@@ -156,8 +156,9 @@
       ]
     }
   ],
-  "LatestTime": "2025-09-05T04:01:07.498Z",
-  "totalFileSizeBytes": 3130241596,
+  "LatestTime": "2026-08-20T15:50:05.900Z",
+  "totalFileSizeBytes": 6793394761,
   "totalDurationSeconds": 34224,
-  "Image": "./Sources/Posters/Anime/In_Another_World_With_My_Smartphone.webp"
+  "Image": "./Sources/Posters/Anime/In_Another_World_With_My_Smartphone.webp",
+  "anilistIds": []
 }
