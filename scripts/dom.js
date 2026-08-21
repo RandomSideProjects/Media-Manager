@@ -39,24 +39,18 @@ let cbzProgressOverlay = document.getElementById('cbzProgressOverlay');
 let cbzProgressBar = document.getElementById('cbzProgressBar');
 let cbzProgressMessage = document.getElementById('cbzProgressMessage');
 
-// Clip progress overlay elements (used by clip.js but not managed by it)
-let clipProgressOverlay = document.getElementById('clipProgressOverlay');
-let clipProgressMessage = document.getElementById('clipProgressMessage');
-let clipProgressBar = document.getElementById('clipProgressBar');
-
-// Clip overlay (created dynamically by clip.js, all elements declared there)
-// clipBtn is declared in clip.js and exposed to window there
-
 // Settings button - handled by settings.js, other settings elements created dynamically
 
 // Video loading card wiring
 let spinnerVideo = null;
 let loadingHideTimer = null;
+let loadingElapsedTimer = null;
+let loadingStartedAt = 0;
 const videoLoadingServer = document.getElementById('videoLoadingServer');
 const videoLoadingStatus = document.getElementById('videoLoadingStatus');
+const videoLoadingElapsed = document.getElementById('videoLoadingElapsed');
 const videoLoadingProgress = document.getElementById('videoLoadingProgress');
 const videoLoadingProgressFill = document.getElementById('videoLoadingProgressFill');
-const videoLoadingProgressText = document.getElementById('videoLoadingProgressText');
 let videoLoadingSource = '';
 let videoLoadingDurationHint = 0;
 
@@ -100,7 +94,26 @@ function setVideoLoadingProgress(target) {
   videoLoadingProgressFill.classList.remove('is-indeterminate');
   videoLoadingProgressFill.style.setProperty('--mm-loading-progress', String(ratio));
   videoLoadingProgress.setAttribute('aria-valuenow', String(Math.round(ratio * 100)));
-  if (videoLoadingProgressText) videoLoadingProgressText.textContent = `${Math.round(ratio * 100)}%`;
+  if (videoLoadingStatus && ratio < 1) videoLoadingStatus.textContent = 'Loading video data';
+}
+
+function formatVideoLoadingElapsed(seconds) {
+  const totalSeconds = Math.max(0, Math.floor(Number(seconds) || 0));
+  const minutes = Math.floor(totalSeconds / 60);
+  const remainder = totalSeconds % 60;
+  return `${String(minutes).padStart(2, '0')}:${String(remainder).padStart(2, '0')}`;
+}
+
+function updateVideoLoadingElapsed() {
+  if (!videoLoadingElapsed || !loadingStartedAt) return;
+  videoLoadingElapsed.textContent = `Elapsed ${formatVideoLoadingElapsed((Date.now() - loadingStartedAt) / 1000)}`;
+}
+
+function stopVideoLoadingElapsed() {
+  if (loadingElapsedTimer) {
+    clearInterval(loadingElapsedTimer);
+    loadingElapsedTimer = null;
+  }
 }
 
 function showVideoLoading(target) {
@@ -109,6 +122,10 @@ function showVideoLoading(target) {
     clearTimeout(loadingHideTimer);
     loadingHideTimer = null;
   }
+  if (!loadingStartedAt) loadingStartedAt = Date.now();
+  stopVideoLoadingElapsed();
+  updateVideoLoadingElapsed();
+  loadingElapsedTimer = setInterval(updateVideoLoadingElapsed, 1000);
   if (videoLoadingStatus) videoLoadingStatus.textContent = 'Preparing playback';
   setVideoLoadingProgress(target);
   if (videoLoadingServer) videoLoadingServer.textContent = getVideoLoadingServerLabel(videoLoadingSource);
@@ -119,6 +136,8 @@ function showVideoLoading(target) {
 
 function hideVideoLoading() {
   if (!spinner) return;
+  stopVideoLoadingElapsed();
+  loadingStartedAt = 0;
   spinner.classList.remove('is-visible');
   loadingHideTimer = setTimeout(() => {
     spinner.hidden = true;
@@ -161,6 +180,7 @@ function wireSpinnerToVideo(target) {
   spinnerVideo.addEventListener("durationchange", spinnerHandlers.durationchange);
   spinnerVideo.addEventListener("playing", spinnerHandlers.playing);
   spinnerVideo.addEventListener("error", spinnerHandlers.error);
+  try { spinnerVideo.preload = 'auto'; } catch {}
 }
 
 if (video && spinner) wireSpinnerToVideo(video);

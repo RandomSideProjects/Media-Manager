@@ -105,7 +105,6 @@ function loadUploadSettings(){
         paheKwikApiBase: DEFAULT_PAHE_KWIK_API_BASE,
         paheKwikAuthToken: DEFAULT_PAHE_KWIK_AUTH_TOKEN,
         paheImportEnabled: DEFAULT_PAHE_IMPORT_ENABLED,
-        webhookUrl: '',
         separationTag: false,
         folderUploadYellWhenHidden: true,
         autoArchiveOversize: false,
@@ -147,7 +146,6 @@ function loadUploadSettings(){
       paheKwikApiBase: (typeof p.paheKwikApiBase === 'string' && p.paheKwikApiBase.trim()) ? p.paheKwikApiBase.trim() : DEFAULT_PAHE_KWIK_API_BASE,
       paheKwikAuthToken: (typeof p.paheKwikAuthToken === 'string' && p.paheKwikAuthToken.trim()) ? p.paheKwikAuthToken.trim() : DEFAULT_PAHE_KWIK_AUTH_TOKEN,
       paheImportEnabled: (typeof p.paheImportEnabled === 'boolean') ? p.paheImportEnabled : DEFAULT_PAHE_IMPORT_ENABLED,
-      webhookUrl: (typeof p.webhookUrl === 'string') ? p.webhookUrl.trim() : ''
     };
     if (storedGithubRaw && normalizedGithubUrl && normalizedGithubUrl !== storedGithubRaw) {
       saveUploadSettings(result);
@@ -171,7 +169,6 @@ function loadUploadSettings(){
     paheKwikApiBase: DEFAULT_PAHE_KWIK_API_BASE,
     paheKwikAuthToken: DEFAULT_PAHE_KWIK_AUTH_TOKEN,
     paheImportEnabled: DEFAULT_PAHE_IMPORT_ENABLED,
-    webhookUrl: '',
     separationTag: false,
     folderUploadYellWhenHidden: true,
     autoArchiveOversize: false,
@@ -208,7 +205,6 @@ function saveUploadSettings(s){
     paheKwikApiBase: (typeof s.paheKwikApiBase === 'string') ? s.paheKwikApiBase.trim() : '',
     paheKwikAuthToken: (typeof s.paheKwikAuthToken === 'string') ? s.paheKwikAuthToken.trim() : '',
     paheImportEnabled: !!s.paheImportEnabled,
-    webhookUrl: (typeof s.webhookUrl === 'string') ? s.webhookUrl.trim() : ''
   }));
   applyCatboxOverride(s.catboxOverrideMode);
 }

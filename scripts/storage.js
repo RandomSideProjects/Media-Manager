@@ -1,7 +1,16 @@
 "use strict";
 
 (function () {
-  const DEV_ONLY_KEYS = new Set(['rsp_dev_mode', 'rsp_account_id', 'rsp_account_password', 'rsp_device_id']);
+  const DEV_ONLY_KEYS = new Set(['rsp_dev_mode', 'rsp_account_id', 'rsp_account_password', 'rsp_account_session', 'rsp_device_id']);
+  const REMOVED_CLIP_KEYS = [
+    'clippingEnabled',
+    'clipPreviewEnabled',
+    'clipLocalMode',
+    'clipPresets',
+    'clipPreferredLength',
+    'clipHistory',
+    'clipBackendUrl'
+  ];
   const EXPORT_SCHEMA = 'rsp-media-manager-settings';
   const ESCAPE_KEY = 'Escape';
   const RECENT_SOURCES_STORAGE_KEY = 'rsp_recent_sources_list_v1';
@@ -17,6 +26,10 @@
   let pendingImportNotice = null;
   let importQueryProcessed = false;
   let keydownHandler = null;
+
+  REMOVED_CLIP_KEYS.forEach((key) => {
+    try { localStorage.removeItem(key); } catch {}
+  });
 
   function getStoredSourceKey() {
     try {
@@ -887,9 +900,6 @@
     function clearSettingsKeys() {
       const keys = [
         'theme',
-        'clippingEnabled',
-        'clipPreviewEnabled',
-        'clipLocalMode',
         'selectiveDownloadsEnabled',
         'downloadConcurrency',
         'storageShowCameraOptions',
@@ -901,12 +911,9 @@
 
     function clearOtherAppData() {
       const keys = [
-        'clipPresets',
-        'clipPreferredLength',
-        'clipHistory',
-        'clipBackendUrl',
         'mm_upload_settings',
         'rsp_account_id',
+        'rsp_account_session',
         'rsp_device_id',
         'rsp_account_auto_sync_sec',
         'currentSourceKey',

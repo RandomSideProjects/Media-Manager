@@ -15,7 +15,6 @@
   let modeStateLabel = null;
   let concurrencyStateLabel = null;
   let catboxStateLabel = null;
-  let clipBackendStateLabel = null;
   let accountSyncStateLabel = null;
   let backendRootUrlInput = null;
   let catboxUrlInput = null;
@@ -40,7 +39,6 @@
     catboxStateLabel = document.getElementById("devCatboxEndpointLabel");
     catboxUrlInput = document.getElementById("devCatboxUploadUrl");
     catboxModeSelect = document.getElementById("devCatboxMode");
-    clipBackendStateLabel = document.getElementById("devClipEndpointLabel");
     accountSyncStateLabel = document.getElementById("devAccountSyncEndpointLabel");
     backendRootUrlInput = document.getElementById("devBackendRootUrl");
     partPreloadMethodSelect = document.getElementById("devPartPreloadMethod");
@@ -52,7 +50,6 @@
   const DEFAULT_CONCURRENCY = 2;
   const OVERLAY_OPEN_CLASS = "is-open";
   const STORAGE_MENU_DELAY_MS = 90;
-  const CLIP_BACKEND_STORAGE_KEY = "clipBackendUrl";
   const BACKEND_ROOT_STORAGE_KEY = "dev:mmBackendRoot";
   const LEGACY_ACCOUNT_SYNC_URL_KEY = "dev:accountSyncUrl";
   const DEFAULT_BACKEND_ROOT = "https://mm.alexspac.es";
@@ -135,18 +132,6 @@
     } catch {}
 
     try {
-      const clipStored = (localStorage.getItem(CLIP_BACKEND_STORAGE_KEY) || "").trim();
-      if (clipStored) {
-        try {
-          const url = new URL(clipStored.includes("://") ? clipStored : `http://${clipStored}`);
-          return normalizeBackendRoot(`${url.protocol}//${url.host}`);
-        } catch {
-          return normalizeBackendRoot(clipStored.replace(/\/clip\/?$/, ""));
-        }
-      }
-    } catch {}
-
-    try {
       const legacy = (localStorage.getItem(LEGACY_ACCOUNT_SYNC_URL_KEY) || "").trim();
       if (legacy) {
         const url = new URL(legacy.includes("://") ? legacy : `http://${legacy}`);
@@ -160,21 +145,10 @@
   function setBackendRootStorage(value) {
     const root = normalizeBackendRoot(value);
     try { localStorage.setItem(BACKEND_ROOT_STORAGE_KEY, root); } catch {}
-    try { localStorage.setItem(CLIP_BACKEND_STORAGE_KEY, root); } catch {}
     try { localStorage.setItem(LEGACY_ACCOUNT_SYNC_URL_KEY, `${root}/account/storage`); } catch {}
     try { window.dispatchEvent(new CustomEvent("mm:backend-root-changed", { detail: { root } })); } catch {}
-    try { window.dispatchEvent(new CustomEvent("mm:clip-backend-changed", { detail: { url: root } })); } catch {}
     try { window.dispatchEvent(new CustomEvent("mm:account-sync-url-changed", { detail: { url: `${root}/account/storage` } })); } catch {}
     return root;
-  }
-
-  function getClipBackendSummary() {
-    try {
-      const root = getBackendRootFromStorage();
-      return `${root}/clip`;
-    } catch {
-      return "Unavailable";
-    }
   }
 
   function getAccountSyncSummary() {
@@ -301,7 +275,6 @@
     if (modeStateLabel) modeStateLabel.textContent = enabled ? "On" : "Off";
     if (concurrencyStateLabel) concurrencyStateLabel.textContent = describeConcurrency(getStoredConcurrency());
     if (catboxStateLabel) catboxStateLabel.textContent = getCatboxSummary();
-    if (clipBackendStateLabel) clipBackendStateLabel.textContent = getClipBackendSummary();
     if (accountSyncStateLabel) accountSyncStateLabel.textContent = getAccountSyncSummary();
     if (sourceKeyLabel) {
       const key = (typeof sourceKey === "string" && sourceKey) ? sourceKey
@@ -438,22 +411,6 @@
     }
   }
 
-  function runClipOverlaySample() {
-    if (typeof displayClipResult === "function") {
-      displayClipResult("Dev overlay sample — triggered from Developer Menu.");
-    } else {
-      showDevNotice("info", "Clip overlay API unavailable in this context.");
-    }
-  }
-
-  function runClipPresetOverlay() {
-    if (typeof openClipPresetOverlay === "function") {
-      openClipPresetOverlay();
-    } else {
-      showDevNotice("info", "Clip preset overlay unavailable.");
-    }
-  }
-
   function triggerTheater() {
     if (typeof theaterBtn !== "undefined" && theaterBtn) {
       theaterBtn.click();
@@ -484,14 +441,6 @@
         break;
       case "catbox:detect":
         runCatboxDetection();
-        break;
-      case "clip:preset":
-        closeOverlay(false);
-        runClipPresetOverlay();
-        break;
-      case "clip:overlay":
-        closeOverlay(false);
-        runClipOverlaySample();
         break;
       case "player:theater":
         closeOverlay(false);

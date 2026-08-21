@@ -81,12 +81,17 @@
     || normalizeServiceUrl(window.MAINTENANCE_REMOTE_SERVICE)
     || DEFAULT_REMOTE_SERVICE;
   const legacyService = storedServiceUrl(LEGACY_SERVICE_STORAGE_KEY);
-  const initialServer = storedServer()
-    || (serviceFromUrl && serviceFromUrl !== localService ? "remote" : "")
-    || (legacyService && legacyService !== localService ? "remote" : "local");
+  const rememberedServer = storedServer();
+  // The Mac worker is intentionally stopped; remote General maintenance is
+  // the live backend. Keep the local endpoint available for an explicit
+  // service override, but make a fresh UI load point at the remote worker.
+  const initialServer = rememberedServer
+    || (serviceFromUrl ? (serviceFromUrl === localService ? "local" : "remote") : "remote");
   const initialOperation = storedOperation(initialServer) || "update";
   const initialTorrentConcurrency = storedTorrentConcurrency(initialServer);
-  const initialService = serviceFromUrl || legacyService || (initialServer === "remote" ? remoteService : localService);
+  const initialService = serviceFromUrl
+    || (rememberedServer ? legacyService : "")
+    || (initialServer === "remote" ? remoteService : localService);
   const SERVER_CONFIG = {
     local: {
       label: "This Mac",
@@ -700,11 +705,16 @@
         badge.textContent = "DUAL AUDIO";
         badge.title = "Every episode currently recorded for this source is marked dual audio.";
         title.append(" ", badge);
-      } else if (Number(source.unconfirmedAudioCount) > 0) {
+      } else if (Number(source.singleAudioCount) > 0 || Number(source.unconfirmedAudioCount) > 0) {
+        const singleAudioCount = Number(source.singleAudioCount) || 0;
+        const unconfirmedAudioCount = Number(source.unconfirmedAudioCount) || 0;
         const badge = document.createElement("span");
         badge.className = "dual-audio-badge dual-audio-badge--pending";
-        badge.textContent = `${source.unconfirmedAudioCount} AUDIO UPGRADE${source.unconfirmedAudioCount === 1 ? "" : "S"}`;
-        badge.title = "Single-audio or unconfirmed episodes will be promoted when a dual-audio release is found.";
+        badge.textContent = [
+          singleAudioCount ? `${singleAudioCount} SINGLE AUDIO` : "",
+          unconfirmedAudioCount ? `${unconfirmedAudioCount} UNCONFIRMED` : "",
+        ].filter(Boolean).join(" · ");
+        badge.title = "Only explicitly single-audio episodes are eligible for replacement; unconfirmed episodes are left alone until inspected.";
         title.append(" ", badge);
       }
       const meta = document.createElement("div");

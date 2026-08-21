@@ -3,8 +3,6 @@
 // Create overlay immediately on load
 let settingsOverlay = null;
 let settingsCloseBtn = null;
-let clipPreviewRow = null;
-let clipLocalModeRow = null;
 
 function ensureSettingsOverlay() {
   if (!settingsOverlay) {
@@ -32,11 +30,6 @@ function ensureSettingsOverlay() {
       }
       
       // Re-query elements after overlay creation
-      window.clipToggle = document.getElementById('clipToggle');
-      window.clipPreviewToggle = document.getElementById('clipPreviewToggle');
-      window.clipLocalModeToggle = document.getElementById('clipLocalModeToggle');
-      clipPreviewRow = document.getElementById('clipPreviewRow');
-      clipLocalModeRow = document.getElementById('clipLocalModeRow');
       window.selectiveDownloadToggle = document.getElementById('selectiveDownloadToggle');
       window.downloadConcurrencyRange = document.getElementById('downloadConcurrencyRange');
       window.downloadConcurrencyValue = document.getElementById('downloadConcurrencyValue');
@@ -51,14 +44,6 @@ function ensureSettingsOverlay() {
     }
   }
   return settingsOverlay;
-}
-
-function updateClippingDependentControls() {
-  const clippingEnabled = !!(window.clipToggle && window.clipToggle.checked);
-  if (clipPreviewRow) clipPreviewRow.style.display = clippingEnabled ? '' : 'none';
-  if (clipLocalModeRow) clipLocalModeRow.style.display = clippingEnabled ? '' : 'none';
-  if (window.clipPreviewToggle) window.clipPreviewToggle.disabled = !clippingEnabled;
-  if (window.clipLocalModeToggle) window.clipLocalModeToggle.disabled = !clippingEnabled;
 }
 
 // Create overlay immediately so storage.js and dev-menu.js can access its elements
@@ -78,46 +63,10 @@ if (settingsBtn) {
 }
 
 function initializeSettingsValues() {
-  const clippingEnabled = localStorage.getItem('clippingEnabled') === 'true';
-  if (clipToggle) {
-    clipToggle.checked = clippingEnabled;
-    if (window.clipBtn) window.clipBtn.style.display = clippingEnabled ? 'inline-block' : 'none';
-  }
-  
-  const clipPreviewEnabledStored = localStorage.getItem('clipPreviewEnabled') === 'true';
-  if (clipPreviewToggle) clipPreviewToggle.checked = clipPreviewEnabledStored;
-
-  const clipLocalModeEnabledStored = localStorage.getItem('clipLocalMode') === 'true';
-  if (clipLocalModeToggle) clipLocalModeToggle.checked = clipLocalModeEnabledStored;
-  
   const selectiveDownloadsEnabledStored = localStorage.getItem('selectiveDownloadsEnabled') === 'true';
   if (selectiveDownloadToggle) selectiveDownloadToggle.checked = selectiveDownloadsEnabledStored;
   
   // Setup event handlers
-  if (clipToggle && !clipToggle.dataset.bound) {
-    clipToggle.addEventListener('change', () => {
-      const enabled = clipToggle.checked;
-      localStorage.setItem('clippingEnabled', enabled);
-      if (window.clipBtn) window.clipBtn.style.display = enabled ? 'inline-block' : 'none';
-      updateClippingDependentControls();
-    });
-    clipToggle.dataset.bound = '1';
-  }
-  
-  if (clipPreviewToggle && !clipPreviewToggle.dataset.bound) {
-    clipPreviewToggle.addEventListener('change', () => {
-      localStorage.setItem('clipPreviewEnabled', clipPreviewToggle.checked);
-    });
-    clipPreviewToggle.dataset.bound = '1';
-  }
-
-  if (clipLocalModeToggle && !clipLocalModeToggle.dataset.bound) {
-    clipLocalModeToggle.addEventListener('change', () => {
-      localStorage.setItem('clipLocalMode', clipLocalModeToggle.checked);
-    });
-    clipLocalModeToggle.dataset.bound = '1';
-  }
-  
   if (selectiveDownloadToggle && !selectiveDownloadToggle.dataset.bound) {
     selectiveDownloadToggle.addEventListener('change', () => {
       localStorage.setItem('selectiveDownloadsEnabled', selectiveDownloadToggle.checked);
@@ -150,11 +99,7 @@ function initializeSettingsValues() {
     downloadConcurrencyRange.dataset.bound = '1';
   }
 
-  updateClippingDependentControls();
 }
-
-const clippingEnabled = localStorage.getItem('clippingEnabled') === 'true';
-if (window.clipBtn) window.clipBtn.style.display = clippingEnabled ? 'inline-block' : 'none';
 
 const MAX_UI_DL_CONCURRENCY = 8;
 const DEFAULT_DL_CONCURRENCY = 2;

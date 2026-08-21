@@ -11,7 +11,7 @@ const payload = JSON.stringify({
   addNewSeasons: false,
   allCategories: false,
   concurrency: 1,
-  torrentConcurrency: 2,
+  torrentConcurrency: 20,
 });
 let lastError = null;
 for (let attempt = 1; attempt <= 6; attempt += 1) {

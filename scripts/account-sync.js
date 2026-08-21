@@ -4,7 +4,8 @@
   if (typeof window === "undefined") return;
 
   const ACCOUNT_ID_KEY = "rsp_account_id";
-  const ACCOUNT_PASSWORD_KEY = "rsp_account_password";
+  const ACCOUNT_SESSION_KEY = "rsp_account_session";
+  const LEGACY_PASSWORD_KEY = "rsp_account_password";
   const BACKEND_ROOT_KEY = "dev:mmBackendRoot";
   const LEGACY_SYNC_URL_KEY = "dev:accountSyncUrl";
   const SINCE_KEY = "dev:accountSyncSince";
@@ -21,7 +22,7 @@
   const MAX_OPS_PER_SYNC = 2500;
   const PULL_INTERVAL_MS = 30 * 60 * 1000;
 
-  const internalKeys = new Set([ACCOUNT_ID_KEY, ACCOUNT_PASSWORD_KEY, BACKEND_ROOT_KEY, LEGACY_SYNC_URL_KEY, SINCE_KEY, LAST_SYNC_AT_KEY, QUEUE_KEY, LOCK_KEY]);
+  const internalKeys = new Set([ACCOUNT_ID_KEY, ACCOUNT_SESSION_KEY, LEGACY_PASSWORD_KEY, BACKEND_ROOT_KEY, LEGACY_SYNC_URL_KEY, SINCE_KEY, LAST_SYNC_AT_KEY, QUEUE_KEY, LOCK_KEY]);
 
   let suspendRecording = false;
   let queue = null;
@@ -246,17 +247,16 @@
   function isLoggedIn() {
     const accountId = (safeGet(ACCOUNT_ID_KEY) || "").trim();
     if (!accountId) return false;
-    const password = safeGet(ACCOUNT_PASSWORD_KEY);
-    return typeof password === "string" && password.trim().length > 0;
+    const session = safeGet(ACCOUNT_SESSION_KEY);
+    return typeof session === "string" && session.trim().length >= 16;
   }
 
   function getAccountConfig() {
     const accountId = (safeGet(ACCOUNT_ID_KEY) || "").trim();
     if (!accountId) return null;
-    const password = safeGet(ACCOUNT_PASSWORD_KEY);
-    if (typeof password !== "string") return null;
-    if (!password.trim()) return null;
-    return { accountId, password };
+    const token = safeGet(ACCOUNT_SESSION_KEY);
+    if (typeof token !== "string" || token.trim().length < 16) return null;
+    return { accountId, token: token.trim() };
   }
 
   function refreshAccountHeaderLine() {
@@ -324,9 +324,6 @@
   }
 
   const settingKeys = new Set([
-    "clippingEnabled",
-    "clipPreviewEnabled",
-    "clipLocalMode",
     "selectiveDownloadsEnabled",
     "downloadConcurrency",
     "storageShowCameraOptions",
@@ -607,23 +604,45 @@
     }, nextMs);
   }
 
-  async function registerAccount() {
+  async function registerAccount(accountIdValue, passwordValue) {
     const url = getSyncUrl();
     const accountIdInput = document.getElementById("accountSyncAccountId");
-    const requestedId = accountIdInput ? String(accountIdInput.value || "").trim() : "";
-    const password = String(safeGet(ACCOUNT_PASSWORD_KEY) ?? "");
+    const requestedId = typeof accountIdValue === "string"
+      ? accountIdValue.trim()
+      : accountIdInput ? String(accountIdInput.value || "").trim() : "";
+    const password = typeof passwordValue === "string" ? passwordValue : "";
     if (!requestedId) throw new Error("Enter an Account ID first.");
-    if (!password.trim()) throw new Error("Enter a password first.");
+    if (!password) throw new Error("Enter a password first.");
     const json = await fetchJsonWithTimeout(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: "register", accountId: requestedId, password })
     }, REQUEST_TIMEOUT_MS);
-    if (!json || json.ok !== true || !json.accountId) {
-      throw new Error("Registration failed.");
+    if (!json || json.ok !== true || !json.accountId || !json.sessionToken) {
+      throw new Error(json && json.error ? String(json.error) : "Registration failed.");
     }
     safeSet(ACCOUNT_ID_KEY, String(json.accountId));
-    safeSet(ACCOUNT_PASSWORD_KEY, password);
+    safeSet(ACCOUNT_SESSION_KEY, String(json.sessionToken));
+    setSince(0);
+    setLastSyncAt(0);
+    return { accountId: String(json.accountId) };
+  }
+
+  async function loginAccount(accountIdValue, passwordValue) {
+    const requestedId = String(accountIdValue || "").trim();
+    const password = typeof passwordValue === "string" ? passwordValue : "";
+    if (!requestedId) throw new Error("Enter an Account ID first.");
+    if (!password) throw new Error("Enter a password first.");
+    const json = await fetchJsonWithTimeout(getSyncUrl(), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "login", accountId: requestedId, password })
+    }, REQUEST_TIMEOUT_MS);
+    if (!json || json.ok !== true || !json.accountId || !json.sessionToken) {
+      throw new Error(json && json.error ? String(json.error) : "Login failed.");
+    }
+    safeSet(ACCOUNT_ID_KEY, String(json.accountId));
+    safeSet(ACCOUNT_SESSION_KEY, String(json.sessionToken));
     setSince(0);
     setLastSyncAt(0);
     return { accountId: String(json.accountId) };
@@ -636,18 +655,18 @@
     try {
       const json = await fetchJsonWithTimeout(url, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ accountId: cfg.accountId, password: cfg.password })
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${cfg.token}` },
+        body: JSON.stringify({ accountId: cfg.accountId })
       }, REQUEST_TIMEOUT_MS);
       return json && json.ok === true
-        ? { ok: true, exists: json.exists !== false, hasPassword: json.hasPassword === true }
+        ? { ok: true, exists: json.exists !== false, authenticated: json.authenticated === true }
         : { ok: false, exists: false };
     } catch (err) {
       const message = err && err.message ? String(err.message) : String(err);
       if (message.toLowerCase().includes("account not found")) return { ok: false, exists: false };
       const lowered = message.toLowerCase();
-      if (lowered.includes("invalid password") || lowered.includes("missing password") || lowered.includes("missing authorization")) {
-        safeRemove(ACCOUNT_PASSWORD_KEY);
+      if (lowered.includes("invalid account") || lowered.includes("invalid or expired session") || lowered.includes("missing authorization")) {
+        safeRemove(ACCOUNT_SESSION_KEY);
         setSince(0);
         setLastSyncAt(0);
         queue = [];
@@ -675,7 +694,8 @@
 
   function clearSession() {
     safeRemove(ACCOUNT_ID_KEY);
-    safeRemove(ACCOUNT_PASSWORD_KEY);
+    safeRemove(ACCOUNT_SESSION_KEY);
+    safeRemove(LEGACY_PASSWORD_KEY);
     setSince(0);
     setLastSyncAt(0);
     queue = [];
@@ -717,7 +737,7 @@
       const postSync = async (payload) => {
         return fetchJsonWithTimeout(url, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${cfg.token}` },
           body: JSON.stringify(payload)
         }, REQUEST_TIMEOUT_MS);
       };
@@ -729,7 +749,6 @@
         json = await postSync({
           action: "sync",
           accountId: cfg.accountId,
-          password: cfg.password,
           deviceId,
           since,
           ops,
@@ -738,8 +757,8 @@
       } catch (err) {
         const message = err && err.message ? String(err.message) : String(err);
         const lowered = message.toLowerCase();
-        if (lowered.includes("invalid password") || lowered.includes("missing password") || lowered.includes("missing authorization")) {
-          safeRemove(ACCOUNT_PASSWORD_KEY);
+        if (lowered.includes("invalid account") || lowered.includes("invalid or expired session") || lowered.includes("missing authorization")) {
+          safeRemove(ACCOUNT_SESSION_KEY);
           setSince(0);
           setLastSyncAt(0);
           queue = [];
@@ -779,7 +798,6 @@
           second = await postSync({
             action: "sync",
             accountId: cfg.accountId,
-            password: cfg.password,
             deviceId,
             since: secondSince,
             ops: [],
@@ -788,8 +806,8 @@
         } catch (err) {
           const message = err && err.message ? String(err.message) : String(err);
           const lowered = message.toLowerCase();
-          if (lowered.includes("invalid password") || lowered.includes("missing password") || lowered.includes("missing authorization")) {
-            safeRemove(ACCOUNT_PASSWORD_KEY);
+          if (lowered.includes("invalid account") || lowered.includes("invalid or expired session") || lowered.includes("missing authorization")) {
+            safeRemove(ACCOUNT_SESSION_KEY);
             setSince(0);
             setLastSyncAt(0);
             queue = [];
@@ -923,7 +941,7 @@
       warningBtn.addEventListener("click", () => {
         showNotice({
           title: "LET ME BE VERY CLEAR",
-          messageHtml: "THIS IS <strong>NOT</strong> SECURE<br><br>PASSWORDS ARE HASHED (NOT ENCRYPTED)<br><br>THIS IS NOT END-TO-END ENCRYPTED<br><br>DO WITH THAT WHAT YOU MUST",
+          messageHtml: "This account sync uses a server-verified password and a revocable session token.<br><br>It is not end-to-end encrypted. Do not sync sensitive files or secrets.",
           tone: "error",
           autoCloseMs: null
         });
@@ -996,14 +1014,9 @@
                       return;
                     }
 
-                    safeSet(ACCOUNT_ID_KEY, accountId);
-                    safeSet(ACCOUNT_PASSWORD_KEY, String(password));
-                    setSince(0);
-                    setLastSyncAt(0);
-                    refreshOverlay();
-
                     setStatusLine("Creating account…");
-                    await registerAccount();
+                    await registerAccount(accountId, String(password));
+                    refreshOverlay();
                     setStatusLine("Syncing…");
                     await syncNow({ forcePull: true });
                     setBusy(false);
@@ -1056,14 +1069,8 @@
               return;
             }
 
-            safeSet(ACCOUNT_ID_KEY, accountId);
-            safeSet(ACCOUNT_PASSWORD_KEY, String(password));
-            setSince(0);
-            setLastSyncAt(0);
-            refreshOverlay();
-
             setStatusLine("Logging in…");
-            return syncNow({ forcePull: true });
+            return loginAccount(accountId, String(password)).then(() => syncNow({ forcePull: true }));
           }).then(() => {
             if (!isLoggedIn()) return;
             setBusy(false);
@@ -1084,9 +1091,9 @@
               message,
               tone: "error"
             });
-            if (message.toLowerCase().includes("invalid password") || message.toLowerCase().includes("missing password")) {
+            if (message.toLowerCase().includes("invalid account") || message.toLowerCase().includes("invalid or expired session")) {
               safeSet(ACCOUNT_ID_KEY, accountId);
-              safeRemove(ACCOUNT_PASSWORD_KEY);
+              safeRemove(ACCOUNT_SESSION_KEY);
               setSince(0);
               setLastSyncAt(0);
             } else {
@@ -1188,6 +1195,8 @@
   }
 
   function start() {
+    // Never retain the legacy raw password key used by the old public client.
+    safeRemove(LEGACY_PASSWORD_KEY);
     installLocalStorageHook();
     wireOverlay();
     refreshAccountHeaderLine();
@@ -1212,6 +1221,7 @@
     closeOverlay,
     syncNow,
     registerAccount,
+    loginAccount,
     getSyncUrl,
     getBackendRoot
   };

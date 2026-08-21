@@ -1,0 +1,58 @@
+{
+  "title": "Maoyu: Archenemy & Hero",
+  "categories": [
+    {
+      "category": "Season 1",
+      "episodes": [
+        {
+          "title": "Episode 02",
+          "src": "https://toodrive.xpbliss.fyi/dl/n6e6nesbedkjsa3i4ovj4ok1/raw",
+          "fileSizeBytes": 415758504,
+          "dualAudio": false
+        },
+        {
+          "title": "Episode 06",
+          "src": "https://toodrive.xpbliss.fyi/dl/zl20kyavwatqavneukosfzr7/raw",
+          "fileSizeBytes": 467964046,
+          "dualAudio": false
+        },
+        {
+          "title": "Episode 07",
+          "src": "https://toodrive.xpbliss.fyi/dl/p3b4fcwbayvq88qo51l0fbdw/raw",
+          "fileSizeBytes": 400606352,
+          "dualAudio": false
+        },
+        {
+          "title": "Episode 10",
+          "src": "https://toodrive.xpbliss.fyi/dl/p4xythgbbtwq1zdfagqjc20h/raw",
+          "fileSizeBytes": 394457514,
+          "dualAudio": false
+        },
+        {
+          "title": "Episode 11",
+          "src": "https://toodrive.xpbliss.fyi/dl/o3t8olvh3u2mfel0q5i6s0ev/raw",
+          "fileSizeBytes": 32418913,
+          "dualAudio": false
+        },
+        {
+          "title": "Episode 12",
+          "src": "https://toodrive.xpbliss.fyi/dl/jj4y5lp4r6fzr5efc5c3cipb/raw",
+          "fileSizeBytes": 40264786,
+          "dualAudio": false
+        }
+      ],
+      "anilistId": 14833,
+      "rootAnilistId": 14833,
+      "mediaFormat": "TV"
+    }
+  ],
+  "LatestTime": "2026-08-17T11:26:59.873Z",
+  "totalFileSizeBytes": 1751470115,
+  "anilistId": 14833,
+  "rootAnilistId": 14833,
+  "mediaFormat": "TV",
+  "anilistIds": [
+    14833
+  ],
+  "Image": "./Sources/Posters/Anime/Maoyu_Archenemy_&_Hero.webp"
+}

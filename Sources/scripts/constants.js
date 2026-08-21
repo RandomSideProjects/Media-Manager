@@ -16,7 +16,7 @@ let SOURCES_SHARE_LOCATION = (function(){
   const v = localStorage.getItem('sources_shareFeedbackLocation');
   if (v === '0') return false;
   if (v === '1') return true;
-  return true;
+  return false;
 })();
 // Search bar toggle (beta) — on by default
 let SOURCES_SEARCH_ENABLED = (function(){

@@ -226,7 +226,7 @@ async function loadSource(rawInput) {
     if (errorMessage) errorMessage.style.display = 'none';
     urlInputContainer.style.display = 'none';
     directoryTitle.textContent = srcTitle;
-    try { document.title = `${(srcTitle || '').trim() || 'Source'} on RSP Media Manager`; } catch {}
+    try { document.title = `${(srcTitle || '').trim() || 'Source'} on Media Manager`; } catch {}
     const imgUrl = extractPoster(json);
     sourceImageUrl = imgUrl || '';
     if (directoryPoster) {

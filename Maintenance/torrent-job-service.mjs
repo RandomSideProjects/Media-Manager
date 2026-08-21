@@ -89,12 +89,62 @@ const ANILIST_CACHE_VERSION = 1;
 const LOG_PROGRESS_INTERVAL_MS = 30_000;
 const LEGACY_RECOVERY_MAX_AGE_MS = 48 * 60 * 60 * 1000;
 const LEGACY_RECOVERY_LOG_BYTES = 16 * 1024 * 1024;
+// Failure notifications are deliberately opt-in. Keep the endpoint in the
+// service environment (never in the repository or the UI) and leave the
+// maintenance worker fully functional when it is not configured.
+const FAILURE_WEBHOOK_URL = String(
+  process.env.MEDIA_MANAGER_WEBHOOK_URL
+    || process.env.MEDIA_MANAGER_FAILURE_WEBHOOK_URL
+    || process.env.MAINTENANCE_FAILURE_WEBHOOK_URL
+    || process.env.MEDIA_MANAGER_DISCORD_WEBHOOK_URL
+    || "",
+).trim();
+const FAILURE_WEBHOOK_ENABLED = Boolean(FAILURE_WEBHOOK_URL) && process.env.MEDIA_MANAGER_FAILURE_WEBHOOK !== "0";
+const FAILURE_WEBHOOK_TIMEOUT_MS = Math.max(
+  1_000,
+  Number(process.env.MEDIA_MANAGER_FAILURE_WEBHOOK_TIMEOUT_MS) || 10_000,
+);
 // The activity endpoint only needs recent milestones. Reading the entire
 // lifetime JSONL file can exceed V8's maximum string length before the caller's
 // entry limit is applied.
 const LOG_READ_BYTES = 8 * 1024 * 1024;
+// Keep the persisted activity log useful and bounded by default. The live job
+// object still retains its recent events for progress/debugging, while raw
+// ffmpeg/libav lines stay out of the long-lived JSONL file and the frontend.
+// Set MEDIA_MANAGER_PERSIST_VERBOSE_LOGS=1 only when a full process trace is
+// needed for a targeted diagnosis.
+const PERSIST_VERBOSE_PROCESS_LOGS = process.env.MEDIA_MANAGER_PERSIST_VERBOSE_LOGS === "1";
+const IMPORTANT_PERSISTED_STATUS_PHASES = new Set([
+  "starting",
+  "fetching_metadata",
+  "overwrite",
+  "processing",
+  "uploading",
+  "finalizing",
+  "complete",
+]);
 const DEFAULT_TD_REPAIR_ATTEMPTS = 20;
 const MAINTENANCE_TD_REPAIR_ATTEMPTS = 3;
+// A Toodrive session can expire during a long maintenance run even when the
+// preflight check succeeded. Retry the same cached torrent after refreshing
+// the session, but cap it so a genuinely broken credential does not loop
+// forever or hold a transfer slot indefinitely.
+const MAX_TOODRIVE_AUTH_RETRIES = Math.max(
+  0,
+  Math.min(5, Number(process.env.MEDIA_MANAGER_TOODRIVE_AUTH_RETRIES) || 2),
+);
+// td already retries individual upload chunks, but a whole pipeline can still
+// exit after a transient Toodrive/Cloudflare failure (notably HTTP 530). A
+// bounded service-level retry resumes the same cache instead of marking the
+// episode dead after the CLI's internal attempts are exhausted.
+const MAX_TD_TRANSIENT_RETRIES = Math.max(
+  0,
+  Math.min(5, Number(process.env.MEDIA_MANAGER_TD_TRANSIENT_RETRIES) || 3),
+);
+const TD_TRANSIENT_RETRY_BASE_MS = Math.max(
+  1_000,
+  Number(process.env.MEDIA_MANAGER_TD_TRANSIENT_RETRY_DELAY_MS) || 10_000,
+);
 const DEFAULT_MAINTENANCE_CONCURRENCY = 1;
 const MAX_MAINTENANCE_CONCURRENCY = 1;
 // Keep the default conservative while allowing the UI to raise the number of
@@ -123,6 +173,7 @@ let catalogWriteQueue = Promise.resolve();
 let catalogScanPromise = null;
 let catalogRunId = null;
 let catalogAniListLastRequestAt = 0;
+let failureWebhookQueue = Promise.resolve();
 
 function emptyCatalogState() {
   return {
@@ -189,6 +240,7 @@ function catalogKey(alID) {
 function resumableRun(run) {
   return {
     id: run.id,
+    operation: String(run.payload?.operation || "update"),
     state: run.state,
     phase: run.phase,
     total: run.total,
@@ -275,6 +327,11 @@ function persistResumeState() {
 }
 
 function persistLog(entry) {
+  if (!PERSIST_VERBOSE_PROCESS_LOGS) {
+    const event = String(entry?.event || "").trim().toLowerCase();
+    if (event === "log") return;
+    if (event === "status" && !IMPORTANT_PERSISTED_STATUS_PHASES.has(String(entry?.phase || "").trim().toLowerCase())) return;
+  }
   const timestamp = Date.parse(entry.at || "") || Date.now();
   if (entry.event === "progress") {
     const key = `${entry.jobId || entry.runId || "service"}:${entry.remotePath || ""}:${entry.phase || ""}`;
@@ -291,6 +348,85 @@ function persistLog(entry) {
       console.error(`[maintenance-log] ${error instanceof Error ? error.message : String(error)}`);
     }
   });
+}
+
+function webhookText(value, limit = 500) {
+  return String(value ?? "")
+    .replace(/[\u0000-\u001f\u007f]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, limit);
+}
+
+function failureWebhookContent(payload = {}) {
+  const title = webhookText(payload.title || payload.name || "Maintenance task", 240);
+  const category = webhookText(payload.category || payload.categoryName, 160);
+  const message = webhookText(payload.message || payload.error || "Unknown failure", 900);
+  const lines = ["🚨 Media Manager maintenance failure", `Task: ${title}${category ? ` · ${category}` : ""}`];
+  if (payload.scope) lines.push(`Scope: ${webhookText(payload.scope, 80)}`);
+  if (payload.runId) lines.push(`Run: ${webhookText(payload.runId, 100)}`);
+  if (payload.jobId) lines.push(`Job: ${webhookText(payload.jobId, 100)}`);
+  if (payload.provider) lines.push(`Source: ${webhookText(payload.provider, 120)}`);
+  if (Number.isFinite(Number(payload.failed)) && Number.isFinite(Number(payload.total))) {
+    lines.push(`Run failures: ${Number(payload.failed)} / ${Number(payload.total)}`);
+  }
+  lines.push(`Error: ${message}`);
+  // Discord-compatible webhooks cap content at 2,000 characters. Keeping a
+  // little room below that limit also makes the payload usable by other
+  // webhook receivers that impose a smaller text limit.
+  return lines.join("\n").slice(0, 1_900);
+}
+
+async function sendFailureWebhook(payload = {}) {
+  if (!FAILURE_WEBHOOK_ENABLED) return { enabled: false, skipped: "not_configured" };
+  const content = failureWebhookContent(payload);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), FAILURE_WEBHOOK_TIMEOUT_MS);
+  try {
+    const response = await fetch(FAILURE_WEBHOOK_URL, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "user-agent": "Media-Manager-Maintenance/1.0",
+      },
+      // `content` is accepted by Discord and keeps the integration useful for
+      // generic JSON receivers without exposing the webhook URL in the body.
+      body: JSON.stringify({ content, username: "Media Manager Maintenance" }),
+      signal: controller.signal,
+    });
+    const responseText = await response.text().catch(() => "");
+    if (!response.ok) {
+      const detail = webhookText(responseText, 180);
+      throw new Error(`webhook returned HTTP ${response.status}${detail ? `: ${detail}` : ""}`);
+    }
+    persistLog({
+      scope: "service",
+      event: "failure_webhook_sent",
+      status: response.status,
+      title: webhookText(payload.title || payload.name || "Maintenance task", 240),
+      runId: payload.runId || undefined,
+      jobId: payload.jobId || undefined,
+    });
+    return { enabled: true, sent: true, status: response.status };
+  } catch (error) {
+    // A notification outage must never stop or change the maintenance job
+    // that caused it. Persist only the safe error summary; never log the URL.
+    persistLog({
+      scope: "service",
+      event: "failure_webhook_failed",
+      message: webhookText(error?.name === "AbortError" ? "webhook request timed out" : error?.message || error, 300),
+    });
+    return { enabled: true, sent: false, error: error instanceof Error ? error.message : String(error) };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function queueFailureWebhook(payload = {}) {
+  if (!FAILURE_WEBHOOK_ENABLED) return Promise.resolve({ enabled: false, skipped: "not_configured" });
+  const next = failureWebhookQueue.then(() => sendFailureWebhook(payload));
+  failureWebhookQueue = next.catch(() => {});
+  return next;
 }
 
 async function readPersistedLogs({ runId = "", jobId = "", limit = 500 } = {}) {
@@ -621,6 +757,11 @@ async function refreshSourceListPublication() {
     state.lastError = error instanceof Error ? error.message : String(error);
     await persistCatalogState();
     persistLog({ scope: "source-list", event: "publication_failed", message: error instanceof Error ? error.message : String(error) });
+    void queueFailureWebhook({
+      scope: "source-list",
+      title: "Source list publication",
+      message: error instanceof Error ? error.message : String(error),
+    });
     return { provider: "github", path: SOURCE_LIST_PATH, skipped: false, pending: true, error: error instanceof Error ? error.message : String(error) };
   }
 }
@@ -718,7 +859,12 @@ async function cleanupUploadedArtifact(job, artifact) {
 function queueUploadedArtifactCleanup(job, artifact) {
   if (!artifact?.localPath || artifact.fileCleanupQueued) return;
   artifact.fileCleanupQueued = true;
-  const promise = cleanupUploadedArtifact(job, artifact);
+  // The td process reports an uploaded artifact before the local conversion
+  // result has necessarily been audio-inspected. Wait for the audio probe
+  // before deleting the cache file, otherwise dual-audio validation races the
+  // cleanup and incorrectly sees zero streams for every episode.
+  const inspections = [job.audioProbePromises?.get(artifact)].filter(Boolean);
+  const promise = Promise.allSettled(inspections).then(() => cleanupUploadedArtifact(job, artifact));
   job.fileCleanupPromises ||= new Set();
   job.fileCleanupPromises.add(promise);
   void promise.finally(() => job.fileCleanupPromises.delete(promise)).catch(() => {});
@@ -2292,6 +2438,12 @@ function hasCompleteDurations(data) {
   });
 }
 
+function audioClassification(entry) {
+  if (entry?.dualAudio === true || String(entry?.audioStatus || "").toLowerCase() === "dual") return "dual";
+  if (entry?.dualAudio === false || String(entry?.audioStatus || "").toLowerCase() === "single") return "single";
+  return "unconfirmed";
+}
+
 function categorySummary(category, index) {
   const { entries } = getEntries(category);
   const categoryName = String(category?.category || `Season ${index + 1}`);
@@ -2306,12 +2458,16 @@ function categorySummary(category, index) {
   const parsed = numberedEntries.filter((item) => item.episode).map((item) => ({ episode: item.episode }));
   const episodeNumbers = [...new Set(parsed.map((info) => info.episode))].sort((a, b) => a - b);
   const dualAudioEpisodeNumbers = [...new Set(numberedEntries
-    .map(({ entry, episode }) => ({ episode, dualAudio: entry?.dualAudio }))
-    .filter((entry) => entry.episode && entry.dualAudio === true)
+    .map(({ entry, episode }) => ({ episode, status: audioClassification(entry) }))
+    .filter((entry) => entry.episode && entry.status === "dual")
     .map((entry) => entry.episode))].sort((a, b) => a - b);
   const nonDualEpisodeNumbers = [...new Set(numberedEntries
-    .map(({ entry, episode }) => ({ episode, dualAudio: entry?.dualAudio }))
-    .filter((entry) => entry.episode && entry.dualAudio !== true)
+    .map(({ entry, episode }) => ({ episode, status: audioClassification(entry) }))
+    .filter((entry) => entry.episode && entry.status === "single")
+    .map((entry) => entry.episode))].sort((a, b) => a - b);
+  const unconfirmedAudioEpisodeNumbers = [...new Set(numberedEntries
+    .map(({ entry, episode }) => ({ episode, status: audioClassification(entry) }))
+    .filter((entry) => entry.episode && entry.status === "unconfirmed")
     .map((entry) => entry.episode))].sort((a, b) => a - b);
   return {
     index,
@@ -2323,7 +2479,9 @@ function categorySummary(category, index) {
     dualAudioEpisodeNumbers,
     nonDualEpisodeNumbers,
     dualAudioCount: dualAudioEpisodeNumbers.length,
-    unconfirmedAudioCount: nonDualEpisodeNumbers.length,
+    singleAudioCount: nonDualEpisodeNumbers.length,
+    unconfirmedAudioEpisodeNumbers,
+    unconfirmedAudioCount: unconfirmedAudioEpisodeNumbers.length,
   };
 }
 
@@ -2351,6 +2509,7 @@ async function listLibrary() {
         hidden: data.hidden === true || data.Hidden === true || data.maintainerHidden === true,
         dualAudio: categories.some((category) => categorySummary(category, 0).dualAudio === true),
         dualAudioCount: categories.reduce((sum, category) => sum + categorySummary(category, 0).dualAudioCount, 0),
+        singleAudioCount: categories.reduce((sum, category) => sum + categorySummary(category, 0).singleAudioCount, 0),
         unconfirmedAudioCount: categories.reduce((sum, category) => sum + categorySummary(category, 0).unconfirmedAudioCount, 0),
         latestTime: data.LatestTime || data.latestTime || "",
         categories: categories.map(categorySummary),
@@ -2466,6 +2625,10 @@ async function resumePausedMaintenanceRun(run, settings = {}) {
   if (!run.paused || run.state !== "paused") throw new Error("maintenance run is not paused yet");
   if (run.pauseDraining) throw new Error("maintenance run is still finishing its current operation");
   updateMaintenanceRunSettings(run, settings);
+  // Stopping child jobs is how a pause drains in-flight work.  Those children
+  // report `cancelled` while the parent run is deliberately paused, so never
+  // carry that transient cancellation marker into the resumed execution.
+  run.cancelled = false;
   run.paused = false;
   run.pauseRequested = false;
   run.state = "running";
@@ -2473,6 +2636,73 @@ async function resumePausedMaintenanceRun(run, settings = {}) {
   runEvent(run, `Resuming maintenance with up to ${run.torrentConcurrency} torrent job${run.torrentConcurrency === 1 ? "" : "s"} at a time.`);
   await persistResumeState();
   startExecuteMaintenanceRun(run, run.payload);
+  return run;
+}
+
+async function resetFailedMaintenanceRun(run) {
+  if (maintenanceRunIsTerminal(run)) throw new Error("maintenance run is already finished");
+  if (!run.paused || run.state !== "paused") throw new Error("pause the maintenance run before resetting failures");
+  if (run.pauseDraining || run.executionActive || run.planningActive) {
+    throw new Error("maintenance run is still finishing its current operation");
+  }
+
+  const catalogState = await loadCatalogState();
+  let resetItems = 0;
+  let resetReleases = 0;
+  for (const item of run.items || []) {
+    const catalogEntry = item.catalogKey ? catalogState.entries[item.catalogKey] : null;
+    // An interrupted item can have been marked active just before the pause;
+    // clear that stale catalog marker even when its release states were
+    // already converted back to queued during recovery.
+    if (catalogEntry && catalogEntry.state === "active" && item.state !== "downloading") {
+      catalogEntry.state = "queued";
+      catalogEntry.lastError = "";
+      catalogEntry.nextRetryAt = null;
+    }
+    const failedStates = (Array.isArray(item.releaseStates) ? item.releaseStates : [])
+      .filter((release) => release.state === "failed" || release.state === "cancelled");
+    // A paused run can contain cancelled items when an in-flight transfer was
+    // stopped to drain the pause. Treat those as interrupted work, not as
+    // permanently finished items, so reset-failed can safely queue them too.
+    if (item.state !== "failed" && item.state !== "cancelled" && !failedStates.length) continue;
+    for (const release of failedStates) {
+      release.state = "queued";
+      release.jobId = null;
+      release.links = 0;
+      release.manifest = null;
+      release.error = "";
+      resetReleases += 1;
+    }
+    item.state = "queued";
+    item.error = "";
+    item.counted = false;
+    item.jobId = null;
+    item.jobIds = [];
+    syncMaintenanceReleaseSummary(item);
+    resetItems += 1;
+    if (catalogEntry) {
+      const entry = catalogEntry;
+      if (entry.state === "failed") entry.state = "queued";
+      entry.lastError = "";
+      entry.nextRetryAt = null;
+      entry.attempts = 0;
+    }
+  }
+  await persistCatalogState();
+  // A paused run may have cancelled its in-flight child jobs while draining;
+  // reset-failed turns that interrupted work back into queued work and must
+  // also clear the parent's transient cancellation marker before resume.
+  run.cancelled = false;
+  run.failed = 0;
+  run.skipped = (run.items || []).filter((item) => item.state === "skipped").length;
+  run.completed = (run.items || []).filter((item) => ["complete", "skipped", "cancelled"].includes(item.state)).length;
+  run.current = null;
+  run.currentJobId = null;
+  run.active = [];
+  run.activeJobIds = [];
+  syncRunActivity(run);
+  runEvent(run, `Reset ${resetItems} failed or interrupted maintenance item${resetItems === 1 ? "" : "s"} and queued ${resetReleases} unfinished release${resetReleases === 1 ? "" : "s"}. Maintenance remains paused until you resume it.`);
+  await persistResumeState();
   return run;
 }
 
@@ -2803,12 +3033,14 @@ function catalogReleaseForMaintenance(entry) {
   const release = entry?.preferredRelease;
   if (!release) return null;
   const title = `[${release.releaseGroup || "SeaDex"}] ${entry.mediaTitle || entry.title}${entry.category ? ` ${entry.category}` : ""}`;
+  const trackerUrl = String(release.trackerUrl || "").trim();
+  const nyaaMatch = trackerUrl.match(/^https?:\/\/(?:www\.)?nyaa\.si\/view\/(\d+)(?:[/?#]|$)/i);
   return {
     provider: "seadex",
     title,
     viewUrl: `${RELEASES_BASE_URL}/${entry.alID}/`,
-    trackerUrl: release.trackerUrl || "",
-    torrentUrl: "",
+    trackerUrl,
+    torrentUrl: nyaaMatch ? `https://nyaa.si/download/${nyaaMatch[1]}.torrent` : "",
     magnet: release.magnet || "",
     hash: release.hash || "",
     seeders: 0,
@@ -2877,6 +3109,7 @@ async function buildCatalogMaintenanceWork(sources, payload = {}) {
       continue;
     }
     if (payload?.newShowsOnly === true && source) continue;
+    if (payload?.existingSourcesOnly === true && !source) continue;
     const groupKey = `${entry.format}:${entry.rootAlID || entry.alID}`;
     const plannedPath = plannedGroups.get(groupKey) || `${SOURCE_PREFIX}${slugFileName(entry.title)}`;
     const sourcePath = source?.path || plannedPath;
@@ -3300,6 +3533,9 @@ async function runMaintenanceRelease(run, item, releaseState, payload) {
     return { cancelled: true };
   }
   if (result.state !== "complete") {
+    // The child job has already emitted the immediate failure notification.
+    // Mark the item so its broader catch handler does not send a duplicate.
+    item.failureWebhookNotified = true;
     releaseState.state = "failed";
     releaseState.error = result.events?.at(-1)?.message || `td exited with code ${result.exitCode ?? "?"}`;
     syncMaintenanceReleaseSummary(item);
@@ -3486,6 +3722,19 @@ async function processMaintenanceItem(run, item, payload = {}) {
     run.failed += 1;
     syncRunActivity(run);
     runEvent(run, `Failed ${item.title} · ${item.category}: ${item.error}.`);
+    if (!item.failureWebhookNotified) {
+      item.failureWebhookNotified = true;
+      void queueFailureWebhook({
+        scope: "item",
+        title: item.title,
+        category: item.category,
+        runId: run.id,
+        message: item.error,
+        provider: item.candidate?.provider || item.release?.provider || "release search",
+        failed: run.failed,
+        total: run.total,
+      });
+    }
     await markCatalogItem(item, null, error);
   }
   if (!item.counted && ["complete", "failed", "cancelled"].includes(item.state)) {
@@ -3548,6 +3797,14 @@ async function executeMaintenanceRun(run, payload = run.payload || {}) {
     run.failed += 1;
     run.state = "failed";
     runEvent(run, error instanceof Error ? error.message : String(error));
+    void queueFailureWebhook({
+      scope: "run",
+      title: "Maintenance run",
+      runId: run.id,
+      message: error instanceof Error ? error.message : String(error),
+      failed: run.failed,
+      total: run.total,
+    });
   } finally {
     run.executionActive = false;
     if (run.pauseRequested || run.pauseDraining) {
@@ -3577,13 +3834,18 @@ async function startMaintenanceRun(payload = {}) {
   payload = payload && typeof payload === "object" ? payload : {};
   const operation = String(payload.operation || "").trim().toLowerCase();
   if (MAINTENANCE_ROLE === "general" && operation !== "add") {
-    // The general worker defaults to upkeep for manifests that already exist.
-    // An explicit add operation from the mode picker may opt into catalog work.
+    // The general worker owns upkeep for manifests that already exist. Keep
+    // catalog planning enabled here so it can promote single-audio episodes
+    // when SeaDex has a preferred dual-audio release, but never create new
+    // shows on this worker. The catalog planner skips entries without an
+    // existing source when existingSourcesOnly is set.
     payload = {
       ...payload,
-      discoverCatalog: false,
-      catalogScan: false,
+      discoverCatalog: true,
+      catalogScan: true,
       catalogOnly: false,
+      newShowsOnly: false,
+      existingSourcesOnly: true,
       addNewSeasons: false,
     };
   }
@@ -3689,6 +3951,14 @@ async function startMaintenanceRun(payload = {}) {
       run.finishedAt = new Date().toISOString();
       if (catalogRunId === run.id) catalogRunId = null;
       runEvent(run, error instanceof Error ? error.message : String(error));
+      void queueFailureWebhook({
+        scope: "run",
+        title: "Maintenance planning",
+        runId: run.id,
+        message: error instanceof Error ? error.message : String(error),
+        failed: run.failed,
+        total: run.total,
+      });
       await persistResumeState();
     } finally {
       run.planningActive = false;
@@ -3952,6 +4222,18 @@ async function finishJob(job, code, error, { cancelled = false } = {}) {
     manifestCommitSha: job.manifest?.github?.commitSha || undefined,
     message: error ? (error instanceof Error ? error.message : String(error)) : undefined,
   });
+  if (!wasCancelled && finalCode !== 0) {
+    job.failureWebhookNotified = true;
+    void queueFailureWebhook({
+      scope: "job",
+      title: job.maintenance?.title || job.destination || "Torrent job",
+      category: job.maintenance?.categoryName || "",
+      provider: job.maintenance?.provider || "torrent",
+      runId: job.runId,
+      jobId: job.id,
+      message: error ? (error instanceof Error ? error.message : String(error)) : `td exited with code ${finalCode}`,
+    });
+  }
   if (job.maintenance) await persistResumeState();
   delete job.finishing;
   job.resolveDone?.(job);
@@ -4105,6 +4387,41 @@ function shouldFallbackToSequential(job, code) {
     && job.artifacts.length === 0;
 }
 
+function toodriveAuthenticationFailure(job, attemptError, eventStart = 0) {
+  const events = Array.isArray(job?.events) ? job.events.slice(eventStart) : [];
+  const eventFailure = events.find((event) => {
+    const code = String(event?.code || event?.errorCode || "").toLowerCase();
+    const message = String(event?.message || event?.error || "").toLowerCase();
+    return code === "session_expired"
+      || code === "not_logged_in"
+      || code === "unauthorized"
+      || /session\s+expired|session\s+invalid|not\s+logged\s+in|authentication\s+failed|unauthenticated/.test(message);
+  });
+  if (eventFailure) return eventFailure;
+  const message = String(attemptError?.message || "").toLowerCase();
+  return /session\s+expired|session\s+invalid|not\s+logged\s+in|authentication\s+failed|unauthenticated/.test(message)
+    ? { message: attemptError.message }
+    : null;
+}
+
+function toodriveTransientFailure(job, attemptError, eventStart = 0) {
+  const events = Array.isArray(job?.events) ? job.events.slice(eventStart) : [];
+  const eventFailure = events.find((event) => {
+    const code = String(event?.code || event?.errorCode || "").toLowerCase();
+    const message = String(event?.message || event?.error || "").toLowerCase();
+    return code === "upload_failed"
+      || code === "http_530"
+      || code === "network_error"
+      || code === "upload_retry"
+      || /failed\s+to\s+upload\s+chunk|http\s*5\d{2}|status\s*5\d{2}|econnreset|etimedout|temporarily\s+unavailable|connection\s+(?:reset|closed)/.test(message);
+  });
+  if (eventFailure) return eventFailure;
+  const message = String(attemptError?.message || "").toLowerCase();
+  return /http\s*5\d{2}|status\s*5\d{2}|econnreset|etimedout|temporarily\s+unavailable|connection\s+(?:reset|closed)/.test(message)
+    ? { message: attemptError.message }
+    : null;
+}
+
 function emitSequentialFallback(job, reason) {
   job.fallbackAttempted = true;
   const event = {
@@ -4118,6 +4435,7 @@ function emitSequentialFallback(job, reason) {
 }
 
 function spawnTdAttempt(job, { downloadAll, repairAttempts, retry = false }, releaseSlot = () => {}) {
+  const attemptEventStart = job.events.length;
   const args = tdAttemptArgs(job, { downloadAll, repairAttempts });
   const child = spawn(TD_BIN, args, {
     env: {
@@ -4184,6 +4502,70 @@ function spawnTdAttempt(job, { downloadAll, repairAttempts, retry = false }, rel
     flush();
     job.child = null;
     const exitCode = code ?? 1;
+    const authFailure = toodriveAuthenticationFailure(job, attemptError, attemptEventStart);
+    if (exitCode !== 0 && authFailure && TOODRIVE_AUTO_LOGIN && !job.stopRequested && job.authRetryCount < MAX_TOODRIVE_AUTH_RETRIES) {
+      job.authRetryCount += 1;
+      job.state = "authenticating";
+      persistLog({
+        scope: "job",
+        event: "td_auth_retry",
+        jobId: job.id,
+        runId: job.runId,
+        attempt: job.attempt,
+        retry: job.authRetryCount,
+      });
+      void (async () => {
+        let login;
+        try {
+          login = await reloginToodrive();
+        } catch (error) {
+          login = { ok: false, message: error instanceof Error ? error.message : String(error) };
+        }
+        if (login?.ok && !job.stopRequested && !job.cancelled) {
+          persistLog({
+            scope: "job",
+            event: "td_auth_relogged",
+            jobId: job.id,
+            runId: job.runId,
+            retry: job.authRetryCount,
+          });
+          spawnTdAttempt(job, { downloadAll, repairAttempts, retry: true }, releaseSlot);
+          return;
+        }
+        const message = login?.message || "Toodrive automatic login failed.";
+        void finishJob(job, exitCode, new Error(message), {
+          cancelled: job.stopRequested || job.cancelled,
+        }).finally(releaseSlot);
+      })();
+      return;
+    }
+    const transientFailure = toodriveTransientFailure(job, attemptError, attemptEventStart);
+    if (exitCode !== 0 && transientFailure && !job.stopRequested && !job.cancelled && job.transientRetryCount < MAX_TD_TRANSIENT_RETRIES) {
+      job.transientRetryCount += 1;
+      const retryNumber = job.transientRetryCount;
+      const delay = Math.min(120_000, TD_TRANSIENT_RETRY_BASE_MS * (2 ** (retryNumber - 1)));
+      job.state = "retrying";
+      persistLog({
+        scope: "job",
+        event: "td_transient_retry",
+        jobId: job.id,
+        runId: job.runId,
+        attempt: job.attempt,
+        retry: retryNumber,
+        delayMs: delay,
+      });
+      void (async () => {
+        await new Promise((resolveWait) => setTimeout(resolveWait, delay));
+        if (job.stopRequested || job.cancelled) {
+          void finishJob(job, exitCode, new Error("Job stopped."), { cancelled: true }).finally(releaseSlot);
+          return;
+        }
+        spawnTdAttempt(job, { downloadAll, repairAttempts, retry: true }, releaseSlot);
+      })().catch((error) => {
+        void finishJob(job, exitCode, error).finally(releaseSlot);
+      });
+      return;
+    }
     if (shouldFallbackToSequential(job, exitCode)) {
       emitSequentialFallback(job, attemptError?.message || `td exited with code ${exitCode}`);
       spawnTdAttempt(job, {
@@ -4225,6 +4607,7 @@ async function startJob({ torrentUrl, magnet, destination, cacheDir, runId, main
     runId: runId || normalizedMaintenance?.runId || null, maintenance: normalizedMaintenance, cacheDir: null, startedAt: new Date().toISOString(),
     source, destination, adaptiveFallback: Boolean(normalizedMaintenance), fallbackAttempted: false,
     metadataSeen: false, hasTransferProgress: false, stopRequested: false, cancelled: false, attempt: 0,
+    authRetryCount: 0, transientRetryCount: 0,
     fileCleanupPromises: new Set(),
     durationProbePromises: new Map(),
     audioProbePromises: new Map(),
@@ -4267,6 +4650,49 @@ function restoreJob(saved) {
   jobs.set(job.id, job);
   if (job.finishedAt) job.resolveDone(job);
   return job;
+}
+
+function normalizePausedRunAfterRestart(run) {
+  if (!run?.paused) return false;
+  let changed = false;
+  const activeStates = new Set(["searching", "downloading", "processing", "uploading"]);
+  for (const item of run.items || []) {
+    if (activeStates.has(item.state)) {
+      item.state = "queued";
+      item.error = "";
+      item.jobId = null;
+      item.jobIds = [];
+      changed = true;
+    }
+    for (const release of item.releaseStates || []) {
+      if (["complete", "failed", "cancelled"].includes(release.state)) continue;
+      release.state = "queued";
+      release.jobId = null;
+      changed = true;
+    }
+    syncMaintenanceReleaseSummary(item);
+  }
+  for (const job of jobs.values()) {
+    if (job.runId !== run.id || job.finishedAt) continue;
+    // The parent service has already stopped; these restored records must not
+    // appear as live transfers or block the paused run from resuming.
+    job.stopRequested = true;
+    job.cancelled = true;
+    job.state = "cancelled";
+    job.finishedAt = job.finishedAt || new Date().toISOString();
+    changed = true;
+  }
+  if (run.pauseDraining || run.current || run.currentJobId || (run.active || []).length || (run.activeJobIds || []).length) {
+    run.pauseDraining = false;
+    run.current = null;
+    run.currentJobId = null;
+    run.active = [];
+    run.activeJobIds = [];
+    changed = true;
+  }
+  run.state = "paused";
+  run.phase = "paused";
+  return changed;
 }
 
 async function resumeMaintenanceRun(run) {
@@ -4560,6 +4986,14 @@ async function restorePersistedWork() {
   }
   for (const run of maintenanceRuns.values()) syncRunActivity(run);
 
+  for (const run of maintenanceRuns.values()) {
+    if (!run.paused) continue;
+    if (normalizePausedRunAfterRestart(run)) {
+      runEvent(run, "Recovered paused maintenance work after service restart; unfinished transfers remain queued until resume.");
+    }
+  }
+  await persistResumeState();
+
   await recoverLegacyMaintenanceWork(
     new Set(maintenanceRuns.keys()),
     new Set(jobs.keys()),
@@ -4592,6 +5026,14 @@ async function restorePersistedWork() {
       run.finishedAt = new Date().toISOString();
       if (catalogRunId === run.id) catalogRunId = null;
       runEvent(run, error instanceof Error ? error.message : String(error));
+      void queueFailureWebhook({
+        scope: "run",
+        title: "Maintenance resume",
+        runId: run.id,
+        message: error instanceof Error ? error.message : String(error),
+        failed: run.failed,
+        total: run.total,
+      });
       await persistResumeState();
     });
   }
@@ -4720,6 +5162,10 @@ const server = createServer(async (req, res) => {
         role: MAINTENANCE_ROLE,
         catalog: catalogSummary(await loadCatalogState()),
         github: githubConfiguration(),
+        failureWebhook: {
+          enabled: FAILURE_WEBHOOK_ENABLED,
+          configured: Boolean(FAILURE_WEBHOOK_URL),
+        },
         scheduler: {
           concurrency: MAX_TORRENT_CONCURRENCY,
           activeJobId: activePipelineJob?.id || null,
@@ -4793,13 +5239,20 @@ const server = createServer(async (req, res) => {
       });
       return json(res, 202, publicRun(run));
     }
-    const runActionMatch = url.pathname.match(/^\/api\/maintenance\/runs\/([^/]+)\/(pause|resume)$/);
+    const runActionMatch = url.pathname.match(/^\/api\/maintenance\/runs\/([^/]+)\/(pause|resume|reset-failed)$/);
     if (runActionMatch && req.method === "POST") {
       const run = maintenanceRuns.get(runActionMatch[1]);
       if (!run) return json(res, 404, { error: "maintenance run not found" });
       if (runActionMatch[2] === "pause") {
         try {
           return json(res, 202, publicRun(requestMaintenancePause(run)));
+        } catch (error) {
+          return json(res, 409, { error: error instanceof Error ? error.message : String(error) });
+        }
+      }
+      if (runActionMatch[2] === "reset-failed") {
+        try {
+          return json(res, 202, publicRun(await resetFailedMaintenanceRun(run)));
         } catch (error) {
           return json(res, 409, { error: error instanceof Error ? error.message : String(error) });
         }
@@ -4855,9 +5308,15 @@ async function startServer() {
     console.log(`Using td: ${TD_BIN}`);
     console.log(`Using Toodrive: ${TOODRIVE_BASE_URL}`);
     persistLog({ scope: "service", event: "service_started", port: PORT, repository: REPO_ROOT, td: TD_BIN });
-    if (CATALOG_SCAN_ENABLED && !catalogRunId) {
+    const hasPausedRun = [...maintenanceRuns.values()].some((run) => run.paused && !run.finishedAt);
+    if (CATALOG_SCAN_ENABLED && !catalogRunId && !hasPausedRun) {
       void startAutomaticCatalogRun("startup").catch((error) => {
         persistLog({ scope: "service", event: "catalog_start_failed", message: error instanceof Error ? error.message : String(error) });
+        void queueFailureWebhook({
+          scope: "catalog",
+          title: "Automatic catalog scan",
+          message: error instanceof Error ? error.message : String(error),
+        });
       });
     }
   });
@@ -4903,6 +5362,8 @@ export {
   cleanupJobCache,
   checkTdSession,
   loginToodrive,
+  failureWebhookContent,
+  sendFailureWebhook,
 };
 
 if (process.env.MEDIA_MANAGER_TEST !== "1") {

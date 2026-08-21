@@ -16,6 +16,11 @@ await writeFile(join(root, sourcePath), `${JSON.stringify({
 }, null, 2)}\n`);
 await writeFile(tdPath, [
   "#!/usr/bin/env node",
+  "import { mkdir, writeFile } from 'node:fs/promises';",
+  "import { join } from 'node:path';",
+  "const cacheDirectory = process.argv[process.argv.indexOf('--cache-dir') + 1];",
+  "await mkdir(join(cacheDirectory, 'release'), { recursive: true });",
+  "await writeFile(join(cacheDirectory, 'release', 'episode.mkv'), 'media');",
   "process.stdout.write(JSON.stringify({ event: 'metadata' }) + '\\n');",
   "process.stdout.write(JSON.stringify({ event: 'file_result', outcome: 'uploaded', remotePath: 'Audio Show/Season 1/S01E01.mp4', localPath: 'release/episode.mkv' }) + '\\n');",
   "process.stdout.write(JSON.stringify({ event: 'link', remotePath: 'Audio Show/Season 1/S01E01.mp4', url: 'https://new/episode-1.mp4' }) + '\\n');",
@@ -23,8 +28,11 @@ await writeFile(tdPath, [
 await chmod(tdPath, 0o755);
 await writeFile(ffprobePath, [
   "#!/usr/bin/env node",
+  "import { existsSync } from 'node:fs';",
   "const count = Math.max(0, Number(process.env.TEST_AUDIO_STREAMS || 0));",
-  "process.stdout.write(Array.from({ length: count }, (_, index) => String(index)).join('\\n') + (count ? '\\n' : ''));",
+  "const input = process.argv.at(-1);",
+  "const available = existsSync(input) ? count : 0;",
+  "process.stdout.write(Array.from({ length: available }, (_, index) => String(index)).join('\\n') + (available ? '\\n' : ''));",
 ].join("\n"), { mode: 0o755 });
 await chmod(ffprobePath, 0o755);
 

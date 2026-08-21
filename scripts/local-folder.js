@@ -307,7 +307,7 @@ async function handleExtractedFiles(files) {
     };
   }));
   directoryTitle.textContent = dirTitle;
-  try { document.title = `${(dirTitle || '').trim() || 'Source'} on RSP Media Manager`; } catch {}
+  try { document.title = `${(dirTitle || '').trim() || 'Source'} on Media Manager`; } catch {}
   sourceImageUrl = posterObjectUrl || '';
   if (directoryPoster) {
     const hidePoster = () => { directoryPoster.style.display = 'none'; };
