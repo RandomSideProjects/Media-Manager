@@ -7,9 +7,10 @@
       "episodes": [
         {
           "title": "Episode 1",
-          "src": "https://files.catbox.moe/h3lv6q.mp4",
-          "fileSizeBytes": 146111631,
-          "durationSeconds": 1485
+          "src": "https://toodrive.xpbliss.fyi/dl/o7jgv1mrqblrlsehl0suuvs8/raw",
+          "fileSizeBytes": 305171739,
+          "durationSeconds": 1630,
+          "dualAudio": true
         },
         {
           "title": "Episode 2",
@@ -82,9 +83,9 @@
       ]
     }
   ],
-  "totalFileSizeBytes": 2164818506,
-  "LatestTime": "2026-08-21T04:37:15.917Z",
-  "totalDurationSeconds": 18170,
+  "totalFileSizeBytes": 2323878614,
+  "LatestTime": "2026-08-21T04:38:03.367Z",
+  "totalDurationSeconds": 18315,
   "hidden": true,
   "anilistIds": []
 }
