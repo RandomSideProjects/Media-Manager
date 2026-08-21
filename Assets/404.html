@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, follow" />
+  <meta name="theme-color" content="#101113" />
+  <title>404 · RSP Media Manager</title>
+  <link rel="icon" href="/Assets/Favicon.png" />
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #101113;
+      color: #f1f1f1;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      margin: 0;
+      padding: 1.5rem;
+      background: #101113;
+    }
+
+    main {
+      width: min(100%, 34rem);
+      padding: clamp(2rem, 7vw, 3.5rem) clamp(1.5rem, 7vw, 3.5rem);
+      border: 1px solid #45484f;
+      border-radius: 10px;
+      background: #1a1b1f;
+      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.32);
+      text-align: center;
+    }
+
+    .code {
+      margin: 0;
+      color: #c8cdd6;
+      font-size: clamp(4rem, 18vw, 7rem);
+      font-weight: 800;
+      letter-spacing: -0.08em;
+      line-height: 0.9;
+    }
+
+    .challenge-image {
+      display: block;
+      width: min(225px, 100%);
+      height: auto;
+      margin: 1.5rem auto 0;
+      border: 1px solid #707784;
+      border-radius: 6px;
+      image-rendering: pixelated;
+    }
+
+    h1 {
+      margin: 1.5rem 0 0;
+      font-size: clamp(1.35rem, 4vw, 1.8rem);
+      letter-spacing: -0.03em;
+    }
+
+    a {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 2.75rem;
+      margin-top: 1.5rem;
+      padding: 0 1.25rem;
+      border: 1px solid #707784;
+      border-radius: 8px;
+      background: #5f6672;
+      color: #fff;
+      font-weight: 750;
+      text-decoration: none;
+      transition: background-color 140ms ease, border-color 140ms ease;
+    }
+
+    a:hover,
+    a:focus-visible {
+      border-color: #9da4b0;
+      background: #747c8a;
+    }
+
+    a:focus-visible {
+      outline: 2px solid #c8cdd6;
+      outline-offset: 3px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      a { transition: none; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <p class="code">404</p>
+    <img class="challenge-image" src="../Assets/404-challenge-complete.png" alt="Challenge complete: How Did We Get Here?" />
+    <h1>I'm being serious though how did you get here? 😭</h1>
+    <a href="/">Home</a>
+  </main>
+</body>
+</html>
