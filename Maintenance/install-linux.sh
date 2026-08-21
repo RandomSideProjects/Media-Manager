@@ -71,6 +71,13 @@ td_bin="${TD_BIN:-${user_home}/.deno/bin/td}"
 if [[ ! -x "$td_bin" ]]; then
   warn "td was not found at $td_bin; install/authenticate td before starting a maintenance run"
 fi
+compatibility_script="$install_dir/Maintenance/apply-toodrive-compatibility.sh"
+if [[ -x "$td_bin" && -f "$compatibility_script" ]]; then
+  chmod +x "$compatibility_script"
+  if ! "$compatibility_script"; then
+    warn "could not apply the td compatibility patch; video jobs may need manual td repair"
+  fi
+fi
 
 mkdir -p "$config_dir" "$unit_dir"
 if [[ ! -f "$environment_file" ]]; then
@@ -99,6 +106,7 @@ fi
   printf 'Type=simple\n'
   printf 'WorkingDirectory=%s\n' "$install_dir"
   printf 'EnvironmentFile=-%s\n' "$environment_file"
+  printf 'ExecStartPre=/usr/bin/env bash %s\n' "$install_dir/Maintenance/apply-toodrive-compatibility.sh"
   printf 'ExecStart=%s %s\n' "$node_bin" "$install_dir/Maintenance/service.mjs"
   printf 'Restart=on-failure\n'
   printf 'RestartSec=5\n'

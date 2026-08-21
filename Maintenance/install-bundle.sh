@@ -60,13 +60,19 @@ fi
 if [[ -f "$bundle_root/README.md" ]]; then
   cp -f "$bundle_root/README.md" "$install_dir/README.md"
 fi
-chmod +x "$install_dir/Maintenance/service.mjs" "$install_dir/Maintenance/install-linux.sh" 2>/dev/null || true
+chmod +x "$install_dir/Maintenance/service.mjs" "$install_dir/Maintenance/install-linux.sh" "$install_dir/Maintenance/apply-toodrive-compatibility.sh" 2>/dev/null || true
 
 if ! command -v ffmpeg >/dev/null 2>&1; then
   warn "ffmpeg is not installed; video conversion jobs will fail"
 fi
 if [[ ! -x "$td_bin" ]]; then
   warn "td was not found at $td_bin; install and authenticate td before starting a run"
+fi
+compatibility_script="$install_dir/Maintenance/apply-toodrive-compatibility.sh"
+if [[ -x "$td_bin" && -f "$compatibility_script" ]]; then
+  if ! "$compatibility_script"; then
+    warn "could not apply the td compatibility patch; video jobs may need manual td repair"
+  fi
 fi
 
 mkdir -p "$config_dir" "$unit_dir"
@@ -96,6 +102,7 @@ fi
   printf 'Type=simple\n'
   printf 'WorkingDirectory=%s\n' "$install_dir"
   printf 'EnvironmentFile=-%s\n' "$environment_file"
+  printf 'ExecStartPre=/usr/bin/env bash %s\n' "$install_dir/Maintenance/apply-toodrive-compatibility.sh"
   printf 'ExecStart=%s %s\n' "$node_bin" "$install_dir/Maintenance/service.mjs"
   printf 'Restart=on-failure\n'
   printf 'RestartSec=5\n'

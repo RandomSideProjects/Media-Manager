@@ -2386,6 +2386,10 @@ function scheduleArtifactDurationProbe(job, artifact, event = {}) {
 
 function scheduleArtifactAudioProbe(job, artifact) {
   if (!artifact || typeof artifact !== "object") return;
+  // Newer td builds report the verified post-hook audio count before they
+  // delete their local upload artifact. Trust that value instead of starting
+  // a second probe that could race cleanup and overwrite it with zero.
+  if (Number.isInteger(Number(artifact.audioStreamCount)) && Number(artifact.audioStreamCount) >= 0) return;
   const input = cacheScopedPath(job, artifact.localPath) || (isAbsolute(String(artifact.localPath || "").trim()) ? String(artifact.localPath).trim() : "");
   if (!input) return;
   job.audioProbePromises ||= new Map();
@@ -4253,8 +4257,21 @@ function recordEvent(job, event, stream) {
   }
   if (normalizedEvent.event === "file_result" && normalizedEvent.remotePath) {
     const artifact = job.artifacts.find((candidate) => candidate.remotePath === normalizedEvent.remotePath);
-    const target = artifact || { remotePath: normalizedEvent.remotePath, sizeBytes: normalizedEvent.sizeBytes, localPath: normalizedEvent.localPath };
-    if (artifact) Object.assign(target, { sizeBytes: normalizedEvent.sizeBytes, localPath: normalizedEvent.localPath });
+    const reportedAudioStreamCount = Number(normalizedEvent.audioStreamCount);
+    const audioFields = Number.isInteger(reportedAudioStreamCount) && reportedAudioStreamCount >= 0
+      ? { audioStreamCount: reportedAudioStreamCount }
+      : {};
+    const target = artifact || {
+      remotePath: normalizedEvent.remotePath,
+      sizeBytes: normalizedEvent.sizeBytes,
+      localPath: normalizedEvent.localPath,
+      ...audioFields,
+    };
+    if (artifact) Object.assign(target, {
+      sizeBytes: normalizedEvent.sizeBytes,
+      localPath: normalizedEvent.localPath,
+      ...audioFields,
+    });
     else job.artifacts.push(target);
     scheduleArtifactDurationProbe(job, target, normalizedEvent);
     if (job.maintenance?.dualAudio === true) scheduleArtifactAudioProbe(job, target);
@@ -4624,6 +4641,7 @@ async function startJob({ torrentUrl, magnet, destination, cacheDir, runId, main
   const repairAttempts = normalizedMaintenance ? MAINTENANCE_TD_REPAIR_ATTEMPTS : DEFAULT_TD_REPAIR_ATTEMPTS;
   const downloadAll = !normalizedMaintenance || normalizedMaintenance.action === "new";
   if (normalizedMaintenance) await persistResumeState();
+  await ensureToodriveCompatibility();
   enqueueTdAttempt(job, { downloadAll, repairAttempts });
   if (normalizedMaintenance) await persistResumeState();
   return job;
@@ -5300,7 +5318,33 @@ const server = createServer(async (req, res) => {
   }
 });
 
+async function ensureToodriveCompatibility() {
+  if (process.env.MEDIA_MANAGER_TEST === "1") return;
+  const compatibilityScript = resolve(join(SERVICE_DIR, "apply-toodrive-compatibility.sh"));
+  try {
+    await new Promise((resolveCompatibility, rejectCompatibility) => {
+      const child = spawn("bash", [compatibilityScript], {
+        env: process.env,
+        stdio: ["ignore", "pipe", "pipe"],
+      });
+      let stderr = "";
+      child.stderr.on("data", (chunk) => { stderr += String(chunk); });
+      child.on("error", rejectCompatibility);
+      child.on("close", (code) => {
+        if (code === 0) resolveCompatibility();
+        else rejectCompatibility(new Error(`td compatibility patch exited with code ${code ?? 1}${stderr.trim() ? `: ${stderr.trim()}` : ""}`));
+      });
+    });
+  } catch (error) {
+    // A td update should not take the API down, but leave a visible record so
+    // an operator can repair the installation before starting video work.
+    console.warn(`[maintenance-td] ${error instanceof Error ? error.message : String(error)}`);
+    persistLog({ scope: "service", event: "td_compatibility_patch_failed", message: error instanceof Error ? error.message : String(error) });
+  }
+}
+
 async function startServer() {
+  await ensureToodriveCompatibility();
   await restorePersistedWork();
   server.listen(PORT, HOST, () => {
     console.log(`Library maintenance service listening on http://${HOST}:${PORT}`);

@@ -136,11 +136,14 @@ and queued categories without starting torrent jobs.
 
 The local video-pipeline conversion maps every audio and compatible text-
 subtitle stream into the MP4 output, converts text subtitles to `mov_text`, and
-preserves container metadata and chapters. English audio is mapped first and
-explicitly marked as the default track when an English language/title tag is
-present; existing MP4 inputs with a non-default English track are normalized
-before upload as well. Bitmap-only subtitles such as PGS cannot be embedded in
-an MP4 container and require a sidecar or MKV output.
+preserves container metadata and chapters. Bitmap-only subtitles such as PGS
+are deliberately omitted from the browser-compatible MP4 instead of causing
+ffmpeg to fail. English audio is mapped first and explicitly marked as the
+default track when an English language/title tag is present; existing MP4
+inputs with a non-default English track are normalized before upload as well.
+The Linux installer and service startup re-apply the td compatibility patch so
+an external td update does not restore the unsupported-subtitle or dual-audio
+cleanup behavior.
 
 The service uses `~/.deno/bin/td` by default. Override `TD_BIN`,
 `MEDIA_MANAGER_ROOT`, `TOODRIVE_BASE_URL`, `TOODRIVE_PUBLIC_BASE_URL`, `CREATOR_TORRENT_HOST`,

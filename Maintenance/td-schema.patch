@@ -1,0 +1,10 @@
+--- a/src/schema.ts
++++ b/src/schema.ts
+@@ -402,6 +402,7 @@
+   localPath: Type.String(),
+   remotePath: Type.String(),
+   sizeBytes: Type.Integer({ minimum: 0 }),
++  audioStreamCount: Type.Optional(Type.Integer({ minimum: 0 })),
+ }, { additionalProperties: false });
+ 
+ const TorrentLinkResult = Type.Object({

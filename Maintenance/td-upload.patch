@@ -1,0 +1,14 @@
+--- a/src/upload.ts
++++ b/src/upload.ts
+@@ -7,7 +7,11 @@
+ const CHUNK_SIZE = 32 * 1024 * 1024; // 32 MiB
+ const MAX_RETRIES = 5;
+ const CHUNK_REQUEST_TIMEOUT_MS = 90_000;
+-const DEFAULT_CONCURRENCY = 4;
++// Keep chunk uploads serial by default.  Maintenance can run many torrent
++// processes at once, and multiplying four concurrent PUTs per process causes
++// Toodrive/Cloudflare to reject the first chunk under load.  Callers can still
++// opt into a higher value through TOODRIVE_UPLOAD_CONCURRENCY (capped below).
++const DEFAULT_CONCURRENCY = 1;
+ 
+ function configuredConcurrency(): number {

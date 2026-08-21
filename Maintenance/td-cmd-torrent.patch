@@ -1,0 +1,113 @@
+--- a/src/cmd-torrent.ts
++++ b/src/cmd-torrent.ts
+@@ -130,6 +130,18 @@
+   return Boolean(english && english.default !== true);
+ }
+ 
++// MP4's mov_text encoder accepts text subtitle codecs, but it cannot convert
++// bitmap subtitle codecs such as PGS.  Mapping those streams and applying
++// `-c:s mov_text` makes ffmpeg fail the entire episode before it can upload.
++// Keep this list deliberately allow-listed: unsupported/unknown subtitle
++// streams are omitted from the browser-compatible MP4 rather than breaking
++// the video and audio tracks.
++const MP4_TEXT_SUBTITLE_CODECS = new Set([
++  "ass", "jacosub", "microdvd", "mpl2", "mov_text", "pjs", "realtext",
++  "sami", "srt", "ssa", "stl", "subrip", "subviewer", "subviewer1",
++  "text", "ttml", "vplayer", "webvtt",
++]);
++
+ function mp4StreamMapArgs(probe?: VideoProbe, includeSubtitles = true): string[] {
+   const args = ["-map", "0:v:0"];
+   const audio = orderedStreams(probe?.audioStreams);
+@@ -143,11 +155,12 @@
+   }
+ 
+   if (!includeSubtitles) return args;
+-  const subtitles = orderedStreams(probe?.subtitleStreams);
+-  if (subtitles.length) {
+-    for (const stream of subtitles) args.push("-map", `0:${stream.index}`);
+-  } else {
+-    args.push("-map", "0:s?");
++  const subtitles = orderedStreams(probe?.subtitleStreams).filter((stream) => {
++    const codec = String(stream.codec || "").trim().toLowerCase();
++    return MP4_TEXT_SUBTITLE_CODECS.has(codec);
++  });
++  for (const stream of subtitles) {
++    args.push("-map", `0:${stream.index}`);
+   }
+   return args;
+ }
+@@ -1042,6 +1055,7 @@
+ 
+       let uploadPath = localPath;
+       let uploadSize = file.sizeBytes;
++      let uploadAudioStreamCount: number | undefined;
+       if (flags.videoPipeline) {
+         const probe = await deps.probeVideo(localPath);
+         if (!probe.isVideo) {
+@@ -1052,6 +1066,7 @@
+           try { await deps.remove(localPath); } catch (error) { fileCleanupErrors.push(error); }
+           continue;
+         }
++        uploadAudioStreamCount = Array.isArray(probe.audioStreams) ? probe.audioStreams.length : 0;
+         const isMatroska = probe.formatName.split(",").includes("matroska");
+         if (isMatroska || needsEnglishAudioDefault(probe)) {
+           uploadPath = isMatroska
+@@ -1139,21 +1154,38 @@
+         }
+       }
+       output.finishProgress("newline");
++      // Probe the actual post-hook upload artifact before deleting it.  The
++      // maintenance service uses this value to validate dual-audio output;
++      // probing only after file_result would race td's cache cleanup.
++      if (result.ok && flags.videoPipeline) {
++        try {
++          const uploadedProbe = await deps.probeVideo(uploadPath);
++          uploadAudioStreamCount = Array.isArray(uploadedProbe.audioStreams)
++            ? uploadedProbe.audioStreams.length
++            : uploadAudioStreamCount ?? 0;
++        } catch {
++          // Keep the source-probe count when the post-hook probe is unavailable.
++        }
++      }
+       torrent.setFileWanted(index, false);
+       try {
+         await deps.remove(localPath);
+       } catch (error) {
+         fileCleanupErrors.push(error);
+       }
+-      if (uploadPath !== localPath) {
++      if (uploadPath !== localPath && !flags.videoPipeline) {
+         try { await deps.remove(uploadPath); } catch (error) { fileCleanupErrors.push(error); }
+       }
+ 
++      // Keep the actual post-hook upload artifact available for the
++      // maintenance service's audio probe. The service removes it after
++      // validation; td's final cache cleanup removes any leftovers on exit.
++      const reportedLocalPath = flags.videoPipeline ? uploadPath : file.path;
+       if (result.ok && result.skippedExisting) {
+-        emitFileResult(output, "disk_backed", "skipped_existing", file.path, remotePath, uploadSize, fileCounter);
++        emitFileResult(output, "disk_backed", "skipped_existing", reportedLocalPath, remotePath, uploadSize, fileCounter, uploadAudioStreamCount);
+         succeeded++;
+       } else if (result.ok) {
+-        emitFileResult(output, "disk_backed", "uploaded", file.path, remotePath, uploadSize, fileCounter);
++        emitFileResult(output, "disk_backed", "uploaded", reportedLocalPath, remotePath, uploadSize, fileCounter, uploadAudioStreamCount);
+         succeeded++;
+       } else {
+         emitUploadFailure(output, "disk_backed", file.path, remotePath, result);
+@@ -1208,6 +1240,7 @@
+   remotePath: string,
+   sizeBytes: number,
+   fileCounter?: string,
++  audioStreamCount?: number,
+ ): void {
+   const event: TdOutput = {
+     schemaVersion: SCHEMA_VERSION,
+@@ -1218,6 +1251,7 @@
+     localPath,
+     remotePath,
+     sizeBytes,
++    audioStreamCount: Number.isInteger(audioStreamCount) && Number(audioStreamCount) >= 0 ? Number(audioStreamCount) : undefined,
+   };
+   if (outcome === "uploaded") {
+     output.emit(event, { stdout: `${fileCounter ? `${fileCounter} ` : ""}Uploaded ${localPath} (${formatBytes(sizeBytes)}) → ${remotePath}` });
