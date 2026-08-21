@@ -1,0 +1,15 @@
+[Unit]
+Description=Keep Media Manager new-show maintenance running
+Requires=media-manager-maintenance.service
+After=media-manager-maintenance.service
+
+[Service]
+Type=simple
+Environment=MAINTENANCE_BACKEND_URL=http://127.0.0.1:6968
+Environment=MEDIA_MANAGER_TORRENT_CONCURRENCY=20
+ExecStart=/usr/bin/node %h/media-manager-maintenance/Maintenance/new-show-maintenance-run.mjs
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=default.target

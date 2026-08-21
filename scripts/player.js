@@ -294,11 +294,13 @@ function attachMediaSourceToElement(el, src, options) {
   if (trackActive) detachActiveHls();
 
   if (!isHlsSource(source)) {
+    try { el.preload = 'auto'; } catch {}
     el.src = source;
     return null;
   }
 
   if (canPlayNativeHls(el)) {
+    try { el.preload = 'auto'; } catch {}
     el.src = source;
     return null;
   }
@@ -306,7 +308,13 @@ function attachMediaSourceToElement(el, src, options) {
   if (canUseHlsJs()) {
     const hlsConfig = {
       enableWorker: true,
-      backBufferLength: 90
+      // Keep requesting a generous forward buffer while playback is active.
+      // Hls.js still applies its bandwidth and memory safeguards.
+      backBufferLength: 90,
+      maxBufferLength: 120,
+      maxMaxBufferLength: 600,
+      startFragPrefetch: true,
+      autoStartLoad: true
     };
     const hls = new window.Hls(hlsConfig);
     if (trackActive) {
@@ -1319,7 +1327,6 @@ function updateChaptersSelection(item) {
 function hideVideoShowCbz() {
   if (video) { try { video.pause(); } catch {} video.style.display = 'none'; }
   if (cbzViewer) cbzViewer.style.display = 'block';
-  if (clipBtn) clipBtn.style.display = 'none';
   if (theaterBtn) theaterBtn.style.display = 'none';
   try {
     if (typeof window !== 'undefined' && typeof window.MM_setTheaterMode === 'function') window.MM_setTheaterMode(false);
@@ -1330,7 +1337,6 @@ function hideVideoShowCbz() {
 function hideCbzShowVideo() {
   if (cbzViewer) cbzViewer.style.display = 'none';
   if (video) video.style.display = '';
-  if (clipBtn) clipBtn.style.display = '';
 }
 
 function getCbzPreloadWindowSize() {
@@ -2079,7 +2085,7 @@ function loadVideo(index) {
   try {
     const sourceTitleText = (directoryTitle && directoryTitle.textContent ? directoryTitle.textContent.trim() : '') || 'Source';
     const itemTitleText = (item && item.title) ? item.title : 'Item';
-    document.title = `${sourceTitleText} | ${itemTitleText} on RSP Media Manager`;
+    document.title = `${sourceTitleText} | ${itemTitleText} on Media Manager`;
   } catch {}
 
   if (item && item.isPlaceholder) {
@@ -2737,7 +2743,7 @@ if (backBtn) {
     } catch {}
     try {
       const st = (directoryTitle && directoryTitle.textContent ? directoryTitle.textContent.trim() : '') || 'Source';
-      document.title = `${st} on RSP Media Manager`;
+      document.title = `${st} on Media Manager`;
     } catch {}
     if (episodeList && !episodeList.childElementCount) {
       renderEpisodeList();
