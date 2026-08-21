@@ -1,8 +1,8 @@
 [Unit]
-Description=Schedule weekly Media Manager maintenance
+Description=Schedule daily Media Manager maintenance
 
 [Timer]
-OnCalendar=Sun *-*-* 17:00:00
+OnCalendar=*-*-* 17:00:00
 Persistent=false
 Unit=media-manager-maintenance-weekly.service
 

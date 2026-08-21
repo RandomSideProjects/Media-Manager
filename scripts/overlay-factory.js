@@ -70,24 +70,6 @@ window.OverlayFactory = (function() {
   function createSettingsOverlay() {
     removeOverlay('settingsOverlay');
     
-    const clippingSection = createElement('div', { className: 'setting-category' }, [
-      createElement('div', { className: 'setting-category-header' }, ['Clipping']),
-      createElement('div', { className: 'setting-row' }, [
-        createElement('input', { type: 'checkbox', id: 'clipToggle' }),
-        createElement('label', { for: 'clipToggle' }, ['Enable clipping'])
-      ]),
-      createElement('div', { className: 'setting-row', id: 'clipPreviewRow' }, [
-        createElement('input', { type: 'checkbox', id: 'clipPreviewToggle' }),
-        createElement('label', { for: 'clipPreviewToggle' }, ['Clip preview'])
-      ]),
-      createElement('div', { className: 'setting-row', id: 'clipLocalModeRow' }, [
-        createElement('div', { style: { display: 'flex', alignItems: 'center', gap: '8px' } }, [
-          createElement('input', { type: 'checkbox', id: 'clipLocalModeToggle' }),
-          createElement('label', { for: 'clipLocalModeToggle' }, ['Local clipping only'])
-        ])
-      ])
-    ]);
-
     const downloadsSection = createElement('div', { className: 'setting-category' }, [
       createElement('div', { className: 'setting-category-header' }, ['Downloads']),
       createElement('div', { className: 'setting-row' }, [
@@ -130,7 +112,6 @@ window.OverlayFactory = (function() {
     ]);
 
     const leftColumn = createElement('div', { className: 'settings-category-col' }, [
-      clippingSection,
       generalSection
     ]);
 
@@ -209,7 +190,7 @@ window.OverlayFactory = (function() {
           ]),
           createElement('label', { className: 'storage-delete-option' }, [
             createElement('input', { id: 'storageSelectiveDeleteRemoveOtherToggle', type: 'checkbox' }),
-            createElement('span', {}, ['Also clear other app data (clip presets/history, account info)'])
+            createElement('span', {}, ['Also clear other app data (account info)'])
           ])
         ]),
         createElement('div', { className: 'setting-row storage-delete-tools' }, [
@@ -362,85 +343,6 @@ window.OverlayFactory = (function() {
     return overlay;
   }
 
-  // Create clip preset overlay
-  function createClipPresetOverlay() {
-    removeOverlay('clipPresetOverlay');
-    
-    const overlay = createElement('div', { id: 'clipPresetOverlay' }, [
-      createElement('div', { id: 'clipPresetContent' }, [
-        createElement('h3', {}, ['Select Clip Length']),
-        createElement('div', { id: 'clipPresetButtons' }),
-        createElement('div', { className: 'clip-custom-row' }, [
-          createElement('div', { className: 'trim-slider', id: 'trimSlider' }, [
-            createElement('div', { className: 'trim-track' }),
-            createElement('div', { className: 'trim-range', id: 'trimRange' }),
-            createElement('button', { className: 'trim-handle', id: 'trimHandleStart', type: 'button', 'aria-label': 'Clip start' }),
-            createElement('button', { className: 'trim-handle', id: 'trimHandleEnd', type: 'button', 'aria-label': 'Clip end' }),
-            createElement('div', { className: 'trim-mark', id: 'trimPreviewMarker' })
-          ]),
-          createElement('div', { className: 'clip-custom-controls' }, [
-            createElement('div', { className: 'trim-display' }, [
-              createElement('span', {}, ['Start: ', createElement('span', { id: 'clipDisplayStart' }, ['00:00'])]),
-              createElement('span', {}, ['End: ', createElement('span', { id: 'clipDisplayEnd' }, ['00:20'])]),
-              createElement('span', {}, ['Length: ', createElement('span', { id: 'clipDisplayLength' }, ['00:20'])])
-            ]),
-            createElement('button', { id: 'clipCustomStartBtn', type: 'button' }, ['Start'])
-          ]),
-          createElement('small', { className: 'clip-custom-hint' }, ['Drag handles to choose the clip window.'])
-        ]),
-        createElement('label', { className: 'clip-remember-row' }, [
-          createElement('input', { type: 'checkbox', id: 'clipRememberPreset' }),
-          createElement('span', {}, ['Remember last selection'])
-        ]),
-        createElement('div', { id: 'clipHistorySection' }, [
-          createElement('div', { className: 'clip-history-header' }, [
-            createElement('h4', {}, ['Recent Clips']),
-            createElement('button', { id: 'clipHistoryClearBtn', type: 'button' }, ['Clear'])
-          ]),
-          createElement('div', { id: 'clipHistoryList' })
-        ]),
-        createElement('button', { id: 'clipPresetCloseBtn', type: 'button', className: 'overlay-close', 'aria-label': 'Close clip presets' }, ['✕'])
-      ])
-    ]);
-    
-    document.body.appendChild(overlay);
-    return overlay;
-  }
-
-  // Create clip overlay
-  function createClipOverlay() {
-    removeOverlay('clipOverlay');
-    
-    const overlay = createElement('div', { id: 'clipOverlay' }, [
-      createElement('div', { id: 'clipOverlayContent' }, [
-        createElement('button', { id: 'clipOverlayCloseBtn', className: 'overlay-close', type: 'button', 'aria-label': 'Close clip dialog' }, ['✕']),
-        createElement('div', { id: 'clipMessage' }),
-        createElement('div', { id: 'clipButtonsRow' }, [
-          createElement('button', { id: 'clipDoneBtn' }, ['Done']),
-          createElement('button', { id: 'clipDownloadBtn' }, ['Download'])
-        ])
-      ])
-    ]);
-    
-    document.body.appendChild(overlay);
-    return overlay;
-  }
-
-  // Create clip progress overlay
-  function createClipProgressOverlay() {
-    removeOverlay('clipProgressOverlay');
-    
-    const overlay = createElement('div', { id: 'clipProgressOverlay' }, [
-      createElement('div', { id: 'clipProgressContent' }, [
-        createElement('p', { id: 'clipProgressMessage' }),
-        createElement('progress', { id: 'clipProgressBar', max: '100', value: '0' })
-      ])
-    ]);
-    
-    document.body.appendChild(overlay);
-    return overlay;
-  }
-
   // Create CBZ progress overlay
   function createCbzProgressOverlay() {
     removeOverlay('cbzProgressOverlay');
@@ -582,8 +484,7 @@ window.OverlayFactory = (function() {
           createElement('input', { 
             id: 'fbShareLocation', 
             type: 'checkbox', 
-            checked: 'checked', 
-            title: 'Share approximate location (IP-based) for this message.', 
+            title: 'Share approximate city and country for this message.',
             style: { width: '14px', height: '14px' } 
           })
         ]),
@@ -974,7 +875,7 @@ window.OverlayFactory = (function() {
 	                className: 'dev-field-input',
 	                placeholder: 'https://mm.alexspac.es'
 	              }),
-	              createElement('p', { className: 'dev-menu-hint' }, ['Example: localhost:8787 (used for /clip and /account/*).'])
+	              createElement('p', { className: 'dev-menu-hint' }, ['Example: localhost:8787 (used for account sync and public Worker APIs).'])
 	            ])
 	          ]),
 
@@ -998,7 +899,6 @@ window.OverlayFactory = (function() {
               createElement('button', { type: 'button', 'data-dev-action': 'notice:error' }, ['Test Error Notice']),
               createElement('button', { type: 'button', 'data-dev-action': 'storage:menu' }, ['Storage Menu']),
               createElement('button', { type: 'button', 'data-dev-action': 'catbox:detect' }, ['Detect Catbox']),
-              createElement('button', { type: 'button', 'data-dev-action': 'clip:preset' }, ['Clip Preset']),
               createElement('button', { type: 'button', 'data-dev-action': 'sources:reload' }, ['Reload Sources'])
             ])
           ]),
@@ -1023,10 +923,6 @@ window.OverlayFactory = (function() {
                 createElement('dt', {}, ['Catbox Endpoint']),
               createElement('dd', { id: 'devCatboxEndpointLabel' }, ['Pending'])
             ]),
-	            createElement('div', { className: 'dev-stat' }, [
-	              createElement('dt', {}, ['Clip Backend']),
-	              createElement('dd', { id: 'devClipEndpointLabel' }, ['Pending'])
-	            ]),
 	            createElement('div', { className: 'dev-stat' }, [
 	              createElement('dt', {}, ['Account Sync']),
 	              createElement('dd', { id: 'devAccountSyncEndpointLabel' }, ['Pending'])
@@ -1109,16 +1005,6 @@ window.OverlayFactory = (function() {
               }),
               createElement('p', { className: 'dev-menu-hint' }, ['Personal access token for GitHub operations.'])
             ]),
-            createElement('div', { className: 'dev-field' }, [
-              createElement('label', { for: 'devWebhookUrl' }, ['Discord Webhook Override']),
-              createElement('input', {
-                type: 'text',
-                id: 'devWebhookUrl',
-                className: 'dev-field-input',
-                placeholder: 'Leave blank to use default webhook'
-              }),
-              createElement('p', { className: 'dev-menu-hint' }, ['Optional Discord webhook for upload summaries.'])
-            ])
           ]),
 
           createElement('div', { className: 'dev-menu-section' }, [
@@ -1297,9 +1183,6 @@ window.OverlayFactory = (function() {
     createStorageImportOverlay,
     createStorageImportScanOverlay,
     createAccountSyncOverlay,
-    createClipPresetOverlay,
-    createClipOverlay,
-    createClipProgressOverlay,
     createCbzProgressOverlay,
     createSourcesSettingsOverlay,
     createFeedbackOverlay,

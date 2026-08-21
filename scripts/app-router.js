@@ -10,15 +10,15 @@
     'scripts/playback-alert.js?v=20260810-playback-alert-asset',
     'scripts/dev-core.js',
     'scripts/tags.js',
-    'scripts/overlay-factory.js?v=20260727-storage-ui',
-    'scripts/account-sync.js',
-    'scripts/storage.js?v=20260810-manga-repair',
-    'Sources/scripts/constants.js',
+    'scripts/overlay-factory.js?v=20260820-no-clip',
+    'scripts/account-sync.js?v=20260820-public-auth',
+    'scripts/storage.js?v=20260820-no-clip',
+    'Sources/scripts/constants.js?v=20260820-public-feedback',
     'Sources/scripts/utils.js',
     'Sources/scripts/render.js?v=20260810-manga-repair',
     'Sources/scripts/search.js?v=20260808-motion-refresh',
     'Sources/scripts/ui-settings.js?v=20260727-storage',
-    'Sources/scripts/feedback.js',
+    'Sources/scripts/feedback.js?v=20260820-public-feedback',
     'Sources/scripts/loader.js?v=20260808-motion-refresh',
     'Sources/scripts/temp-sources.js'
   ];
@@ -29,19 +29,18 @@
     'scripts/alerts.js',
     'scripts/playback-alert.js?v=20260810-playback-alert-asset',
     'scripts/dev-core.js',
-    'scripts/overlay-factory.js?v=20260727-storage-ui',
-    'scripts/dom.js?v=20260808-motion-refresh',
+    'scripts/overlay-factory.js?v=20260820-no-clip',
+    'scripts/dom.js?v=20260820-no-clip',
     'scripts/theater.js',
     'scripts/tags.js',
     'scripts/recent-sources.js?v=20260727-continue-watching',
     'https://cdn.jsdelivr.net/npm/hls.js@1/dist/hls.min.js',
-    'scripts/player.js?v=20260810-manga-repair',
+    'scripts/player.js?v=20260820-no-clip',
     'scripts/popout.js',
     'scripts/list.js?v=20260810-manga-repair',
     'scripts/downloads.js',
     'scripts/catbox.js',
-    'scripts/clip.js',
-    'scripts/settings.js',
+    'scripts/settings.js?v=20260820-no-clip',
     'scripts/dev-menu.js',
     'scripts/theme.js',
     'scripts/jszip/jszip.min.js',
@@ -50,8 +49,8 @@
     'scripts/zxing-lib.min.js',
     'scripts/jsqr.min.js',
     'scripts/qrcode.min.js',
-    'scripts/account-sync.js',
-    'scripts/storage.js?v=20260810-manga-repair',
+    'scripts/account-sync.js?v=20260820-public-auth',
+    'scripts/storage.js?v=20260820-no-clip',
     'scripts/version.js?v=20260725-layout'
   ];
 
@@ -92,7 +91,7 @@
     document.getElementById('publicSourcesStyles')?.remove();
     const stylesheet = document.createElement('link');
     stylesheet.rel = 'stylesheet';
-    stylesheet.href = 'style.css?v=20260808-motion-refresh';
+    stylesheet.href = 'style.css?v=20260820-no-clip';
     document.head.appendChild(stylesheet);
     document.title = 'Media Manager';
     document.documentElement.classList.add('custom-route');
@@ -100,9 +99,9 @@
 
     document.body.innerHTML = `
       <div class="toolbar">
-        <a class="toolbar-brand" href="./index.html" aria-label="RSP Media Manager home">
+        <a class="toolbar-brand" href="./index.html" aria-label="Media Manager home">
           <img src="Assets/Favicon.png" alt="">
-          <span>RSP Media Manager</span>
+          <span>Media Manager</span>
         </a>
         <nav class="tabs" aria-label="Main navigation">
           <button type="button" data-route="./index.html" class="tab-button tab-button--icon" aria-label="Public sources" title="Public sources">
@@ -158,7 +157,6 @@
           <div id="playerScreen" style="display:none">
             <button id="backBtn" title="Menu (Esc)" aria-label="Menu">≡</button>
             <button id="theaterBtn" title="Theater Mode (T)" aria-pressed="false">⤴</button>
-            <button id="clipBtn">Clip</button>
             <h2 id="videoTitle">Loading...</h2>
             <div id="separatedPartsBar" class="separated-parts-bar" role="group" aria-label="Part selection"></div>
             <div class="mm-video-frame">
@@ -168,6 +166,7 @@
                   <span class="video-loading-kicker">Loading video</span>
                   <strong id="videoLoadingServer" class="video-loading-server">—</strong>
                   <span id="videoLoadingStatus" class="video-loading-status">Preparing playback</span>
+                  <span id="videoLoadingElapsed" class="video-loading-elapsed">Elapsed 00:00</span>
                   <div
                     id="videoLoadingProgress"
                     class="video-loading-progress"
@@ -178,10 +177,9 @@
                   >
                     <span id="videoLoadingProgressFill" class="video-loading-progress-fill"></span>
                   </div>
-                  <span id="videoLoadingProgressText" class="video-loading-progress-text">Loading…</span>
                 </div>
               </div>
-              <video id="videoPlayer" controls autoplay playsinline></video>
+              <video id="videoPlayer" controls autoplay playsinline preload="auto"></video>
               <button id="nextBtn" type="button" aria-label="Next">Next</button>
             </div>
             <div id="cbzViewer" style="display:none">

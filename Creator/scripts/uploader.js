@@ -1214,7 +1214,7 @@ function generateArchiveIdentifier() {
 
 function generateArchiveTitle() {
   const rand = Math.random().toString(16).slice(2, 6).toUpperCase();
-  return `RSPMM Upload ${rand}`;
+  return `Media Manager Upload ${rand}`;
 }
 
 function uploadToArchiveOrgWithProgress(file, onProgress, opts) {

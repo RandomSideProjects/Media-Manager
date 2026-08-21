@@ -83,6 +83,7 @@ if [[ ! -f "$environment_file" ]]; then
     printf 'MEDIA_MANAGER_GITHUB_REPOSITORY=RandomSideProjects/Media-Manager\n'
     printf 'MEDIA_MANAGER_GITHUB_BRANCH=main\n'
     printf '# MEDIA_MANAGER_GITHUB_TOKEN=put-your-token-here\n'
+    printf '# MEDIA_MANAGER_WEBHOOK_URL=https://discord.com/api/webhooks/...\n'
   } >"$environment_file"
   chmod 600 "$environment_file"
 else

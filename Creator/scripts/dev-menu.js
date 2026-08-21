@@ -20,7 +20,6 @@
   let githubWorkerUrlInput = null;
   let playbackAlertWorkerUrlInput = null;
   let githubTokenInput = null;
-  let webhookUrlInput = null;
   let playbackAlertPublishBtn = null;
   let catboxUrlInput = null;
   let catboxModeSelect = null;
@@ -51,7 +50,6 @@
     githubWorkerUrlInput = document.getElementById("devGithubWorkerUrl");
     playbackAlertWorkerUrlInput = document.getElementById("devPlaybackAlertWorkerUrl");
     githubTokenInput = document.getElementById("devGithubToken");
-    webhookUrlInput = document.getElementById("devWebhookUrl");
     playbackAlertPublishBtn = document.getElementById("devPublishPlaybackAlertBtn");
     catboxUrlInput = document.getElementById("devCatboxUploadUrl");
     catboxModeSelect = document.getElementById("devCatboxMode");
@@ -353,9 +351,6 @@
         if (githubTokenInput && settings.githubToken !== undefined) {
           githubTokenInput.value = settings.githubToken || '';
         }
-        if (webhookUrlInput && settings.webhookUrl !== undefined) {
-          webhookUrlInput.value = settings.webhookUrl || '';
-        }
         if (catboxUrlInput && settings.catboxUploadUrl !== undefined) {
           catboxUrlInput.value = settings.catboxUploadUrl || '';
         }
@@ -504,20 +499,6 @@
       githubTokenInput.addEventListener('blur', commitGithubToken);
     }
     
-    if (webhookUrlInput) {
-      const commitWebhookUrl = () => {
-        if (typeof saveSettingsPartial === 'function') {
-          try {
-            saveSettingsPartial({ webhookUrl: webhookUrlInput.value.trim() });
-          } catch (err) {
-            console.warn('[CreatorDevMenu] Failed to save Discord Webhook URL', err);
-          }
-        }
-      };
-      webhookUrlInput.addEventListener('change', commitWebhookUrl);
-      webhookUrlInput.addEventListener('blur', commitWebhookUrl);
-    }
-
     if (playbackAlertPublishBtn && !playbackAlertPublishBtn.dataset.bound) {
       playbackAlertPublishBtn.addEventListener("click", () => {
         if (typeof window.mm_publishPlaybackAlert === "function") {

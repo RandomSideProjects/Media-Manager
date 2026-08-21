@@ -1,14 +1,13 @@
-# [RSP Media Manager](https://randomsideprojects.github.io/Media-Manager/)
-![RSP Media Manager logo](https://github.com/RandomSideProjects/Media-Manager/blob/main/Assets/Favicon.png?raw=true)
+# [Media Manager](https://randomsideprojects.github.io/Media-Manager/)
+![Media Manager logo](https://github.com/RandomSideProjects/Media-Manager/blob/main/Assets/Favicon.png?raw=true)
 
-Browser-only player for video libraries and CBZ manga archives. Point it at a JSON manifest—from Catbox, GitHub Pages, or a local folder—and it handles playback, progress, downloads, clipping, and manga reading without any backend.
+Browser-only player for video libraries and CBZ manga archives. Point it at a JSON manifest—from Catbox, GitHub Pages, or a local folder—and it handles playback, progress, downloads, and manga reading without any backend.
 
 ## Why use it
 - Runs completely client-side; open `index.html` locally or use the [hosted build](https://randomsideprojects.github.io/Media-Manager/).
 - Accepts JSON URLs, 6-character Catbox IDs, pasted JSON/data URIs, or a local folder containing `index.json` + media.
 - Remembers progress, resumes automatically, and can jump straight to the next episode/volume.
 - Built-in download manager with size estimates, selective season/episode downloads, concurrency control, and StreamSaver for large archives.
-- Optional clip recorder that uploads to Catbox (or lets you download the WebM) with preview and a quick on/off toggle.
 - Integrated CBZ reader with progress overlay and page tracking.
 - Theme toggle, theater mode, and a persistent settings panel with a storage reset.
 
@@ -31,13 +30,12 @@ Browser-only player for video libraries and CBZ manga archives. Point it at a JS
 - Resume banner highlights where you left off or skips ahead if the last item was nearly finished.
 - `≡` returns to the list, `⤴` toggles theater mode, `H` opens a pop-out window, and `Next` advances manually.
 - Manga/CBZ volumes show a page counter and overlay while archives unpack.
-- Settings pane toggles clipping, selective downloads, download concurrency, and a `CLEAR STORAGE` action to wipe local data.
+- Settings pane toggles selective downloads, download concurrency, and a `CLEAR STORAGE` action to wipe local data.
 - Version badge in the corner reads `Assets/LastUpdated.txt` (update alongside releases).
 
-## Downloads & clipping
+## Downloads
 - `Download Source` saves the entire directory; enable **Selective downloads** in Settings to pick seasons/episodes with live size estimates.
 - StreamSaver streams large downloads without exhausting memory; tune concurrency in Settings to balance speed vs network load.
-- Enable **Clipping** (and **Clip preview** if desired) to record short segments. Success paths upload to Catbox; failures still offer a local WebM download.
 
 ## Creator web app
 Launch `Creator/index.html` for a guided editor that can import existing manifests, convert folders full of media/CBZ files, upload posters/assets to Catbox, and manage manga options like CBZ expansion. Upload settings (library type, anonymous mode, concurrency) persist locally so you can fine-tune workflows. Uploads randomize filenames by default; Creator item uploads use `S##E##_Title` when the category is `Season #`, otherwise `##_Title`.
@@ -97,6 +95,15 @@ that upload succeeds. Cancelling a run or job stops its `td` process, waits for
 that stop to settle, and removes its cache; every completed or failed job also
 removes the rest of its temporary cache. A service crash before a job reaches a
 terminal state can still leave a cache for restart recovery.
+
+To receive a notification when maintenance fails, set
+`MEDIA_MANAGER_WEBHOOK_URL` in the service's private environment file.
+The payload is Discord-webhook compatible (`content` plus a service username)
+and includes the show/category, run or job ID, release source, and error. A
+message is sent for each terminal failed job, as well as planning, catalog, and
+publication failures. Notifications are opt-in, time out after ten seconds by
+default, and never stop a maintenance job if the webhook is unavailable. The
+URL is never written to the activity log or returned by the health endpoint.
 
 ### Linux API-only server
 
@@ -203,7 +210,7 @@ Optional unavailable-item fields: `isPlaceholder: true`, `unavailableReason: str
 - `Tools/HostServer.py` starts a threaded HTTP server rooted at the repo for quick local testing.
 
 ## Requirements & notes
-- Modern Chromium, Firefox, or Safari. Clipping relies on MediaRecorder + captureStream (best in Chromium-based browsers).
+- Modern Chromium, Firefox, or Safari.
 - For `file://` usage, some browsers block `fetch` for local JSON—toggle that setting if needed.
 - Local-folder ingestion depends on `webkitdirectory` support (Chromium recommended).
 

@@ -63,6 +63,7 @@ const server = createServer(async (req, res) => {
             {
               infoHash: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
               tracker: "Nyaa",
+              url: "https://nyaa.si/view/12345",
               isBest: false,
               dualAudio: true,
               releaseGroup: "Dual",
@@ -135,6 +136,7 @@ test("catalog work targets only non-dual episodes of an existing season", async 
   assert.deepEqual(planned.items[0].missingEpisodes, [1]);
   assert.deepEqual(planned.items[0].release.targetEpisodes, [1]);
   assert.equal(planned.items[0].catalog.preferredDualAudio, true);
+  assert.equal(planned.items[0].release.torrentUrl, "https://nyaa.si/download/12345.torrent");
 });
 
 test("catalog work never replaces a fully dual-audio season", async () => {
@@ -165,6 +167,27 @@ test("new-show mode ignores catalog entries already attached to a source", async
   }];
   const planned = await service.buildCatalogMaintenanceWork(sources, { newShowsOnly: true });
   assert.equal(planned.items.length, 0);
+});
+
+test("existing-source mode plans dual-audio upgrades without new shows", async () => {
+  const sources = [{
+    file: "Example_Show.json",
+    path: "Sources/Files/Anime/Example_Show.json",
+    title: "Example Show",
+    malTitle: "Example Show",
+    anilistIds: [100],
+    categories: [{
+      category: "Season 1",
+      episodeNumbers: [1, 2],
+      nonDualEpisodeNumbers: [1],
+      dualAudio: false,
+    }],
+  }];
+  const planned = await service.buildCatalogMaintenanceWork(sources, { existingSourcesOnly: true });
+  assert.equal(planned.items.length, 1);
+  assert.equal(planned.items[0].maintenanceAction, "update");
+  assert.equal(planned.items[0].catalog.upgrade, true);
+  assert.deepEqual(planned.items[0].missingEpisodes, [1]);
 });
 
 test("movie promotions replace the existing item and never downgrade confirmed dual audio", async () => {
