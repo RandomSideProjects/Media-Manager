@@ -43,9 +43,10 @@
         },
         {
           "title": "Episode 7",
-          "src": "https://files.catbox.moe/hof5fj.mp4",
-          "fileSizeBytes": 157107301,
-          "durationSeconds": 1578
+          "src": "https://toodrive.xpbliss.fyi/dl/vyerbht87v07to0qldkbmmvh/raw",
+          "fileSizeBytes": 286711064,
+          "durationSeconds": 1484,
+          "dualAudio": true
         },
         {
           "title": "Episode 8",
@@ -81,9 +82,9 @@
       ]
     }
   ],
-  "totalFileSizeBytes": 2035214743,
-  "LatestTime": "2026-08-21T04:35:15.731Z",
-  "totalDurationSeconds": 18264,
+  "totalFileSizeBytes": 2164818506,
+  "LatestTime": "2026-08-21T04:37:15.917Z",
+  "totalDurationSeconds": 18170,
   "hidden": true,
   "anilistIds": []
 }
