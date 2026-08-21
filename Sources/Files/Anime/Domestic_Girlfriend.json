@@ -55,9 +55,10 @@
         },
         {
           "title": "Episode 9",
-          "src": "https://files.catbox.moe/37g4x4.mp4",
-          "fileSizeBytes": 140112768,
-          "durationSeconds": 1484
+          "src": "https://toodrive.xpbliss.fyi/dl/d32gzbz1hwb226agctt99tx1/raw",
+          "fileSizeBytes": 251640581,
+          "durationSeconds": 1484,
+          "dualAudio": true
         },
         {
           "title": "Episode 10",
@@ -80,8 +81,9 @@
       ]
     }
   ],
-  "totalFileSizeBytes": 1923686930,
-  "LatestTime": "2026-06-10T15:32:27.977Z",
+  "totalFileSizeBytes": 2035214743,
+  "LatestTime": "2026-08-21T04:35:15.731Z",
   "totalDurationSeconds": 18264,
-  "hidden": true
+  "hidden": true,
+  "anilistIds": []
 }
