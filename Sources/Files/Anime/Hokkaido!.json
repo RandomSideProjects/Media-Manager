@@ -24,9 +24,10 @@
         },
         {
           "title": "Episode 4",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/Hokkaido%21.json/Hokkaido%20Gals%20Are%20Super%20Adorable%21/S01_E04__ABS0004.mp4",
-          "fileSizeBytes": 143244048,
-          "durationSeconds": 1440
+          "src": "https://toodrive.xpbliss.fyi/dl/lz0q981gspnoydkdfg27ygs9/raw",
+          "fileSizeBytes": 516053366,
+          "durationSeconds": 1440,
+          "dualAudio": true
         },
         {
           "title": "Episode 5",
@@ -79,8 +80,9 @@
       ]
     }
   ],
-  "LatestTime": "2025-09-05T05:11:52.044Z",
-  "totalFileSizeBytes": 1469343927,
+  "LatestTime": "2026-08-21T21:22:31.116Z",
+  "totalFileSizeBytes": 1842153245,
   "totalDurationSeconds": 17280,
-  "Image": "./Sources/Posters/Anime/Hokkaido_Gals_Are_Super_Adorable!.webp"
+  "Image": "./Sources/Posters/Anime/Hokkaido_Gals_Are_Super_Adorable!.webp",
+  "anilistIds": []
 }
