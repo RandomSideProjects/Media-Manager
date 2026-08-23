@@ -43,9 +43,10 @@
         },
         {
           "title": "Episode 7",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/Hokkaido%21.json/Hokkaido%20Gals%20Are%20Super%20Adorable%21/S01_E07__ABS0007.mp4",
-          "fileSizeBytes": 123341644,
-          "durationSeconds": 1440
+          "src": "https://toodrive.xpbliss.fyi/dl/h7gp0kvfoxpawcw5u8kbp7no/raw",
+          "fileSizeBytes": 442282634,
+          "durationSeconds": 1440,
+          "dualAudio": true
         },
         {
           "title": "Episode 8",
@@ -61,9 +62,10 @@
         },
         {
           "title": "Episode 10",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/Hokkaido%21.json/Hokkaido%20Gals%20Are%20Super%20Adorable%21/S01_E10__ABS0010.mp4",
-          "fileSizeBytes": 125045133,
-          "durationSeconds": 1440
+          "src": "https://toodrive.xpbliss.fyi/dl/ybvyjihomk041pyf460qlewd/raw",
+          "fileSizeBytes": 445365747,
+          "durationSeconds": 1440,
+          "dualAudio": true
         },
         {
           "title": "Episode 11",
@@ -80,8 +82,8 @@
       ]
     }
   ],
-  "LatestTime": "2026-08-21T21:22:31.116Z",
-  "totalFileSizeBytes": 1842153245,
+  "LatestTime": "2026-08-23T02:59:24.171Z",
+  "totalFileSizeBytes": 2481414849,
   "totalDurationSeconds": 17280,
   "Image": "./Sources/Posters/Anime/Hokkaido_Gals_Are_Super_Adorable!.webp",
   "anilistIds": []
