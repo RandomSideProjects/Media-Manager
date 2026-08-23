@@ -5507,6 +5507,10 @@ const server = createServer(async (req, res) => {
       if (!run.finishedAt) {
         await run.stop?.();
         run.state = "cancelled";
+        run.phase = "complete";
+        run.finishedAt = new Date().toISOString();
+        if (catalogRunId === run.id) catalogRunId = null;
+        await persistResumeState();
       }
       return json(res, 200, publicRun(run));
     }
