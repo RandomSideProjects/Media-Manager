@@ -67,6 +67,7 @@ const GITHUB_TEST_PUBLISH = process.env.MEDIA_MANAGER_TEST_GITHUB === "1";
 const DEFAULT_CACHE = join(homedir(), ".local/share/toodrive-job/creator-cache");
 const LOG_FILE = resolve(process.env.MEDIA_MANAGER_LOG_FILE || join(homedir(), ".local/share/media-manager-maintenance/maintenance.log"));
 const RESUME_FILE = resolve(process.env.MEDIA_MANAGER_RESUME_FILE || join(homedir(), ".local/share/media-manager-maintenance/resume-state.json"));
+const CANCELLED_RUNS_FILE = resolve(process.env.MEDIA_MANAGER_CANCELLED_RUNS_FILE || join(dirname(RESUME_FILE), "cancelled-runs.json"));
 const CATALOG_STATE_FILE = resolve(process.env.MEDIA_MANAGER_CATALOG_STATE_FILE || join(homedir(), ".local/share/media-manager-maintenance/catalog-state.json"));
 const CATALOG_STATE_VERSION = 1;
 const MAINTENANCE_ROLE = String(process.env.MEDIA_MANAGER_MAINTENANCE_ROLE || "all").trim().toLowerCase() === "general"
@@ -175,6 +176,8 @@ let aniListCacheWrite = Promise.resolve();
 let aniListRequestQueue = Promise.resolve();
 let aniListLastRequestAt = 0;
 let resumeWriteQueue = Promise.resolve();
+let cancelledRunsWriteQueue = Promise.resolve();
+let cancelledRunIds = new Set();
 let catalogState = null;
 let catalogStateLoad = null;
 let catalogWriteQueue = Promise.resolve();
@@ -332,6 +335,30 @@ function persistResumeState() {
     console.error(`[maintenance-resume] ${error instanceof Error ? error.message : String(error)}`);
   });
   return resumeWriteQueue;
+}
+
+async function loadCancelledRunIds() {
+  try {
+    const parsed = JSON.parse(await readFile(CANCELLED_RUNS_FILE, "utf8"));
+    cancelledRunIds = new Set(Array.isArray(parsed) ? parsed.map((id) => String(id)).filter(Boolean) : []);
+  } catch (error) {
+    if (error?.code !== "ENOENT") console.error(`[maintenance-cancelled-runs] ${error instanceof Error ? error.message : String(error)}`);
+    cancelledRunIds = new Set();
+  }
+}
+
+function rememberCancelledRun(runId) {
+  const id = String(runId || "").trim();
+  if (!id) return cancelledRunsWriteQueue;
+  cancelledRunIds.add(id);
+  const snapshot = JSON.stringify([...cancelledRunIds].slice(-1000), null, 2) + "\n";
+  cancelledRunsWriteQueue = cancelledRunsWriteQueue.then(async () => {
+    await mkdir(dirname(CANCELLED_RUNS_FILE), { recursive: true });
+    await writeFile(CANCELLED_RUNS_FILE, snapshot, "utf8");
+  }).catch((error) => {
+    console.error(`[maintenance-cancelled-runs] ${error instanceof Error ? error.message : String(error)}`);
+  });
+  return cancelledRunsWriteQueue;
 }
 
 function persistLog(entry) {
@@ -3962,10 +3989,11 @@ async function startMaintenanceRun(payload = {}) {
     // when SeaDex has a preferred dual-audio release, but never create new
     // shows on this worker. The catalog planner skips entries without an
     // existing source when existingSourcesOnly is set.
+    const catalogRequested = payload.discoverCatalog === true && payload.catalogScan !== false;
     payload = {
       ...payload,
-      discoverCatalog: true,
-      catalogScan: true,
+      discoverCatalog: catalogRequested,
+      catalogScan: catalogRequested,
       catalogOnly: false,
       newShowsOnly: false,
       existingSourcesOnly: true,
@@ -4373,6 +4401,11 @@ function recordEvent(job, event, stream) {
   const normalizedEvent = event?.url
     ? { ...event, url: normalizeToodriveUrl(event.url) }
     : event;
+  if (normalizedEvent.event === "log") {
+    const message = String(normalizedEvent.message || "");
+    if (/\b(?:converting|normalizing audio)\b/i.test(message)) job.lastTransferPhase = "processing";
+    else if (/\b(?:uploading|uploaded)\b/i.test(message)) job.lastTransferPhase = "uploading";
+  }
   if (normalizedEvent.event === "metadata") job.metadataSeen = true;
   if (normalizedEvent.event === "progress") {
     const transferredBytes = Math.max(0, Number(normalizedEvent.transferredBytes) || 0);
@@ -4399,6 +4432,7 @@ function recordEvent(job, event, stream) {
     else job.artifacts.push({ remotePath: normalizedEvent.remotePath || "", url: normalizedEvent.url });
   }
   if (normalizedEvent.event === "file_result" && normalizedEvent.remotePath) {
+    job.lastTransferPhase = "finalizing";
     const artifact = job.artifacts.find((candidate) => candidate.remotePath === normalizedEvent.remotePath);
     const reportedAudioStreamCount = Number(normalizedEvent.audioStreamCount);
     const audioFields = Number.isInteger(reportedAudioStreamCount) && reportedAudioStreamCount >= 0
@@ -4748,6 +4782,7 @@ function spawnTdAttempt(job, { downloadAll, repairAttempts, retry = false }, rel
             runId: job.runId,
             retry: job.authRetryCount,
           });
+          await clearStalePipelineLock(job.cacheDir).catch(() => {});
           spawnTdAttempt(job, { downloadAll, repairAttempts, retry: true }, releaseSlot);
           return;
         }
@@ -4783,6 +4818,7 @@ function spawnTdAttempt(job, { downloadAll, repairAttempts, retry = false }, rel
           void finishJob(job, exitCode, new Error("Job stopped."), { cancelled: true }).finally(releaseSlot);
           return;
         }
+        await clearStalePipelineLock(job.cacheDir).catch(() => {});
         spawnTdAttempt(job, { downloadAll, repairAttempts, retry: true }, releaseSlot);
       })().catch((error) => {
         void finishJob(job, exitCode, error).finally(releaseSlot);
@@ -4791,11 +4827,13 @@ function spawnTdAttempt(job, { downloadAll, repairAttempts, retry = false }, rel
     }
     if (shouldFallbackToSequential(job, exitCode)) {
       emitSequentialFallback(job, attemptError?.message || `td exited with code ${exitCode}`);
-      spawnTdAttempt(job, {
-        downloadAll: false,
-        repairAttempts: MAINTENANCE_TD_REPAIR_ATTEMPTS,
-        retry: true,
-      }, releaseSlot);
+      void clearStalePipelineLock(job.cacheDir).catch(() => {}).finally(() => {
+        spawnTdAttempt(job, {
+          downloadAll: false,
+          repairAttempts: MAINTENANCE_TD_REPAIR_ATTEMPTS,
+          retry: true,
+        }, releaseSlot);
+      });
       return;
     }
     void finishJob(job, exitCode, attemptError).finally(releaseSlot);
@@ -5055,7 +5093,7 @@ async function recoverLegacyMaintenanceWork(knownRunIds, knownJobIds) {
     if (Number.isFinite(startedAt) && Date.now() - startedAt > LEGACY_RECOVERY_MAX_AGE_MS) continue;
     if (knownJobIds.has(jobId) || completedJobs.has(jobId) || processIsAlive(jobStart.pid)) continue;
     const runId = jobStart.runId;
-    if (!runId || knownRunIds.has(runId)) continue;
+    if (!runId || cancelledRunIds.has(String(runId)) || knownRunIds.has(runId)) continue;
     const events = runEntries.get(runId) || [];
     // Older recovery used the first "Searching" event in a run. A run can
     // contain several shows, so that paired an unrelated torrent with the
@@ -5180,11 +5218,12 @@ async function restorePersistedWork() {
     }
   }
   if (snapshot?.version !== 1) return;
+  await loadCancelledRunIds();
 
   const runs = Array.isArray(snapshot.runs) ? snapshot.runs : [];
   const savedJobs = Array.isArray(snapshot.jobs) ? snapshot.jobs : [];
   for (const saved of runs) {
-    if (!saved?.id || saved.finishedAt || ["complete", "failed", "cancelled"].includes(saved.state)) continue;
+    if (!saved?.id || cancelledRunIds.has(String(saved.id)) || saved.finishedAt || ["complete", "failed", "cancelled"].includes(saved.state)) continue;
     const run = {
       ...saved,
       events: Array.isArray(saved.events) ? saved.events : [],
