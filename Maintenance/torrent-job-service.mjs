@@ -4403,7 +4403,7 @@ function recordEvent(job, event, stream) {
     : event;
   if (normalizedEvent.event === "log") {
     const message = String(normalizedEvent.message || "");
-    if (/\b(?:converting|normalizing audio)\b/i.test(message)) job.lastTransferPhase = "processing";
+    if (/\b(?:converting|normalizing audio|browser compatibility|ffmpeg|encoder|frame=)\b/i.test(message)) job.lastTransferPhase = "processing";
     else if (/\b(?:uploading|uploaded)\b/i.test(message)) job.lastTransferPhase = "uploading";
   }
   if (normalizedEvent.event === "metadata") job.metadataSeen = true;
@@ -4421,6 +4421,14 @@ function recordEvent(job, event, stream) {
       }
       job.lastPeerCount = Number(normalizedEvent.numPeers) || 0;
       job.lastSeedCount = Number(normalizedEvent.numSeeds) || 0;
+      // td does not emit a separate JSON processing event between the final
+      // download progress line and ffmpeg. Once the file is complete, stop
+      // treating silence as a swarm stall; conversion can legitimately take
+      // several minutes before the next upload progress event.
+      if (totalBytes > 0 && transferredBytes >= totalBytes) {
+        job.lastTransferPhase = "processing";
+        job.lastTransferAt = Date.now();
+      }
     } else if (normalizedEvent.phase) {
       job.lastTransferPhase = String(normalizedEvent.phase);
     }
@@ -5095,6 +5103,11 @@ async function recoverLegacyMaintenanceWork(knownRunIds, knownJobIds) {
     const runId = jobStart.runId;
     if (!runId || cancelledRunIds.has(String(runId)) || knownRunIds.has(runId)) continue;
     const events = runEntries.get(runId) || [];
+    // A terminal run can leave an old job_started entry in the JSONL tail.
+    // Never resurrect that historical job as a new one-item run after a
+    // restart; the persisted run/result is the authoritative record.
+    if (events.some((entry) => entry.event === "run_finished"
+      && ["complete", "complete_with_errors", "failed", "cancelled"].includes(entry.state))) continue;
     // Older recovery used the first "Searching" event in a run. A run can
     // contain several shows, so that paired an unrelated torrent with the
     // first title after a restart. Resolve the item from the job's persisted
