@@ -145,6 +145,14 @@ const TD_TRANSIENT_RETRY_BASE_MS = Math.max(
   1_000,
   Number(process.env.MEDIA_MANAGER_TD_TRANSIENT_RETRY_DELAY_MS) || 10_000,
 );
+// A torrent with peers but no byte movement is allowed to warm up briefly;
+// after this window, stop the child and let the normal retry/research path
+// choose another release instead of occupying a transfer slot forever.
+const TORRENT_STALL_TIMEOUT_MS = Math.max(
+  60_000,
+  Number(process.env.MEDIA_MANAGER_TORRENT_STALL_TIMEOUT_MS) || 5 * 60_000,
+);
+const TORRENT_STALL_CHECK_INTERVAL_MS = Math.min(30_000, Math.max(5_000, Math.floor(TORRENT_STALL_TIMEOUT_MS / 6)));
 const DEFAULT_MAINTENANCE_CONCURRENCY = 1;
 const MAX_MAINTENANCE_CONCURRENCY = 1;
 // Keep the default conservative while allowing the UI to raise the number of
@@ -1528,6 +1536,22 @@ function releaseAvailabilityScore(item) {
   return Math.log10(seeders + 1) * 10 + Math.log10(downloads + 1) * 2;
 }
 
+// Availability is a selection gate, not merely a score.  A Nyaa result with
+// zero seeders can be a perfectly named release and still never transfer a
+// byte.  SeaDex magnets are kept as a lower-confidence fallback because their
+// tracker seeder count is often unavailable; zero-seeder tracker results are
+// never preferred when a seeded candidate covers the same work.
+function releaseAvailabilityTier(item) {
+  const seeders = Math.max(0, Number(item?.seeders) || 0);
+  if (seeders > 0) return 2;
+  const provider = String(item?.provider || item?.providers?.[0] || "").trim().toLowerCase();
+  return provider === "seadex" ? 1 : 0;
+}
+
+function releaseHasUsableAvailability(item) {
+  return releaseAvailabilityTier(item) > 0;
+}
+
 function normalizeTitle(value) {
   return String(value || "")
     .normalize("NFKD")
@@ -2045,6 +2069,9 @@ function rankIndividualReleaseCandidate(item, source, categoryName, episode) {
 function betterReleaseCandidate(candidate, current) {
   if (!current) return true;
   if (candidate.dualAudio !== current.dualAudio) return candidate.dualAudio;
+  const candidateAvailability = releaseAvailabilityTier(candidate.item);
+  const currentAvailability = releaseAvailabilityTier(current.item);
+  if (candidateAvailability !== currentAvailability) return candidateAvailability > currentAvailability;
   const candidateSeeders = Math.max(0, Number(candidate.item?.seeders) || 0);
   const currentSeeders = Math.max(0, Number(current.item?.seeders) || 0);
   if (candidateSeeders !== currentSeeders) return candidateSeeders > currentSeeders;
@@ -2102,9 +2129,11 @@ async function findIndividualReleasePlan(source, categoryName, missingEpisodes =
         const candidates = items
           .map((item) => rankIndividualReleaseCandidate(item, source, categoryName, episode))
           .filter(Boolean);
-        const preferredCandidates = candidates.some((candidate) => candidate.dualAudio)
-          ? candidates.filter((candidate) => candidate.dualAudio)
-          : candidates;
+        const availableCandidates = candidates.filter((candidate) => releaseHasUsableAvailability(candidate.item));
+        const consideredCandidates = availableCandidates.length ? availableCandidates : candidates;
+        const preferredCandidates = consideredCandidates.some((candidate) => candidate.dualAudio)
+          ? consideredCandidates.filter((candidate) => candidate.dualAudio)
+          : consideredCandidates;
         for (const candidate of preferredCandidates) {
           if (!betterReleaseCandidate(candidate, selected)) continue;
           selected = { ...candidate, query };
@@ -2120,10 +2149,52 @@ async function findIndividualReleasePlan(source, categoryName, missingEpisodes =
   return { releases, unresolved };
 }
 
+async function findBestHealthyBatchRelease(source, categoryName, missingEpisodes = []) {
+  const missing = normalizedEpisodeNumbers(missingEpisodes);
+  if (missing.length < 2) return null;
+  let best = null;
+  for (const query of releaseSearchQueries(source, categoryName, missing)) {
+    try {
+      const items = await releaseSearch(query, categoryName);
+      for (const item of items) {
+        const candidate = rankReleaseCandidate(item, source, categoryName, missing);
+        if (!candidate?.dualAudio || !releaseHasUsableAvailability(item)) continue;
+        if (!candidate.coverage.batchLike && candidate.coveredEpisodes.length < 2) continue;
+        if (!best || betterReleaseCandidate(candidate, best)
+          || (candidate.coveredEpisodes.length > best.coveredEpisodes.length
+            && releaseAvailabilityTier(candidate.item) >= releaseAvailabilityTier(best.item))) {
+          best = { ...candidate, query };
+        }
+      }
+    } catch {
+      // Keep searching other providers and query forms.
+    }
+  }
+  return best;
+}
+
 async function findAutomaticReleasePlan(source, categoryName, missingEpisodes = []) {
   const missing = [...new Set(missingEpisodes.map((episode) => Number(episode)))].filter((episode) => Number.isInteger(episode) && episode > 0);
   const individualPlan = await findIndividualReleasePlan(source, categoryName, missing);
   let individualReleases = individualPlan?.releases || [];
+  const healthyBatch = await findBestHealthyBatchRelease(source, categoryName, missing);
+  if (healthyBatch) {
+    const coveredByBatch = missing.filter((episode) => healthyBatch.coveredEpisodes.includes(episode));
+    const batchSeeders = Math.max(0, Number(healthyBatch.item?.seeders) || 0);
+    const individualSeeders = Math.max(0, ...individualReleases
+      .filter((release) => releaseTargetEpisodes(release, categoryName, missing).some((episode) => coveredByBatch.includes(episode)))
+      .map((release) => Number(release.seeders) || 0));
+    const batchIsBetter = coveredByBatch.length > 1
+      && (batchSeeders >= individualSeeders || individualSeeders === 0);
+    if (batchIsBetter) {
+      const coveredSet = new Set(coveredByBatch);
+      individualReleases = [
+        releasePlanEntry({ ...healthyBatch, coveredEpisodes: coveredByBatch }, healthyBatch.query, coveredByBatch, categoryName),
+        ...individualReleases.filter((release) => !releaseTargetEpisodes(release, categoryName, missing)
+          .some((episode) => coveredSet.has(episode))),
+      ];
+    }
+  }
   const nonDualEpisodes = normalizedEpisodeNumbers(individualReleases
     .filter((release) => !releaseHasDualAudio(release))
     .flatMap((release) => releaseTargetEpisodes(release, categoryName, missing)));
@@ -2188,9 +2259,11 @@ async function findAutomaticReleasePlan(source, categoryName, missingEpisodes = 
           const candidates = items
             .map((item) => rankIndividualReleaseCandidate(item, source, categoryName, episode))
             .filter(Boolean);
-          const preferredCandidates = candidates.some((candidate) => candidate.dualAudio)
-            ? candidates.filter((candidate) => candidate.dualAudio)
-            : candidates;
+          const availableCandidates = candidates.filter((candidate) => releaseHasUsableAvailability(candidate.item));
+          const consideredCandidates = availableCandidates.length ? availableCandidates : candidates;
+          const preferredCandidates = consideredCandidates.some((candidate) => candidate.dualAudio)
+            ? consideredCandidates.filter((candidate) => candidate.dualAudio)
+            : consideredCandidates;
           for (const candidate of preferredCandidates) {
             if (!betterReleaseCandidate(candidate, selected)) continue;
             selected = { ...candidate, query };
@@ -2585,6 +2658,52 @@ function syncRunActivity(run) {
 
 function maintenanceRunIsTerminal(run) {
   return Boolean(run?.finishedAt) || ["complete", "complete_with_errors", "failed", "cancelled"].includes(run?.state);
+}
+
+function maintenanceRunSourcePaths(runOrPayload) {
+  const paths = Array.isArray(runOrPayload?.payload?.sourcePaths)
+    ? runOrPayload.payload.sourcePaths
+    : Array.isArray(runOrPayload?.sourcePaths) ? runOrPayload.sourcePaths : [];
+  return new Set(paths.map((path) => String(path).trim()).filter(Boolean));
+}
+
+function maintenanceRunsOverlap(left, right) {
+  const leftPaths = maintenanceRunSourcePaths(left);
+  const rightPaths = maintenanceRunSourcePaths(right);
+  // A whole-library run overlaps every source-specific run.  This keeps the
+  // scheduler from creating duplicate torrent work through a second browser
+  // tab, automatic recovery, or a repeated button press.
+  if (!leftPaths.size || !rightPaths.size) return true;
+  return [...leftPaths].some((path) => rightPaths.has(path));
+}
+
+function findOverlappingMaintenanceRun(payload = {}) {
+  const operation = String(payload.operation || "").trim().toLowerCase();
+  if (operation === "add") return null;
+  return [...maintenanceRuns.values()]
+    .filter((run) => !maintenanceRunIsTerminal(run))
+    .filter((run) => String(run.payload?.operation || "update").trim().toLowerCase() !== "add")
+    .filter((run) => maintenanceRunsOverlap(run, payload))
+    .sort((left, right) => Date.parse(right.startedAt || "") - Date.parse(left.startedAt || ""))[0] || null;
+}
+
+function deduplicateMaintenanceRuns() {
+  const active = [...maintenanceRuns.values()]
+    .filter((run) => !maintenanceRunIsTerminal(run))
+    .sort((left, right) => Date.parse(right.startedAt || "") - Date.parse(left.startedAt || ""));
+  const kept = [];
+  for (const run of active) {
+    if (kept.some((candidate) => maintenanceRunsOverlap(candidate, run))) {
+      runEvent(run, "Cancelled as an overlapping maintenance run; the newest run owns this library work.");
+      run.stop?.();
+      run.state = "cancelled";
+      run.phase = "complete";
+      run.finishedAt = new Date().toISOString();
+      continue;
+    }
+    kept.push(run);
+  }
+  return kept;
 }
 
 function markMaintenanceRunPaused(run, message = "Maintenance paused. Active transfer work has finished; update settings and resume when ready.") {
@@ -3853,6 +3972,12 @@ async function startMaintenanceRun(payload = {}) {
       addNewSeasons: false,
     };
   }
+  const overlappingRun = findOverlappingMaintenanceRun(payload);
+  if (overlappingRun) {
+    runEvent(overlappingRun, "Ignored a duplicate maintenance request; an existing run already owns this work.");
+    await persistResumeState();
+    return overlappingRun;
+  }
   const library = await listLibrary();
   const run = {
     id: randomUUID(), state: "checking", phase: maintenanceAniListEnabled(payload) ? "anilist" : "planning",
@@ -4179,6 +4304,7 @@ async function applyMaintenanceSerially(maintenance, artifacts) {
 async function finishJob(job, code, error, { cancelled = false } = {}) {
   if (job.finishedAt || job.finishing) return;
   job.finishing = true;
+  clearTorrentStallWatch(job);
   let finalCode = code;
   let wasCancelled = cancelled || job.cancelled === true || job.stopRequested === true;
   if (finalCode === 0 && job.maintenance && !wasCancelled) {
@@ -4248,7 +4374,24 @@ function recordEvent(job, event, stream) {
     ? { ...event, url: normalizeToodriveUrl(event.url) }
     : event;
   if (normalizedEvent.event === "metadata") job.metadataSeen = true;
-  if (normalizedEvent.event === "progress" && Number(normalizedEvent.transferredBytes) > 0) job.hasTransferProgress = true;
+  if (normalizedEvent.event === "progress") {
+    const transferredBytes = Math.max(0, Number(normalizedEvent.transferredBytes) || 0);
+    const totalBytes = Math.max(0, Number(normalizedEvent.totalBytes) || 0);
+    if (transferredBytes > 0) job.hasTransferProgress = true;
+    if (normalizedEvent.phase === "disk_download") {
+      job.lastTransferPhase = "disk_download";
+      job.lastTransferTotal = totalBytes;
+      job.currentRemotePath = normalizedEvent.remotePath || job.currentRemotePath || "";
+      if (!job.lastTransferAt || transferredBytes > job.lastTransferBytes) {
+        job.lastTransferAt = Date.now();
+        job.lastTransferBytes = transferredBytes;
+      }
+      job.lastPeerCount = Number(normalizedEvent.numPeers) || 0;
+      job.lastSeedCount = Number(normalizedEvent.numSeeds) || 0;
+    } else if (normalizedEvent.phase) {
+      job.lastTransferPhase = String(normalizedEvent.phase);
+    }
+  }
   if (normalizedEvent.event === "link" && normalizedEvent.url) {
     if (!job.links.includes(normalizedEvent.url)) job.links.push(normalizedEvent.url);
     const artifact = job.artifacts.find((candidate) => candidate.remotePath === normalizedEvent.remotePath);
@@ -4361,7 +4504,7 @@ function requestJobStop(job) {
     return job.done;
   }
   if (job.child) {
-    job.child.kill("SIGTERM");
+    terminateTdProcess(job, "SIGTERM");
     return job.done;
   }
   if (!job.finishing) {
@@ -4451,10 +4594,66 @@ function emitSequentialFallback(job, reason) {
   recordEvent(job, event, "service");
 }
 
+function terminateTdProcess(job, signal = "SIGTERM") {
+  const child = job?.child;
+  if (!child) return;
+  const pid = Number(child.pid);
+  if (Number.isInteger(pid) && pid > 0) {
+    try {
+      // td launches ffmpeg and the post-download shell hook. It is started
+      // detached so the whole process group can be stopped together instead
+      // of leaving orphaned encoders behind when a torrent is stalled.
+      process.kill(-pid, signal);
+      return;
+    } catch (error) {
+      if (!['ESRCH', 'EINVAL'].includes(String(error?.code || ""))) throw error;
+    }
+  }
+  child.kill(signal);
+}
+
+function clearTorrentStallWatch(job) {
+  if (job?.stallTimer) clearInterval(job.stallTimer);
+  if (job) job.stallTimer = null;
+}
+
+function startTorrentStallWatch(job) {
+  clearTorrentStallWatch(job);
+  if (!job?.maintenance) return;
+  job.lastTransferAt = 0;
+  job.lastTransferBytes = 0;
+  job.lastTransferTotal = 0;
+  job.lastTransferPhase = "";
+  job.stallRequested = false;
+  job.stallError = null;
+  job.stallTimer = setInterval(() => {
+    if (job.finishedAt || job.stopRequested || job.cancelled || !job.child) {
+      clearTorrentStallWatch(job);
+      return;
+    }
+    if (job.lastTransferPhase !== "disk_download" || !job.lastTransferAt) return;
+    if (Date.now() - job.lastTransferAt < TORRENT_STALL_TIMEOUT_MS) return;
+    if (job.stallRequested) return;
+    job.stallRequested = true;
+    job.stallError = new Error(`Torrent stalled for ${Math.round(TORRENT_STALL_TIMEOUT_MS / 60_000)} minutes with no byte movement`);
+    recordEvent(job, {
+      event: "warning",
+      code: "torrent_stalled",
+      message: `${job.stallError.message}; stopping this release so maintenance can retry or choose another candidate`,
+      phase: "disk_download",
+      remotePath: job.currentRemotePath || undefined,
+      transferredBytes: job.lastTransferBytes,
+      totalBytes: job.lastTransferTotal,
+    }, "service");
+    terminateTdProcess(job, "SIGTERM");
+  }, TORRENT_STALL_CHECK_INTERVAL_MS);
+}
+
 function spawnTdAttempt(job, { downloadAll, repairAttempts, retry = false }, releaseSlot = () => {}) {
   const attemptEventStart = job.events.length;
   const args = tdAttemptArgs(job, { downloadAll, repairAttempts });
   const child = spawn(TD_BIN, args, {
+    detached: true,
     env: {
       ...process.env,
       // One upload stream avoids losing an entire file when a concurrent HTTP/2
@@ -4465,6 +4664,7 @@ function spawnTdAttempt(job, { downloadAll, repairAttempts, retry = false }, rel
   });
   job.child = child;
   job.pid = child.pid;
+  startTorrentStallWatch(job);
   job.state = "running";
   job.downloadAll = downloadAll;
   job.attempt = (job.attempt || 0) + 1;
@@ -4516,8 +4716,10 @@ function spawnTdAttempt(job, { downloadAll, repairAttempts, retry = false }, rel
   const settle = (code) => {
     if (settled) return;
     settled = true;
+    clearTorrentStallWatch(job);
     flush();
     job.child = null;
+    if (job.stallError) attemptError ||= job.stallError;
     const exitCode = code ?? 1;
     const authFailure = toodriveAuthenticationFailure(job, attemptError, attemptEventStart);
     if (exitCode !== 0 && authFailure && TOODRIVE_AUTO_LOGIN && !job.stopRequested && job.authRetryCount < MAX_TOODRIVE_AUTH_RETRIES) {
@@ -4556,9 +4758,13 @@ function spawnTdAttempt(job, { downloadAll, repairAttempts, retry = false }, rel
       })();
       return;
     }
-    const transientFailure = toodriveTransientFailure(job, attemptError, attemptEventStart);
+    const transientFailure = job.stallRequested
+      ? { code: "torrent_stalled", message: job.stallError?.message || "torrent stalled" }
+      : toodriveTransientFailure(job, attemptError, attemptEventStart);
     if (exitCode !== 0 && transientFailure && !job.stopRequested && !job.cancelled && job.transientRetryCount < MAX_TD_TRANSIENT_RETRIES) {
       job.transientRetryCount += 1;
+      job.stallRequested = false;
+      job.stallError = null;
       const retryNumber = job.transientRetryCount;
       const delay = Math.min(120_000, TD_TRANSIENT_RETRY_BASE_MS * (2 ** (retryNumber - 1)));
       job.state = "retrying";
@@ -4624,6 +4830,7 @@ async function startJob({ torrentUrl, magnet, destination, cacheDir, runId, main
     runId: runId || normalizedMaintenance?.runId || null, maintenance: normalizedMaintenance, cacheDir: null, startedAt: new Date().toISOString(),
     source, destination, adaptiveFallback: Boolean(normalizedMaintenance), fallbackAttempted: false,
     metadataSeen: false, hasTransferProgress: false, stopRequested: false, cancelled: false, attempt: 0,
+    stallTimer: null, stallRequested: false, stallError: null, lastTransferAt: 0, lastTransferBytes: 0, lastTransferTotal: 0, lastTransferPhase: "",
     authRetryCount: 0, transientRetryCount: 0,
     fileCleanupPromises: new Set(),
     durationProbePromises: new Map(),
@@ -4658,6 +4865,13 @@ function restoreJob(saved) {
     finishing: false,
     stopRequested: saved.stopRequested === true,
     cancelled: saved.cancelled === true,
+    stallTimer: null,
+    stallRequested: false,
+    stallError: null,
+    lastTransferAt: 0,
+    lastTransferBytes: 0,
+    lastTransferTotal: 0,
+    lastTransferPhase: "",
     fileCleanupPromises: new Set(),
     durationProbePromises: new Map(),
     audioProbePromises: new Map(),
@@ -5003,6 +5217,7 @@ async function restorePersistedWork() {
     restoreJob(saved);
   }
   for (const run of maintenanceRuns.values()) syncRunActivity(run);
+  deduplicateMaintenanceRuns();
 
   for (const run of maintenanceRuns.values()) {
     if (!run.paused) continue;
@@ -5387,6 +5602,9 @@ export {
   releaseMatchesMissing,
   rankReleaseCandidate,
   rankIndividualReleaseCandidate,
+  releaseAvailabilityTier,
+  releaseHasUsableAvailability,
+  maintenanceRunsOverlap,
   splitReleasePlanByEpisode,
   releaseHasDualAudio,
   betterReleaseCandidate,

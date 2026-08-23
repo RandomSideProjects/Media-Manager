@@ -150,6 +150,43 @@ test("prefers the faster eligible dual-audio release", () => {
   assert.equal(service.betterReleaseCandidate(slow, fast), false);
 });
 
+test("availability tiers reject zero-seeder tracker releases when a seeded candidate exists", () => {
+  assert.equal(service.releaseAvailabilityTier({ provider: "nyaa", seeders: 0, magnet: "magnet:?xt=urn:btih:dead" }), 0);
+  assert.equal(service.releaseAvailabilityTier({ provider: "seadex", seeders: 0, magnet: "magnet:?xt=urn:btih:seadex" }), 1);
+  assert.equal(service.releaseAvailabilityTier({ provider: "nyaa", seeders: 24, magnet: "magnet:?xt=urn:btih:healthy" }), 2);
+  const source = { title: "Example Show" };
+  const stalled = service.rankIndividualReleaseCandidate({
+    provider: "nyaa",
+    title: "Example Show S03E05 1080p Dual Audio",
+    dualAudio: true,
+    seeders: 0,
+    magnet: "magnet:?xt=urn:btih:dead",
+  }, source, "Season 3", 5);
+  const healthy = service.rankIndividualReleaseCandidate({
+    provider: "nyaa",
+    title: "Example Show S03E05 1080p Dual Audio",
+    dualAudio: true,
+    seeders: 24,
+    magnet: "magnet:?xt=urn:btih:healthy",
+  }, source, "Season 3", 5);
+  assert.equal(service.betterReleaseCandidate(healthy, stalled), true);
+});
+
+test("maintenance runs overlap when they can touch the same source", () => {
+  assert.equal(service.maintenanceRunsOverlap(
+    { payload: { sourcePaths: ["Sources/Files/Anime/Hokkaido!.json"] } },
+    { sourcePaths: ["Sources/Files/Anime/Hokkaido!.json"] },
+  ), true);
+  assert.equal(service.maintenanceRunsOverlap(
+    { payload: { sourcePaths: ["Sources/Files/Anime/Hokkaido!.json"] } },
+    { sourcePaths: ["Sources/Files/Anime/Domestic_Girlfriend.json"] },
+  ), false);
+  assert.equal(service.maintenanceRunsOverlap(
+    { payload: {} },
+    { sourcePaths: ["Sources/Files/Anime/Hokkaido!.json"] },
+  ), true);
+});
+
 test("adds a compact title query for censored release titles", () => {
   const queries = service.releaseSearchQueries(
     { title: "Watari-kun's ****** Is About To Collapse" },
