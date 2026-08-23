@@ -1,6 +1,6 @@
 {
   "title": "Re: Zero",
-  "LatestTime": "2026-08-16T17:29:05.509Z",
+  "LatestTime": "2026-08-23T02:22:19.599Z",
   "categories": [
     {
       "category": "Season 1",
@@ -477,11 +477,18 @@
           "src": "https://toodrive.xpbliss.fyi/dl/w27gyydj7dvaofbs1vwwx3w4/raw",
           "fileSizeBytes": 504630327,
           "dualAudio": false
+        },
+        {
+          "title": "Episode 13",
+          "src": "https://toodrive.xpbliss.fyi/dl/sjdxvmx254s4q19d7zoqg6yw/raw",
+          "fileSizeBytes": 834170242,
+          "durationSeconds": 1740,
+          "dualAudio": false
         }
       ]
     }
   ],
-  "totalFileSizeBytes": 26473651795,
+  "totalFileSizeBytes": 27307822037,
   "Image": "./Sources/Posters/Anime/Re_Zero.webp",
   "anilistIds": []
 }
