@@ -1,7 +1,7 @@
 {
   "title": "You And I Are Polar Opposites",
   "Image": "./Sources/Posters/Anime/You_And_I_Are_Polar_Opposites.webp",
-  "LatestTime": "2026-08-16T17:50:58.050Z",
+  "LatestTime": "2026-08-24T21:57:09.295Z",
   "categories": [
     {
       "category": "Season 1",
@@ -117,10 +117,17 @@
           "src": "https://toodrive.xpbliss.fyi/dl/jgq36hlg05x68hd78dgsjjtj/raw",
           "fileSizeBytes": 337058567,
           "dualAudio": false
+        },
+        {
+          "title": "Episode 08",
+          "src": "https://toodrive.xpbliss.fyi/dl/xedl3dap4bnwwgy9v6hw1gib/raw",
+          "fileSizeBytes": 1464969660,
+          "durationSeconds": 1432,
+          "dualAudio": false
         }
       ]
     }
   ],
-  "totalFileSizeBytes": 10004703403,
+  "totalFileSizeBytes": 11469673063,
   "anilistIds": []
 }
