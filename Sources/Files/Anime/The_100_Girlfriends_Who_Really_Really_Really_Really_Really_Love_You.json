@@ -199,11 +199,18 @@
           "src": "https://toodrive.xpbliss.fyi/dl/jk6kd39fs2eofhk8h29sd32n/raw",
           "fileSizeBytes": 1447323890,
           "dualAudio": false
+        },
+        {
+          "title": "Episode 08",
+          "src": "https://toodrive.xpbliss.fyi/dl/ffq246cd9h197rsnb2zmk8f0/raw",
+          "fileSizeBytes": 1449417765,
+          "durationSeconds": 1430,
+          "dualAudio": false
         }
       ]
     }
   ],
-  "totalFileSizeBytes": 11995665134,
-  "LatestTime": "2026-08-16T17:38:21.955Z",
+  "totalFileSizeBytes": 13445082899,
+  "LatestTime": "2026-08-24T21:48:13.393Z",
   "anilistIds": []
 }
