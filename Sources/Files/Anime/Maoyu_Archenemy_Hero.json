@@ -11,6 +11,13 @@
           "dualAudio": false
         },
         {
+          "title": "Episode 04",
+          "src": "https://toodrive.xpbliss.fyi/dl/xhn71g8fhemcz9eoxfgfat5r/raw",
+          "fileSizeBytes": 376967250,
+          "durationSeconds": 1421,
+          "dualAudio": false
+        },
+        {
           "title": "Episode 06",
           "src": "https://toodrive.xpbliss.fyi/dl/zl20kyavwatqavneukosfzr7/raw",
           "fileSizeBytes": 467964046,
@@ -46,13 +53,13 @@
       "mediaFormat": "TV"
     }
   ],
-  "LatestTime": "2026-08-17T11:26:59.873Z",
-  "totalFileSizeBytes": 1751470115,
+  "LatestTime": "2026-08-24T21:32:08.654Z",
+  "totalFileSizeBytes": 2128437365,
   "anilistId": 14833,
   "rootAnilistId": 14833,
   "mediaFormat": "TV",
   "anilistIds": [
     14833
   ],
-  "Image": "./Sources/Posters/Anime/Maoyu_Archenemy_&_Hero.webp"
+  "Image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx14833-6M3yEmu4SJkH.png"
 }
