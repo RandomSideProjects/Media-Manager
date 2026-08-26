@@ -1,6 +1,4 @@
 .DS_Store
-.DS_Store
-.DS_Store
 /Tools/__pycache__
 # The generated native maintenance output is workstation-only; keep the
 # source-side Maintenance service and installer in version control.

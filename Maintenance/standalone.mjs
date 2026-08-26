@@ -20,6 +20,7 @@ const SERVICE_PROTOCOL_VERSION = "maintenance-v4";
 const serviceScript = join(ROOT, "Maintenance", "service.mjs");
 
 const MIME_TYPES = {
+  ".cbz": "application/vnd.comicbook+zip",
   ".css": "text/css; charset=utf-8",
   ".gif": "image/gif",
   ".html": "text/html; charset=utf-8",
@@ -33,7 +34,9 @@ const MIME_TYPES = {
   ".png": "image/png",
   ".svg": "image/svg+xml",
   ".txt": "text/plain; charset=utf-8",
+  ".webm": "video/webm",
   ".webp": "image/webp",
+  ".zip": "application/zip",
 };
 
 function parseArgs(argv) {

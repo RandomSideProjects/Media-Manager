@@ -33,9 +33,10 @@ def main() -> None:
     handler_class = SimpleHTTPRequestHandler
 
     with ThreadingHTTPServer(server_address, handler_class) as server:
+        display_host = "localhost" if args.host == "0.0.0.0" else args.host
         print(
-            f"Serving {parent_dir} at http://{args.host}:{args.port} "
-            "(press Ctrl+C to stop)"
+            f"Serving {parent_dir} at http://{display_host}:{args.port} "
+            f"(bound to {args.host}:{args.port}, press Ctrl+C to stop)"
         )
         try:
             server.serve_forever()

@@ -222,4 +222,4 @@ Apache 2.0, see `LICENSE`.
 
 ---
 
-Last updated: 2026-04-27
+Last updated: 2026-08-26
