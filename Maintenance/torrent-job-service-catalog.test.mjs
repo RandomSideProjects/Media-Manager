@@ -136,7 +136,7 @@ test("catalog work targets only non-dual episodes of an existing season", async 
   assert.deepEqual(planned.items[0].missingEpisodes, [1]);
   assert.deepEqual(planned.items[0].release.targetEpisodes, [1]);
   assert.equal(planned.items[0].catalog.preferredDualAudio, true);
-  assert.equal(planned.items[0].release.torrentUrl, "https://nyaa.si/download/12345.torrent");
+  assert.equal(planned.items[0].release.torrentUrl, "https://nyaa.land/download/12345.torrent");
 });
 
 test("catalog work never replaces a fully dual-audio season", async () => {

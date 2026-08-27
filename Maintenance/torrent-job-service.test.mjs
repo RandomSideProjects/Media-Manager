@@ -251,11 +251,11 @@ test("collapses duplicate batch magnets before starting torrent jobs", () => {
 test("derives a tracker torrent URL for SeaDex releases", () => {
   assert.equal(
     service.trackerTorrentUrl("https://nyaa.si/view/1686647"),
-    "https://nyaa.si/download/1686647.torrent",
+    "https://nyaa.land/download/1686647.torrent",
   );
   assert.equal(
     service.trackerTorrentUrl("https://www.nyaa.net/view/42/"),
-    "https://nyaa.net/download/42.torrent",
+    "https://nyaa.land/download/42.torrent",
   );
   assert.equal(service.trackerTorrentUrl("https://example.test/release/42"), "");
 });

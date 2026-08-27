@@ -47,6 +47,11 @@ const NYAA_BASE_URLS = [
   process.env.NYAA_FALLBACK_URL || "https://nyaa.net",
 ].filter((base, index, all) => base && all.indexOf(base) === index)
   .map((base) => String(base).replace(/\/$/, ""));
+// The tracker pages are frequently blocked from headless/server networks,
+// while the Nyaa download mirror remains reachable.  Prefer the mirror for
+// .torrent files and allow deployments to override it when their network has a
+// different reachable endpoint.
+const NYAA_TORRENT_BASE_URL = String(process.env.NYAA_TORRENT_BASE_URL || "https://nyaa.land").replace(/\/$/, "");
 const SERVICE_DIR = dirname(fileURLToPath(import.meta.url));
 const BROWSER_COMPATIBILITY_SCRIPT = resolve(process.env.MEDIA_MANAGER_BROWSER_COMPATIBILITY_SCRIPT || join(SERVICE_DIR, "browser-compatible-reencode.sh"));
 const REPO_ROOT = resolve(process.env.MEDIA_MANAGER_ROOT || join(SERVICE_DIR, ".."));
@@ -1448,8 +1453,8 @@ function torrentFileSeasonNumbers(torrent) {
 
 function trackerTorrentUrl(trackerUrl) {
   const value = String(trackerUrl || "").trim();
-  const match = value.match(/^(https?:\/\/)(?:www\.)?(nyaa\.(?:si|net))\/view\/(\d+)(?:[/?#]|$)/i);
-  return match ? `${match[1]}${match[2]}/download/${match[3]}.torrent` : "";
+  const match = value.match(/^(https?:\/\/)(?:www\.)?(nyaa\.(?:si|net|land))\/view\/(\d+)(?:[/?#]|$)/i);
+  return match ? `${NYAA_TORRENT_BASE_URL}/download/${match[3]}.torrent` : "";
 }
 
 function seaDexTorrentToItem(torrent, entry, media, categoryName = "") {
@@ -1527,7 +1532,7 @@ function parseRssItems(xml) {
     const viewUrl = get("link");
     const hash = get("nyaa:infoHash") || get("infoHash");
     const enclosure = block.match(/<enclosure\b[^>]+url=["']([^"']+)["']/i)?.[1] || "";
-    const torrentUrl = enclosure || (viewUrl.includes("/download/")
+    const torrentUrl = trackerTorrentUrl(viewUrl) || enclosure || (viewUrl.includes("/download/")
       ? viewUrl
       : viewUrl.includes("/view/") ? `${viewUrl.replace("/view/", "/download/")}.torrent` : "");
     const magnet = hash
