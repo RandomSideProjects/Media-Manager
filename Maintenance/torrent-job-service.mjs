@@ -3980,7 +3980,9 @@ async function processMaintenanceItem(run, item, payload = {}) {
     });
     if (pendingEpisodes.length && (pendingHasNonDual || pendingHasLowAvailability)) {
       try {
-        const refreshed = await findAutomaticReleasePlan(source, item.category, pendingEpisodes);
+        const refreshed = item.maintenanceAction === "new"
+          ? await findBatchReleasePlan(source, item.category, pendingEpisodes)
+          : await findAutomaticReleasePlan(source, item.category, pendingEpisodes);
         const candidatesByEpisode = new Map();
         for (const release of refreshed) {
           for (const episode of releaseTargetEpisodes(release, item.category, pendingEpisodes)) {
