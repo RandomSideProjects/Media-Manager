@@ -1638,7 +1638,11 @@ function releaseIdentity(release) {
   if (hash) return `hash:${hash}`;
   const magnet = String(release?.magnet || "").trim();
   const magnetHash = magnet.match(/(?:^|[?:&])(?:xt=)?urn:btih:([^&]+)/i)?.[1];
-  if (magnetHash) return `hash:${decodeURIComponent(magnetHash).toLowerCase()}`;
+  if (magnetHash) {
+    let decodedHash = magnetHash;
+    try { decodedHash = decodeURIComponent(magnetHash); } catch { /* use the raw hash */ }
+    return `hash:${decodedHash.toLowerCase()}`;
+  }
   const torrentUrl = String(release?.torrentUrl || "").trim().toLowerCase();
   if (torrentUrl) return `torrent:${torrentUrl}`;
   return "";
@@ -2949,6 +2953,7 @@ async function resetFailedMaintenanceRun(run) {
     item.counted = false;
     item.jobId = null;
     item.jobIds = [];
+    normalizeMaintenanceReleaseStates(item);
     syncMaintenanceReleaseSummary(item);
     resetItems += 1;
     if (catalogEntry) {
@@ -4811,18 +4816,36 @@ function terminateTdProcess(job, signal = "SIGTERM") {
   const child = job?.child;
   if (!child) return;
   const pid = Number(child.pid);
+  let groupSignalled = false;
   if (Number.isInteger(pid) && pid > 0) {
     try {
       // td launches ffmpeg and the post-download shell hook. It is started
       // detached so the whole process group can be stopped together instead
       // of leaving orphaned encoders behind when a torrent is stalled.
       process.kill(-pid, signal);
-      return;
+      groupSignalled = true;
     } catch (error) {
       if (!['ESRCH', 'EINVAL'].includes(String(error?.code || ""))) throw error;
     }
   }
-  child.kill(signal);
+  if (!groupSignalled) child.kill(signal);
+  if (signal === "SIGTERM" && job && !job.killTimer) {
+    // Some td/Deno versions keep waiting on libtorrent metadata after SIGTERM.
+    // Escalate only this job's process group after a short grace period so a
+    // pause or retry cannot remain blocked forever with orphaned td children.
+    job.killTimer = setTimeout(() => {
+      job.killTimer = null;
+      if (job.finishedAt || job.child !== child) return;
+      const currentPid = Number(child.pid);
+      if (Number.isInteger(currentPid) && currentPid > 0) {
+        try { process.kill(-currentPid, "SIGKILL"); } catch (error) {
+          if (!['ESRCH', 'EINVAL'].includes(String(error?.code || ""))) return;
+        }
+      }
+      try { child.kill("SIGKILL"); } catch { /* already exited */ }
+    }, 5_000);
+    job.killTimer.unref?.();
+  }
 }
 
 function clearTorrentStallWatch(job) {
@@ -4930,6 +4953,10 @@ function spawnTdAttempt(job, { downloadAll, repairAttempts, retry = false }, rel
     if (settled) return;
     settled = true;
     clearTorrentStallWatch(job);
+    if (job.killTimer) {
+      clearTimeout(job.killTimer);
+      job.killTimer = null;
+    }
     flush();
     job.child = null;
     if (job.stallError) attemptError ||= job.stallError;
@@ -5119,6 +5146,7 @@ function normalizePausedRunAfterRestart(run) {
       release.jobId = null;
       changed = true;
     }
+    normalizeMaintenanceReleaseStates(item);
     syncMaintenanceReleaseSummary(item);
   }
   for (const job of jobs.values()) {
