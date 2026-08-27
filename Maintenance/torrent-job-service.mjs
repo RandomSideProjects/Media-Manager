@@ -5139,16 +5139,27 @@ async function startJob({ torrentUrl, magnet, destination, cacheDir, runId, main
   jobs.set(id, job);
   const cacheRoot = resolve(cacheDir || DEFAULT_CACHE);
   const cache = join(cacheRoot, id);
-  await mkdir(cache, { recursive: true });
-  job.cacheDir = cache;
-  await clearStalePipelineLock(cache);
-  const repairAttempts = normalizedMaintenance ? MAINTENANCE_TD_REPAIR_ATTEMPTS : DEFAULT_TD_REPAIR_ATTEMPTS;
-  const downloadAll = !normalizedMaintenance || normalizedMaintenance.action === "new";
-  if (normalizedMaintenance) await persistResumeState();
-  await ensureToodriveCompatibility();
-  enqueueTdAttempt(job, { downloadAll, repairAttempts });
-  if (normalizedMaintenance) await persistResumeState();
-  return job;
+  try {
+    await mkdir(cache, { recursive: true });
+    job.cacheDir = cache;
+    await clearStalePipelineLock(cache);
+    const repairAttempts = normalizedMaintenance ? MAINTENANCE_TD_REPAIR_ATTEMPTS : DEFAULT_TD_REPAIR_ATTEMPTS;
+    const downloadAll = !normalizedMaintenance || normalizedMaintenance.action === "new";
+    if (normalizedMaintenance) await persistResumeState();
+    await ensureToodriveCompatibility();
+    enqueueTdAttempt(job, { downloadAll, repairAttempts });
+    if (normalizedMaintenance) await persistResumeState();
+    return job;
+  } catch (error) {
+    // A failed preflight (for example, an EIO while creating the cache
+    // directory) must not leave a phantom `starting` job in memory or in the
+    // resume snapshot. The parent maintenance item records the error and can
+    // retry it normally.
+    if (job.child) terminateTdProcess(job, "SIGTERM");
+    jobs.delete(id);
+    await cleanupJobCache(job).catch(() => {});
+    throw error;
+  }
 }
 
 function restoreJob(saved) {
@@ -5517,6 +5528,10 @@ async function restorePersistedWork() {
   }
   for (const saved of savedJobs) {
     if (!saved?.id || !saved.maintenance || !saved.cacheDir) continue;
+    // A job that never got past initialization has no child PID or resumable
+    // transfer state. Do not resurrect these stale `starting` records after a
+    // restart; the parent item will remain queued for a normal retry.
+    if (saved.state === "starting" && !saved.pid) continue;
     if (saved.runId && !maintenanceRuns.has(saved.runId)) continue;
     restoreJob(saved);
   }
