@@ -3929,7 +3929,7 @@ async function processMaintenanceItem(run, item, payload = {}) {
       // count. Search for a seeded alternative before handing that magnet to
       // td; retain it only as a single last-resort fallback when no other
       // provider can supply the requested work.
-      if (directRelease && releaseAvailabilityTier(directRelease) >= 2) {
+      if (directRelease && (releaseAvailabilityTier(directRelease) >= 2 || directRelease.torrentUrl)) {
         releasePlan = [directRelease];
       } else {
         const searched = await findAutomaticReleasePlan(source, item.category, targetEpisodes, { batchOnly: true });
