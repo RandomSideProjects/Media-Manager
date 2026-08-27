@@ -114,6 +114,10 @@ const FAILURE_WEBHOOK_TIMEOUT_MS = Math.max(
 // lifetime JSONL file can exceed V8's maximum string length before the caller's
 // entry limit is applied.
 const LOG_READ_BYTES = 8 * 1024 * 1024;
+const STALE_STARTING_JOB_TIMEOUT_MS = Math.max(
+  30_000,
+  Number(process.env.MEDIA_MANAGER_STALE_STARTING_JOB_TIMEOUT_MS) || 2 * 60_000,
+);
 // Keep the persisted activity log useful and bounded by default. The live job
 // object still retains its recent events for progress/debugging, while raw
 // ffmpeg/libav lines stay out of the long-lived JSONL file and the frontend.
@@ -190,6 +194,23 @@ let catalogScanPromise = null;
 let catalogRunId = null;
 let catalogAniListLastRequestAt = 0;
 let failureWebhookQueue = Promise.resolve();
+
+function pruneStaleStartingJobs() {
+  const cutoff = Date.now() - STALE_STARTING_JOB_TIMEOUT_MS;
+  let pruned = 0;
+  for (const job of jobs.values()) {
+    if (job.finishedAt || job.state !== "starting" || job.child || job.queueEntry || job.pid) continue;
+    if ((Date.parse(job.startedAt || "") || Date.now()) > cutoff) continue;
+    jobs.delete(job.id);
+    if (job.cacheDir) void cleanupJobCache(job).catch(() => {});
+    pruned += 1;
+  }
+  if (pruned) {
+    persistLog({ scope: "service", event: "stale_starting_jobs_pruned", count: pruned });
+    void persistResumeState();
+  }
+  return pruned;
+}
 
 function emptyCatalogState() {
   return {
@@ -5657,6 +5678,7 @@ function publicJobSummary(job) {
 }
 
 function publicActiveWork() {
+  pruneStaleStartingJobs();
   const terminalStates = new Set(["complete", "complete_with_errors", "failed", "cancelled"]);
   const runs = [...maintenanceRuns.values()]
     .filter((run) => !run.finishedAt && !terminalStates.has(run.state))
