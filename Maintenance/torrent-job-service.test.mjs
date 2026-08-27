@@ -238,12 +238,26 @@ test("collapses duplicate batch magnets before starting torrent jobs", () => {
       provider: "seadex",
       title: "Example Show Season 3 batch",
       magnet: "magnet:?xt=urn:btih:batch",
+      torrentUrl: "https://nyaa.si/download/42.torrent",
       targetEpisodes: [6],
     },
   ], "Season 3", [5, 6]);
   assert.equal(plan.length, 1);
   assert.deepEqual(plan[0].targetEpisodes, [5, 6]);
+  assert.equal(plan[0].torrentUrl, "https://nyaa.si/download/42.torrent");
   assert.equal(service.releaseIdentity(plan[0]), "hash:batch");
+});
+
+test("derives a tracker torrent URL for SeaDex releases", () => {
+  assert.equal(
+    service.trackerTorrentUrl("https://nyaa.si/view/1686647"),
+    "https://nyaa.si/download/1686647.torrent",
+  );
+  assert.equal(
+    service.trackerTorrentUrl("https://www.nyaa.net/view/42/"),
+    "https://nyaa.net/download/42.torrent",
+  );
+  assert.equal(service.trackerTorrentUrl("https://example.test/release/42"), "");
 });
 
 test("limits manifest artifacts to the selected missing episode", () => {

@@ -1446,6 +1446,12 @@ function torrentFileSeasonNumbers(torrent) {
   return [...seasons].filter((season) => Number.isInteger(season) && season > 0).sort((a, b) => a - b);
 }
 
+function trackerTorrentUrl(trackerUrl) {
+  const value = String(trackerUrl || "").trim();
+  const match = value.match(/^(https?:\/\/)(?:www\.)?(nyaa\.(?:si|net))\/view\/(\d+)(?:[/?#]|$)/i);
+  return match ? `${match[1]}${match[2]}/download/${match[3]}.torrent` : "";
+}
+
 function seaDexTorrentToItem(torrent, entry, media, categoryName = "") {
   const hash = String(torrent?.infoHash || "").trim();
   if (!/^[a-f0-9]{40}$/i.test(hash)) return null;
@@ -1454,13 +1460,14 @@ function seaDexTorrentToItem(torrent, entry, media, categoryName = "") {
   if (requestedSeason && fileSeasons.length && !fileSeasons.includes(requestedSeason)) return null;
   const title = mediaTitleText(media);
   const releaseGroup = String(torrent.releaseGroup || "SeaDex").trim() || "SeaDex";
+  const trackerUrl = torrent.url || "";
   const releaseTitle = `[${releaseGroup}] ${title}${categoryName ? ` ${categoryName}` : ""} batch`;
   return {
     provider: "seadex",
     title: releaseTitle,
     viewUrl: `${RELEASES_BASE_URL}/${entry.alID}/`,
-    trackerUrl: torrent.url || "",
-    torrentUrl: "",
+    trackerUrl,
+    torrentUrl: trackerTorrentUrl(trackerUrl),
     magnet: `magnet:?xt=urn:btih:${hash}&dn=${encodeURIComponent(releaseTitle)}`,
     hash,
     seeders: 0,
@@ -1673,6 +1680,13 @@ function releasePlanGroups(releases, categoryName = "", missingEpisodes = []) {
     const previous = merged[byIdentity.get(identity)];
     const group = groups[byIdentity.get(identity)];
     group.indices.push(rawIndex);
+    for (const key of ["torrentUrl", "trackerUrl", "viewUrl", "magnet", "query"]) {
+      if (!previous[key] && normalized[key]) previous[key] = normalized[key];
+    }
+    previous.providers = [...new Set([
+      ...(Array.isArray(previous.providers) ? previous.providers : [previous.provider]),
+      ...(Array.isArray(normalized.providers) ? normalized.providers : [normalized.provider]),
+    ].filter(Boolean))];
     previous.targetEpisodes = normalizedEpisodeNumbers([
       ...(previous.targetEpisodes || []),
       ...(normalized.targetEpisodes || []),
@@ -3311,13 +3325,12 @@ function catalogReleaseForMaintenance(entry) {
   if (!release) return null;
   const title = `[${release.releaseGroup || "SeaDex"}] ${entry.mediaTitle || entry.title}${entry.category ? ` ${entry.category}` : ""}`;
   const trackerUrl = String(release.trackerUrl || "").trim();
-  const nyaaMatch = trackerUrl.match(/^https?:\/\/(?:www\.)?nyaa\.si\/view\/(\d+)(?:[/?#]|$)/i);
   return {
     provider: "seadex",
     title,
     viewUrl: `${RELEASES_BASE_URL}/${entry.alID}/`,
     trackerUrl,
-    torrentUrl: nyaaMatch ? `https://nyaa.si/download/${nyaaMatch[1]}.torrent` : "",
+    torrentUrl: trackerTorrentUrl(trackerUrl),
     magnet: release.magnet || "",
     hash: release.hash || "",
     seeders: 0,
@@ -5852,6 +5865,7 @@ export {
   releaseSearchQueries,
   mediaMatchesRequestedSeason,
   seaDexTorrentToItem,
+  trackerTorrentUrl,
   findAutomaticReleasePlan,
   missingEpisodesForCategory,
   releaseCoverage,
