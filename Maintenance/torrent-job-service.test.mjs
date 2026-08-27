@@ -226,6 +226,26 @@ test("splits a batch fallback into one target episode per torrent job", () => {
   assert.deepEqual(plan.map((release) => release.magnet), ["magnet:?xt=urn:btih:batch", "magnet:?xt=urn:btih:batch"]);
 });
 
+test("collapses duplicate batch magnets before starting torrent jobs", () => {
+  const plan = service.deduplicateReleasePlan([
+    {
+      provider: "seadex",
+      title: "Example Show Season 3 batch",
+      magnet: "magnet:?xt=urn:btih:batch",
+      targetEpisodes: [5],
+    },
+    {
+      provider: "seadex",
+      title: "Example Show Season 3 batch",
+      magnet: "magnet:?xt=urn:btih:batch",
+      targetEpisodes: [6],
+    },
+  ], "Season 3", [5, 6]);
+  assert.equal(plan.length, 1);
+  assert.deepEqual(plan[0].targetEpisodes, [5, 6]);
+  assert.equal(service.releaseIdentity(plan[0]), "hash:batch");
+});
+
 test("limits manifest artifacts to the selected missing episode", () => {
   const artifacts = service.selectArtifacts([
     { remotePath: "Show/S03E04.mp4", url: "https://example.test/4.mp4" },

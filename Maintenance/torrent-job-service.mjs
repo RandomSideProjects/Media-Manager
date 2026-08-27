@@ -1633,6 +1633,62 @@ function releaseHasUsableAvailability(item) {
   return releaseAvailabilityTier(item) > 0;
 }
 
+function releaseIdentity(release) {
+  const hash = String(release?.hash || "").trim().toLowerCase();
+  if (hash) return `hash:${hash}`;
+  const magnet = String(release?.magnet || "").trim();
+  const magnetHash = magnet.match(/(?:^|[?:&])(?:xt=)?urn:btih:([^&]+)/i)?.[1];
+  if (magnetHash) return `hash:${decodeURIComponent(magnetHash).toLowerCase()}`;
+  const torrentUrl = String(release?.torrentUrl || "").trim().toLowerCase();
+  if (torrentUrl) return `torrent:${torrentUrl}`;
+  return "";
+}
+
+// Release planning can intentionally split a batch into one episode per
+// fallback candidate.  That is useful for candidate selection, but starting a
+// separate td process for every identical magnet causes a metadata stampede
+// and makes an unavailable batch look like a td outage.  Collapse identical
+// torrent identities before execution and combine their target episodes.
+function releasePlanGroups(releases, categoryName = "", missingEpisodes = []) {
+  const merged = [];
+  const groups = [];
+  const byIdentity = new Map();
+  for (const [rawIndex, release] of (Array.isArray(releases) ? releases : []).entries()) {
+    if (!release || typeof release !== "object") continue;
+    const normalized = {
+      ...release,
+      targetEpisodes: releaseTargetEpisodes(release, categoryName, missingEpisodes),
+    };
+    const identity = releaseIdentity(normalized);
+    if (!identity || !byIdentity.has(identity)) {
+      const index = merged.push(normalized) - 1;
+      groups.push({ release: normalized, indices: [rawIndex] });
+      if (identity) byIdentity.set(identity, index);
+      continue;
+    }
+    const previous = merged[byIdentity.get(identity)];
+    const group = groups[byIdentity.get(identity)];
+    group.indices.push(rawIndex);
+    previous.targetEpisodes = normalizedEpisodeNumbers([
+      ...(previous.targetEpisodes || []),
+      ...(normalized.targetEpisodes || []),
+    ]);
+    previous.dualAudio = releaseHasDualAudio(previous) || releaseHasDualAudio(normalized);
+    previous.seeders = Math.max(Number(previous.seeders) || 0, Number(normalized.seeders) || 0);
+    previous.downloads = Math.max(Number(previous.downloads) || 0, Number(normalized.downloads) || 0);
+    previous.score = Math.max(Number(previous.score) || 0, Number(normalized.score) || 0);
+    previous.availabilityScore = Math.max(
+      Number(previous.availabilityScore) || 0,
+      Number(normalized.availabilityScore) || 0,
+    );
+  }
+  return { releases: merged, groups };
+}
+
+function deduplicateReleasePlan(releases, categoryName = "", missingEpisodes = []) {
+  return releasePlanGroups(releases, categoryName, missingEpisodes).releases;
+}
+
 function normalizeTitle(value) {
   return String(value || "")
     .normalize("NFKD")
@@ -2237,9 +2293,13 @@ async function findBestHealthyBatchRelease(source, categoryName, missingEpisodes
   for (const query of releaseSearchQueries(source, categoryName, missing)) {
     try {
       const items = await releaseSearch(query, categoryName);
-      for (const item of items) {
-        const candidate = rankReleaseCandidate(item, source, categoryName, missing);
-        if (!candidate?.dualAudio || !releaseHasUsableAvailability(item)) continue;
+      const candidates = items
+        .map((item) => rankReleaseCandidate(item, source, categoryName, missing))
+        .filter(Boolean);
+      const availableCandidates = candidates.filter((candidate) => releaseHasUsableAvailability(candidate.item));
+      const consideredCandidates = availableCandidates.length ? availableCandidates : candidates;
+      for (const candidate of consideredCandidates) {
+        if (!candidate?.dualAudio || !releaseHasUsableAvailability(candidate.item)) continue;
         if (!candidate.coverage.batchLike && candidate.coveredEpisodes.length < 2) continue;
         if (!best || betterReleaseCandidate(candidate, best)
           || (candidate.coveredEpisodes.length > best.coveredEpisodes.length
@@ -2284,9 +2344,12 @@ async function findAutomaticReleasePlan(source, categoryName, missingEpisodes = 
     for (const query of releaseSearchQueries(source, categoryName, missing)) {
       try {
         const items = await releaseSearch(query, categoryName);
-        for (const item of items) {
-          const candidate = rankReleaseCandidate(item, source, categoryName, missing);
-          if (!candidate?.dualAudio || !candidate.coveredEpisodes.some((episode) => nonDualEpisodes.includes(episode))) continue;
+        const candidates = items
+          .map((item) => rankReleaseCandidate(item, source, categoryName, missing))
+          .filter((candidate) => candidate?.dualAudio && candidate.coveredEpisodes.some((episode) => nonDualEpisodes.includes(episode)));
+        const availableCandidates = candidates.filter((candidate) => releaseHasUsableAvailability(candidate.item));
+        const consideredCandidates = availableCandidates.length ? availableCandidates : candidates;
+        for (const candidate of consideredCandidates) {
           if (!bestDualBatch || betterReleaseCandidate(candidate, bestDualBatch)) bestDualBatch = { ...candidate, query };
         }
       } catch {
@@ -2314,9 +2377,13 @@ async function findAutomaticReleasePlan(source, categoryName, missingEpisodes = 
   for (const query of queries) {
     try {
       const items = await releaseSearch(query, categoryName);
-      for (const item of items) {
-        const candidate = rankReleaseCandidate(item, source, categoryName, pending);
-        if (!candidate || !betterReleaseCandidate(candidate, best)) continue;
+      const candidates = items
+        .map((item) => rankReleaseCandidate(item, source, categoryName, pending))
+        .filter(Boolean);
+      const availableCandidates = candidates.filter((candidate) => releaseHasUsableAvailability(candidate.item));
+      const consideredCandidates = availableCandidates.length ? availableCandidates : candidates;
+      for (const candidate of consideredCandidates) {
+        if (!betterReleaseCandidate(candidate, best)) continue;
         best = { ...candidate, query };
       }
       if (best && best.dualAudio && best.coveredEpisodes.length === pending.length && best.score >= 32) {
@@ -3612,29 +3679,54 @@ async function buildMaintenanceWork(sources, payload, { onProgress } = {}) {
 }
 
 function normalizeMaintenanceReleaseStates(item) {
-  const releases = Array.isArray(item.releases) ? item.releases : [];
+  const rawReleases = Array.isArray(item.releases) ? item.releases : [];
   const existing = Array.isArray(item.releaseStates) ? item.releaseStates : [];
   const hadStates = Array.isArray(item.releaseStates);
-  const releaseIndex = Math.max(0, Math.min(releases.length, Number(item.releaseIndex) || 0));
-  const states = releases.map((release, index) => {
-    const previous = existing[index] && typeof existing[index] === "object" ? existing[index] : {};
-    let jobId = String(previous.jobId || "").trim() || null;
-    if (jobId && !jobs.has(jobId)) jobId = null;
-    let state = String(previous.state || (index < releaseIndex ? "complete" : "queued"));
-    if (!["queued", "downloading", "complete", "failed", "cancelled"].includes(state)) state = "queued";
-    if (state === "downloading" && !jobId) state = "queued";
-    if (state === "complete") jobId = null;
+  const releaseIndex = Math.max(0, Math.min(rawReleases.length, Number(item.releaseIndex) || 0));
+  const grouped = releasePlanGroups(rawReleases, item.category, item.missingEpisodes || []);
+  const releases = grouped.releases;
+  const states = grouped.groups.map((group, index) => {
+    const previousStates = group.indices.map((rawIndex) => {
+      const previous = existing[rawIndex] && typeof existing[rawIndex] === "object" ? existing[rawIndex] : {};
+      let jobId = String(previous.jobId || "").trim() || null;
+      if (jobId && !jobs.has(jobId)) jobId = null;
+      let state = String(previous.state || (rawIndex < releaseIndex ? "complete" : "queued"));
+      if (!["queued", "downloading", "complete", "failed", "cancelled"].includes(state)) state = "queued";
+      if (state === "downloading" && !jobId) state = "queued";
+      if (state === "complete") jobId = null;
+      return {
+        state,
+        jobId,
+        links: Number(previous.links) || 0,
+        manifest: previous.manifest || null,
+        error: String(previous.error || ""),
+        targetEpisodes: releaseTargetEpisodes(rawReleases[rawIndex], item.category, item.missingEpisodes || []),
+      };
+    });
+    const active = previousStates.find((state) => state.state === "downloading" && state.jobId);
+    const unresolved = previousStates.filter((state) => state.state !== "complete");
+    const state = active
+      ? "downloading"
+      : unresolved.some((candidate) => candidate.state === "queued")
+        ? "queued"
+        : unresolved.some((candidate) => candidate.state === "failed")
+          ? "failed"
+          : unresolved.some((candidate) => candidate.state === "cancelled")
+            ? "cancelled"
+            : "complete";
+    const targetStates = unresolved.length ? unresolved : previousStates;
     return {
       index,
       state,
-      jobId,
-      links: Number(previous.links) || 0,
-      manifest: previous.manifest || null,
-      error: String(previous.error || ""),
-      provider: release.provider || "unknown",
-      targetEpisodes: releaseTargetEpisodes(release, item.category, item.missingEpisodes || []),
+      jobId: active?.jobId || null,
+      links: previousStates.reduce((sum, candidate) => sum + (Number(candidate.links) || 0), 0),
+      manifest: previousStates.find((candidate) => candidate.manifest)?.manifest || null,
+      error: state === "failed" ? (unresolved.find((candidate) => candidate.error)?.error || "") : "",
+      provider: releases[index].provider || "unknown",
+      targetEpisodes: normalizedEpisodeNumbers(targetStates.flatMap((candidate) => candidate.targetEpisodes || [])),
     };
   });
+  item.releases = releases;
   // Migrate a pre-concurrency snapshot, which had one item-level jobId.
   if (!hadStates && item.jobId && states[releaseIndex] && !states[releaseIndex].jobId) {
     states[releaseIndex].jobId = jobs.has(item.jobId) ? item.jobId : null;
@@ -3776,9 +3868,23 @@ async function processMaintenanceItem(run, item, payload = {}) {
       item.state = "searching";
       syncRunActivity(run);
       runEvent(run, `Searching release sources automatically for ${item.title} · ${item.category}.`);
-      const releasePlan = item.release?.torrentUrl || item.release?.magnet
-        ? [item.release]
-        : await findAutomaticReleasePlan(source, item.category, item.missingEpisodes || []);
+      const directRelease = item.release?.torrentUrl || item.release?.magnet ? item.release : null;
+      const targetEpisodes = normalizedEpisodeNumbers([
+        ...(item.missingEpisodes || []),
+        ...(directRelease?.targetEpisodes || []),
+      ]);
+      let releasePlan;
+      // Catalog entries often carry a SeaDex magnet without a tracker seeder
+      // count. Search for a seeded alternative before handing that magnet to
+      // td; retain it only as a single last-resort fallback when no other
+      // provider can supply the requested work.
+      if (directRelease && releaseAvailabilityTier(directRelease) >= 2) {
+        releasePlan = [directRelease];
+      } else {
+        const searched = await findAutomaticReleasePlan(source, item.category, targetEpisodes);
+        releasePlan = searched.length ? searched : directRelease ? [directRelease] : [];
+      }
+      releasePlan = deduplicateReleasePlan(releasePlan, item.category, targetEpisodes);
       item.releases = releasePlan.map((release) => ({
         provider: release.provider || "unknown",
         title: release.title || "Selected release",
@@ -3792,7 +3898,7 @@ async function processMaintenanceItem(run, item, payload = {}) {
         isBest: release.isBest === true,
         dualAudio: release.dualAudio === true,
         query: release.query || "",
-        targetEpisodes: releaseTargetEpisodes(release, item.category, item.missingEpisodes || []),
+        targetEpisodes: releaseTargetEpisodes(release, item.category, targetEpisodes),
       }));
       item.releaseIndex = Number.isInteger(Number(item.releaseIndex)) ? Number(item.releaseIndex) : 0;
       item.jobId = item.jobId || null;
@@ -5725,6 +5831,8 @@ export {
   rankIndividualReleaseCandidate,
   releaseAvailabilityTier,
   releaseHasUsableAvailability,
+  releaseIdentity,
+  deduplicateReleasePlan,
   maintenanceRunsOverlap,
   splitReleasePlanByEpisode,
   releaseHasDualAudio,
