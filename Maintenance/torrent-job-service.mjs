@@ -412,6 +412,20 @@ function failureWebhookContent(payload = {}) {
   return lines.join("\n").slice(0, 1_900);
 }
 
+function completionWebhookContent(payload = {}) {
+  const title = webhookText(payload.title || payload.name || "New show", 240);
+  const category = webhookText(payload.category || payload.categoryName, 160);
+  const lines = ["✅ Media Manager new show complete", `Show: ${title}${category ? ` · ${category}` : ""}`];
+  if (Number.isFinite(Number(payload.links)) && Number(payload.links) > 0) {
+    lines.push(`Published links: ${Number(payload.links)}`);
+  }
+  if (payload.dualAudio === true) lines.push("Audio: dual-audio");
+  if (payload.provider) lines.push(`Source: ${webhookText(payload.provider, 120)}`);
+  if (payload.runId) lines.push(`Run: ${webhookText(payload.runId, 100)}`);
+  lines.push("The show is complete and its source manifest was published.");
+  return lines.join("\n").slice(0, 1_900);
+}
+
 async function sendFailureWebhook(payload = {}) {
   if (!FAILURE_WEBHOOK_ENABLED) return { enabled: false, skipped: "not_configured" };
   const content = failureWebhookContent(payload);
@@ -449,6 +463,46 @@ async function sendFailureWebhook(payload = {}) {
     persistLog({
       scope: "service",
       event: "failure_webhook_failed",
+      message: webhookText(error?.name === "AbortError" ? "webhook request timed out" : error?.message || error, 300),
+    });
+    return { enabled: true, sent: false, error: error instanceof Error ? error.message : String(error) };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function sendCompletionWebhook(payload = {}) {
+  if (!FAILURE_WEBHOOK_ENABLED) return { enabled: false, skipped: "not_configured" };
+  const content = completionWebhookContent(payload);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), FAILURE_WEBHOOK_TIMEOUT_MS);
+  try {
+    const response = await fetch(FAILURE_WEBHOOK_URL, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "user-agent": "Media-Manager-Maintenance/1.0",
+      },
+      body: JSON.stringify({ content, username: "Media Manager Maintenance" }),
+      signal: controller.signal,
+    });
+    const responseText = await response.text().catch(() => "");
+    if (!response.ok) {
+      const detail = webhookText(responseText, 180);
+      throw new Error(`webhook returned HTTP ${response.status}${detail ? `: ${detail}` : ""}`);
+    }
+    persistLog({
+      scope: "service",
+      event: "completion_webhook_sent",
+      status: response.status,
+      title: webhookText(payload.title || payload.name || "New show", 240),
+      runId: payload.runId || undefined,
+    });
+    return { enabled: true, sent: true, status: response.status };
+  } catch (error) {
+    persistLog({
+      scope: "service",
+      event: "completion_webhook_failed",
       message: webhookText(error?.name === "AbortError" ? "webhook request timed out" : error?.message || error, 300),
     });
     return { enabled: true, sent: false, error: error instanceof Error ? error.message : String(error) };
@@ -3865,6 +3919,17 @@ async function processMaintenanceItem(run, item, payload = {}) {
       syncRunActivity(run);
       runEvent(run, `Updated ${item.title} · ${item.category} (${item.links} links from ${item.releases.length} release${item.releases.length === 1 ? "" : "s"}).`);
       await markCatalogItem(item, item.manifest);
+      if (item.maintenanceAction === "new" && !item.completionWebhookNotified) {
+        item.completionWebhookNotified = true;
+        void queueCompletionWebhook({
+          title: item.title,
+          category: item.category,
+          links: item.links,
+          dualAudio: item.catalog?.preferredDualAudio === true || item.manifest?.dualAudio === true,
+          provider: item.candidate?.provider || item.release?.provider || "release source",
+          runId: run.id,
+        });
+      }
     }
   } catch (error) {
     item.state = "failed";
@@ -5682,6 +5747,8 @@ export {
   loginToodrive,
   failureWebhookContent,
   sendFailureWebhook,
+  completionWebhookContent,
+  sendCompletionWebhook,
 };
 
 if (process.env.MEDIA_MANAGER_TEST !== "1") {

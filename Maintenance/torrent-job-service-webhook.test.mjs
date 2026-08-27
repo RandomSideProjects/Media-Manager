@@ -71,3 +71,42 @@ test("failure webhook content is bounded and strips control characters", async (
   assert.match(content, /Show Name/);
   assert.match(content, /Season 1/);
 });
+
+test("completion webhook sends a new-show publication notification", async () => {
+  const received = [];
+  const server = createServer((request, response) => {
+    let raw = "";
+    request.setEncoding("utf8");
+    request.on("data", (chunk) => { raw += chunk; });
+    request.on("end", () => {
+      received.push(JSON.parse(raw));
+      response.writeHead(204);
+      response.end();
+    });
+  });
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const address = server.address();
+  process.env.MEDIA_MANAGER_TEST = "1";
+  process.env.MEDIA_MANAGER_FAILURE_WEBHOOK_URL = `http://127.0.0.1:${address.port}/hook`;
+
+  try {
+    const service = await import(`./torrent-job-service.mjs?completion-webhook-test=${randomUUID()}`);
+    const result = await service.sendCompletionWebhook({
+      title: "Example Show",
+      category: "Season 1",
+      links: 12,
+      dualAudio: true,
+      provider: "seadex",
+      runId: "run-789",
+    });
+    assert.deepEqual(result, { enabled: true, sent: true, status: 204 });
+    assert.equal(received.length, 1);
+    assert.equal(received[0].username, "Media Manager Maintenance");
+    assert.match(received[0].content, /new show complete/);
+    assert.match(received[0].content, /Example Show · Season 1/);
+    assert.match(received[0].content, /Published links: 12/);
+    assert.match(received[0].content, /dual-audio/);
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
+});
