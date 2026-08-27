@@ -2879,6 +2879,7 @@ function requestMaintenancePause(run) {
   runEvent(run, run.pauseDraining
     ? "Pause requested. The current operation is finishing; no new maintenance work will be scheduled."
     : "Maintenance paused. Update settings and resume when ready.");
+  if (run.pauseDraining) void stopMaintenanceChildren(run);
   if (!run.pauseDraining) markMaintenanceRunPaused(run);
   void persistResumeState();
   return run;
