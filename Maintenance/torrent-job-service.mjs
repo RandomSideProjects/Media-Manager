@@ -1668,6 +1668,7 @@ function releasePlanGroups(releases, categoryName = "", missingEpisodes = []) {
     if (!release || typeof release !== "object") continue;
     const normalized = {
       ...release,
+      torrentUrl: release.torrentUrl || trackerTorrentUrl(release.trackerUrl),
       targetEpisodes: releaseTargetEpisodes(release, categoryName, missingEpisodes),
     };
     const identity = releaseIdentity(normalized);
@@ -2332,8 +2333,39 @@ async function findBestHealthyBatchRelease(source, categoryName, missingEpisodes
   return best;
 }
 
-async function findAutomaticReleasePlan(source, categoryName, missingEpisodes = []) {
+async function findBatchReleasePlan(source, categoryName, missingEpisodes = []) {
+  const missing = normalizedEpisodeNumbers(missingEpisodes);
+  if (!missing.length) return [];
+  let best = null;
+  const queries = releaseSearchQueries(source, categoryName, missing).slice(0, 3);
+  for (const query of queries) {
+    try {
+      const items = await releaseSearch(query, categoryName);
+      const candidates = items
+        .map((item) => rankReleaseCandidate(item, source, categoryName, missing))
+        .filter((candidate) => candidate && (candidate.coverage.batchLike || candidate.coveredEpisodes.length === missing.length));
+      const availableCandidates = candidates.filter((candidate) => releaseHasUsableAvailability(candidate.item));
+      const consideredCandidates = availableCandidates.length ? availableCandidates : candidates;
+      for (const candidate of consideredCandidates) {
+        if (!best || betterReleaseCandidate(candidate, best)
+          || (candidate.coveredEpisodes.length > best.coveredEpisodes.length
+            && releaseAvailabilityTier(candidate.item) >= releaseAvailabilityTier(best.item))) {
+          best = { ...candidate, query };
+        }
+      }
+      if (best?.coveredEpisodes.length === missing.length && releaseAvailabilityTier(best.item) === 2) break;
+    } catch {
+      // Keep trying the bounded batch query set and use the original catalog
+      // release if no alternative can be confirmed.
+    }
+  }
+  if (!best || (!best.coverage.batchLike && best.coveredEpisodes.length !== missing.length)) return [];
+  return [releasePlanEntry({ ...best, coveredEpisodes: missing }, best.query, missing, categoryName)];
+}
+
+async function findAutomaticReleasePlan(source, categoryName, missingEpisodes = [], options = {}) {
   const missing = [...new Set(missingEpisodes.map((episode) => Number(episode)))].filter((episode) => Number.isInteger(episode) && episode > 0);
+  if (options?.batchOnly === true) return findBatchReleasePlan(source, categoryName, missing);
   const individualPlan = await findIndividualReleasePlan(source, categoryName, missing);
   let individualReleases = individualPlan?.releases || [];
   const healthyBatch = await findBestHealthyBatchRelease(source, categoryName, missing);
@@ -3900,7 +3932,7 @@ async function processMaintenanceItem(run, item, payload = {}) {
       if (directRelease && releaseAvailabilityTier(directRelease) >= 2) {
         releasePlan = [directRelease];
       } else {
-        const searched = await findAutomaticReleasePlan(source, item.category, targetEpisodes);
+        const searched = await findAutomaticReleasePlan(source, item.category, targetEpisodes, { batchOnly: true });
         releasePlan = searched.length ? searched : directRelease ? [directRelease] : [];
       }
       releasePlan = deduplicateReleasePlan(releasePlan, item.category, targetEpisodes);
@@ -5867,6 +5899,7 @@ export {
   seaDexTorrentToItem,
   trackerTorrentUrl,
   findAutomaticReleasePlan,
+  findBatchReleasePlan,
   missingEpisodesForCategory,
   releaseCoverage,
   releaseMatchesMissing,
