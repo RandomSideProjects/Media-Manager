@@ -82,6 +82,7 @@ const CATALOG_PAGE_SIZE = Math.min(500, Math.max(50, Number(process.env.MEDIA_MA
 const CATALOG_ANILIST_BATCH_SIZE = Math.min(50, Math.max(1, Number(process.env.MEDIA_MANAGER_CATALOG_ANILIST_BATCH_SIZE) || 50));
 const CATALOG_ANILIST_INTERVAL_MS = Math.max(0, Number(process.env.MEDIA_MANAGER_CATALOG_ANILIST_INTERVAL_MS) || 2_200);
 const CATALOG_SCAN_ENABLED = process.env.MEDIA_MANAGER_CATALOG_SCAN !== "0";
+const PROVIDER_REQUEST_TIMEOUT_MS = Math.max(2_000, Number(process.env.MEDIA_MANAGER_PROVIDER_REQUEST_TIMEOUT_MS) || 15_000);
 // General maintenance uses AniList's public GraphQL API as its preflight
 // check. AniList exposes the aired schedule and next episode directly, so a
 // releasing season can be checked without scraping a second site. The cache
@@ -1051,7 +1052,15 @@ function readBody(req) {
 }
 
 async function fetchJson(url, options, label) {
-  const response = await fetch(url, options);
+  const requestOptions = options && typeof options === "object" ? options : {};
+  const controller = requestOptions.signal ? null : new AbortController();
+  const timeout = controller ? setTimeout(() => controller.abort(), PROVIDER_REQUEST_TIMEOUT_MS) : null;
+  let response;
+  try {
+    response = await fetch(url, controller ? { ...requestOptions, signal: controller.signal } : requestOptions);
+  } finally {
+    if (timeout) clearTimeout(timeout);
+  }
   const body = await response.json().catch(() => ({}));
   if (!response.ok) {
     const error = new Error(`${label} returned HTTP ${response.status}`);
@@ -1063,7 +1072,15 @@ async function fetchJson(url, options, label) {
 }
 
 async function fetchText(url, options, label) {
-  const response = await fetch(url, options);
+  const requestOptions = options && typeof options === "object" ? options : {};
+  const controller = requestOptions.signal ? null : new AbortController();
+  const timeout = controller ? setTimeout(() => controller.abort(), PROVIDER_REQUEST_TIMEOUT_MS) : null;
+  let response;
+  try {
+    response = await fetch(url, controller ? { ...requestOptions, signal: controller.signal } : requestOptions);
+  } finally {
+    if (timeout) clearTimeout(timeout);
+  }
   const body = await response.text();
   if (!response.ok) throw new Error(`${label} returned HTTP ${response.status}`);
   return body;
@@ -4004,7 +4021,8 @@ async function processMaintenanceItem(run, item, payload = {}) {
       return !candidate?.magnet
         && (!Number.isFinite(Number(candidate?.seeders)) || Number(candidate?.seeders) <= 0);
     });
-    if (pendingEpisodes.length && (pendingHasNonDual || pendingHasLowAvailability)) {
+    const candidateRefreshEnabled = Boolean(item.catalogKey || payload?.operation);
+    if (candidateRefreshEnabled && pendingEpisodes.length && (pendingHasNonDual || pendingHasLowAvailability)) {
       try {
         const refreshed = item.maintenanceAction === "new"
           ? await findBatchReleasePlan(source, item.category, pendingEpisodes)
