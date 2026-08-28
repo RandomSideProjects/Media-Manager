@@ -4296,6 +4296,7 @@ async function startMaintenanceRun(payload = {}) {
     run.pauseRequested = false;
     run.paused = false;
     run.cancelled = true;
+    void rememberCancelledRun(run.id);
     const stopping = stopMaintenanceChildren(run);
     syncRunActivity(run);
     void persistResumeState();
@@ -5482,6 +5483,7 @@ async function recoverLegacyMaintenanceWork(knownRunIds, knownJobIds) {
     };
     run.stop = () => {
       run.cancelled = true;
+      void rememberCancelledRun(run.id);
       const stopping = stopMaintenanceChildren(run);
       syncRunActivity(run);
       void persistResumeState();
@@ -5558,6 +5560,7 @@ async function restorePersistedWork() {
       run.pauseRequested = false;
       run.paused = false;
       run.cancelled = true;
+      void rememberCancelledRun(run.id);
       const stopping = stopMaintenanceChildren(run);
       syncRunActivity(run);
       void persistResumeState();
@@ -5865,6 +5868,7 @@ const server = createServer(async (req, res) => {
       if (!run) return json(res, 404, { error: "maintenance run not found" });
       if (!run.finishedAt) {
         await run.stop?.();
+        await rememberCancelledRun(run.id);
         run.state = "cancelled";
         run.phase = "complete";
         run.finishedAt = new Date().toISOString();
