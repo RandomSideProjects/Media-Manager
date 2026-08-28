@@ -3610,6 +3610,32 @@ async function markCatalogActive(item) {
   await persistCatalogState();
 }
 
+async function repairOrphanedCatalogEntries() {
+  const state = await loadCatalogState();
+  const ownedKeys = new Set();
+  for (const run of maintenanceRuns.values()) {
+    if (maintenanceRunIsTerminal(run)) continue;
+    for (const item of run.items || []) {
+      if (item.catalogKey && ["searching", "downloading", "processing", "uploading"].includes(item.state)) {
+        ownedKeys.add(item.catalogKey);
+      }
+    }
+  }
+  let repaired = 0;
+  for (const [key, entry] of Object.entries(state.entries || {})) {
+    if (entry.state !== "active" || ownedKeys.has(key) || ownedKeys.has(entry.key)) continue;
+    entry.state = "queued";
+    entry.lastError = "";
+    entry.nextRetryAt = null;
+    repaired += 1;
+  }
+  if (repaired) {
+    await persistCatalogState();
+    persistLog({ scope: "catalog", event: "orphaned_entries_repaired", count: repaired });
+  }
+  return repaired;
+}
+
 async function buildMaintenanceWork(sources, payload, { onProgress } = {}) {
   const sourcePaths = Array.isArray(payload?.sourcePaths) && payload.sourcePaths.length
     ? new Set(payload.sourcePaths.map((path) => String(path)))
@@ -5928,6 +5954,7 @@ async function ensureToodriveCompatibility() {
 async function startServer() {
   await ensureToodriveCompatibility();
   await restorePersistedWork();
+  await repairOrphanedCatalogEntries();
   server.listen(PORT, HOST, () => {
     console.log(`Library maintenance service listening on http://${HOST}:${PORT}`);
     console.log(`Repository: ${REPO_ROOT}`);
