@@ -257,6 +257,10 @@ test("derives a tracker torrent URL for SeaDex releases", () => {
     service.trackerTorrentUrl("https://www.nyaa.net/view/42/"),
     "https://nyaa.land/download/42.torrent",
   );
+  assert.equal(
+    service.trackerTorrentUrl("https://nyaa.si/download/42.torrent"),
+    "https://nyaa.land/download/42.torrent",
+  );
   assert.equal(service.trackerTorrentUrl("https://example.test/release/42"), "");
 });
 

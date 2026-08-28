@@ -1491,7 +1491,7 @@ function torrentFileSeasonNumbers(torrent) {
 
 function trackerTorrentUrl(trackerUrl) {
   const value = String(trackerUrl || "").trim();
-  const match = value.match(/^(https?:\/\/)(?:www\.)?(nyaa\.(?:si|net|land))\/view\/(\d+)(?:[/?#]|$)/i);
+  const match = value.match(/^(https?:\/\/)(?:www\.)?(nyaa\.(?:si|net|land))\/(?:view|download)\/(\d+)(?:\.torrent)?(?:[/?#]|$)/i);
   return match ? `${NYAA_TORRENT_BASE_URL}/download/${match[3]}.torrent` : "";
 }
 
