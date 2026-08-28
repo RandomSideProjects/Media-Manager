@@ -60,7 +60,7 @@ fi
 if [[ -f "$bundle_root/README.md" ]]; then
   cp -f "$bundle_root/README.md" "$install_dir/README.md"
 fi
-chmod +x "$install_dir/Maintenance/service.mjs" "$install_dir/Maintenance/install-linux.sh" "$install_dir/Maintenance/apply-toodrive-compatibility.sh" 2>/dev/null || true
+chmod +x "$install_dir/Maintenance/service.mjs" "$install_dir/Maintenance/install-linux.sh" "$install_dir/Maintenance/run-service-with-dns.sh" "$install_dir/Maintenance/apply-toodrive-compatibility.sh" 2>/dev/null || true
 
 if ! command -v ffmpeg >/dev/null 2>&1; then
   warn "ffmpeg is not installed; video conversion jobs will fail"
@@ -103,7 +103,7 @@ fi
   printf 'WorkingDirectory=%s\n' "$install_dir"
   printf 'EnvironmentFile=-%s\n' "$environment_file"
   printf 'ExecStartPre=/usr/bin/env bash %s\n' "$install_dir/Maintenance/apply-toodrive-compatibility.sh"
-  printf 'ExecStart=%s %s\n' "$node_bin" "$install_dir/Maintenance/service.mjs"
+  printf 'ExecStart=%s %s\n' /usr/bin/env bash "$install_dir/Maintenance/run-service-with-dns.sh"
   printf 'Restart=on-failure\n'
   printf 'RestartSec=5\n'
   printf 'KillSignal=SIGINT\n\n'
