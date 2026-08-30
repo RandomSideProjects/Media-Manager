@@ -523,6 +523,33 @@ body.light-mode .episode-button.episode--complete .episode-progress-fill {
   color: #ffd7d7;
   font-weight: 700;
 }
+.episode-button.episode--offline {
+  border-color: #f97316;
+  background: linear-gradient(135deg, rgba(185, 28, 28, 0.96), rgba(127, 29, 29, 0.96));
+  color: #fff;
+}
+.episode-button.episode--offline:hover,
+.episode-button.episode--offline:focus-visible {
+  border-color: #fb923c;
+  background: linear-gradient(135deg, rgba(220, 38, 38, 0.98), rgba(153, 27, 27, 0.98));
+}
+.episode-offline-cone {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.65rem;
+  width: 1.1rem;
+  height: 1.35rem;
+  border-radius: 0.15rem 0.15rem 0.08rem 0.08rem;
+  background: repeating-linear-gradient(
+    to bottom,
+    #fb923c 0 0.25rem,
+    #fff7ed 0.25rem 0.42rem,
+    #f97316 0.42rem 0.72rem
+  );
+  clip-path: polygon(39% 0, 61% 0, 86% 87%, 100% 87%, 100% 100%, 0 100%, 0 87%, 14% 87%);
+  box-shadow: 0 0.15rem 0.35rem rgba(0, 0, 0, 0.38);
+  pointer-events: none;
+}
 .episode-title {
   font-size: calc(0.98em * var(--tile-scale));
   line-height: 1.25;

@@ -321,6 +321,203 @@ function attachLongTitleTooltip(button, text) {
   button.addEventListener('focusout', hide);
 }
 
+const VIDEO_LINK_CHECK_TIMEOUT_MS = 10000;
+const VIDEO_LINK_CHECK_CONCURRENCY = 8;
+let videoLinkValidationRun = 0;
+
+function escapeOfflineNoticeHtml(value) {
+  return String(value || '').replace(/[&<>"']/g, (character) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  }[character]));
+}
+
+function resolveVideoLink(value) {
+  const raw = typeof value === 'string' ? value.trim() : '';
+  if (!raw) return '';
+  try {
+    return new URL(raw, window.location.href).href;
+  } catch {
+    return raw;
+  }
+}
+
+function getVideoLinkServer(value) {
+  const resolved = resolveVideoLink(value);
+  if (!resolved) return 'This source';
+  if (/^(?:blob:|data:|file:)/i.test(resolved)) return 'This device';
+  try {
+    const parsed = new URL(resolved, window.location.href);
+    return parsed.hostname || parsed.host || 'This source';
+  } catch {
+    return 'This source';
+  }
+}
+
+function showOfflineVideoNotice(value) {
+  const server = getVideoLinkServer(value);
+  const message = `${server} is offline at the moment, please try again later. We apologize for the inconvenience.`;
+  const discordUrl = 'https://discord.com/users/536633946344259614';
+  const messageHtml = `${escapeOfflineNoticeHtml(message)}<br><br>If this continues for more than 7 days without additional notices, please <a href="${discordUrl}" target="_blank" rel="noopener noreferrer">message me</a>.`;
+
+  if (typeof window.showAppNotice === 'function') {
+    window.showAppNotice({
+      title: 'Source unavailable',
+      messageHtml,
+      tone: 'error',
+      dismissLabel: 'Close'
+    });
+    return;
+  }
+  if (typeof window.alert === 'function') {
+    window.alert(`${message}\n\nIf this continues for more than 7 days without additional notices, please message me: ${discordUrl}`);
+  }
+}
+
+function setEpisodeOfflineState(button, source) {
+  if (!button || !source) return;
+  button.classList.add('episode--offline');
+  button.dataset.offlineSource = source;
+  button.setAttribute('aria-label', `${button.textContent.trim() || 'Video'} (source offline)`);
+  if (!button.querySelector('.episode-offline-cone')) {
+    const cone = document.createElement('span');
+    cone.className = 'episode-offline-cone';
+    cone.setAttribute('aria-hidden', 'true');
+    button.appendChild(cone);
+  }
+}
+
+function getVideoLinksFromEntry(entry) {
+  if (!entry || typeof entry !== 'object') return [];
+  if (typeof isEpisodeManga === 'function' && isEpisodeManga(entry)) return [];
+
+  const links = [];
+  const addLink = (value) => {
+    if (typeof value !== 'string' || !value.trim()) return;
+    const resolved = resolveVideoLink(value);
+    if (!resolved || /\.(?:json|cbz)(?:[?#]|$)/i.test(resolved)) return;
+    if (!links.includes(resolved)) links.push(resolved);
+  };
+  const visitSourceValue = (value) => {
+    if (!value) return;
+    if (typeof value === 'string') {
+      addLink(value);
+      return;
+    }
+    if (Array.isArray(value)) {
+      value.forEach(visitSourceValue);
+      return;
+    }
+    if (typeof value !== 'object') return;
+    addLink(value.src);
+    addLink(value.url);
+    addLink(value.videoUrl);
+    addLink(value.videoURL);
+    addLink(value.mediaUrl);
+    addLink(value.sourceUrl);
+    ['sources', 'parts', 'videos', 'videoLinks', 'videoUrls'].forEach((key) => {
+      if (value[key]) visitSourceValue(value[key]);
+    });
+  };
+
+  visitSourceValue(entry.src);
+  visitSourceValue(entry.url);
+  visitSourceValue(entry.videoUrl);
+  visitSourceValue(entry.videoURL);
+  visitSourceValue(entry.mediaUrl);
+  visitSourceValue(entry.sourceUrl);
+  visitSourceValue(entry.sources);
+  visitSourceValue(entry.parts);
+  visitSourceValue(entry.videos);
+  visitSourceValue(entry.videoLinks);
+  visitSourceValue(entry.videoUrls);
+  return links;
+}
+
+async function checkVideoLink(value) {
+  if (typeof fetch !== 'function') return false;
+  const controller = typeof AbortController === 'function' ? new AbortController() : null;
+  const timeoutId = controller
+    ? setTimeout(() => controller.abort(), VIDEO_LINK_CHECK_TIMEOUT_MS)
+    : null;
+  let reader = null;
+  try {
+    const response = await fetch(value, {
+      method: 'GET',
+      headers: { Range: 'bytes=0-0' },
+      cache: 'no-store',
+      credentials: 'omit',
+      signal: controller ? controller.signal : undefined
+    });
+    if (!response || !response.ok || !response.body || typeof response.body.getReader !== 'function') return false;
+    reader = response.body.getReader();
+    const firstChunk = await reader.read();
+    return Boolean(firstChunk && firstChunk.value && firstChunk.value.byteLength > 0);
+  } catch {
+    return false;
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
+    if (reader) {
+      try { await reader.cancel(); } catch {}
+    }
+  }
+}
+
+async function validateVideoLinksForCurrentSource() {
+  const run = ++videoLinkValidationRun;
+  const buttons = Array.from(document.querySelectorAll('#episodeList .episode-button[data-flat-index]'));
+  const linkToButtons = new Map();
+  const linkResults = new Map();
+
+  buttons.forEach((button) => {
+    const start = Number(button.dataset.flatIndex);
+    const end = Number.isFinite(Number(button.dataset.videoCheckEnd))
+      ? Number(button.dataset.videoCheckEnd)
+      : start;
+    if (!Number.isFinite(start) || !Number.isFinite(end)) return;
+    for (let index = start; index <= end; index += 1) {
+      const entry = flatList[index];
+      getVideoLinksFromEntry(entry).forEach((link) => {
+        if (!linkToButtons.has(link)) linkToButtons.set(link, new Set());
+        linkToButtons.get(link).add(button);
+      });
+    }
+  });
+
+  const links = Array.from(linkToButtons.keys());
+  let nextLinkIndex = 0;
+  const checkNextLink = async () => {
+    while (nextLinkIndex < links.length) {
+      const link = links[nextLinkIndex++];
+      linkResults.set(link, await checkVideoLink(link));
+    }
+  };
+  const workers = Array.from({ length: Math.min(VIDEO_LINK_CHECK_CONCURRENCY, links.length) }, checkNextLink);
+  await Promise.all(workers);
+  if (run !== videoLinkValidationRun) return;
+
+  buttons.forEach((button) => {
+    const start = Number(button.dataset.flatIndex);
+    const end = Number.isFinite(Number(button.dataset.videoCheckEnd))
+      ? Number(button.dataset.videoCheckEnd)
+      : start;
+    let offlineLink = '';
+    for (let index = start; index <= end && !offlineLink; index += 1) {
+      getVideoLinksFromEntry(flatList[index]).some((link) => {
+        if (linkResults.get(link) === false) {
+          offlineLink = link;
+          return true;
+        }
+        return false;
+      });
+    }
+    if (offlineLink) setEpisodeOfflineState(button, offlineLink);
+  });
+}
+
 function renderEpisodeList() {
   episodeList.innerHTML = '';
   flatList = [];
@@ -431,6 +628,8 @@ function renderEpisodeList() {
 
       const button = document.createElement('button');
       button.className = 'episode-button separated-category';
+      button.dataset.flatIndex = String(startIndex);
+      button.dataset.videoCheckEnd = String(endIndex);
       const right = document.createElement('span');
       right.className = 'episode-meta';
       const titleText = normalizeSingleTitle(categoryTitle.trim());
@@ -478,7 +677,15 @@ function renderEpisodeList() {
         button.append(titleEl, countEl, right);
       }
 
+      const knownOfflineEntry = entries.find((entry) => entry && entry.isPlaceholder);
+      const knownOfflineLink = knownOfflineEntry ? getVideoLinksFromEntry(knownOfflineEntry)[0] : '';
+      if (knownOfflineLink) setEpisodeOfflineState(button, knownOfflineLink);
+
       button.addEventListener('click', () => {
+        if (button.classList.contains('episode--offline')) {
+          showOfflineVideoNotice(button.dataset.offlineSource);
+          return;
+        }
         if (resumeKey) localStorage.setItem('lastEpSrc', resumeKey);
         writeSourceScopedValue('SavedItem', String(startIndex));
         currentIndex = startIndex;
@@ -529,6 +736,7 @@ function renderEpisodeList() {
       if (singleCenter) button.classList.add('single-center');
       if (entry.isPlaceholder) button.classList.add('episode--unavailable');
       button.dataset.flatIndex = String(index);
+      button.dataset.videoCheckEnd = String(index);
       if (entry.isPlaceholder && typeof entry.unavailableReason === 'string' && entry.unavailableReason.trim()) {
         button.title = entry.unavailableReason.trim();
       }
@@ -590,7 +798,13 @@ function renderEpisodeList() {
       } else {
         button.append(left, right);
       }
+      const knownOfflineLink = entry.isPlaceholder ? getVideoLinksFromEntry(entry)[0] : '';
+      if (knownOfflineLink) setEpisodeOfflineState(button, knownOfflineLink);
       button.addEventListener('click', () => {
+        if (button.classList.contains('episode--offline')) {
+          showOfflineVideoNotice(button.dataset.offlineSource);
+          return;
+        }
         const resumeKey = resolveResumeKeyForItem(entry);
         if (resumeKey) localStorage.setItem('lastEpSrc', resumeKey);
         writeSourceScopedValue('SavedItem', String(index));

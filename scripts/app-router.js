@@ -37,7 +37,7 @@
     'https://cdn.jsdelivr.net/npm/hls.js@1/dist/hls.min.js',
     'scripts/player.js?v=20260820-no-clip',
     'scripts/popout.js',
-    'scripts/list.js?v=20260810-manga-repair',
+    'scripts/list.js?v=20260830-video-link-check',
     'scripts/downloads.js',
     'scripts/catbox.js',
     'scripts/settings.js?v=20260820-no-clip',
@@ -45,7 +45,7 @@
     'scripts/theme.js',
     'scripts/jszip/jszip.min.js',
     'scripts/local-folder.js?v=20260810-manga-repair',
-    'scripts/init.js?v=20260727-continue-watching',
+    'scripts/init.js?v=20260830-video-link-check',
     'scripts/zxing-lib.min.js',
     'scripts/jsqr.min.js',
     'scripts/qrcode.min.js',
@@ -91,7 +91,7 @@
     document.getElementById('publicSourcesStyles')?.remove();
     const stylesheet = document.createElement('link');
     stylesheet.rel = 'stylesheet';
-    stylesheet.href = 'style.css?v=20260820-no-clip';
+    stylesheet.href = 'style.css?v=20260830-video-link-check';
     document.head.appendChild(stylesheet);
     document.title = 'Media Manager';
     document.documentElement.classList.add('custom-route');

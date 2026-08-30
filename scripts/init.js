@@ -247,6 +247,7 @@ async function loadSource(rawInput) {
     directoryTitle.style.display = 'block';
     selectorScreen.style.display = 'flex';
     renderEpisodeList();
+    void validateVideoLinksForCurrentSource();
     if (!openSingleItemMovieSource()) showResumeMessage();
     setRecentSourcesActive(true);
     if (window.RSPRecentSources && typeof window.RSPRecentSources.record === 'function') {
