@@ -300,11 +300,15 @@ test("probes a media file duration in whole seconds", async () => {
 test("normalizes legacy local Toodrive links to the public host", () => {
   assert.equal(
     service.normalizeToodriveUrl("http://localhost:16169/dl/example/raw"),
-    "https://toodrive.xpbliss.fyi/dl/example/raw",
+    "https://td.alexspac.es/dl/example/raw",
   );
   assert.equal(
     service.normalizeToodriveUrl("https://toodrive.xpbliss.fyi/dl/example/raw"),
-    "https://toodrive.xpbliss.fyi/dl/example/raw",
+    "https://td.alexspac.es/dl/example/raw",
+  );
+  assert.equal(
+    service.normalizeToodriveUrl("https://td.alexspac.es/dl/example/raw"),
+    "https://td.alexspac.es/dl/example/raw",
   );
 });
 

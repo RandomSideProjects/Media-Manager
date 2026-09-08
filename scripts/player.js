@@ -217,6 +217,48 @@ function isHttpUrl(src) {
   }
 }
 
+// Toodrive links published in older manifests use the legacy public hostname.
+// Keep the old hostname as a browser fallback, but always try the current
+// endpoint first so existing manifests do not need to be rewritten in-place.
+const TOODRIVE_PLAYER_PRIMARY_HOST = 'td.alexspac.es';
+const TOODRIVE_PLAYER_BACKUP_HOST = 'toodrive.xpbliss.fyi';
+const TOODRIVE_PLAYER_LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '0.0.0.0', '[::1]']);
+
+function isToodrivePlayerHost(hostname, port) {
+  const host = String(hostname || '').trim().toLowerCase();
+  if (host === TOODRIVE_PLAYER_PRIMARY_HOST || host === TOODRIVE_PLAYER_BACKUP_HOST) return true;
+  return TOODRIVE_PLAYER_LOOPBACK_HOSTS.has(host) && String(port || '') === '16169';
+}
+
+function normalizeToodrivePlayerUrl(value, hostname = TOODRIVE_PLAYER_PRIMARY_HOST) {
+  const raw = String(value || '').trim();
+  if (!raw || !isHttpUrl(raw)) return raw;
+  try {
+    const parsed = new URL(raw);
+    if (!isToodrivePlayerHost(parsed.hostname, parsed.port)) return raw;
+    parsed.protocol = 'https:';
+    parsed.hostname = hostname;
+    parsed.port = '';
+    return parsed.href;
+  } catch {
+    return raw;
+  }
+}
+
+function toodrivePlayerCandidates(value) {
+  const raw = String(value || '').trim();
+  if (!raw || !isHttpUrl(raw)) return raw ? [raw] : [];
+  try {
+    const parsed = new URL(raw);
+    if (!isToodrivePlayerHost(parsed.hostname, parsed.port)) return [raw];
+    const primary = normalizeToodrivePlayerUrl(raw, TOODRIVE_PLAYER_PRIMARY_HOST);
+    const backup = normalizeToodrivePlayerUrl(raw, TOODRIVE_PLAYER_BACKUP_HOST);
+    return [...new Set([primary, backup].filter(Boolean))];
+  } catch {
+    return [raw];
+  }
+}
+
 function unwrapVideoProxyUrl(src) {
   const source = String(src || '').trim();
   if (!source || !isHttpUrl(source)) return source;
@@ -230,7 +272,7 @@ function unwrapVideoProxyUrl(src) {
 }
 
 function resolveHlsMediaUrl(src) {
-  return unwrapVideoProxyUrl(src);
+  return normalizeToodrivePlayerUrl(unwrapVideoProxyUrl(src));
 }
 
 function canPlayNativeHls(el) {
@@ -266,13 +308,13 @@ function detachActiveHls() {
 
 function getMediaElementOriginalSource(el, item) {
   if (item && item.__hlsPlaylistFallbackActive && typeof item.src === 'string' && item.src.trim()) {
-    return item.src.trim();
+    return normalizeToodrivePlayerUrl(item.src.trim());
   }
   try {
     const datasetSrc = el && el.dataset && typeof el.dataset.mmSourceSrc === 'string' ? el.dataset.mmSourceSrc.trim() : '';
     if (datasetSrc) return datasetSrc;
   } catch {}
-  if (item && typeof item.src === 'string' && item.src.trim()) return item.src.trim();
+  if (item && typeof item.src === 'string' && item.src.trim()) return normalizeToodrivePlayerUrl(item.src.trim());
   try {
     const current = el && typeof el.currentSrc === 'string' ? el.currentSrc.trim() : '';
     if (current) return current;
@@ -286,20 +328,47 @@ function getMediaElementOriginalSource(el, item) {
 
 function attachMediaSourceToElement(el, src, options) {
   const opts = options || {};
-  const source = String(src || '').trim();
+  const candidates = toodrivePlayerCandidates(src);
+  const fallbackIndexRaw = Number(opts.toodriveFallbackIndex);
+  const fallbackIndex = Number.isInteger(fallbackIndexRaw) && fallbackIndexRaw >= 0 ? fallbackIndexRaw : 0;
+  const source = candidates[fallbackIndex] || String(src || '').trim();
   if (!el || !source) return null;
   try { el.dataset.mmSourceSrc = source; } catch {}
+
+  const fallbackToodrive = (event) => {
+    if (fallbackIndex >= candidates.length - 1) return false;
+    try {
+      event?.preventDefault?.();
+      event?.stopImmediatePropagation?.();
+    } catch {}
+    const nextSource = candidates[fallbackIndex + 1];
+    if (!nextSource) return false;
+    try {
+      const nextOptions = { ...opts, toodriveFallbackIndex: fallbackIndex + 1 };
+      attachMediaSourceToElement(el, nextSource, nextOptions);
+      if (!isHlsSource(nextSource)) el.load();
+      return true;
+    } catch {
+      return false;
+    }
+  };
 
   const trackActive = opts.trackActive !== false && typeof video !== 'undefined' && el === video;
   if (trackActive) detachActiveHls();
 
   if (!isHlsSource(source)) {
+    el.addEventListener('error', (event) => {
+      fallbackToodrive(event);
+    }, { once: true });
     try { el.preload = 'auto'; } catch {}
     el.src = source;
     return null;
   }
 
   if (canPlayNativeHls(el)) {
+    el.addEventListener('error', (event) => {
+      fallbackToodrive(event);
+    }, { once: true });
     try { el.preload = 'auto'; } catch {}
     el.src = source;
     return null;
@@ -324,6 +393,10 @@ function attachMediaSourceToElement(el, src, options) {
     try {
       hls.on(window.Hls.Events.ERROR, (_event, data) => {
         if (!data || !data.fatal) return;
+        if (fallbackToodrive()) {
+          destroyHlsInstance(hls);
+          return;
+        }
         if (typeof opts.onFatalError === 'function') {
           try { opts.onFatalError(data, hls); } catch {}
         }
@@ -352,9 +425,10 @@ function attachMediaSourceToElement(el, src, options) {
 
 function resolvePlaylistUrl(src) {
   try {
-    return new URL(String(src || ''), window.location && window.location.href ? window.location.href : document.baseURI).href;
+    const absolute = new URL(String(src || ''), window.location && window.location.href ? window.location.href : document.baseURI).href;
+    return normalizeToodrivePlayerUrl(absolute);
   } catch {
-    return String(src || '');
+    return normalizeToodrivePlayerUrl(String(src || ''));
   }
 }
 
@@ -406,12 +480,20 @@ async function loadPlaylistPartsForFallback(src) {
   if (hlsPlaylistFallbackCache.has(cacheKey)) {
     return hlsPlaylistFallbackCache.get(cacheKey).map(part => ({ ...part }));
   }
-  const response = await fetch(playlistUrl, { cache: 'no-store' });
-  if (!response || !response.ok) throw new Error(`Playlist request failed: ${response && response.status}`);
-  const text = await response.text();
-  const parts = parseHlsPlaylistParts(text, playlistUrl).filter(part => part && part.src);
-  hlsPlaylistFallbackCache.set(cacheKey, parts.map(part => ({ ...part })));
-  return parts;
+  let lastError = null;
+  for (const candidate of toodrivePlayerCandidates(playlistUrl)) {
+    try {
+      const response = await fetch(candidate, { cache: 'no-store' });
+      if (!response || !response.ok) throw new Error(`Playlist request failed: ${response && response.status}`);
+      const text = await response.text();
+      const parts = parseHlsPlaylistParts(text, candidate).filter(part => part && part.src);
+      hlsPlaylistFallbackCache.set(cacheKey, parts.map(part => ({ ...part })));
+      return parts;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  throw lastError || new Error('Playlist request failed');
 }
 
 async function switchHlsPlaylistToSeparatedPlayback(item, src, options) {
@@ -674,31 +756,34 @@ async function prefetchFirstBytes(url, bytes, signal) {
   const targetBytes = Math.max(1, Math.floor(Number(bytes) || 0));
   if (targetBytes <= 0) return false;
 
-  try {
-    const headers = new Headers();
-    headers.set('Range', `bytes=0-${Math.max(0, targetBytes - 1)}`);
-    const res = await fetch(url, { method: 'GET', headers, cache: 'force-cache', credentials: 'omit', signal });
-    if (!res) return false;
+  for (const candidate of toodrivePlayerCandidates(url)) {
+    try {
+      const headers = new Headers();
+      headers.set('Range', `bytes=0-${Math.max(0, targetBytes - 1)}`);
+      const res = await fetch(candidate, { method: 'GET', headers, cache: 'force-cache', credentials: 'omit', signal });
+      if (!res) continue;
 
-    // Some hosts ignore range; we still stop reading early.
-    const okStatus = res.status === 206 || res.status === 200;
-    if (!okStatus) return false;
+      // Some hosts ignore range; we still stop reading early.
+      const okStatus = res.status === 206 || res.status === 200;
+      if (!okStatus) continue;
 
-    if (!res.body || typeof res.body.getReader !== 'function') return true;
-    const reader = res.body.getReader();
-    let received = 0;
-    while (received < targetBytes) {
-      const next = await reader.read();
-      if (!next || next.done) break;
-      const value = next.value;
-      received += value ? (value.byteLength || value.length || 0) : 0;
-      if (signal && signal.aborted) break;
+      if (!res.body || typeof res.body.getReader !== 'function') return true;
+      const reader = res.body.getReader();
+      let received = 0;
+      while (received < targetBytes) {
+        const next = await reader.read();
+        if (!next || next.done) break;
+        const value = next.value;
+        received += value ? (value.byteLength || value.length || 0) : 0;
+        if (signal && signal.aborted) break;
+      }
+      try { await reader.cancel(); } catch {}
+      if (received > 0) return true;
+    } catch (error) {
+      if (signal && signal.aborted) throw error;
     }
-    try { await reader.cancel(); } catch {}
-    return received > 0;
-  } catch {
-    return false;
   }
+  return false;
 }
 
 function ensureSeparatedNextPartPrefetchVideo() {
@@ -755,7 +840,7 @@ function prefetchNextPartViaVideoElement(url, targetSeconds, signal) {
     el.addEventListener('progress', onProgress);
     el.addEventListener('error', onError);
     try {
-      el.src = url;
+      el.src = normalizeToodrivePlayerUrl(url);
       el.load();
     } catch {
       finalize(false);
@@ -809,7 +894,7 @@ function maybePrimeSeparatedNextPartSwap(item) {
     try { standby1.preload = 'auto'; } catch {}
     try { standby1.setAttribute('data-mm-video-role', 'standby-1'); } catch {}
     try {
-      standby1.src = nextSrc;
+      standby1.src = normalizeToodrivePlayerUrl(nextSrc);
       standby1.load();
     } catch {}
   }
@@ -819,9 +904,10 @@ function maybePrimeSeparatedNextPartSwap(item) {
   const nextBytes = (Number.isFinite(nextSize) && nextSize > 0)
     ? Math.max(1, Math.ceil(nextSize * nextFraction))
     : Math.max(1, Math.ceil(SEPARATED_NEXT_PART_PREFETCH_FALLBACK_BYTES * nextFraction));
-  if (separatedSwapPreload.slot1.src !== nextSrc || separatedSwapPreload.slot1.bytesTarget !== nextBytes) {
+  if (normalizeToodrivePlayerUrl(separatedSwapPreload.slot1.src) !== normalizeToodrivePlayerUrl(nextSrc)
+      || separatedSwapPreload.slot1.bytesTarget !== nextBytes) {
     abortSwapFetchSlot(1);
-    separatedSwapPreload.slot1.src = nextSrc;
+    separatedSwapPreload.slot1.src = normalizeToodrivePlayerUrl(nextSrc);
     separatedSwapPreload.slot1.bytesTarget = nextBytes;
     const controller = new AbortController();
     separatedSwapPreload.slot1.controller = controller;
@@ -847,7 +933,7 @@ function maybePrimeSeparatedNextPartSwap(item) {
           try { standby2.preload = 'auto'; } catch {}
           try { standby2.setAttribute('data-mm-video-role', 'standby-2'); } catch {}
           try {
-            standby2.src = next2Src;
+            standby2.src = normalizeToodrivePlayerUrl(next2Src);
             standby2.load();
           } catch {}
         }
@@ -855,9 +941,10 @@ function maybePrimeSeparatedNextPartSwap(item) {
         const next2Bytes = (Number.isFinite(next2Size) && next2Size > 0)
           ? Math.max(1, Math.ceil(next2Size * next2Fraction))
           : Math.max(1, Math.ceil(SEPARATED_NEXT_PART_PREFETCH_FALLBACK_BYTES * next2Fraction));
-        if (separatedSwapPreload.slot2.src !== next2Src || separatedSwapPreload.slot2.bytesTarget !== next2Bytes) {
+        if (normalizeToodrivePlayerUrl(separatedSwapPreload.slot2.src) !== normalizeToodrivePlayerUrl(next2Src)
+            || separatedSwapPreload.slot2.bytesTarget !== next2Bytes) {
           abortSwapFetchSlot(2);
-          separatedSwapPreload.slot2.src = next2Src;
+          separatedSwapPreload.slot2.src = normalizeToodrivePlayerUrl(next2Src);
           separatedSwapPreload.slot2.bytesTarget = next2Bytes;
           const controller = new AbortController();
           separatedSwapPreload.slot2.controller = controller;
@@ -1212,7 +1299,7 @@ function setSeparatedPartSource(item, partIndex, options) {
   const targetIndex = Math.max(0, Math.min(partIndex, meta.parts.length - 1));
   const part = meta.parts[targetIndex];
   if (typeof window !== 'undefined' && typeof window.MM_setVideoLoadingSource === 'function') {
-    window.MM_setVideoLoadingSource(part && typeof part.src === 'string' ? part.src : '');
+    window.MM_setVideoLoadingSource(part && typeof part.src === 'string' ? normalizeToodrivePlayerUrl(part.src) : '');
   }
   if (typeof window !== 'undefined' && typeof window.MM_setVideoLoadingDurationHint === 'function') {
     window.MM_setVideoLoadingDurationHint(part && part.durationSeconds);
@@ -1356,7 +1443,7 @@ function ensureCbzPagePreloaded(index) {
   const img = new Image();
   img.decoding = 'async';
   try { img.loading = 'eager'; } catch {}
-  img.src = src;
+  img.src = normalizeToodrivePlayerUrl(src);
   cbzPreloadedImages.set(intIndex, img);
 }
 
@@ -1435,10 +1522,12 @@ function formatMB(bytes) {
 }
 
 function fetchBlobWithProgress(url, onProgress) {
-  return new Promise((resolve, reject) => {
+  const candidates = toodrivePlayerCandidates(url);
+  const attempt = (index) => new Promise((resolve, reject) => {
+    const candidate = candidates[index] || String(url || '');
     try {
       const xhr = new XMLHttpRequest();
-      xhr.open('GET', url, true);
+      xhr.open('GET', candidate, true);
       xhr.responseType = 'blob';
       xhr.onprogress = (e) => { try { onProgress && onProgress(e.loaded, e.lengthComputable ? e.total : undefined); } catch {} };
       xhr.onerror = () => reject(new Error('Network error'));
@@ -1448,7 +1537,11 @@ function fetchBlobWithProgress(url, onProgress) {
       };
       xhr.send();
     } catch (e) { reject(e); }
+  }).catch((error) => {
+    if (index + 1 < candidates.length) return attempt(index + 1);
+    throw error;
   });
+  return attempt(0);
 }
 
 function readFileWithProgress(file, onProgress) {
@@ -1643,7 +1736,7 @@ async function loadMangaVolume(item) {
       try {
         const isLocal = !!(item && item.file);
         if (!isLocal && item && item.src) {
-          const base = new URL('.', new URL(String(item.src), window.location.href)).href;
+          const base = new URL('.', new URL(normalizeToodrivePlayerUrl(String(item.src)), window.location.href)).href;
           pages = pages.map(p => {
             try {
               if (typeof p !== 'string') return '';
@@ -2046,7 +2139,7 @@ function loadVideo(index) {
   resetSeparatedNextPartPrefetch();
   const item = flatList[index];
   if (typeof window !== 'undefined' && typeof window.MM_setVideoLoadingSource === 'function') {
-    window.MM_setVideoLoadingSource(item && typeof item.src === 'string' ? item.src : '');
+    window.MM_setVideoLoadingSource(item && typeof item.src === 'string' ? normalizeToodrivePlayerUrl(item.src) : '');
   }
   if (typeof window !== 'undefined' && typeof window.MM_setVideoLoadingDurationHint === 'function') {
     window.MM_setVideoLoadingDurationHint(item && item.durationSeconds);
@@ -2061,7 +2154,7 @@ function loadVideo(index) {
       if (item && item.title) localStorage.setItem(`${sourceKey}:itemTitle:${index}`, String(item.title));
       // Best-effort: store the playable src so the Home rail can generate a preview frame.
       if (item && typeof item.src === 'string' && item.src) {
-        localStorage.setItem(`${sourceKey}:itemSrc:${index}`, String(item.src));
+        localStorage.setItem(`${sourceKey}:itemSrc:${index}`, normalizeToodrivePlayerUrl(item.src));
       }
       // If the source JSON exposes duration, stash it too (may be overwritten with real video.duration later).
       const hintedDuration = Number(item && item.durationSeconds);
@@ -2074,7 +2167,7 @@ function loadVideo(index) {
         const hintedDuration2 = Number(item && item.durationSeconds);
         const canThumb = (item && typeof item.src === 'string' && item.src && Number.isFinite(hintedDuration2) && hintedDuration2 > 1);
         if (canThumb) {
-          generateThumbFromSrcOnce(index, item.src, hintedDuration2);
+          generateThumbFromSrcOnce(index, normalizeToodrivePlayerUrl(item.src), hintedDuration2);
         }
       } catch {}
     }
@@ -2140,7 +2233,7 @@ function loadVideo(index) {
     video.dataset.separatedPartIndex = '';
     video.dataset.separatedPartCount = '';
     video.dataset.separatedBaseKey = '';
-    video.dataset.mmSourceSrc = item && typeof item.src === 'string' ? item.src : '';
+    video.dataset.mmSourceSrc = item && typeof item.src === 'string' ? normalizeToodrivePlayerUrl(item.src) : '';
   }
 
   const isSeparatedItem = hasSeparatedParts(item);
@@ -2173,7 +2266,7 @@ function loadVideo(index) {
       setSeparatedPartSource(item, fallbackIndex, { resumeTime: fallbackTime, combinedTime: combinedGuess });
     }
   } else if (video) {
-    const sourceSrc = item && typeof item.src === 'string' ? item.src.trim() : '';
+    const sourceSrc = item && typeof item.src === 'string' ? normalizeToodrivePlayerUrl(item.src.trim()) : '';
     const storageKey = resumeKey || sourceSrc;
     let savedTime = storageKey ? localStorage.getItem(storageKey) : null;
     if (!savedTime && sourceSrc) savedTime = localStorage.getItem(sourceSrc);

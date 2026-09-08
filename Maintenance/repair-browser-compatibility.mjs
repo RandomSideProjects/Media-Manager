@@ -22,7 +22,7 @@ envFromFile(process.env.MEDIA_MANAGER_ENV_FILE || join(process.env.HOME || "/tmp
 
 const ROOT = resolve(process.env.MEDIA_MANAGER_ROOT || dirname(dirname(new URL(import.meta.url).pathname)));
 const TD_BIN = process.env.TD_BIN || "td";
-const TD_BASE_URL = process.env.TD_BASE_URL || "https://toodrive.xpbliss.fyi";
+const TD_BASE_URL = process.env.TD_BASE_URL || "https://td.alexspac.es";
 const STATE_FILE = process.env.MEDIA_MANAGER_BROWSER_REPAIR_STATE || join(process.env.XDG_STATE_HOME || join(process.env.HOME || "/tmp", ".local", "state"), "media-manager-browser-repair.json");
 const WORK_DIR = process.env.MEDIA_MANAGER_BROWSER_REPAIR_WORK || join(process.env.TMPDIR || "/tmp", "media-manager-browser-repair");
 const HELPER = resolve(process.env.MEDIA_MANAGER_BROWSER_COMPATIBILITY_SCRIPT || join(ROOT, "Maintenance", "browser-compatible-reencode.sh"));
