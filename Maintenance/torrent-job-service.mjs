@@ -97,6 +97,18 @@ const ANILIST_ERROR_CACHE_TTL_MS = Math.max(15_000, Number(process.env.ANILIST_E
 const ANILIST_REQUEST_TIMEOUT_MS = Math.max(2_000, Number(process.env.ANILIST_REQUEST_TIMEOUT_MS) || 12_000);
 const ANILIST_REQUEST_INTERVAL_MS = Math.max(0, Number(process.env.ANILIST_REQUEST_INTERVAL_MS) || CATALOG_ANILIST_INTERVAL_MS);
 const ANILIST_CACHE_VERSION = 1;
+// Kitsu is the first metadata fallback when AniList is unavailable. Public
+// reads do not require credentials; keep the fallback separately cached and
+// deliberately slower than the normal release-source requests.
+const KITSU_API_URL = String(process.env.KITSU_API_URL || "https://kitsu.io/api/edge").replace(/\/$/, "");
+const KITSU_CACHE_FILE = resolve(process.env.KITSU_CACHE_FILE || join(homedir(), ".local/share/media-manager-maintenance/kitsu-cache.json"));
+const KITSU_CACHE_TTL_MS = Math.max(60_000, Number(process.env.KITSU_CACHE_TTL_MS) || 6 * 60 * 60_000);
+const KITSU_ERROR_CACHE_TTL_MS = Math.max(15_000, Number(process.env.KITSU_ERROR_CACHE_TTL_MS) || 5 * 60_000);
+const KITSU_REQUEST_TIMEOUT_MS = Math.max(2_000, Number(process.env.KITSU_REQUEST_TIMEOUT_MS) || 15_000);
+const KITSU_REQUEST_INTERVAL_MS = Math.max(250, Number(process.env.KITSU_REQUEST_INTERVAL_MS) || 1_000);
+const KITSU_CACHE_VERSION = 1;
+const KITSU_CATALOG_CACHE_FILE = resolve(process.env.KITSU_CATALOG_CACHE_FILE || join(homedir(), ".local/share/media-manager-maintenance/kitsu-catalog-cache.json"));
+const KITSU_ENABLED = process.env.KITSU_CHECK !== "0";
 const LOG_PROGRESS_INTERVAL_MS = 30_000;
 const LEGACY_RECOVERY_MAX_AGE_MS = 48 * 60 * 60 * 1000;
 const LEGACY_RECOVERY_LOG_BYTES = 16 * 1024 * 1024;
@@ -190,6 +202,14 @@ let aniListCacheWrite = Promise.resolve();
 let aniListRequestQueue = Promise.resolve();
 let aniListLastRequestAt = 0;
 let aniListBlockedUntil = 0;
+let kitsuCache = null;
+let kitsuCacheLoad = null;
+let kitsuCacheWrite = Promise.resolve();
+let kitsuRequestQueue = Promise.resolve();
+let kitsuLastRequestAt = 0;
+let kitsuCatalogCache = null;
+let kitsuCatalogCacheLoad = null;
+let kitsuCatalogCacheWrite = Promise.resolve();
 let resumeWriteQueue = Promise.resolve();
 let cancelledRunsWriteQueue = Promise.resolve();
 let cancelledRunIds = new Set();
@@ -223,6 +243,7 @@ function emptyCatalogState() {
     updatedAt: null,
     lastScanAt: null,
     lastScanError: "",
+    lastScanProvider: "",
     lastError: "",
     sourceListPending: false,
     scanning: false,
@@ -1417,6 +1438,7 @@ function catalogSummary(state = catalogState || emptyCatalogState()) {
     scanning: state.scanning === true,
     lastScanAt: state.lastScanAt || null,
     lastScanError: state.lastScanError || "",
+    lastScanProvider: state.lastScanProvider || "",
     sourceListPending: state.sourceListPending === true,
     total: entries.length,
     tv: entries.filter((entry) => entry.format === "TV").length,
@@ -1453,20 +1475,33 @@ async function scanCatalog({ onProgress } = {}) {
     try {
       const records = await fetchCatalogReleaseRecords({ onProgress });
       const ids = records.map((record) => Number(record?.alID)).filter((id) => Number.isInteger(id) && id > 0);
-      const mediaById = await fetchAniListCatalogMedia(ids, { onProgress: (progress) => onProgress?.({ ...progress, stage: "anilist" }) });
+      let mediaById;
+      let metadataProvider = "anilist";
+      let metadataWarning = "";
+      try {
+        mediaById = await fetchAniListCatalogMedia(ids, { onProgress: (progress) => onProgress?.({ ...progress, stage: "anilist" }) });
+      } catch (error) {
+        if (!KITSU_ENABLED) throw error;
+        metadataProvider = "kitsu";
+        mediaById = await fetchKitsuCatalogMedia(ids, { onProgress });
+        if (!mediaById.size) throw error;
+        metadataWarning = `AniList unavailable; Kitsu fallback mapped ${mediaById.size} of ${ids.length} catalog entries`;
+      }
       const seasonNumbers = catalogSeasonNumbers(mediaById);
-      const nextEntries = {};
+      const nextEntries = metadataProvider === "kitsu" ? { ...state.entries } : {};
       for (const record of records) {
         const key = catalogKey(record?.alID);
         if (!key) continue;
         const previous = state.entries[key] || {};
         const entry = catalogEntryFromRecord(record, mediaById, seasonNumbers, previous);
         if (!entry) continue;
+        entry.metadataProvider = metadataProvider;
         nextEntries[key] = entry;
       }
       state.entries = nextEntries;
       state.lastScanAt = new Date().toISOString();
-      state.lastScanError = "";
+      state.lastScanProvider = metadataProvider;
+      state.lastScanError = metadataWarning;
       return catalogSummary(state);
     } catch (error) {
       state.lastScanError = error instanceof Error ? error.message : String(error);
@@ -1874,6 +1909,177 @@ async function fetchAniListGraphql(query, variables = {}, label = "AniList query
   throw lastError || new Error(`${label} failed`);
 }
 
+async function loadKitsuCache() {
+  if (kitsuCache) return kitsuCache;
+  if (kitsuCacheLoad) return kitsuCacheLoad;
+  kitsuCacheLoad = readFile(KITSU_CACHE_FILE, "utf8")
+    .then((raw) => {
+      const parsed = JSON.parse(raw);
+      kitsuCache = parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+      return kitsuCache;
+    })
+    .catch((error) => {
+      if (error?.code !== "ENOENT") console.error(`[kitsu-cache] ${error instanceof Error ? error.message : String(error)}`);
+      kitsuCache = {};
+      return kitsuCache;
+    });
+  return kitsuCacheLoad;
+}
+
+function queueKitsuCacheWrite() {
+  const snapshot = JSON.stringify(kitsuCache || {}, null, 2);
+  kitsuCacheWrite = kitsuCacheWrite.then(async () => {
+    try {
+      await mkdir(dirname(KITSU_CACHE_FILE), { recursive: true });
+      await writeFile(KITSU_CACHE_FILE, `${snapshot}\n`, "utf8");
+    } catch (error) {
+      console.error(`[kitsu-cache] ${error instanceof Error ? error.message : String(error)}`);
+    }
+  });
+  return kitsuCacheWrite;
+}
+
+function queueKitsuRequest(task) {
+  const next = kitsuRequestQueue
+    .catch(() => {})
+    .then(async () => {
+      const waitMs = Math.max(0, KITSU_REQUEST_INTERVAL_MS - (Date.now() - kitsuLastRequestAt));
+      if (waitMs) await new Promise((resolveWait) => setTimeout(resolveWait, waitMs));
+      kitsuLastRequestAt = Date.now();
+      return task();
+    });
+  kitsuRequestQueue = next.catch(() => {});
+  return next;
+}
+
+async function fetchKitsuJson(path, label = "Kitsu query") {
+  let lastError = null;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      const url = `${KITSU_API_URL}${String(path || "").startsWith("/") ? path : `/${path}`}`;
+      return await queueKitsuRequest(async () => {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), KITSU_REQUEST_TIMEOUT_MS);
+        try {
+          return await fetchJson(url, {
+            headers: {
+              accept: "application/vnd.api+json",
+              "content-type": "application/vnd.api+json",
+              "user-agent": "Media-Manager-Maintenance/1.0",
+            },
+            signal: controller.signal,
+          }, label);
+        } finally {
+          clearTimeout(timeout);
+        }
+      });
+    } catch (error) {
+      lastError = error;
+      const retryable = Number(error?.status) === 429 || Number(error?.status) >= 500 || error?.name === "AbortError";
+      if (!retryable || attempt === 2) break;
+      const retryMs = Math.max(1_000, Number(error?.retryAfter || 0) * 1_000, 2_000 * (attempt + 1));
+      await new Promise((resolveWait) => setTimeout(resolveWait, retryMs));
+    }
+  }
+  throw lastError || new Error(`${label} failed`);
+}
+
+async function loadKitsuCatalogCache() {
+  if (kitsuCatalogCache) return kitsuCatalogCache;
+  if (kitsuCatalogCacheLoad) return kitsuCatalogCacheLoad;
+  kitsuCatalogCacheLoad = readFile(KITSU_CATALOG_CACHE_FILE, "utf8")
+    .then((raw) => {
+      const parsed = JSON.parse(raw);
+      kitsuCatalogCache = parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+      return kitsuCatalogCache;
+    })
+    .catch((error) => {
+      if (error?.code !== "ENOENT") console.error(`[kitsu-catalog-cache] ${error instanceof Error ? error.message : String(error)}`);
+      kitsuCatalogCache = {};
+      return kitsuCatalogCache;
+    });
+  return kitsuCatalogCacheLoad;
+}
+
+function queueKitsuCatalogCacheWrite() {
+  const snapshot = JSON.stringify(kitsuCatalogCache || {}, null, 2);
+  kitsuCatalogCacheWrite = kitsuCatalogCacheWrite.then(async () => {
+    try {
+      await mkdir(dirname(KITSU_CATALOG_CACHE_FILE), { recursive: true });
+      await writeFile(KITSU_CATALOG_CACHE_FILE, `${snapshot}\n`, "utf8");
+    } catch (error) {
+      console.error(`[kitsu-catalog-cache] ${error instanceof Error ? error.message : String(error)}`);
+    }
+  });
+  return kitsuCatalogCacheWrite;
+}
+
+function kitsuCatalogMedia(item, alID) {
+  const attributes = item?.attributes && typeof item.attributes === "object" ? item.attributes : {};
+  const titles = attributes.titles && typeof attributes.titles === "object" ? attributes.titles : {};
+  const canonical = String(attributes.canonicalTitle || titles.en || titles.en_jp || "").trim();
+  const subtype = String(attributes.subtype || attributes.showType || "TV").trim().toUpperCase();
+  const format = subtype === "MOVIE" ? "MOVIE" : subtype === "TV" || subtype === "ONA" || subtype === "OVA" ? "TV" : "";
+  if (!canonical || !format) return null;
+  return {
+    id: Number(alID),
+    title: {
+      romaji: String(titles.en_jp || canonical).trim(),
+      english: String(titles.en || canonical).trim(),
+      native: String(titles.ja_jp || "").trim(),
+      userPreferred: String(titles.en || titles.en_jp || canonical).trim(),
+    },
+    format,
+    episodes: Number(attributes.episodeCount) > 0 ? Number(attributes.episodeCount) : null,
+    coverImage: {
+      large: String(attributes.posterImage?.large || "").trim(),
+      extraLarge: String(attributes.posterImage?.original || attributes.posterImage?.large || "").trim(),
+    },
+    siteUrl: item?.id ? `https://kitsu.io/anime/${item.id}` : "",
+    relations: { edges: [] },
+    kitsuId: String(item?.id || "").trim(),
+  };
+}
+
+async function fetchKitsuCatalogMedia(ids, { onProgress } = {}) {
+  const cache = await loadKitsuCatalogCache();
+  const uniqueIds = [...new Set(ids.map((id) => Number(id)).filter((id) => Number.isInteger(id) && id > 0))];
+  const mediaById = new Map();
+  let completed = 0;
+  for (const id of uniqueIds) {
+    const key = String(id);
+    const cached = cache[key];
+    const cacheAge = cached?.checkedAt ? Date.now() - Number(cached.checkedAt) : Infinity;
+    const cacheTtl = cached?.error ? KITSU_ERROR_CACHE_TTL_MS : KITSU_CACHE_TTL_MS;
+    if (cached && cacheAge < cacheTtl) {
+      if (cached.media) mediaById.set(id, cached.media);
+      completed += 1;
+      onProgress?.({ completed, total: uniqueIds.length, stage: "kitsu" });
+      continue;
+    }
+    try {
+      const params = new URLSearchParams({
+        "filter[externalId]": key,
+        include: "item",
+        "page[limit]": "20",
+      });
+      const body = await fetchKitsuJson(`/mappings?${params.toString()}`, "Kitsu AniList mapping lookup");
+      const mapping = (body?.data || []).find((entry) => String(entry?.attributes?.externalSite || "").toLowerCase() === "anilist/anime");
+      const kitsuID = String(mapping?.relationships?.item?.data?.id || "").trim();
+      const item = kitsuID ? (body?.included || []).find((entry) => String(entry?.type || "") === "anime" && String(entry?.id || "") === kitsuID) : null;
+      const media = kitsuCatalogMedia(item, id);
+      cache[key] = { checkedAt: Date.now(), media, error: media ? "" : "Kitsu has no anime mapping for this AniList ID" };
+      if (media) mediaById.set(id, media);
+    } catch (error) {
+      cache[key] = { checkedAt: Date.now(), media: null, error: error instanceof Error ? error.message : String(error) };
+    }
+    completed += 1;
+    onProgress?.({ completed, total: uniqueIds.length, stage: "kitsu" });
+    queueKitsuCatalogCacheWrite();
+  }
+  return mediaById;
+}
+
 function aniListTitles(item) {
   const title = item?.title && typeof item.title === "object" ? Object.values(item.title) : [];
   return [
@@ -2075,6 +2281,197 @@ async function findAniListAnime(source, categoryName) {
   cache[key] = record;
   queueAniListCacheWrite();
   return { ...record, candidate: chooseAniListCandidate(candidates, source, categoryName), cached: false };
+}
+
+function kitsuTitles(item) {
+  const attributes = item?.attributes && typeof item.attributes === "object" ? item.attributes : item || {};
+  const titleMap = attributes.titles && typeof attributes.titles === "object" ? Object.values(attributes.titles) : [];
+  return [
+    attributes.canonicalTitle,
+    ...titleMap,
+    ...(Array.isArray(attributes.abbreviatedTitles) ? attributes.abbreviatedTitles : []),
+    item?.title,
+    item?.titleEnglish,
+    ...(Array.isArray(item?.titles) ? item.titles : []),
+  ].filter(Boolean).map(String).map((title) => title.trim()).filter(Boolean);
+}
+
+function kitsuSeasonMarker(item) {
+  const text = kitsuTitles(item).join(" ");
+  const numbered = text.match(/\b(?:season|series|cour|part)\s*0*(\d{1,2})\b|\b(\d{1,2})(?:st|nd|rd|th)\s+season\b/i);
+  if (numbered) return Number(numbered[1] || numbered[2]);
+  const trailingNumber = text.match(/(?:^|[\s:])(?:2|3|4|5|6|7|8|9|10)\s*$/);
+  return trailingNumber ? Number(trailingNumber[0].trim()) : null;
+}
+
+function kitsuStatusLabel(status) {
+  const normalized = String(status || "").trim().toLowerCase();
+  if (normalized === "finished") return "Finished Airing";
+  if (normalized === "current" || normalized === "releasing") return "Currently Airing";
+  if (normalized === "upcoming" || normalized === "tba") return "Not Yet Aired";
+  return normalized ? normalized.replace(/\b\w/g, (value) => value.toUpperCase()) : "";
+}
+
+function summarizeKitsuCandidate(item, score) {
+  const attributes = item?.attributes && typeof item.attributes === "object" ? item.attributes : {};
+  const rawStatus = String(attributes.status || "").trim().toLowerCase();
+  const airing = rawStatus === "current" || rawStatus === "releasing";
+  const episodes = Number(attributes.episodeCount) > 0 ? Number(attributes.episodeCount) : null;
+  const titles = kitsuTitles(item);
+  const title = String(attributes.canonicalTitle || titles[0] || "").trim();
+  const finished = rawStatus === "finished";
+  const knownEpisodeNumbers = finished && episodes
+    ? Array.from({ length: Math.min(1000, episodes) }, (_, index) => index + 1)
+    : [];
+  return {
+    provider: "kitsu",
+    kitsuId: String(item?.id || "").trim(),
+    kitsuUrl: item?.id ? `https://kitsu.io/anime/${item.id}` : "",
+    title,
+    titleEnglish: String(attributes.titles?.en || attributes.titles?.en_jp || "").trim(),
+    titles,
+    type: String(attributes.subtype || attributes.showType || "TV").toUpperCase(),
+    episodes,
+    airedEpisodes: knownEpisodeNumbers.length ? knownEpisodeNumbers.length : null,
+    knownEpisodeNumbers,
+    episodeCountSource: knownEpisodeNumbers.length ? "kitsu-total" : "unknown",
+    episodeProgressCheckedAt: knownEpisodeNumbers.length ? Date.now() : 0,
+    episodeProgressError: knownEpisodeNumbers.length || !airing ? "" : "Kitsu aired episode schedule not loaded yet",
+    status: kitsuStatusLabel(rawStatus),
+    airing,
+    seasonMarker: kitsuSeasonMarker({ ...item, title, titles }),
+    score,
+  };
+}
+
+async function findKitsuAnime(source, categoryName) {
+  if (!KITSU_ENABLED) return { provider: "kitsu", candidate: null, candidates: [], error: "Kitsu fallback disabled" };
+  const cache = await loadKitsuCache();
+  const key = aniListCacheKey(source?.anilistTitle || source?.malTitle || source?.title);
+  const cached = cache[key];
+  const now = Date.now();
+  const cacheTtl = cached?.error ? KITSU_ERROR_CACHE_TTL_MS : KITSU_CACHE_TTL_MS;
+  if (cached?.version === KITSU_CACHE_VERSION && Number.isFinite(Number(cached.checkedAt)) && now - Number(cached.checkedAt) < cacheTtl) {
+    const candidate = chooseAniListCandidate(cached.candidates, source, categoryName);
+    return { ...cached, provider: "kitsu", cacheKey: key, candidate: candidate ? { ...candidate } : null, cached: true };
+  }
+
+  const candidatesById = new Map();
+  let lastError = null;
+  const queries = aniListTitleQueries(source);
+  for (const query of queries) {
+    try {
+      const params = new URLSearchParams({
+        "filter[text]": seaDexSearchTitle(query),
+        "page[limit]": "10",
+        include: "mediaRelationships.destination",
+      });
+      const body = await fetchKitsuJson(`/anime?${params.toString()}`, "Kitsu title search");
+      for (const item of body?.data || []) {
+        const draft = summarizeKitsuCandidate(item, 0);
+        const score = aniListCandidateScore(draft, source, categoryName);
+        if (!Number.isFinite(score)) continue;
+        const candidate = { ...draft, score };
+        const candidateKey = candidate.kitsuId || candidate.title;
+        const previous = candidatesById.get(candidateKey);
+        if (!previous || candidate.score > previous.score) candidatesById.set(candidateKey, candidate);
+      }
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  const candidates = [...candidatesById.values()].sort((a, b) => b.score - a.score).slice(0, 10);
+  const record = {
+    version: KITSU_CACHE_VERSION,
+    checkedAt: now,
+    query: queries[0] || "",
+    candidates,
+    error: candidates.length ? "" : (lastError ? (lastError instanceof Error ? lastError.message : String(lastError)) : ""),
+  };
+  cache[key] = record;
+  queueKitsuCacheWrite();
+  return { ...record, provider: "kitsu", cacheKey: key, candidate: chooseAniListCandidate(candidates, source, categoryName), cached: false };
+}
+
+function metadataCandidateHasProgress(candidate) {
+  return normalizedEpisodeNumbers(candidate?.knownEpisodeNumbers).length > 0
+    || Number(candidate?.airedEpisodes) > 0
+    || (!candidate?.airing && Number(candidate?.episodes) > 0);
+}
+
+async function fetchKitsuEpisodeProgress(kitsuId) {
+  const episodes = [];
+  const limit = 20;
+  for (let offset = 0; offset < 1000; offset += limit) {
+    const params = new URLSearchParams({ "page[limit]": String(limit), "page[offset]": String(offset) });
+    const body = await fetchKitsuJson(`/anime/${encodeURIComponent(kitsuId)}/episodes?${params.toString()}`, "Kitsu episode lookup");
+    const page = Array.isArray(body?.data) ? body.data : [];
+    episodes.push(...page);
+    if (page.length < limit) break;
+  }
+  const now = Date.now();
+  const knownEpisodeNumbers = [...new Set(episodes
+    .filter((episode) => {
+      const airdate = String(episode?.attributes?.airdate || "").trim();
+      return airdate && Number.isFinite(Date.parse(airdate)) && Date.parse(airdate) <= now;
+    })
+    .map((episode) => Number(episode?.attributes?.number))
+    .filter((number) => Number.isInteger(number) && number > 0))].sort((a, b) => a - b);
+  return {
+    airedEpisodes: knownEpisodeNumbers.length ? Math.max(...knownEpisodeNumbers) : null,
+    knownEpisodeNumbers,
+    episodeCountSource: knownEpisodeNumbers.length ? "kitsu-airing-schedule" : "unknown",
+    episodeProgressError: knownEpisodeNumbers.length ? "" : "Kitsu did not expose aired episode dates",
+  };
+}
+
+async function hydrateKitsuCandidateProgress(kitsuResult, source, categoryName) {
+  const candidate = chooseAniListCandidate(kitsuResult?.candidates, source, categoryName);
+  if (!candidate || !candidate.kitsuId || !candidate.airing || metadataCandidateHasProgress(candidate)) return candidate || null;
+  try {
+    const progress = await fetchKitsuEpisodeProgress(candidate.kitsuId);
+    Object.assign(candidate, progress, { episodeProgressCheckedAt: Date.now() });
+  } catch (error) {
+    candidate.episodeProgressError = error instanceof Error ? error.message : String(error);
+    candidate.episodeProgressCheckedAt = Date.now();
+  }
+  const cache = await loadKitsuCache();
+  const cacheKey = kitsuResult?.cacheKey || aniListCacheKey(source?.anilistTitle || source?.malTitle || source?.title);
+  const cached = cache[cacheKey];
+  if (cached && Array.isArray(cached.candidates)) {
+    const cachedCandidate = cached.candidates.find((item) => String(item?.kitsuId || "") === String(candidate.kitsuId));
+    if (cachedCandidate) Object.assign(cachedCandidate, candidate);
+    queueKitsuCacheWrite();
+  }
+  return candidate;
+}
+
+async function findMaintenanceMetadata(source, categoryName) {
+  let aniListResult = { provider: "anilist", candidate: null, candidates: [], error: "" };
+  try {
+    aniListResult = await findAniListAnime(source, categoryName);
+    const aniListCandidate = await hydrateAniListCandidateProgress(aniListResult, source, categoryName);
+    if (aniListCandidate && metadataCandidateHasProgress(aniListCandidate)) {
+      return { ...aniListResult, provider: "anilist", candidate: aniListCandidate };
+    }
+  } catch (error) {
+    aniListResult = { ...aniListResult, error: error instanceof Error ? error.message : String(error) };
+  }
+  if (!KITSU_ENABLED) return aniListResult;
+  try {
+    const kitsuResult = await findKitsuAnime(source, categoryName);
+    const kitsuCandidate = await hydrateKitsuCandidateProgress(kitsuResult, source, categoryName);
+    if (!kitsuCandidate) return { ...aniListResult, fallbackProvider: "kitsu", kitsuError: kitsuResult.error || "Kitsu did not return a confident matching anime" };
+    return {
+      ...kitsuResult,
+      provider: "kitsu",
+      fallbackFrom: aniListResult.error ? "anilist-error" : "anilist-no-progress",
+      candidate: kitsuCandidate,
+      aniList: aniListResult,
+    };
+  } catch (error) {
+    return { ...aniListResult, fallbackProvider: "kitsu", kitsuError: error instanceof Error ? error.message : String(error) };
+  }
 }
 
 function discoverAniListSeasons(source, existingCategories, aniListResult) {
@@ -3684,10 +4081,13 @@ async function buildMaintenanceWork(sources, payload, { onProgress } = {}) {
     }
 
     let aniListResult = null;
+    let metadataProvider = "anilist";
     if (aniListEnabled) {
       try {
         onProgress?.({ title: source.title, state: "checking_anilist" });
-        aniListResult = await findAniListAnime(source, categories[0].category);
+        aniListResult = await findMaintenanceMetadata(source, categories[0].category);
+        metadataProvider = aniListResult?.provider || "anilist";
+        if (metadataProvider === "kitsu") onProgress?.({ title: source.title, state: "checking_kitsu" });
       } catch (error) {
         aniListResult = { candidate: null, candidates: [], error: error instanceof Error ? error.message : String(error) };
       }
@@ -3698,13 +4098,17 @@ async function buildMaintenanceWork(sources, payload, { onProgress } = {}) {
       if (aniListEnabled) {
         let aniListCandidate = chooseAniListCandidate(aniListResult?.candidates, source, category.category);
         if (!aniListCandidate) {
+          const providerLabel = metadataProvider === "kitsu" ? "Kitsu" : "AniList";
           const reason = aniListResult?.error
-            ? `AniList check unavailable: ${aniListResult.error}`
-            : "AniList did not return a confident matching anime";
+            ? `${providerLabel} check unavailable: ${aniListResult.error}`
+            : `${providerLabel} did not return a confident matching anime`;
           work.push(skippedMaintenanceItem(source, category, reason, { status: "unavailable", error: aniListResult?.error || "" }));
           continue;
         }
-        aniListCandidate = await hydrateAniListCandidateProgress(aniListResult, source, category.category);
+        aniListCandidate = metadataProvider === "kitsu"
+          ? await hydrateKitsuCandidateProgress(aniListResult, source, category.category)
+          : await hydrateAniListCandidateProgress(aniListResult, source, category.category);
+        const providerLabel = metadataProvider === "kitsu" ? "Kitsu" : "AniList";
         const expectedEpisodeNumbers = Array.isArray(aniListCandidate?.knownEpisodeNumbers)
           ? aniListCandidate.knownEpisodeNumbers
           : [];
@@ -3718,8 +4122,8 @@ async function buildMaintenanceWork(sources, payload, { onProgress } = {}) {
               : Number(aniListCandidate?.airedEpisodes) > 0 ? Number(aniListCandidate.airedEpisodes) : null;
         if ((!Number.isInteger(expectedEpisodes) || expectedEpisodes <= 0) && !expectedEpisodeNumbers.length) {
           const progressReason = aniListCandidate?.episodeProgressError
-            ? `AniList aired episode schedule unavailable: ${aniListCandidate.episodeProgressError}`
-            : "AniList episode count is not available yet";
+            ? `${providerLabel} aired episode schedule unavailable: ${aniListCandidate.episodeProgressError}`
+            : `${providerLabel} episode count is not available yet`;
           work.push(skippedMaintenanceItem(source, category, progressReason, { status: "unknown", ...aniListCandidate }));
           continue;
         }
@@ -3759,7 +4163,7 @@ async function buildMaintenanceWork(sources, payload, { onProgress } = {}) {
           id: randomUUID(), sourcePath: source.path, sourceFile: source.file, title: source.title, malTitle: source.malTitle || "", anilistTitle: source.anilistTitle || "",
           category: category.category, state: "queued", query: "", candidate: null,
           jobId: null, manifest: null, links: 0, error: "", missingEpisodes: targetEpisodes,
-          anilist: { status: refreshEpisodes.length ? "refresh" : "missing", ...aniListCandidate, toodriveAudit: toodriveAudit || undefined },
+          anilist: { status: refreshEpisodes.length ? "refresh" : "missing", metadataProvider, ...aniListCandidate, toodriveAudit: toodriveAudit || undefined },
         });
         continue;
       }
@@ -3774,7 +4178,9 @@ async function buildMaintenanceWork(sources, payload, { onProgress } = {}) {
     if (aniListEnabled && payload?.addNewSeasons !== false && payload?.addMissing !== false) {
       for (const { season, candidate } of discoverAniListSeasons(source, existingCategories, aniListResult)) {
         const categoryName = `Season ${season}`;
-        const hydratedCandidate = await hydrateAniListCandidateProgress(aniListResult, source, categoryName) || candidate;
+        const hydratedCandidate = (metadataProvider === "kitsu"
+          ? await hydrateKitsuCandidateProgress(aniListResult, source, categoryName)
+          : await hydrateAniListCandidateProgress(aniListResult, source, categoryName)) || candidate;
         const currentlyAiring = aniListCandidateIsCurrentlyAiring(hydratedCandidate);
         const knownEpisodeNumbers = Array.isArray(hydratedCandidate?.knownEpisodeNumbers)
           ? hydratedCandidate.knownEpisodeNumbers.filter((number) => Number.isInteger(number) && number > 0)
@@ -3789,8 +4195,8 @@ async function buildMaintenanceWork(sources, payload, { onProgress } = {}) {
             source,
             { category: categoryName },
             hydratedCandidate?.episodeProgressError
-              ? `AniList aired episode schedule unavailable: ${hydratedCandidate.episodeProgressError}`
-              : "AniList episode count is not available yet",
+              ? `${metadataProvider === "kitsu" ? "Kitsu" : "AniList"} aired episode schedule unavailable: ${hydratedCandidate.episodeProgressError}`
+              : `${metadataProvider === "kitsu" ? "Kitsu" : "AniList"} episode count is not available yet`,
             { status: "unknown", ...hydratedCandidate, seasonMarker: season },
           ));
           continue;
@@ -3801,7 +4207,7 @@ async function buildMaintenanceWork(sources, payload, { onProgress } = {}) {
           jobId: null, manifest: null, links: 0, error: "", missingEpisodes: Array.from(
             { length: episodes.length }, (_, index) => episodes[index],
           ), createCategory: true, newSeason: true,
-          anilist: { status: "new_season", ...hydratedCandidate, seasonMarker: season },
+          anilist: { status: "new_season", metadataProvider, ...hydratedCandidate, seasonMarker: season },
         });
       }
     }
@@ -5834,6 +6240,7 @@ const server = createServer(async (req, res) => {
           mediaTitle: entry.mediaTitle,
           format: entry.format,
           category: entry.category,
+          metadataProvider: entry.metadataProvider || "",
           state: entry.state,
           sourcePath: entry.sourcePath || "",
           preferredReleaseHash: entry.preferredReleaseHash || "",
