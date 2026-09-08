@@ -80,7 +80,11 @@ const MAINTENANCE_ROLE = String(process.env.MEDIA_MANAGER_MAINTENANCE_ROLE || "a
   : "all";
 const CATALOG_PAGE_SIZE = Math.min(500, Math.max(50, Number(process.env.MEDIA_MANAGER_CATALOG_PAGE_SIZE) || 500));
 const CATALOG_ANILIST_BATCH_SIZE = Math.min(50, Math.max(1, Number(process.env.MEDIA_MANAGER_CATALOG_ANILIST_BATCH_SIZE) || 50));
-const CATALOG_ANILIST_INTERVAL_MS = Math.max(0, Number(process.env.MEDIA_MANAGER_CATALOG_ANILIST_INTERVAL_MS) || 2_200);
+// AniList currently documents a degraded 30-request/minute limit. Keep the
+// catalog batch setting as a backwards-compatible environment override, but
+// route both catalog and maintenance requests through the shared AniList gate
+// below so the two paths cannot exceed the limit together.
+const CATALOG_ANILIST_INTERVAL_MS = Math.max(0, Number(process.env.MEDIA_MANAGER_CATALOG_ANILIST_INTERVAL_MS) || 2_500);
 const CATALOG_SCAN_ENABLED = process.env.MEDIA_MANAGER_CATALOG_SCAN !== "0";
 const PROVIDER_REQUEST_TIMEOUT_MS = Math.max(2_000, Number(process.env.MEDIA_MANAGER_PROVIDER_REQUEST_TIMEOUT_MS) || 15_000);
 // General maintenance uses AniList's public GraphQL API as its preflight
@@ -91,7 +95,7 @@ const ANILIST_CACHE_FILE = resolve(process.env.ANILIST_CACHE_FILE || join(homedi
 const ANILIST_CACHE_TTL_MS = Math.max(60_000, Number(process.env.ANILIST_CACHE_TTL_MS) || 30 * 60_000);
 const ANILIST_ERROR_CACHE_TTL_MS = Math.max(15_000, Number(process.env.ANILIST_ERROR_CACHE_TTL_MS) || 2 * 60_000);
 const ANILIST_REQUEST_TIMEOUT_MS = Math.max(2_000, Number(process.env.ANILIST_REQUEST_TIMEOUT_MS) || 12_000);
-const ANILIST_REQUEST_INTERVAL_MS = Math.max(0, Number(process.env.ANILIST_REQUEST_INTERVAL_MS) || 700);
+const ANILIST_REQUEST_INTERVAL_MS = Math.max(0, Number(process.env.ANILIST_REQUEST_INTERVAL_MS) || CATALOG_ANILIST_INTERVAL_MS);
 const ANILIST_CACHE_VERSION = 1;
 const LOG_PROGRESS_INTERVAL_MS = 30_000;
 const LEGACY_RECOVERY_MAX_AGE_MS = 48 * 60 * 60 * 1000;
@@ -185,6 +189,7 @@ let aniListCacheLoad = null;
 let aniListCacheWrite = Promise.resolve();
 let aniListRequestQueue = Promise.resolve();
 let aniListLastRequestAt = 0;
+let aniListBlockedUntil = 0;
 let resumeWriteQueue = Promise.resolve();
 let cancelledRunsWriteQueue = Promise.resolve();
 let cancelledRunIds = new Set();
@@ -193,7 +198,6 @@ let catalogStateLoad = null;
 let catalogWriteQueue = Promise.resolve();
 let catalogScanPromise = null;
 let catalogRunId = null;
-let catalogAniListLastRequestAt = 0;
 let failureWebhookQueue = Promise.resolve();
 
 function pruneStaleStartingJobs() {
@@ -1066,6 +1070,9 @@ async function fetchJson(url, options, label) {
     const error = new Error(`${label} returned HTTP ${response.status}`);
     error.status = response.status;
     error.retryAfter = Number(response.headers.get("retry-after")) || 0;
+    error.rateLimitLimit = Number(response.headers.get("x-ratelimit-limit")) || 0;
+    error.rateLimitRemaining = Number(response.headers.get("x-ratelimit-remaining")) || 0;
+    error.rateLimitReset = Number(response.headers.get("x-ratelimit-reset")) || 0;
     throw error;
   }
   return body;
@@ -1322,16 +1329,13 @@ async function fetchAniListCatalogMedia(ids, { onProgress } = {}) {
     };
     let body;
     for (let attempt = 0; attempt < 4; attempt += 1) {
-      const waitMs = Math.max(0, CATALOG_ANILIST_INTERVAL_MS - (Date.now() - catalogAniListLastRequestAt));
-      if (waitMs) await new Promise((resolveWait) => setTimeout(resolveWait, waitMs));
-      catalogAniListLastRequestAt = Date.now();
       try {
-        body = await fetchJson(ANILIST_API_URL, request, "AniList catalog lookup");
+        body = await queueAniListRequest(() => fetchJson(ANILIST_API_URL, request, "AniList catalog lookup"));
         break;
       } catch (error) {
         const retryable = Number(error?.status) === 429 || Number(error?.status) >= 500;
         if (!retryable || attempt === 3) throw error;
-        const retryMs = Math.max(5_000, Number(error?.retryAfter || 0) * 1_000, 2_500 * (attempt + 1));
+        const retryMs = aniListRetryDelayMs(error, attempt, 5_000);
         await new Promise((resolveWait) => setTimeout(resolveWait, retryMs));
       }
     }
@@ -1812,48 +1816,62 @@ function queueAniListCacheWrite() {
   return aniListCacheWrite;
 }
 
+function aniListRetryDelayMs(error, attempt, minimumMs = 2_500) {
+  const retryAfterMs = Math.max(0, Number(error?.retryAfter || 0) * 1_000);
+  const resetMs = Number(error?.rateLimitReset) > 0
+    ? Math.max(0, Number(error.rateLimitReset) * 1_000 - Date.now())
+    : 0;
+  const delayMs = Math.max(minimumMs, retryAfterMs, resetMs, minimumMs * (attempt + 1));
+  if (Number(error?.status) === 429) aniListBlockedUntil = Math.max(aniListBlockedUntil, Date.now() + delayMs);
+  return delayMs;
+}
+
 function queueAniListRequest(task) {
-  const next = aniListRequestQueue.then(async () => {
-    const waitMs = Math.max(0, ANILIST_REQUEST_INTERVAL_MS - (Date.now() - aniListLastRequestAt));
-    if (waitMs) await new Promise((resolveWait) => setTimeout(resolveWait, waitMs));
-    aniListLastRequestAt = Date.now();
-    return task();
-  }, async () => task());
+  const next = aniListRequestQueue
+    .catch(() => {})
+    .then(async () => {
+      const waitMs = Math.max(
+        0,
+        ANILIST_REQUEST_INTERVAL_MS - (Date.now() - aniListLastRequestAt),
+        aniListBlockedUntil - Date.now(),
+      );
+      if (waitMs) await new Promise((resolveWait) => setTimeout(resolveWait, waitMs));
+      aniListLastRequestAt = Date.now();
+      return task();
+    });
   aniListRequestQueue = next.catch(() => {});
   return next;
 }
 
 async function fetchAniListGraphql(query, variables = {}, label = "AniList query") {
-  return queueAniListRequest(async () => {
-    let lastError = null;
-    for (let attempt = 0; attempt < 4; attempt += 1) {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), ANILIST_REQUEST_TIMEOUT_MS);
-      try {
-        const body = await fetchJson(ANILIST_API_URL, {
-          method: "POST",
-          headers: { "content-type": "application/json", "user-agent": "Media-Manager-Maintenance/1.0" },
-          body: JSON.stringify({ query, variables }),
-          signal: controller.signal,
-        }, label);
-        if (Array.isArray(body?.errors) && body.errors.length) {
-          const error = new Error(`${label}: ${body.errors.map((entry) => entry?.message || "GraphQL error").join("; ")}`);
-          error.status = Number(body?.errors?.[0]?.status) || 0;
-          throw error;
-        }
-        return body;
-      } catch (error) {
-        lastError = error;
-        const retryable = Number(error?.status) === 429 || Number(error?.status) >= 500 || error?.name === "AbortError";
-        if (!retryable || attempt === 3) break;
-        const retryMs = Math.max(2_000, Number(error?.retryAfter || 0) * 1_000, 1_500 * (attempt + 1));
-        await new Promise((resolveWait) => setTimeout(resolveWait, retryMs));
-      } finally {
-        clearTimeout(timeout);
+  let lastError = null;
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), ANILIST_REQUEST_TIMEOUT_MS);
+    try {
+      const body = await queueAniListRequest(() => fetchJson(ANILIST_API_URL, {
+        method: "POST",
+        headers: { "content-type": "application/json", "user-agent": "Media-Manager-Maintenance/1.0" },
+        body: JSON.stringify({ query, variables }),
+        signal: controller.signal,
+      }, label));
+      if (Array.isArray(body?.errors) && body.errors.length) {
+        const error = new Error(`${label}: ${body.errors.map((entry) => entry?.message || "GraphQL error").join("; ")}`);
+        error.status = Number(body?.errors?.[0]?.status) || 0;
+        throw error;
       }
+      return body;
+    } catch (error) {
+      lastError = error;
+      const retryable = Number(error?.status) === 429 || Number(error?.status) >= 500 || error?.name === "AbortError";
+      if (!retryable || attempt === 3) break;
+      const retryMs = aniListRetryDelayMs(error, attempt, 2_500);
+      await new Promise((resolveWait) => setTimeout(resolveWait, retryMs));
+    } finally {
+      clearTimeout(timeout);
     }
-    throw lastError || new Error(`${label} failed`);
-  });
+  }
+  throw lastError || new Error(`${label} failed`);
 }
 
 function aniListTitles(item) {
