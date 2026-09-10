@@ -5291,7 +5291,7 @@ function tdAttemptArgs(job, { downloadAll, repairAttempts }) {
     "--cache-dir", job.cacheDir,
   );
   if (BROWSER_COMPATIBILITY_ENABLED && job.maintenance) {
-    args.push("--cmd-after-dl", BROWSER_COMPATIBILITY_SCRIPT, "--cmd-exit", "fail");
+    args.push("--cmd-after-dl", BROWSER_COMPATIBILITY_SCRIPT, "--exit-behavior-after", "err");
   }
   if (job.maintenance?.replaceExisting) args.push("--exist=overwrite");
   return args;
