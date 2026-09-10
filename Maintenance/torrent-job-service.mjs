@@ -3517,6 +3517,7 @@ function stopMaintenanceChildren(run) {
 function publicRun(run) {
   return {
     id: run.id,
+    operation: String(run.payload?.operation || "update").trim().toLowerCase() || "update",
     state: run.state,
     phase: run.phase,
     total: run.total,
