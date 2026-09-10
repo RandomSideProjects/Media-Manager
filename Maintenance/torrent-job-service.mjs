@@ -266,6 +266,10 @@ async function loadCatalogState() {
           ...emptyCatalogState(),
           ...parsed,
           entries: parsed.entries && typeof parsed.entries === "object" && !Array.isArray(parsed.entries) ? parsed.entries : {},
+          // A service restart can leave the catalog's transient scanning flag
+          // set even though no catalog run survived. Never expose that stale
+          // state as an active scan after restoring the process.
+          scanning: false,
         };
       }
       return catalogState;
