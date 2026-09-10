@@ -5281,14 +5281,12 @@ function tdAttemptArgs(job, { downloadAll, repairAttempts }) {
   const args = [
     "--base-url", TOODRIVE_BASE_URL,
     "torrent", job.source, job.destination,
-    "--video-pipeline",
+    // td 0.1.0 replaced the old video-pipeline/download-all/repair flags with
+    // the disk-backed torrent flow. The service owns retries and repair
+    // decisions, while td owns torrent-to-Toodrive transfer and JSON events.
+    "--disk-backed",
   ];
-  const targetEpisodes = maintenanceTargetEpisodes(job);
-  if (targetEpisodes.length) args.push("--only-episodes", targetEpisodes.join(","));
-  if (downloadAll && !targetEpisodes.length) args.push("--download-all");
   args.push(
-    "--repair",
-    "--repair-attempts", String(repairAttempts),
     "--json",
     "--cache-dir", job.cacheDir,
   );

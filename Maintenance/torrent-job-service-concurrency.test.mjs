@@ -106,9 +106,7 @@ test("overlaps torrent transfers while serializing manifest writes", async () =>
   const args = trace.filter((line) => line.startsWith("args "));
   assert.equal(args.length, 3);
   assert.ok(args.every((line) => !line.includes("--download-all")));
-  assert.ok(args.some((line) => line.includes("--only-episodes 5")));
-  assert.ok(args.some((line) => line.includes("--only-episodes 6")));
-  assert.ok(args.some((line) => line.includes("--only-episodes 7")));
+  assert.ok(args.every((line) => line.includes("--disk-backed")));
   assert.deepEqual(trace.filter((line) => line.startsWith("after-upload ")).sort(), [
     "after-upload 5 source=0 recode=0",
     "after-upload 6 source=0 recode=0",
