@@ -5,7 +5,7 @@
 // Run from the repository with: node Maintenance/torrent-job-service.mjs
 
 import { createServer } from "node:http";
-import { appendFile, chmod, mkdir, open, readFile, readdir, rename, rm, unlink, writeFile } from "node:fs/promises";
+import { appendFile, chmod, mkdir, open, readFile, readdir, rename, rm, stat, unlink, writeFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import { spawn } from "node:child_process";
 import { homedir } from "node:os";
@@ -3119,6 +3119,45 @@ function scheduleArtifactDurationProbe(job, artifact, event = {}) {
   job.durationProbePromises.set(artifact, promise);
 }
 
+function scheduleArtifactSizeProbe(job, artifact, event = {}) {
+  if (!artifact || typeof artifact !== "object") return;
+  const reported = numericValue(event.sizeBytes ?? event.fileSizeBytes ?? artifact.sizeBytes);
+  if (reported > 0) {
+    artifact.sizeBytes = reported;
+    return;
+  }
+  const input = cacheScopedPath(job, artifact.localPath) || (isAbsolute(String(artifact.localPath || "").trim()) ? String(artifact.localPath).trim() : "");
+  if (!input) return;
+  job.sizeProbePromises ||= new Map();
+  if (job.sizeProbePromises.has(artifact)) return;
+  const promise = stat(input).then((details) => {
+    const size = numericValue(details?.size);
+    if (size > 0) artifact.sizeBytes = size;
+    persistLog({
+      scope: "job",
+      event: size > 0 ? "size_probed" : "size_probe_empty",
+      jobId: job.id,
+      runId: job.runId,
+      remotePath: artifact.remotePath,
+      localPath: artifact.localPath,
+      sizeBytes: size || undefined,
+    });
+    return size;
+  }).catch((error) => {
+    persistLog({
+      scope: "job",
+      event: "size_probe_failed",
+      jobId: job.id,
+      runId: job.runId,
+      remotePath: artifact.remotePath,
+      localPath: artifact.localPath,
+      message: error instanceof Error ? error.message : String(error),
+    });
+    return 0;
+  });
+  job.sizeProbePromises.set(artifact, promise);
+}
+
 function scheduleArtifactAudioProbe(job, artifact) {
   if (!artifact || typeof artifact !== "object") return;
   // Newer td builds report the verified post-hook audio count before they
@@ -3175,6 +3214,14 @@ function hasCompleteDurations(data) {
     const { entries } = getEntries(category);
     return entries.every((entry) => entryDuration(entry) > 0);
   });
+}
+
+function normalizeManifestMetadata(data) {
+  if (!data || typeof data !== "object") return data;
+  data.totalFileSizeBytes = Math.round(totalSize(data));
+  if (hasCompleteDurations(data)) data.totalDurationSeconds = Math.round(totalDuration(data));
+  else delete data.totalDurationSeconds;
+  return data;
 }
 
 function audioClassification(entry) {
@@ -4955,15 +5002,13 @@ async function applyMaintenance(maintenance, artifacts) {
       title,
       categories: [category],
       LatestTime: now,
-      totalFileSizeBytes: totalSize({ categories: [category] }),
     };
     if (Number.isInteger(Number(maintenance.anilistId)) && Number(maintenance.anilistId) > 0) data.anilistId = Number(maintenance.anilistId);
     if (Number.isInteger(Number(maintenance.rootAnilistId)) && Number(maintenance.rootAnilistId) > 0) data.rootAnilistId = Number(maintenance.rootAnilistId);
     if (String(maintenance.mediaFormat || "").trim()) data.mediaFormat = String(maintenance.mediaFormat).trim().toUpperCase();
     data.anilistIds = [...new Set([data.anilistId, data.rootAnilistId].filter((id) => Number.isInteger(id) && id > 0))];
+    normalizeManifestMetadata(data);
     normalizeManifestSourceUrls(data);
-    const duration = totalDuration(data);
-    if (duration > 0 && hasCompleteDurations(data)) data.totalDurationSeconds = duration;
     if (String(maintenance.image || "").trim()) data.Image = String(maintenance.image).trim();
     const content = `${JSON.stringify(data, null, 2)}\n`;
     const github = await publishSourceToGithub(target.path, content, { title, category: categoryName });
@@ -5028,12 +5073,8 @@ async function applyMaintenance(maintenance, artifacts) {
   }
   entries.sort((a, b) => (episodeInfo(a?.title).episode || Number.MAX_SAFE_INTEGER) - (episodeInfo(b?.title).episode || Number.MAX_SAFE_INTEGER));
   normalizeManifestSourceUrls(data);
+  normalizeManifestMetadata(data);
   data.LatestTime = now;
-  const size = totalSize(data);
-  if (size > 0) data.totalFileSizeBytes = size;
-  const duration = totalDuration(data);
-  if (duration > 0 && hasCompleteDurations(data)) data.totalDurationSeconds = duration;
-  else delete data.totalDurationSeconds;
   const content = `${JSON.stringify(data, null, 2)}\n`;
   const title = data.title || target.file;
   const github = await publishSourceToGithub(target.path, content, { title, category: category.category });
@@ -5063,6 +5104,9 @@ async function finishJob(job, code, error, { cancelled = false } = {}) {
   let wasCancelled = cancelled || job.cancelled === true || job.stopRequested === true;
   if (finalCode === 0 && job.maintenance && !wasCancelled) {
     job.state = "finalizing";
+    if (job.sizeProbePromises?.size) {
+      await Promise.allSettled([...job.sizeProbePromises.values()]);
+    }
     if (job.durationProbePromises?.size) {
       await Promise.allSettled([...job.durationProbePromises.values()]);
     }
@@ -5184,6 +5228,7 @@ function recordEvent(job, event, stream) {
       ...audioFields,
     });
     else job.artifacts.push(target);
+    scheduleArtifactSizeProbe(job, target, normalizedEvent);
     scheduleArtifactDurationProbe(job, target, normalizedEvent);
     if (job.maintenance?.dualAudio === true) scheduleArtifactAudioProbe(job, target);
     const uploaded = String(normalizedEvent.outcome || "").toLowerCase() === "uploaded";
@@ -5625,6 +5670,7 @@ async function startJob({ torrentUrl, magnet, destination, cacheDir, runId, main
     stallTimer: null, stallRequested: false, stallError: null, lastTransferAt: 0, lastTransferBytes: 0, lastTransferTotal: 0, lastTransferPhase: "",
     authRetryCount: 0, transientRetryCount: 0,
     fileCleanupPromises: new Set(),
+    sizeProbePromises: new Map(),
     durationProbePromises: new Map(),
     audioProbePromises: new Map(),
     done: new Promise((resolveDonePromise) => { resolveDone = resolveDonePromise; }),
@@ -5676,6 +5722,7 @@ function restoreJob(saved) {
     lastTransferTotal: 0,
     lastTransferPhase: "",
     fileCleanupPromises: new Set(),
+    sizeProbePromises: new Map(),
     durationProbePromises: new Map(),
     audioProbePromises: new Map(),
     done: new Promise((resolveDonePromise) => { resolveDone = resolveDonePromise; }),
@@ -6441,6 +6488,7 @@ export {
   probeMediaDurationSeconds,
   probeMediaAudioStreamCount,
   totalDuration,
+  normalizeManifestMetadata,
   normalizeToodriveUrl,
   processMaintenanceItem,
   startJob,

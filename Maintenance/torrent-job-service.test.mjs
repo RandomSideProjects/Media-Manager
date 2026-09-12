@@ -297,6 +297,27 @@ test("probes a media file duration in whole seconds", async () => {
   assert.equal(service.totalDuration({ categories: [{ episodes: [{ durationSeconds: 15 }] }] }), 15);
 });
 
+test("normalizes source size and duration aggregates after maintenance", () => {
+  const data = {
+    categories: [{
+      category: "Season 1",
+      episodes: [
+        { title: "Episode 01", fileSizeBytes: 100, durationSeconds: 10 },
+        { title: "Episode 02", fileSizeBytes: 250, durationSeconds: 20 },
+      ],
+    }],
+    totalFileSizeBytes: 999,
+    totalDurationSeconds: 999,
+  };
+  service.normalizeManifestMetadata(data);
+  assert.equal(data.totalFileSizeBytes, 350);
+  assert.equal(data.totalDurationSeconds, 30);
+  delete data.categories[0].episodes[1].durationSeconds;
+  service.normalizeManifestMetadata(data);
+  assert.equal(data.totalFileSizeBytes, 350);
+  assert.equal("totalDurationSeconds" in data, false);
+});
+
 test("normalizes legacy local Toodrive links to the public host", () => {
   assert.equal(
     service.normalizeToodriveUrl("http://localhost:16169/dl/example/raw"),
