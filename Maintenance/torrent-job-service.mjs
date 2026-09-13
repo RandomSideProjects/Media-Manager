@@ -6149,6 +6149,7 @@ async function startAutomaticCatalogRun(reason = "automatic") {
   const state = await loadCatalogState();
   if (state.sourceListPending === true) await refreshSourceListPublication();
   const run = await startMaintenanceRun({
+    operation: "add",
     discoverCatalog: true,
     catalogScan: true,
     catalogOnly: true,
@@ -6334,6 +6335,7 @@ const server = createServer(async (req, res) => {
       const payload = await readBody(req);
       const run = await startMaintenanceRun({
         ...payload,
+        operation: "add",
         discoverCatalog: true,
         catalogScan: true,
         catalogOnly: true,
