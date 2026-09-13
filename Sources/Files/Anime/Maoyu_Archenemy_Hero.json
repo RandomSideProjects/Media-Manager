@@ -15,7 +15,8 @@
           "title": "Episode 02",
           "src": "https://toodrive.xpbliss.fyi/dl/n6e6nesbedkjsa3i4ovj4ok1/raw",
           "fileSizeBytes": 415758504,
-          "dualAudio": false
+          "dualAudio": false,
+          "durationSeconds": 1421
         },
         {
           "title": "Episode 03",
@@ -42,13 +43,15 @@
           "title": "Episode 06",
           "src": "https://toodrive.xpbliss.fyi/dl/zl20kyavwatqavneukosfzr7/raw",
           "fileSizeBytes": 467964046,
-          "dualAudio": false
+          "dualAudio": false,
+          "durationSeconds": 1421
         },
         {
           "title": "Episode 07",
           "src": "https://toodrive.xpbliss.fyi/dl/p3b4fcwbayvq88qo51l0fbdw/raw",
           "fileSizeBytes": 400606352,
-          "dualAudio": false
+          "dualAudio": false,
+          "durationSeconds": 1421
         },
         {
           "title": "Episode 08",
@@ -68,19 +71,22 @@
           "title": "Episode 10",
           "src": "https://toodrive.xpbliss.fyi/dl/p4xythgbbtwq1zdfagqjc20h/raw",
           "fileSizeBytes": 394457514,
-          "dualAudio": false
+          "dualAudio": false,
+          "durationSeconds": 1421
         },
         {
           "title": "Episode 11",
           "src": "https://toodrive.xpbliss.fyi/dl/o3t8olvh3u2mfel0q5i6s0ev/raw",
           "fileSizeBytes": 32418913,
-          "dualAudio": false
+          "dualAudio": false,
+          "durationSeconds": 142
         },
         {
           "title": "Episode 12",
           "src": "https://toodrive.xpbliss.fyi/dl/jj4y5lp4r6fzr5efc5c3cipb/raw",
           "fileSizeBytes": 40264786,
-          "dualAudio": false
+          "dualAudio": false,
+          "durationSeconds": 176
         }
       ],
       "anilistId": 14833,
@@ -96,5 +102,6 @@
   "anilistIds": [
     14833
   ],
-  "Image": "./Sources/Posters/Anime/Maoyu_Archenemy_&_Hero.webp"
+  "Image": "./Sources/Posters/Anime/Maoyu_Archenemy_&_Hero.webp",
+  "totalDurationSeconds": 14528
 }
