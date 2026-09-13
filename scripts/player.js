@@ -220,13 +220,14 @@ function isHttpUrl(src) {
 // Toodrive links published in older manifests use the legacy public hostname.
 // Keep the old hostname as a browser fallback, but always try the current
 // endpoint first so existing manifests do not need to be rewritten in-place.
-const TOODRIVE_PLAYER_PRIMARY_HOST = 'td.alexspac.es';
-const TOODRIVE_PLAYER_BACKUP_HOST = 'toodrive.xpbliss.fyi';
+const TOODRIVE_PLAYER_PRIMARY_HOST = 'uhidontkno--toodrive-serve.modal.run';
+const TOODRIVE_PLAYER_BACKUP_HOST = 'td.alexspac.es';
+const TOODRIVE_PLAYER_LEGACY_HOST = 'toodrive.xpbliss.fyi';
 const TOODRIVE_PLAYER_LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '0.0.0.0', '[::1]']);
 
 function isToodrivePlayerHost(hostname, port) {
   const host = String(hostname || '').trim().toLowerCase();
-  if (host === TOODRIVE_PLAYER_PRIMARY_HOST || host === TOODRIVE_PLAYER_BACKUP_HOST) return true;
+  if (host === TOODRIVE_PLAYER_PRIMARY_HOST || host === TOODRIVE_PLAYER_BACKUP_HOST || host === TOODRIVE_PLAYER_LEGACY_HOST) return true;
   return TOODRIVE_PLAYER_LOOPBACK_HOSTS.has(host) && String(port || '') === '16169';
 }
 
@@ -252,8 +253,9 @@ function toodrivePlayerCandidates(value) {
     const parsed = new URL(raw);
     if (!isToodrivePlayerHost(parsed.hostname, parsed.port)) return [raw];
     const primary = normalizeToodrivePlayerUrl(raw, TOODRIVE_PLAYER_PRIMARY_HOST);
-    const backup = normalizeToodrivePlayerUrl(raw, TOODRIVE_PLAYER_BACKUP_HOST);
-    return [...new Set([primary, backup].filter(Boolean))];
+    const backups = [TOODRIVE_PLAYER_BACKUP_HOST, TOODRIVE_PLAYER_LEGACY_HOST]
+      .map((hostname) => normalizeToodrivePlayerUrl(raw, hostname));
+    return [...new Set([primary, ...backups].filter(Boolean))];
   } catch {
     return [raw];
   }

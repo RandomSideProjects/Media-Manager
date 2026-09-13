@@ -13,7 +13,7 @@ import { extname, join, resolve, sep } from "node:path";
 
 const PORT = Number(process.env.CREATOR_TORRENT_PORT || 41723);
 const TD_BIN = process.env.TD_BIN || join(homedir(), ".deno/bin/td");
-const TOODRIVE_BASE_URL = process.env.TOODRIVE_BASE_URL || "https://td.alexspac.es";
+const TOODRIVE_BASE_URL = process.env.TOODRIVE_BASE_URL || "https://uhidontkno--toodrive-serve.modal.run";
 const REPO_ROOT = resolve(process.env.MEDIA_MANAGER_ROOT || process.cwd());
 const SOURCE_DIR = resolve(REPO_ROOT, "Sources/Files/Anime");
 const SOURCE_PREFIX = "Sources/Files/Anime/";
