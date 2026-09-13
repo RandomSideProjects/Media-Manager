@@ -8,7 +8,17 @@ import { fileURLToPath } from "node:url";
 
 // Reuse the maintenance service's ffprobe behavior without starting its API.
 process.env.MEDIA_MANAGER_TEST = "1";
-const { probeMediaDurationSeconds } = await import(`../Maintenance/torrent-job-service.mjs?duration-backfill=${process.pid}`);
+const {
+  probeMediaDurationSeconds,
+  normalizeToodriveUrl,
+  publishSourceToGithub,
+  publishSourceListToGithub,
+  buildSourceListContent,
+} = await import(`../Maintenance/torrent-job-service.mjs?duration-backfill=${process.pid}`);
+
+// The service was imported in test mode so it does not start an HTTP server.
+// Publishing is enabled explicitly after import for remote metadata repairs.
+process.env.MEDIA_MANAGER_TEST = "0";
 
 const execFile = promisify(execFileCallback);
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -52,6 +62,23 @@ function episodesOf(data) {
 function positiveNumber(value) {
   const number = Number(value);
   return Number.isFinite(number) && number > 0 ? number : 0;
+}
+
+async function probeMediaSizeBytes(filePath) {
+  const input = normalizeToodriveUrl(filePath);
+  if (!input) throw new Error("media path is empty");
+  const head = await fetch(input, { method: "HEAD", redirect: "follow" });
+  const headSize = positiveNumber(head.headers.get("content-length"));
+  if (head.ok && headSize > 0) return Math.round(headSize);
+  const ranged = await fetch(input, {
+    headers: { range: "bytes=0-0" },
+    redirect: "follow",
+  });
+  const contentRange = ranged.headers.get("content-range") || "";
+  const rangeMatch = contentRange.match(/\/([0-9]+)$/);
+  const rangeSize = positiveNumber(rangeMatch?.[1]);
+  if (ranged.ok && rangeSize > 0) return Math.round(rangeSize);
+  throw new Error(`size probe returned HTTP ${head.status}/${ranged.status}`);
 }
 
 function totalSize(data) {
@@ -162,6 +189,7 @@ const from = option("--from");
 const to = option("--to", "HEAD");
 const all = hasFlag("--all");
 const missingOnly = hasFlag("--missing");
+const publish = hasFlag("--publish");
 const explicitFiles = options("--file");
 const concurrency = Math.max(1, Math.min(16, Number(option("--concurrency", "3")) || 3));
 const retries = Math.max(1, Math.min(8, Number(option("--retries", "4")) || 4));
@@ -180,13 +208,21 @@ for (const file of files) {
   const previous = await baseEpisodeMap(from, file);
   for (const { category, entry } of episodesOf(data)) {
     const currentDuration = positiveNumber(entry?.durationSeconds || entry?.DurationSeconds);
+    const currentSize = positiveNumber(entry?.fileSizeBytes || entry?.sizeBytes || entry?.FileSizeBytes);
     const old = previous.get(episodeKey(category, entry));
     const changedSinceBase = Boolean(from) && (!old
       || String(old.src || "") !== String(entry.src || "")
       || positiveNumber(old.fileSizeBytes || old.sizeBytes || old.FileSizeBytes) !== positiveNumber(entry.fileSizeBytes || entry.sizeBytes || entry.FileSizeBytes));
-    if (missingOnly && currentDuration > 0) continue;
-    if (all || changedSinceBase || (!from && currentDuration <= 0)) {
-      targets.push({ file, category, entry, source: String(entry?.src || "") });
+    if (missingOnly && currentDuration > 0 && currentSize > 0) continue;
+    if (all || changedSinceBase || (!from && (currentDuration <= 0 || currentSize <= 0))) {
+      targets.push({
+        file,
+        category,
+        entry,
+        source: normalizeToodriveUrl(String(entry?.src || "")),
+        currentDuration,
+        currentSize,
+      });
     }
   }
 }
@@ -203,28 +239,52 @@ async function worker() {
     if (index >= targets.length) return;
     const target = targets[index];
     try {
-      let duration = 0;
-      let lastError;
-      for (let attempt = 1; attempt <= retries; attempt += 1) {
-        try {
-          duration = await probeMediaDurationSeconds(target.source);
-          break;
-        } catch (error) {
-          lastError = error;
-          const permanent = /\b404\b|not found/i.test(error instanceof Error ? error.message : String(error));
-          if (attempt < retries && !permanent) {
-            await new Promise((resolveDelay) => setTimeout(resolveDelay, Math.min(10_000, attempt * 1_500)));
-          } else if (permanent) {
+      let duration = target.currentDuration;
+      let size = target.currentSize;
+      const errors = [];
+      if (!duration && target.source) {
+        let lastError;
+        for (let attempt = 1; attempt <= retries; attempt += 1) {
+          try {
+            duration = await probeMediaDurationSeconds(target.source);
             break;
+          } catch (error) {
+            lastError = error;
+            const permanent = /\b404\b|not found/i.test(error instanceof Error ? error.message : String(error));
+            if (attempt < retries && !permanent) {
+              await new Promise((resolveDelay) => setTimeout(resolveDelay, Math.min(10_000, attempt * 1_500)));
+            } else if (permanent) {
+              break;
+            }
           }
         }
+        if (!duration) errors.push(`duration: ${lastError?.message || "ffprobe returned no duration"}`);
       }
-      if (!duration) throw lastError || new Error("ffprobe returned no duration");
-      target.entry.durationSeconds = duration;
-      delete target.entry.DurationSeconds;
-      manifests.get(target.file).changed = true;
-      successes += 1;
-      console.log(`[${successes + failures}/${targets.length}] ${target.file} · ${target.category} · ${target.entry.title}: ${duration}s`);
+      if (!size && target.source) {
+        try {
+          size = await probeMediaSizeBytes(target.source);
+        } catch (error) {
+          errors.push(`size: ${error instanceof Error ? error.message : String(error)}`);
+        }
+      }
+      if (duration) {
+        target.entry.durationSeconds = duration;
+        delete target.entry.DurationSeconds;
+      }
+      if (size) {
+        target.entry.fileSizeBytes = size;
+        delete target.entry.sizeBytes;
+        delete target.entry.FileSizeBytes;
+      }
+      if (duration || size) manifests.get(target.file).changed = true;
+      if (errors.length) {
+        failures += 1;
+        failed.push({ ...target, error: errors.join("; ") });
+        console.error(`[${successes + failures}/${targets.length}] PARTIAL ${target.file} · ${target.category} · ${target.entry.title}: ${errors.join("; ")}`);
+      } else {
+        successes += 1;
+        console.log(`[${successes + failures}/${targets.length}] ${target.file} · ${target.category} · ${target.entry.title}: ${duration || "?"}s · ${size || "?"} bytes`);
+      }
     } catch (error) {
       failures += 1;
       failed.push({ ...target, error: error instanceof Error ? error.message : String(error) });
@@ -251,6 +311,21 @@ if (files.length) {
     if (syncSourceListSummary(summary, data)) listChanged = true;
   }
   if (listChanged) await writeFile(SOURCE_LIST_FILE, `${JSON.stringify(list, null, 2)}\n`, "utf8");
+}
+
+if (publish && changedFilesWritten.length) {
+  for (const file of changedFilesWritten) {
+    const data = manifests.get(file).data;
+    const result = await publishSourceToGithub(`Sources/Files/Anime/${file}`, `${JSON.stringify(data, null, 2)}\n`, {
+      title: data.title || file,
+      category: "metadata backfill",
+    });
+    console.log(`Published ${file}: ${result.commitSha || result.reason || "ok"}`);
+  }
+  const sourceListContent = await buildSourceListContent();
+  await writeFile(SOURCE_LIST_FILE, sourceListContent, "utf8");
+  const listResult = await publishSourceListToGithub(sourceListContent);
+  console.log(`Published source list: ${listResult.commitSha || listResult.reason || "ok"}`);
 }
 
 console.log(`Completed: ${successes} probed, ${failures} failed, ${changedFilesWritten.length} manifest(s) updated.`);
