@@ -5331,6 +5331,17 @@ function requestJobStop(job) {
   return job.done;
 }
 
+function shellQuote(value) {
+  return `'${String(value).replaceAll("'", "'\\''")}'`;
+}
+
+function browserCompatibilityCommand() {
+  // td 0.1.0 expands {local}/{remote} in hook commands; it does not expose
+  // the local path as TD_LOCAL_PATH. Pass the expanded path explicitly so the
+  // compatibility script can inspect the downloaded file before upload.
+  return `bash ${shellQuote(BROWSER_COMPATIBILITY_SCRIPT)} "{local}"`;
+}
+
 function tdAttemptArgs(job, { downloadAll, repairAttempts }) {
   const args = [
     "--base-url", TOODRIVE_BASE_URL,
@@ -5345,7 +5356,7 @@ function tdAttemptArgs(job, { downloadAll, repairAttempts }) {
     "--cache-dir", job.cacheDir,
   );
   if (BROWSER_COMPATIBILITY_ENABLED && job.maintenance) {
-    args.push("--cmd-after-dl", BROWSER_COMPATIBILITY_SCRIPT, "--exit-behavior-after", "err");
+    args.push("--cmd-after-dl", browserCompatibilityCommand(), "--exit-behavior-after", "err");
   }
   if (job.maintenance?.replaceExisting) args.push("--exist=overwrite");
   return args;
@@ -6504,6 +6515,7 @@ export {
   buildSourceListContent,
   refreshSourceListPublication,
   cleanupJobCache,
+  tdAttemptArgs,
   checkTdSession,
   loginToodrive,
   failureWebhookContent,

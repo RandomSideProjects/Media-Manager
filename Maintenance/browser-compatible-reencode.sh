@@ -2,7 +2,13 @@
 
 set -Eeuo pipefail
 
-input=${TD_LOCAL_PATH:?TD_LOCAL_PATH must be set}
+# td passes the downloaded local path through the {local} hook placeholder.
+# Keep TD_LOCAL_PATH as a backwards-compatible fallback for older wrappers.
+input="${1:-${TD_LOCAL_PATH:-}}"
+if [[ -z "$input" ]]; then
+  printf 'browser compatibility check: local input path was not supplied\n' >&2
+  exit 1
+fi
 if [[ ! -f "$input" ]]; then
   printf 'browser compatibility check: missing input %s\n' "$input" >&2
   exit 1
