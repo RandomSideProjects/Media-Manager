@@ -99,17 +99,20 @@
         {
           "title": "Episode 14",
           "src": "https://toodrive.xpbliss.fyi/dl/a9ein1vg4zepx7ekxm77cux0/raw",
-          "fileSizeBytes": 25204606
+          "fileSizeBytes": 25204606,
+          "durationSeconds": 92
         },
         {
           "title": "Episode 15",
           "src": "https://toodrive.xpbliss.fyi/dl/ouri2vibxdj9mva5xt8vrqva/raw",
-          "fileSizeBytes": 47135287
+          "fileSizeBytes": 47135287,
+          "durationSeconds": 92
         }
       ]
     }
   ],
   "totalFileSizeBytes": 5220933180,
   "Image": "./Sources/Posters/Anime/Bloom_Into_You.webp",
-  "anilistIds": []
+  "anilistIds": [],
+  "totalDurationSeconds": 24203
 }
