@@ -186,19 +186,22 @@
         {
           "title": "Episode 05",
           "src": "https://toodrive.xpbliss.fyi/dl/irj3c8hc8khvgp7n4zhd5la0/raw",
-          "fileSizeBytes": 384917339
+          "fileSizeBytes": 384917339,
+          "durationSeconds": 1430
         },
         {
           "title": "Episode 06",
           "src": "https://toodrive.xpbliss.fyi/dl/pqxa6roduw9ugl7eppjvhx23/raw",
           "fileSizeBytes": 459211435,
-          "dualAudio": false
+          "dualAudio": false,
+          "durationSeconds": 1430
         },
         {
           "title": "Episode 07",
           "src": "https://toodrive.xpbliss.fyi/dl/jk6kd39fs2eofhk8h29sd32n/raw",
           "fileSizeBytes": 1447323890,
-          "dualAudio": false
+          "dualAudio": false,
+          "durationSeconds": 1430
         },
         {
           "title": "Episode 08",
@@ -212,5 +215,6 @@
   ],
   "totalFileSizeBytes": 13445082899,
   "LatestTime": "2026-08-24T21:48:13.393Z",
-  "anilistIds": []
+  "anilistIds": [],
+  "totalDurationSeconds": 45659
 }
