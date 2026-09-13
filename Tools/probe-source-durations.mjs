@@ -65,20 +65,54 @@ function positiveNumber(value) {
 }
 
 async function probeMediaSizeBytes(filePath) {
-  const input = normalizeToodriveUrl(filePath);
-  if (!input) throw new Error("media path is empty");
-  const head = await fetch(input, { method: "HEAD", redirect: "follow" });
-  const headSize = positiveNumber(head.headers.get("content-length"));
-  if (head.ok && headSize > 0) return Math.round(headSize);
-  const ranged = await fetch(input, {
-    headers: { range: "bytes=0-0" },
-    redirect: "follow",
-  });
-  const contentRange = ranged.headers.get("content-range") || "";
-  const rangeMatch = contentRange.match(/\/([0-9]+)$/);
-  const rangeSize = positiveNumber(rangeMatch?.[1]);
-  if (ranged.ok && rangeSize > 0) return Math.round(rangeSize);
-  throw new Error(`size probe returned HTTP ${head.status}/${ranged.status}`);
+  const candidates = probeCandidates(filePath);
+  if (!candidates.length) throw new Error("media path is empty");
+  let lastError;
+  for (const input of candidates) {
+    try {
+      const head = await fetch(input, { method: "HEAD", redirect: "follow" });
+      const headSize = positiveNumber(head.headers.get("content-length"));
+      if (head.ok && headSize > 0) return Math.round(headSize);
+      const ranged = await fetch(input, {
+        headers: { range: "bytes=0-0" },
+        redirect: "follow",
+      });
+      const contentRange = ranged.headers.get("content-range") || "";
+      const rangeMatch = contentRange.match(/\/([0-9]+)$/);
+      const rangeSize = positiveNumber(rangeMatch?.[1]);
+      if (ranged.ok && rangeSize > 0) return Math.round(rangeSize);
+      lastError = new Error(`size probe returned HTTP ${head.status}/${ranged.status}`);
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  throw lastError || new Error("size probe failed");
+}
+
+function probeCandidates(filePath) {
+  const raw = String(filePath || "").trim();
+  if (!raw) return [];
+  const candidates = [normalizeToodriveUrl(raw)];
+  try {
+    const parsed = new URL(candidates[0]);
+    if (parsed.hostname.toLowerCase() === "uhidontkno--toodrive-serve.modal.run") {
+      parsed.hostname = "toodrive.xpbliss.fyi";
+      candidates.push(parsed.toString());
+    }
+  } catch {}
+  return [...new Set(candidates.filter(Boolean))];
+}
+
+async function probeDurationWithFallback(filePath) {
+  let lastError;
+  for (const input of probeCandidates(filePath)) {
+    try {
+      return await probeMediaDurationSeconds(input);
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  throw lastError || new Error("ffprobe returned no duration");
 }
 
 function totalSize(data) {
@@ -246,7 +280,7 @@ async function worker() {
         let lastError;
         for (let attempt = 1; attempt <= retries; attempt += 1) {
           try {
-            duration = await probeMediaDurationSeconds(target.source);
+            duration = await probeDurationWithFallback(target.source);
             break;
           } catch (error) {
             lastError = error;
