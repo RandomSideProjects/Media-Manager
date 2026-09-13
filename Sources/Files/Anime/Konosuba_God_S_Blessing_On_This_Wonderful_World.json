@@ -38,7 +38,8 @@
         {
           "title": "Episode 6",
           "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Konosuba_God_S_Blessing_On_This_Wonderful_World/1.mp4",
-          "durationSeconds": 1421
+          "durationSeconds": 1421,
+          "fileSizeBytes": 142301120
         },
         {
           "title": "Episode 7",
@@ -220,7 +221,7 @@
       ]
     }
   ],
-  "totalFileSizeBytes": 12543581603,
+  "totalFileSizeBytes": 12685882723,
   "totalDurationSeconds": 50091,
   "Image": "./Sources/Posters/Anime/KONOSUBA.webp"
 }
