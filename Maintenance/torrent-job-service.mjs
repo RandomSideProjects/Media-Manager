@@ -18,7 +18,7 @@ const SERVICE_PROTOCOL_VERSION = "maintenance-v6";
 const TD_BIN = process.env.TD_BIN || join(homedir(), ".deno/bin/td");
 const FFPROBE_BIN = process.env.FFPROBE_BIN || "ffprobe";
 const BROWSER_COMPATIBILITY_ENABLED = process.env.MEDIA_MANAGER_BROWSER_COMPATIBILITY !== "0";
-const TOODRIVE_BASE_URL = process.env.TOODRIVE_BASE_URL || "https://toodrive.xpbliss.fyi";
+const TOODRIVE_BASE_URL = process.env.TOODRIVE_BASE_URL || "https://uhidontkno--toodrive-serve.modal.run";
 const TOODRIVE_PUBLIC_BASE_URL = String(process.env.TOODRIVE_PUBLIC_BASE_URL || "https://uhidontkno--toodrive-serve.modal.run").replace(/\/$/, "");
 const TOODRIVE_USERNAME = String(
   process.env.MEDIA_MANAGER_TOODRIVE_USERNAME || process.env.TOODRIVE_USERNAME || "",
