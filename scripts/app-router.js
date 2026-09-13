@@ -35,7 +35,7 @@
     'scripts/tags.js',
     'scripts/recent-sources.js?v=20260727-continue-watching',
     'https://cdn.jsdelivr.net/npm/hls.js@1/dist/hls.min.js',
-    'scripts/player.js?v=20260912-toodrive-modal',
+    'scripts/player.js?v=20260913-toodrive-modal',
     'scripts/popout.js',
     'scripts/list.js?v=20260830-video-link-check',
     'scripts/downloads.js',
