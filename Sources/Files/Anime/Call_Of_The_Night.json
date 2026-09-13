@@ -150,18 +150,20 @@
         {
           "title": "Episode 11",
           "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Call_Of_The_Night/4.mp4",
-          "durationSeconds": 1398
+          "durationSeconds": 1398,
+          "fileSizeBytes": 190520655
         },
         {
           "title": "Episode 12",
           "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Call_Of_The_Night/5.mp4",
-          "durationSeconds": 1398
+          "durationSeconds": 1398,
+          "fileSizeBytes": 190291305
         }
       ]
     }
   ],
   "LatestTime": "2025-11-05T20:12:58.906Z",
-  "totalFileSizeBytes": 3301840883,
-  "totalDurationSeconds": 31997,
+  "totalFileSizeBytes": 3682652843,
+  "totalDurationSeconds": 34793,
   "Image": "./Sources/Posters/Anime/Call_Of_The_Night.webp"
 }
