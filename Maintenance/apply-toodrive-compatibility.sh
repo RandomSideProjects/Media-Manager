@@ -35,7 +35,13 @@ apply_patch_once() {
     return 0
   fi
   cp -n "$target_path" "${target_path}.before-media-manager-compatibility" 2>/dev/null || true
-  patch --batch --forward -p1 -d "$td_root" < "${bundle_root}/${patch_file}"
+  if ! patch --batch --forward -p1 -d "$td_root" < "${bundle_root}/${patch_file}"; then
+    # A newer td checkout may already contain an incompatible-but-equivalent
+    # implementation. Do not prevent the service from starting; leave a
+    # visible warning and continue with the remaining compatibility patches.
+    rm -f "${target_path}.rej"
+    printf 'Toodrive compatibility patch did not apply cleanly: %s\n' "$target_path" >&2
+  fi
 }
 
 apply_patch_once "cmd-torrent.ts" "td-cmd-torrent.patch" "MP4_TEXT_SUBTITLE_CODECS"
