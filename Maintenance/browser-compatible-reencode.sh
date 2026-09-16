@@ -39,7 +39,10 @@ audio_codecs=$(ffprobe -v error -select_streams a \
 subtitle_map_args=()
 while IFS=',' read -r stream_index subtitle_codec; do
   subtitle_codec=${subtitle_codec//$'\r'/}
-  case "${subtitle_codec,,}" in
+  # macOS ships Bash 3.2, which does not support Bash 4's ${var,,}
+  # lowercase expansion.
+  subtitle_codec=$(printf '%s' "$subtitle_codec" | tr '[:upper:]' '[:lower:]')
+  case "$subtitle_codec" in
     ass|jacosub|microdvd|mpl2|mov_text|pjs|realtext|sami|srt|ssa|stl|subrip|subviewer|subviewer1|text|ttml|vplayer|webvtt)
       subtitle_map_args+=("-map" "0:${stream_index}")
       ;;
