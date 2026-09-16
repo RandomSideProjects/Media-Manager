@@ -1,0 +1,24 @@
+--- a/src/cmd-torrent.ts
++++ b/src/cmd-torrent.ts
+@@ -832,7 +832,7 @@
+       const result = await deps.uploadStream(
+         session,
+         remotePath,
+-        file.sizeBytes,
++        uploadSize,
+         deps.fileChunkReader(localPath),
+         flags.private ?? false,
+         (uploaded, total, uploadRate) => {
+@@ -860,10 +860,10 @@
+       }
+ 
+       if (result.ok && result.skippedExisting) {
+-        emitFileResult(output, "disk_backed", "skipped_existing", file.path, remotePath, file.sizeBytes);
++        emitFileResult(output, "disk_backed", "skipped_existing", file.path, remotePath, uploadSize);
+         succeeded++;
+       } else if (result.ok) {
+-        emitFileResult(output, "disk_backed", "uploaded", file.path, remotePath, file.sizeBytes);
++        emitFileResult(output, "disk_backed", "uploaded", file.path, remotePath, uploadSize);
+ 
+         if (!(await runAfterCmd(flags.cmdAfterUp, afterBehavior, remotePath, localPath))) {
+           if (result.fileId) { try { await deps.api(session, "POST", `/api/files/${result.fileId}/delete`, {}); } catch { /* best-effort */ } }
