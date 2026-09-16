@@ -9,6 +9,13 @@ bundle_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 td_root="${TOODRIVE_SOURCE_ROOT:-${HOME:?HOME must be set}/.local/share/toodrive-cli}"
 source_dir="${td_root}/src"
 
+# The remote development install keeps the CLI source in ~/Documents/toodrive/cli
+# rather than the packaged ~/.local/share/toodrive-cli location.
+if [[ ! -d "$source_dir" && -d "${HOME}/Documents/toodrive/cli/src" ]]; then
+  td_root="${HOME}/Documents/toodrive/cli"
+  source_dir="${td_root}/src"
+fi
+
 if [[ ! -d "$source_dir" ]]; then
   printf 'Toodrive source directory not found; leaving td unchanged: %s\n' "$source_dir" >&2
   exit 0
@@ -33,6 +40,6 @@ apply_patch_once() {
 
 apply_patch_once "cmd-torrent.ts" "td-cmd-torrent.patch" "MP4_TEXT_SUBTITLE_CODECS"
 apply_patch_once "schema.ts" "td-schema.patch" "audioStreamCount: Type.Optional"
-apply_patch_once "upload.ts" "td-upload.patch" "const DEFAULT_CONCURRENCY = 1"
+apply_patch_once "upload.ts" "td-upload.patch" "const PIPELINE_CONCURRENCY = 1"
 
 printf 'Toodrive compatibility patches are current: %s\n' "$td_root"
