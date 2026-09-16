@@ -45,6 +45,7 @@ apply_patch_once() {
 }
 
 apply_patch_once "cmd-torrent.ts" "td-cmd-torrent.patch" "MP4_TEXT_SUBTITLE_CODECS"
+apply_patch_once "cmd-torrent.ts" "td-disk-size.patch" "let uploadSize = file.sizeBytes"
 apply_patch_once "schema.ts" "td-schema.patch" "audioStreamCount: Type.Optional"
 apply_patch_once "upload.ts" "td-upload.patch" "const PIPELINE_CONCURRENCY = 1"
 
