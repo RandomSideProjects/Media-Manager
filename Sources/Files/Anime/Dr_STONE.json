@@ -15,17 +15,33 @@
       "anilistId": 172019,
       "rootAnilistId": 105333,
       "mediaFormat": "TV"
+    },
+    {
+      "category": "Season 2",
+      "episodes": [
+        {
+          "title": "Episode 09",
+          "src": "https://toodrive.xpbliss.fyi/dl/fa8x7uzkvukceqz8nzd5z7i6/raw",
+          "fileSizeBytes": 798294231,
+          "durationSeconds": 1440,
+          "dualAudio": true
+        }
+      ],
+      "anilistId": 189117,
+      "rootAnilistId": 105333,
+      "mediaFormat": "TV"
     }
   ],
-  "LatestTime": "2026-09-17T02:39:45.561Z",
-  "totalFileSizeBytes": 798294231,
+  "LatestTime": "2026-09-17T02:50:34.772Z",
+  "totalFileSizeBytes": 1596588462,
   "anilistId": 172019,
   "rootAnilistId": 105333,
   "mediaFormat": "TV",
   "anilistIds": [
     172019,
-    105333
+    105333,
+    189117
   ],
-  "totalDurationSeconds": 1440,
-  "Image": "./Sources/Posters/Anime/Dr__STONE.webp"
+  "totalDurationSeconds": 2880,
+  "Image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx172019-3cfZbrYBmV23.jpg"
 }
