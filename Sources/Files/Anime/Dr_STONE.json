@@ -30,18 +30,34 @@
       "anilistId": 189117,
       "rootAnilistId": 105333,
       "mediaFormat": "TV"
+    },
+    {
+      "category": "Season 3",
+      "episodes": [
+        {
+          "title": "Episode 09",
+          "src": "https://toodrive.xpbliss.fyi/dl/aikoq6j7ews2izv8pv5gjlym/raw",
+          "fileSizeBytes": 798294231,
+          "durationSeconds": 1440,
+          "dualAudio": true
+        }
+      ],
+      "anilistId": 199221,
+      "rootAnilistId": 105333,
+      "mediaFormat": "TV"
     }
   ],
-  "LatestTime": "2026-09-17T02:50:34.772Z",
-  "totalFileSizeBytes": 1596588462,
+  "LatestTime": "2026-09-17T03:01:01.390Z",
+  "totalFileSizeBytes": 2394882693,
   "anilistId": 172019,
   "rootAnilistId": 105333,
   "mediaFormat": "TV",
   "anilistIds": [
     172019,
     105333,
-    189117
+    189117,
+    199221
   ],
-  "totalDurationSeconds": 2880,
-  "Image": "./Sources/Posters/Anime/Dr__STONE.webp"
+  "totalDurationSeconds": 4320,
+  "Image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx172019-3cfZbrYBmV23.jpg"
 }
