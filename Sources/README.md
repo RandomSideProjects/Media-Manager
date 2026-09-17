@@ -58,6 +58,7 @@ This directory contains all available media sources.
 - [Ranma ½ (2024)](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FRanma_1_2_2024.json)
 - [Rascal Does Not Dream Of A Bunny Girl Senpai](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FRascal_Does_Not_Dream_Of_A_Bunny_Girl_Senpai.json)
 - [Re: Zero](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FRe_Zero.json)
+- [REBORN!](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FREBORN.json)
 - [Roshidere (Alya Hides Her Feelings In Russian)](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FRoshidere.json)
 - [Science Fell in Love, So I Tried to Prove it](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FScience_Fell_in_Love%2C_So_I_Tried_to_Prove_it.json)
 - [Scum of the Brave](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FScum_of_the_Brave.json)
