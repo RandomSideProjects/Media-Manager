@@ -51,6 +51,7 @@ This directory contains all available media sources.
 - [My Tiny Senpai](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FTinySenpai.json)
 - [Nukitashi the Animation](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FNukitashi_The_Animation.json)
 - [Nyaight Of The Living Cat](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FNyaight_Of_The_Living_Cat.json)
+- [OKITSURA: Fell in Love with an Okinawan Girl, but I Just Wish I Know What She's Saying](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FOKITSURA_Fell_in_Love_with_an_Okinawan_Girl_but_I_Just_Wish_I_Know_What_Shes_Saying.json)
 - [One-Punch Man](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FOne-Punch_Man.json)
 - [Quintessential Quintuplets](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FQuintuplets.json)
 - [Ranma ½ (2024)](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FRanma_1_2_2024.json)
