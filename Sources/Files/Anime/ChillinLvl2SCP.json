@@ -6,9 +6,10 @@
       "episodes": [
         {
           "title": "Episode 1",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/ChillinLvl2SCP/1.mp4",
-          "fileSizeBytes": 107822160,
-          "durationSeconds": 1441
+          "src": "https://toodrive.xpbliss.fyi/dl/mdg9ldrw7z8qsn6pue3rrzgw/raw",
+          "fileSizeBytes": 519589065,
+          "durationSeconds": 1441,
+          "dualAudio": true
         },
         {
           "title": "Episode 2",
@@ -48,27 +49,31 @@
         },
         {
           "title": "Episode 8",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/ChillinLvl2SCP/8.mp4",
-          "fileSizeBytes": 96546156,
-          "durationSeconds": 1441
+          "src": "https://toodrive.xpbliss.fyi/dl/ktlcux8a6cst154clw0tyamw/raw",
+          "fileSizeBytes": 491125950,
+          "durationSeconds": 1441,
+          "dualAudio": true
         },
         {
           "title": "Episode 9",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/ChillinLvl2SCP/9.mp4",
-          "fileSizeBytes": 90824020,
-          "durationSeconds": 1441
+          "src": "https://toodrive.xpbliss.fyi/dl/b2f3r3hzrxqag9jh37hqvx2a/raw",
+          "fileSizeBytes": 445104440,
+          "durationSeconds": 1441,
+          "dualAudio": true
         },
         {
           "title": "Episode 10",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/ChillinLvl2SCP/10.mp4",
-          "fileSizeBytes": 94434935,
-          "durationSeconds": 1441
+          "src": "https://toodrive.xpbliss.fyi/dl/aauv98esvf3pl8hzalmeycui/raw",
+          "fileSizeBytes": 473877817,
+          "durationSeconds": 1441,
+          "dualAudio": true
         },
         {
           "title": "Episode 11",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/ChillinLvl2SCP/11.mp4",
-          "fileSizeBytes": 143640776,
-          "durationSeconds": 1441
+          "src": "https://toodrive.xpbliss.fyi/dl/r5f0ibtkwv2gyofm5sd8pe4b/raw",
+          "fileSizeBytes": 701511721,
+          "durationSeconds": 1441,
+          "dualAudio": true
         },
         {
           "title": "Episode 12",
@@ -79,8 +84,9 @@
       ]
     }
   ],
-  "LatestTime": "2025-08-15T00:45:40.890Z",
-  "totalFileSizeBytes": 1301085726,
+  "LatestTime": "2026-09-17T23:08:51.373Z",
+  "totalFileSizeBytes": 3399026672,
   "totalDurationSeconds": 17292,
-  "Image": "./Sources/Posters/Anime/Chillin'_In_A_World_With_Level_2_Super_Powers.webp"
+  "Image": "./Sources/Posters/Anime/Chillin'_In_A_World_With_Level_2_Super_Powers.webp",
+  "anilistIds": []
 }
