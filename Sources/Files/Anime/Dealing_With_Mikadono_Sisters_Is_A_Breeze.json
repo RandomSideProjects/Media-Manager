@@ -1,6 +1,6 @@
 {
   "title": "Dealing With Mikadono Sisters Is A Breeze",
-  "LatestTime": "2025-10-08T23:40:29.119Z",
+  "LatestTime": "2026-09-17T23:58:54.412Z",
   "categories": [
     {
       "category": "Season 1",
@@ -49,38 +49,44 @@
         },
         {
           "title": "Episode 8",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/Dealing_With_Mikadono_Sisters_Is_A_Breeze.json/Dealing%20With%20Mikadono%20Sisters%20Is%20A%20Breeze/S01_E08__ABS0008.mp4",
-          "fileSizeBytes": 177157146,
-          "durationSeconds": 1420
+          "src": "https://toodrive.xpbliss.fyi/dl/r7qsh4jtclkx7dnc9kh6axbd/raw",
+          "fileSizeBytes": 565779968,
+          "durationSeconds": 1420,
+          "dualAudio": true
         },
         {
           "title": "Episode 9",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/Dealing_With_Mikadono_Sisters_Is_A_Breeze.json/Dealing%20With%20Mikadono%20Sisters%20Is%20A%20Breeze/S01_E09__ABS0009.mp4",
-          "fileSizeBytes": 155164198,
-          "durationSeconds": 1420
+          "src": "https://toodrive.xpbliss.fyi/dl/afd42qxa16fnlqr6f36ikbcf/raw",
+          "fileSizeBytes": 479343387,
+          "durationSeconds": 1420,
+          "dualAudio": true
         },
         {
           "title": "Episode 10",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/Dealing_With_Mikadono_Sisters_Is_A_Breeze.json/Dealing%20With%20Mikadono%20Sisters%20Is%20A%20Breeze/S01_E10__ABS0010.mp4",
-          "fileSizeBytes": 162709351,
-          "durationSeconds": 1420
+          "src": "https://toodrive.xpbliss.fyi/dl/av1d2jp7bwlknnvo1ilimokz/raw",
+          "fileSizeBytes": 504611887,
+          "durationSeconds": 1420,
+          "dualAudio": true
         },
         {
           "title": "Episode 11",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/Dealing_With_Mikadono_Sisters_Is_A_Breeze.json/Dealing%20With%20Mikadono%20Sisters%20Is%20A%20Breeze/S01_E11__ABS0011.mp4",
-          "fileSizeBytes": 133820346,
-          "durationSeconds": 1420
+          "src": "https://toodrive.xpbliss.fyi/dl/d81pc0laaxtv70tnp6336sg0/raw",
+          "fileSizeBytes": 439374169,
+          "durationSeconds": 1420,
+          "dualAudio": true
         },
         {
           "title": "Episode 12",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/Dealing_With_Mikadono_Sisters_Is_A_Breeze.json/Dealing%20With%20Mikadono%20Sisters%20Is%20A%20Breeze/S01_E12__ABS0012.mp4",
-          "fileSizeBytes": 113246514,
-          "durationSeconds": 1420
+          "src": "https://toodrive.xpbliss.fyi/dl/gk51sugblxjpjywpv58r4gxk/raw",
+          "fileSizeBytes": 342489932,
+          "durationSeconds": 1420,
+          "dualAudio": true
         }
       ]
     }
   ],
-  "totalFileSizeBytes": 1918180857,
+  "totalFileSizeBytes": 3507682645,
   "totalDurationSeconds": 17100,
-  "Image": "./Sources/Posters/Anime/Dealing_With_Mikadono_Sisters_Is_A_Breeze.webp"
+  "Image": "./Sources/Posters/Anime/Dealing_With_Mikadono_Sisters_Is_A_Breeze.webp",
+  "anilistIds": []
 }
