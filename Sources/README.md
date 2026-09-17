@@ -64,6 +64,7 @@ This directory contains all available media sources.
 - [Shikimori's Not Just a Cutie](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FShikimori.json)
 - [So I'm a Spider, So What?](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FSo_I_M_A_Spider_So_What.json)
 - [Solo Leveling](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FSolo_Leveling.json)
+- [takt op.Destiny](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2Ftakt_opDestiny.json)
 - [The 100 Girlfriends Who Really, Really, Really, Really, Really Love You](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FThe_100_Girlfriends_Who_Really_Really_Really_Really_Really_Love_You.json)
 - [The Banished Court Magician Aims to Become the Strongest](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FThe_Banished_Court_Magician_Aims_to_Become_the_Strongest.json)
 - [The Dreaming Boy is a Realist](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FThe_Dreaming_Boy_is_a_Realist.json)
