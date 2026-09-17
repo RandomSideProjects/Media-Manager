@@ -45,10 +45,186 @@
       "anilistId": 199221,
       "rootAnilistId": 105333,
       "mediaFormat": "TV"
+    },
+    {
+      "category": "Season 1",
+      "episodes": [
+        {
+          "title": "Episode 01",
+          "src": "https://toodrive.xpbliss.fyi/dl/ifp803bbjqtae0wz4x378u8p/raw",
+          "fileSizeBytes": 631738388,
+          "durationSeconds": 1440,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 02",
+          "src": "https://toodrive.xpbliss.fyi/dl/gp2emoj9x4fdxizpbazkqrny/raw",
+          "fileSizeBytes": 736367566,
+          "durationSeconds": 1440,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 03",
+          "src": "https://toodrive.xpbliss.fyi/dl/zjcjh7j8d1562dcwbyluso1o/raw",
+          "fileSizeBytes": 675855951,
+          "durationSeconds": 1440,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 04",
+          "src": "https://toodrive.xpbliss.fyi/dl/d9cezzm636w57stcyk1y8sw6/raw",
+          "fileSizeBytes": 635673286,
+          "durationSeconds": 1440,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 05",
+          "src": "https://toodrive.xpbliss.fyi/dl/h3f35jyaw81hvxf99ukgdju7/raw",
+          "fileSizeBytes": 766968117,
+          "durationSeconds": 1440,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 06",
+          "src": "https://toodrive.xpbliss.fyi/dl/lmgn3di9otakad31auw40wm8/raw",
+          "fileSizeBytes": 632252042,
+          "durationSeconds": 1440,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 07",
+          "src": "https://toodrive.xpbliss.fyi/dl/zhd79u3lnxyomym2e9sczpam/raw",
+          "fileSizeBytes": 684242555,
+          "durationSeconds": 1440,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 08",
+          "src": "https://toodrive.xpbliss.fyi/dl/mgm5tmqn9f83js2kb8zjqtjd/raw",
+          "fileSizeBytes": 681749805,
+          "durationSeconds": 1440,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 09",
+          "src": "https://toodrive.xpbliss.fyi/dl/iu09svcc85pa5gqf4ny6wtk3/raw",
+          "fileSizeBytes": 577773622,
+          "durationSeconds": 1440,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 10",
+          "src": "https://toodrive.xpbliss.fyi/dl/er9jzj1veib6big9dsd55u23/raw",
+          "fileSizeBytes": 602042102,
+          "durationSeconds": 1440,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 11",
+          "src": "https://toodrive.xpbliss.fyi/dl/sijyefy4z0yeyq0yy8kybjir/raw",
+          "fileSizeBytes": 659434188,
+          "durationSeconds": 1440,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 12",
+          "src": "https://toodrive.xpbliss.fyi/dl/w4sdb4lpptbbues0lgdba57g/raw",
+          "fileSizeBytes": 661278824,
+          "durationSeconds": 1440,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 13",
+          "src": "https://toodrive.xpbliss.fyi/dl/r7v5qsv9rdqdyxcxkg2u83ky/raw",
+          "fileSizeBytes": 652986874,
+          "durationSeconds": 1440,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 14",
+          "src": "https://toodrive.xpbliss.fyi/dl/bxq4c3r6s0n78gr1v5ix9l99/raw",
+          "fileSizeBytes": 592256004,
+          "durationSeconds": 1440,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 15",
+          "src": "https://toodrive.xpbliss.fyi/dl/p8dczmg0z1aajv7ayquckc2h/raw",
+          "fileSizeBytes": 633428724,
+          "durationSeconds": 1440,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 16",
+          "src": "https://toodrive.xpbliss.fyi/dl/vx6jsejjpuidp1lagdaajt87/raw",
+          "fileSizeBytes": 546341476,
+          "durationSeconds": 1440,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 17",
+          "src": "https://toodrive.xpbliss.fyi/dl/qqthf7oqgnooykby9t4ufigw/raw",
+          "fileSizeBytes": 600331711,
+          "durationSeconds": 1440,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 18",
+          "src": "https://toodrive.xpbliss.fyi/dl/opn7vab98bh6gcbzfdn208va/raw",
+          "fileSizeBytes": 672996629,
+          "durationSeconds": 1440,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 19",
+          "src": "https://toodrive.xpbliss.fyi/dl/dr2vg94kpzg4ixlgyadkm6jk/raw",
+          "fileSizeBytes": 621817798,
+          "durationSeconds": 1440,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 20",
+          "src": "https://toodrive.xpbliss.fyi/dl/tunpyzlcqyw4903bwbs751dj/raw",
+          "fileSizeBytes": 615556199,
+          "durationSeconds": 1440,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 21",
+          "src": "https://toodrive.xpbliss.fyi/dl/bsygbdebnd6c4c6130q8xt63/raw",
+          "fileSizeBytes": 640675797,
+          "durationSeconds": 1440,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 22",
+          "src": "https://toodrive.xpbliss.fyi/dl/q5ebw7duy2e2rolqy9ukssb8/raw",
+          "fileSizeBytes": 578989530,
+          "durationSeconds": 1440,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 23",
+          "src": "https://toodrive.xpbliss.fyi/dl/qgxeu5znd5k2pq9ltkk0d7ak/raw",
+          "fileSizeBytes": 576469379,
+          "durationSeconds": 1440,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 24",
+          "src": "https://toodrive.xpbliss.fyi/dl/rt5ri8j22s2z5bz29aj8rdg7/raw",
+          "fileSizeBytes": 586042555,
+          "durationSeconds": 1440,
+          "dualAudio": true
+        }
+      ],
+      "anilistId": 105333,
+      "rootAnilistId": 105333,
+      "mediaFormat": "TV"
     }
   ],
-  "LatestTime": "2026-09-17T03:01:01.390Z",
-  "totalFileSizeBytes": 2394882693,
+  "LatestTime": "2026-09-17T06:21:05.220Z",
+  "totalFileSizeBytes": 17658151815,
   "anilistId": 172019,
   "rootAnilistId": 105333,
   "mediaFormat": "TV",
@@ -58,6 +234,6 @@
     189117,
     199221
   ],
-  "totalDurationSeconds": 4320,
-  "Image": "./Sources/Posters/Anime/Dr__STONE.webp"
+  "totalDurationSeconds": 38880,
+  "Image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx172019-3cfZbrYBmV23.jpg"
 }
