@@ -1,0 +1,31 @@
+{
+  "title": "Dr. STONE",
+  "categories": [
+    {
+      "category": "Season 6",
+      "episodes": [
+        {
+          "title": "Episode 09",
+          "src": "https://toodrive.xpbliss.fyi/dl/wdj5xq6wq5y9dp84c67wwldj/raw",
+          "fileSizeBytes": 798294231,
+          "durationSeconds": 1440,
+          "dualAudio": true
+        }
+      ],
+      "anilistId": 172019,
+      "rootAnilistId": 105333,
+      "mediaFormat": "TV"
+    }
+  ],
+  "LatestTime": "2026-09-17T02:39:45.561Z",
+  "totalFileSizeBytes": 798294231,
+  "anilistId": 172019,
+  "rootAnilistId": 105333,
+  "mediaFormat": "TV",
+  "anilistIds": [
+    172019,
+    105333
+  ],
+  "totalDurationSeconds": 1440,
+  "Image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx172019-3cfZbrYBmV23.jpg"
+}
