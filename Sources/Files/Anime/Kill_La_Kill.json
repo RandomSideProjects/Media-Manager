@@ -1,6 +1,6 @@
 {
   "title": "Kill la Kill",
-  "LatestTime": "2025-12-01T00:13:33.409Z",
+  "LatestTime": "2026-09-18T22:33:35.354Z",
   "categories": [
     {
       "category": "Season 1",
@@ -146,31 +146,35 @@
         },
         {
           "title": "Episode 22",
-          "src": "https://files.catbox.moe/y3865b.mp4",
-          "fileSizeBytes": 193988548,
-          "durationSeconds": 1469
+          "src": "https://toodrive.xpbliss.fyi/dl/lns8zmuh65y8p7ezslriyzej/raw",
+          "fileSizeBytes": 6132408329,
+          "durationSeconds": 1469,
+          "dualAudio": true
         },
         {
           "title": "Episode 23",
-          "src": "Sources/Files/Playlists/Kill_La_Kill_Season_1_Episode_23_23.m3u8",
-          "fileSizeBytes": 253814466,
+          "src": "https://toodrive.xpbliss.fyi/dl/jbye182usds64isnx0dq40nc/raw",
+          "fileSizeBytes": 6121012198,
           "durationSeconds": 1469,
           "progressKey": "sepitem:1ug26re",
           "isPlaceholder": true,
           "unavailableReason": "Confirmed unavailable on 2026-06-10: playlist segment 1 returns HTTP 404.",
-          "unavailableCheckedAt": "2026-06-10"
+          "unavailableCheckedAt": "2026-06-10",
+          "dualAudio": true
         },
         {
           "title": "Episode 24",
-          "src": "Sources/Files/Playlists/Kill_La_Kill_Season_1_Episode_24_24.m3u8",
-          "fileSizeBytes": 287878892,
-          "durationSeconds": 1475,
-          "progressKey": "sepitem:1uglzcs"
+          "src": "https://toodrive.xpbliss.fyi/dl/i5y57x302pbdi3ortgn1uf1c/raw",
+          "fileSizeBytes": 6101192511,
+          "durationSeconds": 1455,
+          "progressKey": "sepitem:1uglzcs",
+          "dualAudio": true
         }
       ]
     }
   ],
-  "totalFileSizeBytes": 5223177254,
-  "totalDurationSeconds": 35291,
-  "Image": "./Sources/Posters/Anime/Kill_la_Kill.webp"
+  "totalFileSizeBytes": 22842108386,
+  "totalDurationSeconds": 35271,
+  "Image": "./Sources/Posters/Anime/Kill_la_Kill.webp",
+  "anilistIds": []
 }
