@@ -1,0 +1,73 @@
+{
+  "title": "Fate/strange Fake -Whispers of Dawn-",
+  "categories": [
+    {
+      "category": "Season 2",
+      "episodes": [
+        {
+          "title": "Episode 02",
+          "src": "https://toodrive.xpbliss.fyi/dl/rsno8i3csb15dg30z2sxn2ui/raw",
+          "fileSizeBytes": 1447380166,
+          "durationSeconds": 1420,
+          "dualAudio": false
+        },
+        {
+          "title": "Episode 05",
+          "src": "https://toodrive.xpbliss.fyi/dl/uxrb7jwzg8fjfqb5d1ijnup1/raw",
+          "fileSizeBytes": 1445174845,
+          "durationSeconds": 1420,
+          "dualAudio": false
+        },
+        {
+          "title": "Episode 06",
+          "src": "https://toodrive.xpbliss.fyi/dl/pb8wfoed51xwucoebuq2h2lu/raw",
+          "fileSizeBytes": 1443347213,
+          "durationSeconds": 1420,
+          "dualAudio": false
+        },
+        {
+          "title": "Episode 07",
+          "src": "https://toodrive.xpbliss.fyi/dl/z7s34fgt6bkq5qebjyj7gr3b/raw",
+          "fileSizeBytes": 1446777081,
+          "durationSeconds": 1420,
+          "dualAudio": false
+        },
+        {
+          "title": "Episode 10",
+          "src": "https://toodrive.xpbliss.fyi/dl/howhqoc29j98e3pk5io48shi/raw",
+          "fileSizeBytes": 1449579496,
+          "durationSeconds": 1420,
+          "dualAudio": false
+        },
+        {
+          "title": "Episode 11",
+          "src": "https://toodrive.xpbliss.fyi/dl/knhuhl2t7wkcsvxu8c5l1tb9/raw",
+          "fileSizeBytes": 1450037672,
+          "durationSeconds": 1420,
+          "dualAudio": false
+        },
+        {
+          "title": "Episode 12",
+          "src": "https://toodrive.xpbliss.fyi/dl/zlgw4pg13a527e0zfsw75fo7/raw",
+          "fileSizeBytes": 1450275211,
+          "durationSeconds": 1420,
+          "dualAudio": false
+        }
+      ],
+      "anilistId": 166617,
+      "rootAnilistId": 154966,
+      "mediaFormat": "TV"
+    }
+  ],
+  "LatestTime": "2026-09-18T16:26:11.336Z",
+  "totalFileSizeBytes": 10132571684,
+  "anilistId": 166617,
+  "rootAnilistId": 154966,
+  "mediaFormat": "TV",
+  "anilistIds": [
+    166617,
+    154966
+  ],
+  "totalDurationSeconds": 9940,
+  "Image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx166617-34fpC9y47tTx.png"
+}
