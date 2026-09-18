@@ -165,68 +165,80 @@
         },
         {
           "title": "Episode 2",
-          "src": "https://files.catbox.moe/7jvu3b.mp4",
-          "fileSizeBytes": 0
+          "src": "https://toodrive.xpbliss.fyi/dl/iqij50zczzhbtysszqdxn5ot/raw",
+          "fileSizeBytes": 935321346,
+          "durationSeconds": 1497,
+          "dualAudio": true
         },
         {
           "title": "Episode 3",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/LoveIsWar/27.mp4",
-          "fileSizeBytes": 128522502,
-          "durationSeconds": 1441
+          "src": "https://toodrive.xpbliss.fyi/dl/x8e8ur0vd2210otrvmr04p2f/raw",
+          "fileSizeBytes": 703828330,
+          "durationSeconds": 1441,
+          "dualAudio": true
         },
         {
           "title": "Episode 4",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/LoveIsWar/28.mp4",
-          "fileSizeBytes": 115556511,
-          "durationSeconds": 1441
+          "src": "https://toodrive.xpbliss.fyi/dl/a5rotowgdpsjzg0sct7ya902/raw",
+          "fileSizeBytes": 656070397,
+          "durationSeconds": 1441,
+          "dualAudio": true
         },
         {
           "title": "Episode 5",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/LoveIsWar/29.mp4",
-          "fileSizeBytes": 153582473,
-          "durationSeconds": 1441
+          "src": "https://toodrive.xpbliss.fyi/dl/fh5mnbkossgzqx02eb3hbmqd/raw",
+          "fileSizeBytes": 908912103,
+          "durationSeconds": 1441,
+          "dualAudio": true
         },
         {
           "title": "Episode 6",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/LoveIsWar/30.mp4",
-          "fileSizeBytes": 134244343,
-          "durationSeconds": 1441
+          "src": "https://toodrive.xpbliss.fyi/dl/iax5qvi2i95g94a62bdi8gcs/raw",
+          "fileSizeBytes": 704225780,
+          "durationSeconds": 1441,
+          "dualAudio": true
         },
         {
           "title": "Episode 7",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/LoveIsWar/31.mp4",
-          "fileSizeBytes": 130687915,
-          "durationSeconds": 1441
+          "src": "https://toodrive.xpbliss.fyi/dl/cjwuyf0fwjfvr2j5ay6puqgr/raw",
+          "fileSizeBytes": 676336956,
+          "durationSeconds": 1441,
+          "dualAudio": true
         },
         {
           "title": "Episode 8",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/LoveIsWar/32.mp4",
-          "fileSizeBytes": 140554139,
-          "durationSeconds": 1441
+          "src": "https://toodrive.xpbliss.fyi/dl/v2dxqgrgcvupvzjhdw9a6w5h/raw",
+          "fileSizeBytes": 697149477,
+          "durationSeconds": 1441,
+          "dualAudio": true
         },
         {
           "title": "Episode 9",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/LoveIsWar/33.mp4",
-          "fileSizeBytes": 133709866,
-          "durationSeconds": 1501
+          "src": "https://toodrive.xpbliss.fyi/dl/qxscfjlp44emxeueqvaec8fp/raw",
+          "fileSizeBytes": 789549876,
+          "durationSeconds": 1501,
+          "dualAudio": true
         },
         {
           "title": "Episode 10",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/LoveIsWar/34.mp4",
-          "fileSizeBytes": 153723190,
-          "durationSeconds": 1441
+          "src": "https://toodrive.xpbliss.fyi/dl/zsoeglufz9wi5p09sswpbi12/raw",
+          "fileSizeBytes": 850112796,
+          "durationSeconds": 1441,
+          "dualAudio": true
         },
         {
           "title": "Episode 11",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/LoveIsWar/35.mp4",
-          "fileSizeBytes": 156407049,
-          "durationSeconds": 1441
+          "src": "https://toodrive.xpbliss.fyi/dl/ibm1kuxj4t4d2fu5ofdz96zp/raw",
+          "fileSizeBytes": 802800198,
+          "durationSeconds": 1441,
+          "dualAudio": true
         },
         {
           "title": "Episode 12",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/LoveIsWar/36.mp4",
-          "fileSizeBytes": 99521476,
-          "durationSeconds": 1531
+          "src": "https://toodrive.xpbliss.fyi/dl/niifrjw6ibh311duwrxb751h/raw",
+          "fileSizeBytes": 590942333,
+          "durationSeconds": 1531,
+          "dualAudio": true
         },
         {
           "title": "Episode 13",
@@ -266,7 +278,8 @@
       ]
     }
   ],
-  "LatestTime": "2025-08-22T03:48:20.383Z",
-  "totalFileSizeBytes": 4767720497,
-  "Image": "./Sources/Posters/Anime/Kaguya-Sama_Love_Is_War.webp"
+  "LatestTime": "2026-09-18T13:37:56.620Z",
+  "totalFileSizeBytes": 11736460625,
+  "Image": "./Sources/Posters/Anime/Kaguya-Sama_Love_Is_War.webp",
+  "anilistIds": []
 }
