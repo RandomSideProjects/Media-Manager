@@ -142,6 +142,12 @@
           "dualAudio": false
         },
         {
+          "title": "Episode 23",
+          "src": "https://toodrive.xpbliss.fyi/dl/dx8bq3ffd7qpjur7kp956ade/raw",
+          "fileSizeBytes": 397150180,
+          "dualAudio": false
+        },
+        {
           "title": "Episode 24",
           "src": "https://toodrive.xpbliss.fyi/dl/sqpl40y23pm6xgq0co9ueccf/raw",
           "fileSizeBytes": 313048717,
@@ -153,13 +159,13 @@
       "mediaFormat": "TV"
     }
   ],
-  "LatestTime": "2026-09-18T19:38:31.351Z",
-  "totalFileSizeBytes": 14067427558,
+  "LatestTime": "2026-09-18T19:40:37.549Z",
+  "totalFileSizeBytes": 14464577738,
   "anilistId": 187989,
   "rootAnilistId": 187989,
   "mediaFormat": "TV",
   "anilistIds": [
     187989
   ],
-  "Image": "./Sources/Posters/Anime/Scum_of_the_Brave.webp"
+  "Image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx187989-IjVYJxi0bEcr.jpg"
 }
