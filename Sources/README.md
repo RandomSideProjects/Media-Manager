@@ -29,6 +29,7 @@ This directory contains all available media sources.
 - [EX-ARM](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FEX_ARM.json)
 - [Failure Frame](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FFailure_Frame.json)
 - [Farming Life In Another World](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FFarming_Life_In_Another_World.json)
+- [Fate/strange Fake -Whispers of Dawn-](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FFatestrange_Fake_Whispers_of_Dawn.json)
 - [Frieren: Beyond Journey's End](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FFrieren.json)
 - [Gamers!](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FGamers.json)
 - [Ghost Stories](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FGhost_Stories.json)
