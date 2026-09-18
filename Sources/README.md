@@ -38,6 +38,7 @@ This directory contains all available media sources.
 - [Hazbin Hotel](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FHazbin_Hotel.json)
 - [Hokkaido Gals Are Super Adorable!](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FHokkaido!.json)
 - [Horimiya](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FHorimiya.json)
+- [I Made Friends with the Second Prettiest Girl in My Class](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FI_Made_Friends_with_the_Second_Prettiest_Girl_in_My_Class.json)
 - [I Want To Eat Your Pancreas](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FI_Want_To_Eat_Your_Pancreas.json)
 - [In Another World With My Smartphone](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FAnotherWorldSmartphone.json)
 - [Kaguya-Sama: Love Is War](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FLoveIsWar.json)
