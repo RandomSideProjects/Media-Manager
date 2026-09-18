@@ -6,9 +6,10 @@
       "episodes": [
         {
           "title": "Episode 1",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Failure_Frame/1.mp4",
-          "fileSizeBytes": 150089019,
-          "durationSeconds": 1451
+          "src": "https://toodrive.xpbliss.fyi/dl/lwx3unfcbs3g42zzdtylylos/raw",
+          "fileSizeBytes": 723057551,
+          "durationSeconds": 1455,
+          "dualAudio": true
         },
         {
           "title": "Episode 2",
@@ -18,33 +19,38 @@
         },
         {
           "title": "Episode 3",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Failure_Frame/3.mp4",
-          "fileSizeBytes": 188432518,
-          "durationSeconds": 1451
+          "src": "https://toodrive.xpbliss.fyi/dl/yephr3bgphah8m0xogskehka/raw",
+          "fileSizeBytes": 739100043,
+          "durationSeconds": 1455,
+          "dualAudio": true
         },
         {
           "title": "Episode 4",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Failure_Frame/4.mp4",
-          "fileSizeBytes": 160929620,
-          "durationSeconds": 1451
+          "src": "https://toodrive.xpbliss.fyi/dl/mqql3ak8vpkvsu78zqwe6d1i/raw",
+          "fileSizeBytes": 625627179,
+          "durationSeconds": 1455,
+          "dualAudio": true
         },
         {
           "title": "Episode 5",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Failure_Frame/5.mp4",
-          "fileSizeBytes": 169709963,
-          "durationSeconds": 1451
+          "src": "https://toodrive.xpbliss.fyi/dl/zu6k689w51l5gyv6sodp1298/raw",
+          "fileSizeBytes": 633192149,
+          "durationSeconds": 1455,
+          "dualAudio": true
         },
         {
           "title": "Episode 6",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Failure_Frame/6.mp4",
-          "fileSizeBytes": 198215742,
-          "durationSeconds": 1451
+          "src": "https://toodrive.xpbliss.fyi/dl/xgm0976y8d2hq23bfp2bd0gt/raw",
+          "fileSizeBytes": 809379919,
+          "durationSeconds": 1455,
+          "dualAudio": true
         },
         {
           "title": "Episode 7",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Failure_Frame/7.mp4",
-          "fileSizeBytes": 153602576,
-          "durationSeconds": 1451
+          "src": "https://toodrive.xpbliss.fyi/dl/ysukzbzuxnnkwu92nar97ihc/raw",
+          "fileSizeBytes": 691607891,
+          "durationSeconds": 1455,
+          "dualAudio": true
         },
         {
           "title": "Episode 8",
@@ -54,33 +60,38 @@
         },
         {
           "title": "Episode 9",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Failure_Frame/9.mp4",
-          "fileSizeBytes": 159150008,
-          "durationSeconds": 1451
+          "src": "https://toodrive.xpbliss.fyi/dl/qreh2otddj8odr4ootp03940/raw",
+          "fileSizeBytes": 783502253,
+          "durationSeconds": 1455,
+          "dualAudio": true
         },
         {
           "title": "Episode 10",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Failure_Frame/10.mp4",
-          "fileSizeBytes": 120166412,
-          "durationSeconds": 1451
+          "src": "https://toodrive.xpbliss.fyi/dl/yyob8u21nwyzdj4iyjsxb5xa/raw",
+          "fileSizeBytes": 675982500,
+          "durationSeconds": 1455,
+          "dualAudio": true
         },
         {
           "title": "Episode 11",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Failure_Frame/11.mp4",
-          "fileSizeBytes": 137480450,
-          "durationSeconds": 1451
+          "src": "https://toodrive.xpbliss.fyi/dl/ts0p3yyoy7lqeol2rbmsc5ou/raw",
+          "fileSizeBytes": 802249993,
+          "durationSeconds": 1455,
+          "dualAudio": true
         },
         {
           "title": "Episode 12",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/Failure_Frame/12.mp4",
-          "fileSizeBytes": 139253264,
-          "durationSeconds": 1436
+          "src": "https://toodrive.xpbliss.fyi/dl/tkzdaso43ugu4s8eh2dxnsy2/raw",
+          "fileSizeBytes": 635534943,
+          "durationSeconds": 1440,
+          "dualAudio": true
         }
       ]
     }
   ],
-  "LatestTime": "2025-08-15T00:33:47.052Z",
-  "totalFileSizeBytes": 1904872376,
-  "totalDurationSeconds": 17397,
-  "Image": "./Sources/Posters/Anime/Failure_Frame.webp"
+  "LatestTime": "2026-09-18T02:40:07.909Z",
+  "totalFileSizeBytes": 7447077225,
+  "totalDurationSeconds": 17437,
+  "Image": "./Sources/Posters/Anime/Failure_Frame.webp",
+  "anilistIds": []
 }
