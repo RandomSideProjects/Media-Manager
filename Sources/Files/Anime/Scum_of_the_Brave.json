@@ -102,6 +102,13 @@
           "dualAudio": false
         },
         {
+          "title": "Episode 18",
+          "src": "https://toodrive.xpbliss.fyi/dl/iaw245mjb2ti3lwtbx77xbf8/raw",
+          "fileSizeBytes": 1399710523,
+          "durationSeconds": 1370,
+          "dualAudio": false
+        },
+        {
           "title": "Episode 22",
           "src": "https://toodrive.xpbliss.fyi/dl/su21bmws72xtof4sugln1kiz/raw",
           "fileSizeBytes": 372848518,
@@ -119,8 +126,8 @@
       "mediaFormat": "TV"
     }
   ],
-  "LatestTime": "2026-09-18T19:36:08.906Z",
-  "totalFileSizeBytes": 7945891243,
+  "LatestTime": "2026-09-18T19:36:12.491Z",
+  "totalFileSizeBytes": 9345601766,
   "anilistId": 187989,
   "rootAnilistId": 187989,
   "mediaFormat": "TV",
