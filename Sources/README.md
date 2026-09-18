@@ -75,6 +75,7 @@ This directory contains all available media sources.
 - [Toradora!](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FToradora.json)
 - [Tune In to the Midnight Heart](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FTune_In_To_The_Midnight_Heart.json)
 - [Watari-kun's ****** Is About To Collapse](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FWatari_Kun_S_Is_About_To_Collapse.json)
+- [Welcome to Irabu's Office](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FWelcome_to_Irabus_Office.json)
 - [Wise Man's Grandchild](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FWise_Man_S_Grandchild.json)
 - [You And I Are Polar Opposites](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FYou_And_I_Are_Polar_Opposites.json)
 - [You are Ms. Servent (Kimi-wa Meido sama)](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FMeidoSama.json)
