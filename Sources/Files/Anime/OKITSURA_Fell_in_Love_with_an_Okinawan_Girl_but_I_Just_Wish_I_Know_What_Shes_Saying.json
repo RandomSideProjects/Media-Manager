@@ -19,6 +19,13 @@
           "dualAudio": false
         },
         {
+          "title": "Episode 03",
+          "src": "https://toodrive.xpbliss.fyi/dl/m6mpeqds2bxm8wmvri98goe1/raw",
+          "fileSizeBytes": 603035486,
+          "durationSeconds": 1422,
+          "dualAudio": false
+        },
+        {
           "title": "Episode 04",
           "src": "https://toodrive.xpbliss.fyi/dl/b1fx8gkg3zxih7php9rr3j2i/raw",
           "fileSizeBytes": 547180029,
@@ -87,14 +94,14 @@
       "mediaFormat": "TV"
     }
   ],
-  "LatestTime": "2026-09-18T18:25:03.622Z",
-  "totalFileSizeBytes": 6090769583,
+  "LatestTime": "2026-09-18T22:57:12.322Z",
+  "totalFileSizeBytes": 6693805069,
   "anilistId": 166699,
   "rootAnilistId": 166699,
   "mediaFormat": "TV",
   "anilistIds": [
     166699
   ],
-  "totalDurationSeconds": 15642,
-  "Image": "./Sources/Posters/Anime/OKITSURA_Fell_in_Love_with_an_Okinawan_Girl,_but_I_Just_Wish_I_Know_What_She's_Saying.webp"
+  "totalDurationSeconds": 17064,
+  "Image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx166699-k5hIccoA5XSW.jpg"
 }
