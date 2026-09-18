@@ -1,7 +1,7 @@
 {
   "title": "Lucky Star",
   "Image": "./Sources/Posters/Anime/Lucky_Star.webp",
-  "LatestTime": "2026-09-18T18:07:18.548Z",
+  "LatestTime": "2026-09-18T18:09:06.285Z",
   "categories": [
     {
       "category": "Season 1",
@@ -14,9 +14,10 @@
         },
         {
           "title": "Episode 02",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/Pain/anime_butitworksonsafarigodfuckingdamnitihatesafari/Lucky%20Star%20(Subbed%20%26%20Dubbed)/Lucky%20Star%20-%2002%20-%20Efforts%20and%20Results.webm",
-          "fileSizeBytes": 339469494,
-          "durationSeconds": 1422
+          "src": "https://toodrive.xpbliss.fyi/dl/op0e02hocc5amec4j32xpz4j/raw",
+          "fileSizeBytes": 1148544110,
+          "durationSeconds": 1421,
+          "dualAudio": false
         },
         {
           "title": "Episode 03",
@@ -155,7 +156,7 @@
       ]
     }
   ],
-  "totalFileSizeBytes": 10510202029,
-  "totalDurationSeconds": 34113,
+  "totalFileSizeBytes": 11319276645,
+  "totalDurationSeconds": 34112,
   "anilistIds": []
 }
