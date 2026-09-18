@@ -1,7 +1,7 @@
 {
   "title": "Ghost Stories",
   "Image": "./Sources/Posters/Anime/Ghost_Stories.webp",
-  "LatestTime": "2026-03-25T17:35:23.282Z",
+  "LatestTime": "2026-09-18T05:44:26.523Z",
   "categories": [
     {
       "category": "Season 1",
@@ -14,9 +14,10 @@
         },
         {
           "title": "Episode 2",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/Pain/anime_butitworksonsafarigodfuckingdamnitihatesafari/Ghost%20Stories_H265/%5BReza%5D%20Ghost%20Stories%20-%20S01E02.webm",
-          "fileSizeBytes": 225657649,
-          "durationSeconds": 1416
+          "src": "https://toodrive.xpbliss.fyi/dl/ep4osps4328qqszk7vr874sl/raw",
+          "fileSizeBytes": 272651649,
+          "durationSeconds": 327,
+          "dualAudio": true
         },
         {
           "title": "Episode 3",
@@ -129,6 +130,7 @@
       ]
     }
   ],
-  "totalFileSizeBytes": 4943094769,
-  "totalDurationSeconds": 28305
+  "totalFileSizeBytes": 4990088769,
+  "totalDurationSeconds": 27216,
+  "anilistIds": []
 }
