@@ -1,7 +1,7 @@
 {
   "title": "Lucky Star",
   "Image": "./Sources/Posters/Anime/Lucky_Star.webp",
-  "LatestTime": "2026-09-18T18:05:13.971Z",
+  "LatestTime": "2026-09-18T18:07:18.548Z",
   "categories": [
     {
       "category": "Season 1",
@@ -27,9 +27,10 @@
         },
         {
           "title": "Episode 04",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/Pain/anime_butitworksonsafarigodfuckingdamnitihatesafari/Lucky%20Star%20(Subbed%20%26%20Dubbed)/Lucky%20Star%20-%2004%20-%20A%20Question%20of%20Motivation.webm",
-          "fileSizeBytes": 307411037,
-          "durationSeconds": 1422
+          "src": "https://toodrive.xpbliss.fyi/dl/ourl9ii809208malj123z4co/raw",
+          "fileSizeBytes": 794111816,
+          "durationSeconds": 1421,
+          "dualAudio": false
         },
         {
           "title": "Episode 05",
@@ -154,7 +155,7 @@
       ]
     }
   ],
-  "totalFileSizeBytes": 10023501250,
-  "totalDurationSeconds": 34114,
+  "totalFileSizeBytes": 10510202029,
+  "totalDurationSeconds": 34113,
   "anilistIds": []
 }
