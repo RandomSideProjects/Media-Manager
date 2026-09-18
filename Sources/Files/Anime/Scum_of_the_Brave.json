@@ -93,6 +93,12 @@
           "src": "https://toodrive.xpbliss.fyi/dl/am9x8haxrz9bs2j7aiuaygk9/raw",
           "fileSizeBytes": 532781443,
           "dualAudio": false
+        },
+        {
+          "title": "Episode 22",
+          "src": "https://toodrive.xpbliss.fyi/dl/su21bmws72xtof4sugln1kiz/raw",
+          "fileSizeBytes": 372848518,
+          "dualAudio": false
         }
       ],
       "anilistId": 187989,
@@ -100,8 +106,8 @@
       "mediaFormat": "TV"
     }
   ],
-  "LatestTime": "2026-09-18T19:33:47.692Z",
-  "totalFileSizeBytes": 5860592866,
+  "LatestTime": "2026-09-18T19:34:07.024Z",
+  "totalFileSizeBytes": 6233441384,
   "anilistId": 187989,
   "rootAnilistId": 187989,
   "mediaFormat": "TV",
