@@ -107,57 +107,66 @@
         },
         {
           "title": "Episode 5",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/GGLR.json/GO%21%20GO%21%20LOSER%20RANGER%21/S02_E05__ABS0017.mp4",
-          "fileSizeBytes": 192540580,
-          "durationSeconds": 1438
+          "src": "https://toodrive.xpbliss.fyi/dl/mcg6bnq5t1wed13fi6bj5zef/raw",
+          "fileSizeBytes": 663166349,
+          "durationSeconds": 1438,
+          "dualAudio": true
         },
         {
           "title": "Episode 6",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/GGLR.json/GO%21%20GO%21%20LOSER%20RANGER%21/S02_E06__ABS0018.mp4",
-          "fileSizeBytes": 191610180,
-          "durationSeconds": 1438
+          "src": "https://toodrive.xpbliss.fyi/dl/d36p0a5osweh7zqtjheccby3/raw",
+          "fileSizeBytes": 686921601,
+          "durationSeconds": 1438,
+          "dualAudio": true
         },
         {
           "title": "Episode 7",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/GGLR.json/GO%21%20GO%21%20LOSER%20RANGER%21/S02_E07__ABS0019.mp4",
-          "fileSizeBytes": 193341770,
-          "durationSeconds": 1438
+          "src": "https://toodrive.xpbliss.fyi/dl/qpneuvfw9rrbte8af4ce6bq1/raw",
+          "fileSizeBytes": 696477911,
+          "durationSeconds": 1438,
+          "dualAudio": true
         },
         {
           "title": "Episode 8",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/GGLR.json/GO%21%20GO%21%20LOSER%20RANGER%21/S02_E08__ABS0020.mp4",
-          "fileSizeBytes": 193320502,
-          "durationSeconds": 1438
+          "src": "https://toodrive.xpbliss.fyi/dl/uj4d3mywovwnpp0ok4yohvdo/raw",
+          "fileSizeBytes": 620505261,
+          "durationSeconds": 1438,
+          "dualAudio": true
         },
         {
           "title": "Episode 9",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/GGLR.json/GO%21%20GO%21%20LOSER%20RANGER%21/S02_E09__ABS0021.mp4",
-          "fileSizeBytes": 192617143,
-          "durationSeconds": 1438
+          "src": "https://toodrive.xpbliss.fyi/dl/bokfmjfx7rjx4k4gows1s3fd/raw",
+          "fileSizeBytes": 725424930,
+          "durationSeconds": 1438,
+          "dualAudio": true
         },
         {
           "title": "Episode 10",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/GGLR.json/GO%21%20GO%21%20LOSER%20RANGER%21/S02_E10__ABS0022.mp4",
-          "fileSizeBytes": 192881412,
-          "durationSeconds": 1438
+          "src": "https://toodrive.xpbliss.fyi/dl/e3wsc40qsl9v48sjfve6ujlu/raw",
+          "fileSizeBytes": 834514439,
+          "durationSeconds": 1438,
+          "dualAudio": true
         },
         {
           "title": "Episode 11",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/GGLR.json/GO%21%20GO%21%20LOSER%20RANGER%21/S02_E11__ABS0023.mp4",
-          "fileSizeBytes": 191793544,
-          "durationSeconds": 1438
+          "src": "https://toodrive.xpbliss.fyi/dl/mmafxyp9ajlyo19as40k0qsp/raw",
+          "fileSizeBytes": 805241744,
+          "durationSeconds": 1438,
+          "dualAudio": true
         },
         {
           "title": "Episode 12",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/GGLR.json/GO%21%20GO%21%20LOSER%20RANGER%21/S02_E12__ABS0024.mp4",
-          "fileSizeBytes": 190094558,
-          "durationSeconds": 1423
+          "src": "https://toodrive.xpbliss.fyi/dl/u97507cvef4rvqcrhx9s2uqs/raw",
+          "fileSizeBytes": 706102955,
+          "durationSeconds": 1423,
+          "dualAudio": true
         }
       ]
     }
   ],
-  "LatestTime": "2025-09-07T05:59:36.421Z",
-  "totalFileSizeBytes": 4054815404,
+  "LatestTime": "2026-09-18T04:18:18.225Z",
+  "totalFileSizeBytes": 8254970905,
   "totalDurationSeconds": 34362,
-  "Image": "./Sources/Posters/Anime/GO!_GO!_LOSER_RANGER!.webp"
+  "Image": "./Sources/Posters/Anime/GO!_GO!_LOSER_RANGER!.webp",
+  "anilistIds": []
 }
