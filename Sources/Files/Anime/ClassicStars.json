@@ -10,6 +10,12 @@
           "fileSizeBytes": 1450562360,
           "durationSeconds": 1420,
           "dualAudio": false
+        },
+        {
+          "title": "Episode 03",
+          "src": "https://toodrive.xpbliss.fyi/dl/h44f7ycqst6sxpsuoiuc06ov/raw",
+          "fileSizeBytes": 416089585,
+          "dualAudio": false
         }
       ],
       "anilistId": 178825,
@@ -17,14 +23,13 @@
       "mediaFormat": "TV"
     }
   ],
-  "LatestTime": "2026-09-18T16:52:33.562Z",
-  "totalFileSizeBytes": 1450562360,
+  "LatestTime": "2026-09-18T21:30:48.071Z",
+  "totalFileSizeBytes": 1866651945,
   "anilistId": 178825,
   "rootAnilistId": 178825,
   "mediaFormat": "TV",
   "anilistIds": [
     178825
   ],
-  "totalDurationSeconds": 1420,
-  "Image": "./Sources/Posters/Anime/Classic★Stars.webp"
+  "Image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx178825-F4StA5BbfN9H.png"
 }
