@@ -24,6 +24,7 @@ This directory contains all available media sources.
 - [Classic★Stars](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FClassicStars.json)
 - [DanDaDan](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FDanDaDan.json)
 - [DARLING in the FRANXX](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FFranxx.json)
+- [Day Break Illusion](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FDay_Break_Illusion.json)
 - [Dealing With Mikadono Sisters Is A Breeze](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FDealing_With_Mikadono_Sisters_Is_A_Breeze.json)
 - [Domestic Girlfriend](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FDomestic_Girlfriend.json)
 - [Dr. STONE](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FDr_STONE.json)
