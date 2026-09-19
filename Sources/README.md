@@ -17,6 +17,7 @@ This directory contains all available media sources.
 - [Apothicary Diaries](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FApothicary_Diaries.json)
 - [Backrooms](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FBackrooms.json)
 - [Bloom Into You](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FBloom_Into_You.json)
+- [By the Grace of the Gods](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FBy_the_Grace_of_the_Gods.json)
 - [Call Of The Night](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FCall_Of_The_Night.json)
 - [Campfire Cooking in Another World with My Absurd Skill](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FCampfire_Cooking_In_Another_World_With_My_Absurd_Skill.json)
 - [Chillin' In A World With Level 2 Super Powers](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FChillinLvl2SCP.json)
