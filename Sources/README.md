@@ -54,6 +54,7 @@ This directory contains all available media sources.
 - [My Dress-up Darling](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FMy_Dress_Up_Darling.json)
 - [My Love Story With Yamada-kun At Lv999](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FMy%20Love%20Story%20With%20Yamada-kun%20At%20Lv999.json)
 - [My Tiny Senpai](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FTinySenpai.json)
+- [Mysterious Joker](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FMysterious_Joker.json)
 - [Nukitashi the Animation](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FNukitashi_The_Animation.json)
 - [Nyaight Of The Living Cat](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FNyaight_Of_The_Living_Cat.json)
 - [OKITSURA: Fell in Love with an Okinawan Girl, but I Just Wish I Know What She's Saying](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FOKITSURA_Fell_in_Love_with_an_Okinawan_Girl_but_I_Just_Wish_I_Know_What_Shes_Saying.json)
