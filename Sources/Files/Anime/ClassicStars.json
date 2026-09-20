@@ -30,6 +30,12 @@
           "dualAudio": false
         },
         {
+          "title": "Episode 05",
+          "src": "https://toodrive.xpbliss.fyi/dl/ywhhq4w62sxmvvycic71kkd7/raw",
+          "fileSizeBytes": 468021192,
+          "dualAudio": false
+        },
+        {
           "title": "Episode 06",
           "src": "https://toodrive.xpbliss.fyi/dl/ancgghnsewg8sivisxozrjra/raw",
           "fileSizeBytes": 450730658,
@@ -77,13 +83,13 @@
       "mediaFormat": "TV"
     }
   ],
-  "LatestTime": "2026-09-20T23:16:12.392Z",
-  "totalFileSizeBytes": 5669904381,
+  "LatestTime": "2026-09-20T23:18:41.016Z",
+  "totalFileSizeBytes": 6137925573,
   "anilistId": 178825,
   "rootAnilistId": 178825,
   "mediaFormat": "TV",
   "anilistIds": [
     178825
   ],
-  "Image": "./Sources/Posters/Anime/Classic★Stars.webp"
+  "Image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx178825-F4StA5BbfN9H.png"
 }
