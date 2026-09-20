@@ -29,6 +29,7 @@ This directory contains all available media sources.
 - [Domestic Girlfriend](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FDomestic_Girlfriend.json)
 - [Dr. STONE](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FDr_STONE.json)
 - [Easygoing Territory Defense by the Optimistic Lord](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FEasygoing_Territory_Defense_By_The_Optimistic_Lord_Production.json)
+- [Eureka Seven](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FEureka_Seven.json)
 - [EX-ARM](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FEX_ARM.json)
 - [Failure Frame](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FFailure_Frame.json)
 - [Farming Life In Another World](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FFarming_Life_In_Another_World.json)
