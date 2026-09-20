@@ -52,6 +52,12 @@
           "src": "https://toodrive.xpbliss.fyi/dl/jep310z5n6suigc7he7fa1ze/raw",
           "fileSizeBytes": 360566652,
           "dualAudio": false
+        },
+        {
+          "title": "Episode 13",
+          "src": "https://toodrive.xpbliss.fyi/dl/xf136a53awyohbns9bshmjg9/raw",
+          "fileSizeBytes": 431565828,
+          "dualAudio": false
         }
       ],
       "anilistId": 178825,
@@ -59,13 +65,13 @@
       "mediaFormat": "TV"
     }
   ],
-  "LatestTime": "2026-09-20T23:11:05.013Z",
-  "totalFileSizeBytes": 4332897726,
+  "LatestTime": "2026-09-20T23:14:37.868Z",
+  "totalFileSizeBytes": 4764463554,
   "anilistId": 178825,
   "rootAnilistId": 178825,
   "mediaFormat": "TV",
   "anilistIds": [
     178825
   ],
-  "Image": "./Sources/Posters/Anime/Classic★Stars.webp"
+  "Image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx178825-F4StA5BbfN9H.png"
 }
