@@ -1,0 +1,107 @@
+{
+  "title": "Monster",
+  "categories": [
+    {
+      "category": "Season 1",
+      "episodes": [
+        {
+          "title": "Episode 01",
+          "src": "https://toodrive.xpbliss.fyi/dl/j848dmnzswxybi4gwl7hbfi3/raw",
+          "fileSizeBytes": 550267347,
+          "durationSeconds": 1421,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 02",
+          "src": "https://toodrive.xpbliss.fyi/dl/xi78qo55uge36l6h5uz1f0z0/raw",
+          "fileSizeBytes": 627514188,
+          "durationSeconds": 1421,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 03",
+          "src": "https://toodrive.xpbliss.fyi/dl/w4v8g5sexf73u07ce5m9s00u/raw",
+          "fileSizeBytes": 614600718,
+          "durationSeconds": 1421,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 04",
+          "src": "https://toodrive.xpbliss.fyi/dl/xyooh2raypx0de7xqm5sw3nt/raw",
+          "fileSizeBytes": 572965283,
+          "durationSeconds": 1421,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 05",
+          "src": "https://toodrive.xpbliss.fyi/dl/sdska94u45999bj6qbltvq50/raw",
+          "fileSizeBytes": 579513334,
+          "durationSeconds": 1421,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 06",
+          "src": "https://toodrive.xpbliss.fyi/dl/jufoy7fpwq8nicisqjtkinf6/raw",
+          "fileSizeBytes": 668486120,
+          "durationSeconds": 1421,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 07",
+          "src": "https://toodrive.xpbliss.fyi/dl/cuztv4h2rni7fxlrhq18d6v4/raw",
+          "fileSizeBytes": 688396174,
+          "durationSeconds": 1421,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 08",
+          "src": "https://toodrive.xpbliss.fyi/dl/s68pomrxt6qmksd9l6drddrr/raw",
+          "fileSizeBytes": 633174281,
+          "durationSeconds": 1421,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 09",
+          "src": "https://toodrive.xpbliss.fyi/dl/gq5fi39rmk2vou2sw836cel4/raw",
+          "fileSizeBytes": 614853552,
+          "durationSeconds": 1421,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 10",
+          "src": "https://toodrive.xpbliss.fyi/dl/kmzv764jg6hy4z3p12ikdnaz/raw",
+          "fileSizeBytes": 615943731,
+          "durationSeconds": 1421,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 11",
+          "src": "https://toodrive.xpbliss.fyi/dl/atb0fvel33rh645lmrwbyxic/raw",
+          "fileSizeBytes": 626955897,
+          "durationSeconds": 1421,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 12",
+          "src": "https://toodrive.xpbliss.fyi/dl/ni6ctbw8v4njt0hqnyw3flrk/raw",
+          "fileSizeBytes": 538422360,
+          "durationSeconds": 1421,
+          "dualAudio": true
+        }
+      ],
+      "anilistId": 19,
+      "rootAnilistId": 19,
+      "mediaFormat": "TV"
+    }
+  ],
+  "LatestTime": "2026-09-20T22:31:42.102Z",
+  "totalFileSizeBytes": 7331092985,
+  "anilistId": 19,
+  "rootAnilistId": 19,
+  "mediaFormat": "TV",
+  "anilistIds": [
+    19
+  ],
+  "totalDurationSeconds": 17052,
+  "Image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx19-gtMC64182sm4.jpg"
+}
