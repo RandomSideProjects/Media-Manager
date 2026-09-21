@@ -1,0 +1,30 @@
+{
+  "title": "HYPNOSISMIC -Division Rap Battle- Rhyme Anima",
+  "categories": [
+    {
+      "category": "Season 1",
+      "episodes": [
+        {
+          "title": "Episode 01",
+          "src": "https://toodrive.xpbliss.fyi/dl/f639sop0pnjk4olkr4o20uj1/raw",
+          "fileSizeBytes": 1427702143,
+          "durationSeconds": 1442,
+          "dualAudio": false
+        }
+      ],
+      "anilistId": 113652,
+      "rootAnilistId": 113652,
+      "mediaFormat": "TV"
+    }
+  ],
+  "LatestTime": "2026-09-21T13:18:22.463Z",
+  "totalFileSizeBytes": 1427702143,
+  "anilistId": 113652,
+  "rootAnilistId": 113652,
+  "mediaFormat": "TV",
+  "anilistIds": [
+    113652
+  ],
+  "totalDurationSeconds": 1442,
+  "Image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx113652-EVDrKLfnuy3X.png"
+}
