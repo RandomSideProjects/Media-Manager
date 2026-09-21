@@ -19,6 +19,7 @@ This directory contains all available media sources.
 - [Angel's 3Piece!](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FAngels_3Piece.json)
 - [Apothicary Diaries](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FApothicary_Diaries.json)
 - [Backrooms](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FBackrooms.json)
+- [Beast Tamer](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FBeast_Tamer.json)
 - [Bloom Into You](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FBloom_Into_You.json)
 - [By the Grace of the Gods](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FBy_the_Grace_of_the_Gods.json)
 - [Call Of The Night](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FCall_Of_The_Night.json)
