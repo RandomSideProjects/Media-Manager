@@ -24,6 +24,7 @@ This directory contains all available media sources.
 - [Campfire Cooking in Another World with My Absurd Skill](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FCampfire_Cooking_In_Another_World_With_My_Absurd_Skill.json)
 - [Chillin' In A World With Level 2 Super Powers](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FChillinLvl2SCP.json)
 - [Classic★Stars](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FClassicStars.json)
+- [D-Frag!](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FD_Frag.json)
 - [DanDaDan](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FDanDaDan.json)
 - [DARLING in the FRANXX](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FFranxx.json)
 - [Day Break Illusion](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FDay_Break_Illusion.json)
