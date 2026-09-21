@@ -66,6 +66,7 @@ This directory contains all available media sources.
 - [OKITSURA: Fell in Love with an Okinawan Girl, but I Just Wish I Know What She's Saying](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FOKITSURA_Fell_in_Love_with_an_Okinawan_Girl_but_I_Just_Wish_I_Know_What_Shes_Saying.json)
 - [One-Punch Man](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FOne-Punch_Man.json)
 - [Possibly the Greatest Alchemist of All Time](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FPossibly_the_Greatest_Alchemist_of_All_Time.json)
+- [Quality Assurance in Another World](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FQuality_Assurance_in_Another_World.json)
 - [Quintessential Quintuplets](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FQuintuplets.json)
 - [Ranma ½ (2024)](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FRanma_1_2_2024.json)
 - [Rascal Does Not Dream Of A Bunny Girl Senpai](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FRascal_Does_Not_Dream_Of_A_Bunny_Girl_Senpai.json)
