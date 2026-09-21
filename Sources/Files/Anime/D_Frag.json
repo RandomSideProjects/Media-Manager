@@ -1,0 +1,107 @@
+{
+  "title": "D-Frag!",
+  "categories": [
+    {
+      "category": "Season 1",
+      "episodes": [
+        {
+          "title": "Episode 01",
+          "src": "https://toodrive.xpbliss.fyi/dl/ovbdk0k9o410kgnndizvw0ea/raw",
+          "fileSizeBytes": 4908177286,
+          "durationSeconds": 1432,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 02",
+          "src": "https://toodrive.xpbliss.fyi/dl/iepc1o0twmm62l3nar485maa/raw",
+          "fileSizeBytes": 4302839184,
+          "durationSeconds": 1431,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 03",
+          "src": "https://toodrive.xpbliss.fyi/dl/godoi69aq9655diswyhezlq3/raw",
+          "fileSizeBytes": 4473343787,
+          "durationSeconds": 1432,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 04",
+          "src": "https://toodrive.xpbliss.fyi/dl/m7gjdsqqs5slofh19cu1vts3/raw",
+          "fileSizeBytes": 4731917107,
+          "durationSeconds": 1431,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 05",
+          "src": "https://toodrive.xpbliss.fyi/dl/zlrugqui58b69bancdwaswop/raw",
+          "fileSizeBytes": 4519774920,
+          "durationSeconds": 1432,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 06",
+          "src": "https://toodrive.xpbliss.fyi/dl/dn2nhpv01ia6zc6neu2dbqzh/raw",
+          "fileSizeBytes": 4688915975,
+          "durationSeconds": 1431,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 07",
+          "src": "https://toodrive.xpbliss.fyi/dl/ytiy5w40uoyhdvh6894pmac8/raw",
+          "fileSizeBytes": 4804991085,
+          "durationSeconds": 1432,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 08",
+          "src": "https://toodrive.xpbliss.fyi/dl/ald7ti1dp87xgf01v9zidmed/raw",
+          "fileSizeBytes": 4406074811,
+          "durationSeconds": 1431,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 09",
+          "src": "https://toodrive.xpbliss.fyi/dl/hmxk3a3zoyfg6r64u8jg2a3f/raw",
+          "fileSizeBytes": 4768070395,
+          "durationSeconds": 1432,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 10",
+          "src": "https://toodrive.xpbliss.fyi/dl/du9sjo76hz04ldc4yojmesds/raw",
+          "fileSizeBytes": 4938075092,
+          "durationSeconds": 1431,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 11",
+          "src": "https://toodrive.xpbliss.fyi/dl/mfx5lheer1v63imugapqnb66/raw",
+          "fileSizeBytes": 5157883205,
+          "durationSeconds": 1432,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 12",
+          "src": "https://toodrive.xpbliss.fyi/dl/e6h2h3ejrihnx5l04seujub4/raw",
+          "fileSizeBytes": 4742336869,
+          "durationSeconds": 1431,
+          "dualAudio": true
+        }
+      ],
+      "anilistId": 20031,
+      "rootAnilistId": 20031,
+      "mediaFormat": "TV"
+    }
+  ],
+  "LatestTime": "2026-09-21T06:25:40.161Z",
+  "totalFileSizeBytes": 56442399716,
+  "anilistId": 20031,
+  "rootAnilistId": 20031,
+  "mediaFormat": "TV",
+  "anilistIds": [
+    20031
+  ],
+  "totalDurationSeconds": 17178,
+  "Image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx20031-WOR6bly9HOr1.jpg"
+}
