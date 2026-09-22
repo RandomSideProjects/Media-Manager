@@ -19,6 +19,7 @@ This directory contains all available media sources.
 - [And You Thought There Is Never A Girl Online?](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FNeverThoughtGirlOnline.json)
 - [Angel's 3Piece!](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FAngels_3Piece.json)
 - [Apothicary Diaries](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FApothicary_Diaries.json)
+- [Asobi Asobase - workshop of fun -](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FAsobi_Asobase_workshop_of_fun.json)
 - [Backrooms](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FBackrooms.json)
 - [Beast Tamer](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FBeast_Tamer.json)
 - [Bloom Into You](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FBloom_Into_You.json)
