@@ -52,6 +52,7 @@ This directory contains all available media sources.
 - [I Want To Eat Your Pancreas](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FI_Want_To_Eat_Your_Pancreas.json)
 - [In Another World With My Smartphone](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FAnotherWorldSmartphone.json)
 - [Kaguya-Sama: Love Is War](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FLoveIsWar.json)
+- [Kämpfer](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FKampfer.json)
 - [Kill la Kill](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FKill_La_Kill.json)
 - [KONOSUBA](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FKonosuba_God_S_Blessing_On_This_Wonderful_World.json)
 - [Love Flops](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FLove_Flops.json)
