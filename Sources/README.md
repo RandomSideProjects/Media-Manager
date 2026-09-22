@@ -34,6 +34,7 @@ This directory contains all available media sources.
 - [Dealing With Mikadono Sisters Is A Breeze](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FDealing_With_Mikadono_Sisters_Is_A_Breeze.json)
 - [Domestic Girlfriend](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FDomestic_Girlfriend.json)
 - [Dr. STONE](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FDr_STONE.json)
+- [Dropkick on My Devil!](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FDropkick_on_My_Devil.json)
 - [Easygoing Territory Defense by the Optimistic Lord](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FEasygoing_Territory_Defense_By_The_Optimistic_Lord_Production.json)
 - [Eureka Seven](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FEureka_Seven.json)
 - [EX-ARM](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FEX_ARM.json)
