@@ -1,0 +1,114 @@
+{
+  "title": "Tower of God",
+  "categories": [
+    {
+      "category": "Season 1",
+      "episodes": [
+        {
+          "title": "Episode 01",
+          "src": "https://toodrive.xpbliss.fyi/dl/jkbc7f0v1da15p42yo1ry9no/raw",
+          "fileSizeBytes": 674156759,
+          "durationSeconds": 1511,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 02",
+          "src": "https://toodrive.xpbliss.fyi/dl/dxzwnta7egtoe2ywvl7ohl3z/raw",
+          "fileSizeBytes": 665262388,
+          "durationSeconds": 1421,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 03",
+          "src": "https://toodrive.xpbliss.fyi/dl/veypv2nvh918x4nqaax7b8bp/raw",
+          "fileSizeBytes": 450526810,
+          "durationSeconds": 1421,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 04",
+          "src": "https://toodrive.xpbliss.fyi/dl/rmdtxyht6w5yz4jbn0z9rn2s/raw",
+          "fileSizeBytes": 550418399,
+          "durationSeconds": 1421,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 05",
+          "src": "https://toodrive.xpbliss.fyi/dl/cog629l5q6sqn2gzkmqgof4l/raw",
+          "fileSizeBytes": 572090009,
+          "durationSeconds": 1421,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 06",
+          "src": "https://toodrive.xpbliss.fyi/dl/p6nn057m2eqsgq5j7n7cwvz5/raw",
+          "fileSizeBytes": 444671129,
+          "durationSeconds": 1420,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 07",
+          "src": "https://toodrive.xpbliss.fyi/dl/x792zj9nn6ehcg4ci2c7dblk/raw",
+          "fileSizeBytes": 516516596,
+          "durationSeconds": 1421,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 08",
+          "src": "https://toodrive.xpbliss.fyi/dl/n40ctd2i3q8lxabfh9pybqfr/raw",
+          "fileSizeBytes": 438969573,
+          "durationSeconds": 1421,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 09",
+          "src": "https://toodrive.xpbliss.fyi/dl/ymmyefacvye21argn23u9908/raw",
+          "fileSizeBytes": 446745905,
+          "durationSeconds": 1421,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 10",
+          "src": "https://toodrive.xpbliss.fyi/dl/e8fkpttmsuv57gjavwa04xhu/raw",
+          "fileSizeBytes": 421892198,
+          "durationSeconds": 1421,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 11",
+          "src": "https://toodrive.xpbliss.fyi/dl/v965nxr5fp98qult6odwc0b1/raw",
+          "fileSizeBytes": 483486046,
+          "durationSeconds": 1421,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 12",
+          "src": "https://toodrive.xpbliss.fyi/dl/fd9gsszkqz704wpymb2l939b/raw",
+          "fileSizeBytes": 545035923,
+          "durationSeconds": 1421,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 13",
+          "src": "https://toodrive.xpbliss.fyi/dl/ppa3x4hpclnv9yxv5r8kpzwl/raw",
+          "fileSizeBytes": 490431920,
+          "durationSeconds": 1421,
+          "dualAudio": true
+        }
+      ],
+      "anilistId": 115230,
+      "rootAnilistId": 115230,
+      "mediaFormat": "TV"
+    }
+  ],
+  "LatestTime": "2026-09-23T10:20:26.078Z",
+  "totalFileSizeBytes": 6700203655,
+  "anilistId": 115230,
+  "rootAnilistId": 115230,
+  "mediaFormat": "TV",
+  "anilistIds": [
+    115230
+  ],
+  "totalDurationSeconds": 18562,
+  "Image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx115230-QHOdSN7yt8ab.jpg"
+}
