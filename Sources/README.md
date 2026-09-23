@@ -67,6 +67,7 @@ This directory contains all available media sources.
 - [My Deer Friend Nokotan](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FMy_Deer_Friend_Nokotan.json)
 - [My Dress-up Darling](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FMy_Dress_Up_Darling.json)
 - [My Love Story With Yamada-kun At Lv999](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FMy%20Love%20Story%20With%20Yamada-kun%20At%20Lv999.json)
+- [My Next Life as a Villainess: All Routes Lead to Doom!](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FMy_Next_Life_as_a_Villainess_All_Routes_Lead_to_Doom.json)
 - [My Tiny Senpai](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FTinySenpai.json)
 - [Mysterious Joker](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FMysterious_Joker.json)
 - [Nukitashi the Animation](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FNukitashi_The_Animation.json)
