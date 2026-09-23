@@ -92,6 +92,7 @@ This directory contains all available media sources.
 - [Tanaka-kun is Always Listless](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FTanaka_kun_is_Always_Listless.json)
 - [The 100 Girlfriends Who Really, Really, Really, Really, Really Love You](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FThe_100_Girlfriends_Who_Really_Really_Really_Really_Really_Love_You.json)
 - [The Banished Court Magician Aims to Become the Strongest](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FThe_Banished_Court_Magician_Aims_to_Become_the_Strongest.json)
+- [The Café Terrace and Its Goddesses](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FThe_Cafe_Terrace_and_Its_Goddesses.json)
 - [The Dreaming Boy is a Realist](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FThe_Dreaming_Boy_is_a_Realist.json)
 - [The Ice Guy and His Cool Female Colleague](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FIceGuy.json)
 - [The Shiunji Family Children](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FShiunji_Children.json)
