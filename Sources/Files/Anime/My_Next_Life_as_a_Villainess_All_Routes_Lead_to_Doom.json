@@ -92,16 +92,109 @@
       "anilistId": 104647,
       "rootAnilistId": 104647,
       "mediaFormat": "TV"
+    },
+    {
+      "category": "Season 2",
+      "episodes": [
+        {
+          "title": "Episode 01",
+          "src": "https://toodrive.xpbliss.fyi/dl/tesmtw4vv3797zgsqr62ea3i/raw",
+          "fileSizeBytes": 417391176,
+          "durationSeconds": 1415,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 02",
+          "src": "https://toodrive.xpbliss.fyi/dl/k7nzyjrex0ds2no7d5udma1r/raw",
+          "fileSizeBytes": 485867831,
+          "durationSeconds": 1415,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 03",
+          "src": "https://toodrive.xpbliss.fyi/dl/mpf4eosdw32appth3duznu9u/raw",
+          "fileSizeBytes": 349854485,
+          "durationSeconds": 1415,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 04",
+          "src": "https://toodrive.xpbliss.fyi/dl/lstedodxzw0q83iifqpv0tih/raw",
+          "fileSizeBytes": 457078588,
+          "durationSeconds": 1415,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 05",
+          "src": "https://toodrive.xpbliss.fyi/dl/bur2usql7ywhd20i7d2ah5ld/raw",
+          "fileSizeBytes": 444828062,
+          "durationSeconds": 1415,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 06",
+          "src": "https://toodrive.xpbliss.fyi/dl/im59ferviqm5d1jl3lq0keiz/raw",
+          "fileSizeBytes": 540019368,
+          "durationSeconds": 1415,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 07",
+          "src": "https://toodrive.xpbliss.fyi/dl/zi2gie6lavf9xltgsnp1c8ri/raw",
+          "fileSizeBytes": 516468358,
+          "durationSeconds": 1415,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 08",
+          "src": "https://toodrive.xpbliss.fyi/dl/pnrdqbqv94pl51jpw4rdlehm/raw",
+          "fileSizeBytes": 409975934,
+          "durationSeconds": 1400,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 09",
+          "src": "https://toodrive.xpbliss.fyi/dl/dtnrtzwooq974q20ruqxbk2n/raw",
+          "fileSizeBytes": 402615887,
+          "durationSeconds": 1400,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 10",
+          "src": "https://toodrive.xpbliss.fyi/dl/afuor2kfgc1es0buuvy4ncp6/raw",
+          "fileSizeBytes": 449048282,
+          "durationSeconds": 1400,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 11",
+          "src": "https://toodrive.xpbliss.fyi/dl/gj9w6njpzexnt2urc0ggsqp4/raw",
+          "fileSizeBytes": 541108549,
+          "durationSeconds": 1400,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 12",
+          "src": "https://toodrive.xpbliss.fyi/dl/s3y29687iql02n3x3ema4rb5/raw",
+          "fileSizeBytes": 398321405,
+          "durationSeconds": 1400,
+          "dualAudio": true
+        }
+      ],
+      "anilistId": 120209,
+      "rootAnilistId": 104647,
+      "mediaFormat": "TV"
     }
   ],
-  "LatestTime": "2026-09-23T15:32:09.557Z",
-  "totalFileSizeBytes": 5749703752,
+  "LatestTime": "2026-09-23T17:42:16.020Z",
+  "totalFileSizeBytes": 11162281677,
   "anilistId": 104647,
   "rootAnilistId": 104647,
   "mediaFormat": "TV",
   "anilistIds": [
-    104647
+    104647,
+    120209
   ],
-  "totalDurationSeconds": 17110,
-  "Image": "./Sources/Posters/Anime/My_Next_Life_as_a_Villainess_All_Routes_Lead_to_Doom!.webp"
+  "totalDurationSeconds": 34015,
+  "Image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx104647-dMGZSavRxHcM.jpg"
 }
