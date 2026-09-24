@@ -1,0 +1,107 @@
+{
+  "title": "Welcome to the Outcast's Restaurant!",
+  "categories": [
+    {
+      "category": "Season 1",
+      "episodes": [
+        {
+          "title": "Episode 01",
+          "src": "https://toodrive.xpbliss.fyi/dl/nquk53gic46fhibgvtuezn6t/raw",
+          "fileSizeBytes": 500951938,
+          "durationSeconds": 1420,
+          "dualAudio": false
+        },
+        {
+          "title": "Episode 02",
+          "src": "https://toodrive.xpbliss.fyi/dl/iotyus0txqonhsobnnniypc8/raw",
+          "fileSizeBytes": 447189610,
+          "durationSeconds": 1420,
+          "dualAudio": false
+        },
+        {
+          "title": "Episode 03",
+          "src": "https://toodrive.xpbliss.fyi/dl/ce743wydql8ajty4odbbfina/raw",
+          "fileSizeBytes": 502015606,
+          "durationSeconds": 1420,
+          "dualAudio": false
+        },
+        {
+          "title": "Episode 04",
+          "src": "https://toodrive.xpbliss.fyi/dl/x2l2uy5ookl1nyzm1mwd7ivx/raw",
+          "fileSizeBytes": 470762834,
+          "durationSeconds": 1420,
+          "dualAudio": false
+        },
+        {
+          "title": "Episode 05",
+          "src": "https://toodrive.xpbliss.fyi/dl/z0c0ykf7ftw0zgotgicap8g2/raw",
+          "fileSizeBytes": 520885685,
+          "durationSeconds": 1420,
+          "dualAudio": false
+        },
+        {
+          "title": "Episode 06",
+          "src": "https://toodrive.xpbliss.fyi/dl/wmozcu3epsr0tf5oru88kjof/raw",
+          "fileSizeBytes": 482732906,
+          "durationSeconds": 1420,
+          "dualAudio": false
+        },
+        {
+          "title": "Episode 07",
+          "src": "https://toodrive.xpbliss.fyi/dl/e1p6ti2qf0dtrqn6n5ziedz4/raw",
+          "fileSizeBytes": 485934083,
+          "durationSeconds": 1420,
+          "dualAudio": false
+        },
+        {
+          "title": "Episode 08",
+          "src": "https://toodrive.xpbliss.fyi/dl/bppjrumeftrm3ordfvn98tp8/raw",
+          "fileSizeBytes": 425338011,
+          "durationSeconds": 1420,
+          "dualAudio": false
+        },
+        {
+          "title": "Episode 09",
+          "src": "https://toodrive.xpbliss.fyi/dl/m6jk2igeiovsiq0z07mfdqi7/raw",
+          "fileSizeBytes": 436037794,
+          "durationSeconds": 1420,
+          "dualAudio": false
+        },
+        {
+          "title": "Episode 10",
+          "src": "https://toodrive.xpbliss.fyi/dl/ke2ifc110gl0821ry7fmk3rm/raw",
+          "fileSizeBytes": 473811581,
+          "durationSeconds": 1420,
+          "dualAudio": false
+        },
+        {
+          "title": "Episode 11",
+          "src": "https://toodrive.xpbliss.fyi/dl/pizw191v6h7qqgn1hqplar0z/raw",
+          "fileSizeBytes": 558172451,
+          "durationSeconds": 1420,
+          "dualAudio": false
+        },
+        {
+          "title": "Episode 12",
+          "src": "https://toodrive.xpbliss.fyi/dl/kyqg0c89ddg0fr6s40ea8zf9/raw",
+          "fileSizeBytes": 557547827,
+          "durationSeconds": 1420,
+          "dualAudio": false
+        }
+      ],
+      "anilistId": 185544,
+      "rootAnilistId": 185544,
+      "mediaFormat": "TV"
+    }
+  ],
+  "LatestTime": "2026-09-24T17:18:05.797Z",
+  "totalFileSizeBytes": 5861380326,
+  "anilistId": 185544,
+  "rootAnilistId": 185544,
+  "mediaFormat": "TV",
+  "anilistIds": [
+    185544
+  ],
+  "totalDurationSeconds": 17040,
+  "Image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx185544-V9XoC8yJ906f.jpg"
+}
