@@ -49,6 +49,7 @@ This directory contains all available media sources.
 - [Ghost Stories](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FGhost_Stories.json)
 - [GO! GO! LOSER RANGER!](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FGGLR.json)
 - [Hazbin Hotel](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FHazbin_Hotel.json)
+- [Hell’s Paradise](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FHells_Paradise.json)
 - [Hokkaido Gals Are Super Adorable!](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FHokkaido!.json)
 - [Horimiya](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FHorimiya.json)
 - [HYPNOSISMIC -Division Rap Battle- Rhyme Anima](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FHYPNOSISMIC_Division_Rap_Battle_Rhyme_Anima.json)
