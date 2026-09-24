@@ -47,6 +47,7 @@ This directory contains all available media sources.
 - [Frieren: Beyond Journey's End](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FFrieren.json)
 - [Gamers!](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FGamers.json)
 - [Ghost Stories](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FGhost_Stories.json)
+- [Gintama](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FGintama.json)
 - [GO! GO! LOSER RANGER!](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FGGLR.json)
 - [Hazbin Hotel](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FHazbin_Hotel.json)
 - [Hell’s Paradise](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FHells_Paradise.json)
