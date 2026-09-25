@@ -92,10 +92,102 @@
       "anilistId": 135102,
       "rootAnilistId": 115740,
       "mediaFormat": "TV"
+    },
+    {
+      "category": "Season 1",
+      "episodes": [
+        {
+          "title": "Episode 01",
+          "src": "https://toodrive.xpbliss.fyi/dl/ggn5yt8qm78s6p64ofent25r/raw",
+          "fileSizeBytes": 505767009,
+          "durationSeconds": 1421,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 02",
+          "src": "https://toodrive.xpbliss.fyi/dl/em2nqkbkio9uzzthpt3ycbcd/raw",
+          "fileSizeBytes": 537281235,
+          "durationSeconds": 1421,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 03",
+          "src": "https://toodrive.xpbliss.fyi/dl/hwbuqffpc0db938c39gukkft/raw",
+          "fileSizeBytes": 473855247,
+          "durationSeconds": 1421,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 04",
+          "src": "https://toodrive.xpbliss.fyi/dl/iyc61au2amun6a1qdvre1uxp/raw",
+          "fileSizeBytes": 523687110,
+          "durationSeconds": 1421,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 05",
+          "src": "https://toodrive.xpbliss.fyi/dl/y2e7wd03yvpgqrv2xc7uxo5s/raw",
+          "fileSizeBytes": 524990836,
+          "durationSeconds": 1421,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 06",
+          "src": "https://toodrive.xpbliss.fyi/dl/fyuyki88sr9tthskjukcbcbg/raw",
+          "fileSizeBytes": 536049295,
+          "durationSeconds": 1421,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 07",
+          "src": "https://toodrive.xpbliss.fyi/dl/ejhg3v1xiyfc85gw9vpmpta1/raw",
+          "fileSizeBytes": 487679189,
+          "durationSeconds": 1421,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 08",
+          "src": "https://toodrive.xpbliss.fyi/dl/gd8mdoi10loals932hdlnim0/raw",
+          "fileSizeBytes": 432153453,
+          "durationSeconds": 1421,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 09",
+          "src": "https://toodrive.xpbliss.fyi/dl/tqk6ddojgfdzafj4rkbew4p9/raw",
+          "fileSizeBytes": 448229832,
+          "durationSeconds": 1421,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 10",
+          "src": "https://toodrive.xpbliss.fyi/dl/pwbmg3dlio8hqw7tmo1jktsj/raw",
+          "fileSizeBytes": 454280231,
+          "durationSeconds": 1421,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 11",
+          "src": "https://toodrive.xpbliss.fyi/dl/plr333qyih4zwxmj2g07wncj/raw",
+          "fileSizeBytes": 526333225,
+          "durationSeconds": 1421,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 12",
+          "src": "https://toodrive.xpbliss.fyi/dl/m1pq26mvmwbnj70bq1s0vn3s/raw",
+          "fileSizeBytes": 468057954,
+          "durationSeconds": 1421,
+          "dualAudio": true
+        }
+      ],
+      "anilistId": 115740,
+      "rootAnilistId": 115740,
+      "mediaFormat": "TV"
     }
   ],
-  "LatestTime": "2026-09-19T17:42:50.891Z",
-  "totalFileSizeBytes": 4319207545,
+  "LatestTime": "2026-09-25T15:10:29.872Z",
+  "totalFileSizeBytes": 10237572161,
   "anilistId": 135102,
   "rootAnilistId": 115740,
   "mediaFormat": "TV",
@@ -103,6 +195,6 @@
     135102,
     115740
   ],
-  "totalDurationSeconds": 17064,
-  "Image": "./Sources/Posters/Anime/By_the_Grace_of_the_Gods.webp"
+  "totalDurationSeconds": 34116,
+  "Image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx135102-3vX6Rs8e8oHU.jpg"
 }
