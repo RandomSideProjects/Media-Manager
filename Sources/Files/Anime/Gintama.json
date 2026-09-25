@@ -1070,10 +1070,102 @@
       "anilistId": 9969,
       "rootAnilistId": 918,
       "mediaFormat": "TV"
+    },
+    {
+      "category": "Season 1",
+      "episodes": [
+        {
+          "title": "Episode 01",
+          "src": "https://toodrive.xpbliss.fyi/dl/w29tse0pdjgcfiuupo4hkltc/raw",
+          "fileSizeBytes": 589069759,
+          "durationSeconds": 1451,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 02",
+          "src": "https://toodrive.xpbliss.fyi/dl/ym5g4cu7lkzbcckrz25lzlu6/raw",
+          "fileSizeBytes": 425068453,
+          "durationSeconds": 1449,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 03",
+          "src": "https://toodrive.xpbliss.fyi/dl/owr8hwn5lwemkn0q95vctlln/raw",
+          "fileSizeBytes": 479035514,
+          "durationSeconds": 1450,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 04",
+          "src": "https://toodrive.xpbliss.fyi/dl/q1bqlxemiq41k1chgeuybx8e/raw",
+          "fileSizeBytes": 506816147,
+          "durationSeconds": 1451,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 05",
+          "src": "https://toodrive.xpbliss.fyi/dl/d226s2uy1zhmg8faf0fdcnqd/raw",
+          "fileSizeBytes": 634089847,
+          "durationSeconds": 1451,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 06",
+          "src": "https://toodrive.xpbliss.fyi/dl/qvwec873dw29px2kjw421f09/raw",
+          "fileSizeBytes": 502617779,
+          "durationSeconds": 1451,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 07",
+          "src": "https://toodrive.xpbliss.fyi/dl/tjmnsrcb4n38vjnpivv7of5q/raw",
+          "fileSizeBytes": 662093149,
+          "durationSeconds": 1451,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 08",
+          "src": "https://toodrive.xpbliss.fyi/dl/dc7icvd8b7odqn1wqpx7h5lg/raw",
+          "fileSizeBytes": 527767364,
+          "durationSeconds": 1450,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 09",
+          "src": "https://toodrive.xpbliss.fyi/dl/dkcdqmwqj0dt3mwr2mkpviqm/raw",
+          "fileSizeBytes": 505383404,
+          "durationSeconds": 1460,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 10",
+          "src": "https://toodrive.xpbliss.fyi/dl/a0omq9syx3g9ykvrugtkolnn/raw",
+          "fileSizeBytes": 509442635,
+          "durationSeconds": 1460,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 11",
+          "src": "https://toodrive.xpbliss.fyi/dl/lh6xam9fv10wyj4odqwcg5gb/raw",
+          "fileSizeBytes": 504997080,
+          "durationSeconds": 1460,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 12",
+          "src": "https://toodrive.xpbliss.fyi/dl/rt0jo5cvq5ez3yepp6uhrzud/raw",
+          "fileSizeBytes": 569129757,
+          "durationSeconds": 1450,
+          "dualAudio": true
+        }
+      ],
+      "anilistId": 918,
+      "rootAnilistId": 918,
+      "mediaFormat": "TV"
     }
   ],
-  "LatestTime": "2026-09-25T11:33:22.781Z",
-  "totalFileSizeBytes": 354915400500,
+  "LatestTime": "2026-09-25T13:18:51.858Z",
+  "totalFileSizeBytes": 361330911388,
   "anilistId": 101925,
   "rootAnilistId": 918,
   "mediaFormat": "TV",
@@ -1087,5 +1179,5 @@
     15417,
     9969
   ],
-  "Image": "./Sources/Posters/Anime/Gintama.webp"
+  "Image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx101925-gcA84dgcSj2w.png"
 }
