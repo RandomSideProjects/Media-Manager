@@ -82,6 +82,7 @@ This directory contains all available media sources.
 - [Nyaight Of The Living Cat](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FNyaight_Of_The_Living_Cat.json)
 - [OKITSURA: Fell in Love with an Okinawan Girl, but I Just Wish I Know What She's Saying](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FOKITSURA_Fell_in_Love_with_an_Okinawan_Girl_but_I_Just_Wish_I_Know_What_Shes_Saying.json)
 - [One-Punch Man](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FOne-Punch_Man.json)
+- [Otoboku: Maidens are Falling for Me](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FOtoboku_Maidens_are_Falling_for_Me.json)
 - [Possibly the Greatest Alchemist of All Time](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FPossibly_the_Greatest_Alchemist_of_All_Time.json)
 - [Quality Assurance in Another World](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FQuality_Assurance_in_Another_World.json)
 - [Quintessential Quintuplets](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FQuintuplets.json)
