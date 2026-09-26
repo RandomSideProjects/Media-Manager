@@ -1,0 +1,107 @@
+{
+  "title": "Mobile Suit Gundam GQuuuuuuX",
+  "categories": [
+    {
+      "category": "Season 1",
+      "episodes": [
+        {
+          "title": "Episode 01",
+          "src": "https://toodrive.xpbliss.fyi/dl/pqjc2296et0pt8vabhxxwk4a/raw",
+          "fileSizeBytes": 6658581454,
+          "durationSeconds": 1472,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 02",
+          "src": "https://toodrive.xpbliss.fyi/dl/p84qqai3ek7t2xuk2xfbcewi/raw",
+          "fileSizeBytes": 6668098051,
+          "durationSeconds": 1472,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 03",
+          "src": "https://toodrive.xpbliss.fyi/dl/qrur76imss5i5z4m1ewsc5tk/raw",
+          "fileSizeBytes": 6664485047,
+          "durationSeconds": 1472,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 04",
+          "src": "https://toodrive.xpbliss.fyi/dl/xhw2zy8frdf5l9f8datar2bd/raw",
+          "fileSizeBytes": 6678624275,
+          "durationSeconds": 1472,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 05",
+          "src": "https://toodrive.xpbliss.fyi/dl/jiemsd5530s0xhidots6qm42/raw",
+          "fileSizeBytes": 6702344376,
+          "durationSeconds": 1472,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 06",
+          "src": "https://toodrive.xpbliss.fyi/dl/ewwecf0hrll7me7tcigd1qxp/raw",
+          "fileSizeBytes": 6671518436,
+          "durationSeconds": 1472,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 07",
+          "src": "https://toodrive.xpbliss.fyi/dl/hhm7t3yoogonxcd84o8c4qgi/raw",
+          "fileSizeBytes": 6699266089,
+          "durationSeconds": 1472,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 08",
+          "src": "https://toodrive.xpbliss.fyi/dl/pfy8qkgy2ktx4jo5fjtjusbx/raw",
+          "fileSizeBytes": 6732699925,
+          "durationSeconds": 1492,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 09",
+          "src": "https://toodrive.xpbliss.fyi/dl/eymmq8twffk7762y7d6zwwra/raw",
+          "fileSizeBytes": 6721366488,
+          "durationSeconds": 1472,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 10",
+          "src": "https://toodrive.xpbliss.fyi/dl/u0a81utzn401nr9i1woepbl4/raw",
+          "fileSizeBytes": 6681495529,
+          "durationSeconds": 1472,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 11",
+          "src": "https://toodrive.xpbliss.fyi/dl/fdwv2ga7i0vw4u545s1ymo4e/raw",
+          "fileSizeBytes": 6403207712,
+          "durationSeconds": 1472,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 12",
+          "src": "https://toodrive.xpbliss.fyi/dl/ndehj8ufeowi4f5xwwow66zw/raw",
+          "fileSizeBytes": 7148852076,
+          "durationSeconds": 1708,
+          "dualAudio": true
+        }
+      ],
+      "anilistId": 185213,
+      "rootAnilistId": 185213,
+      "mediaFormat": "TV"
+    }
+  ],
+  "LatestTime": "2026-09-26T13:59:29.848Z",
+  "totalFileSizeBytes": 80430539458,
+  "anilistId": 185213,
+  "rootAnilistId": 185213,
+  "mediaFormat": "TV",
+  "anilistIds": [
+    185213
+  ],
+  "totalDurationSeconds": 17920,
+  "Image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx185213-RKQN0qxKlqd6.jpg"
+}
