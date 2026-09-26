@@ -1,0 +1,107 @@
+{
+  "title": "BOCCHI THE ROCK!",
+  "categories": [
+    {
+      "category": "Season 1",
+      "episodes": [
+        {
+          "title": "Episode 01",
+          "src": "https://toodrive.xpbliss.fyi/dl/xk9g4unzmmhhj7iiap3pzxg8/raw",
+          "fileSizeBytes": 338404893,
+          "durationSeconds": 1421,
+          "dualAudio": false
+        },
+        {
+          "title": "Episode 02",
+          "src": "https://toodrive.xpbliss.fyi/dl/qsrzgb0z0w5fnzlqa3tu07lr/raw",
+          "fileSizeBytes": 332413633,
+          "durationSeconds": 1429,
+          "dualAudio": false
+        },
+        {
+          "title": "Episode 03",
+          "src": "https://toodrive.xpbliss.fyi/dl/gpkz34iaatk0647nyjhn4s14/raw",
+          "fileSizeBytes": 418908174,
+          "durationSeconds": 1421,
+          "dualAudio": false
+        },
+        {
+          "title": "Episode 04",
+          "src": "https://toodrive.xpbliss.fyi/dl/csiq1w3fexlis1v1j12wg7qb/raw",
+          "fileSizeBytes": 362508608,
+          "durationSeconds": 1429,
+          "dualAudio": false
+        },
+        {
+          "title": "Episode 05",
+          "src": "https://toodrive.xpbliss.fyi/dl/k1f74i2ba471q2zw7xuxev4d/raw",
+          "fileSizeBytes": 346996520,
+          "durationSeconds": 1421,
+          "dualAudio": false
+        },
+        {
+          "title": "Episode 06",
+          "src": "https://toodrive.xpbliss.fyi/dl/x1xvvly00d02eyup2whx75j9/raw",
+          "fileSizeBytes": 348263205,
+          "durationSeconds": 1429,
+          "dualAudio": false
+        },
+        {
+          "title": "Episode 07",
+          "src": "https://toodrive.xpbliss.fyi/dl/fdfzxsfnrurc8t1zkhy7kmt6/raw",
+          "fileSizeBytes": 370718123,
+          "durationSeconds": 1421,
+          "dualAudio": false
+        },
+        {
+          "title": "Episode 08",
+          "src": "https://toodrive.xpbliss.fyi/dl/a61zkd2zeq0tmodohd7cfs1y/raw",
+          "fileSizeBytes": 408721714,
+          "durationSeconds": 1429,
+          "dualAudio": false
+        },
+        {
+          "title": "Episode 09",
+          "src": "https://toodrive.xpbliss.fyi/dl/pyjgze3kiqy07do5vqwke1m0/raw",
+          "fileSizeBytes": 396728592,
+          "durationSeconds": 1421,
+          "dualAudio": false
+        },
+        {
+          "title": "Episode 10",
+          "src": "https://toodrive.xpbliss.fyi/dl/psnihdlbyjdo1033fixi36ut/raw",
+          "fileSizeBytes": 341844188,
+          "durationSeconds": 1429,
+          "dualAudio": false
+        },
+        {
+          "title": "Episode 11",
+          "src": "https://toodrive.xpbliss.fyi/dl/xwypla2jal2e9m1dgd7lcisy/raw",
+          "fileSizeBytes": 358123688,
+          "durationSeconds": 1421,
+          "dualAudio": false
+        },
+        {
+          "title": "Episode 12",
+          "src": "https://toodrive.xpbliss.fyi/dl/hfe7ec1euztc0atb6xvlh14i/raw",
+          "fileSizeBytes": 337858842,
+          "durationSeconds": 1429,
+          "dualAudio": false
+        }
+      ],
+      "anilistId": 130003,
+      "rootAnilistId": 130003,
+      "mediaFormat": "TV"
+    }
+  ],
+  "LatestTime": "2026-09-26T16:49:02.868Z",
+  "totalFileSizeBytes": 4361490180,
+  "anilistId": 130003,
+  "rootAnilistId": 130003,
+  "mediaFormat": "TV",
+  "anilistIds": [
+    130003
+  ],
+  "totalDurationSeconds": 17100,
+  "Image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx130003-HTDmeL4RGeJ4.png"
+}
