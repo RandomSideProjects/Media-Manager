@@ -1,0 +1,100 @@
+{
+  "title": "given",
+  "categories": [
+    {
+      "category": "Season 1",
+      "episodes": [
+        {
+          "title": "Episode 01",
+          "src": "https://toodrive.xpbliss.fyi/dl/odyomxvgwnoa4mpdkv42hgjl/raw",
+          "fileSizeBytes": 424295205,
+          "durationSeconds": 1372,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 02",
+          "src": "https://toodrive.xpbliss.fyi/dl/qeh42daq0cf7b1gvm562t1sz/raw",
+          "fileSizeBytes": 369143617,
+          "durationSeconds": 1372,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 03",
+          "src": "https://toodrive.xpbliss.fyi/dl/n0ahuvk1dnst6aabuxliqckp/raw",
+          "fileSizeBytes": 371929176,
+          "durationSeconds": 1372,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 04",
+          "src": "https://toodrive.xpbliss.fyi/dl/moi6se44be3xbezpwkqj14tp/raw",
+          "fileSizeBytes": 400837586,
+          "durationSeconds": 1372,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 05",
+          "src": "https://toodrive.xpbliss.fyi/dl/dmcpnyce1qlu1zlu8337hgnf/raw",
+          "fileSizeBytes": 364968541,
+          "durationSeconds": 1372,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 06",
+          "src": "https://toodrive.xpbliss.fyi/dl/sy0j92d99eveupjm56cm897d/raw",
+          "fileSizeBytes": 358711171,
+          "durationSeconds": 1372,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 07",
+          "src": "https://toodrive.xpbliss.fyi/dl/hjif4c440km304jhcg0zy33e/raw",
+          "fileSizeBytes": 349756594,
+          "durationSeconds": 1372,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 08",
+          "src": "https://toodrive.xpbliss.fyi/dl/nya35wqg81bs0c5xyws0fysh/raw",
+          "fileSizeBytes": 351840610,
+          "durationSeconds": 1372,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 09",
+          "src": "https://toodrive.xpbliss.fyi/dl/vm6wit2bci8ae71052707uf5/raw",
+          "fileSizeBytes": 390650502,
+          "durationSeconds": 1372,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 10",
+          "src": "https://toodrive.xpbliss.fyi/dl/b17j5ea0n1tfqgkfsarthpq3/raw",
+          "fileSizeBytes": 397438626,
+          "durationSeconds": 1372,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 11",
+          "src": "https://toodrive.xpbliss.fyi/dl/dz9d6mpsgjnnpouhyveybpyk/raw",
+          "fileSizeBytes": 407985214,
+          "durationSeconds": 1372,
+          "dualAudio": true
+        }
+      ],
+      "anilistId": 108430,
+      "rootAnilistId": 108430,
+      "mediaFormat": "TV"
+    }
+  ],
+  "LatestTime": "2026-09-26T23:48:16.523Z",
+  "totalFileSizeBytes": 4187556842,
+  "anilistId": 108430,
+  "rootAnilistId": 108430,
+  "mediaFormat": "TV",
+  "anilistIds": [
+    108430
+  ],
+  "totalDurationSeconds": 15092,
+  "Image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx108430-UdruJPro4vDK.jpg"
+}
