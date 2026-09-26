@@ -1,0 +1,107 @@
+{
+  "title": "Black Summoner",
+  "categories": [
+    {
+      "category": "Season 1",
+      "episodes": [
+        {
+          "title": "Episode 01",
+          "src": "https://toodrive.xpbliss.fyi/dl/eu4v3prjfzgy0s9pxd3t5rhy/raw",
+          "fileSizeBytes": 1487266931,
+          "durationSeconds": 1420,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 02",
+          "src": "https://toodrive.xpbliss.fyi/dl/p6w9xwwxdmblkp88o6gble9j/raw",
+          "fileSizeBytes": 1488632439,
+          "durationSeconds": 1420,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 03",
+          "src": "https://toodrive.xpbliss.fyi/dl/p138m3el2ujwbuwvvgv7mi5j/raw",
+          "fileSizeBytes": 1488952834,
+          "durationSeconds": 1420,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 04",
+          "src": "https://toodrive.xpbliss.fyi/dl/pdbdojb8q7lz6io8sz3tie15/raw",
+          "fileSizeBytes": 1487055030,
+          "durationSeconds": 1420,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 05",
+          "src": "https://toodrive.xpbliss.fyi/dl/xh8zdp86ijtzvjyobt92tgt0/raw",
+          "fileSizeBytes": 1488950748,
+          "durationSeconds": 1420,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 06",
+          "src": "https://toodrive.xpbliss.fyi/dl/j35lox2i5yi76jc5jhhfm4x2/raw",
+          "fileSizeBytes": 1489975393,
+          "durationSeconds": 1420,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 07",
+          "src": "https://toodrive.xpbliss.fyi/dl/q80jpk4mtk7e94r4zruxijn5/raw",
+          "fileSizeBytes": 1488658131,
+          "durationSeconds": 1420,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 08",
+          "src": "https://toodrive.xpbliss.fyi/dl/z0o29rxm7x74ddcnjll5va2k/raw",
+          "fileSizeBytes": 1490702001,
+          "durationSeconds": 1420,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 09",
+          "src": "https://toodrive.xpbliss.fyi/dl/a978oyst9za06182gzrf6hrf/raw",
+          "fileSizeBytes": 1486901792,
+          "durationSeconds": 1420,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 10",
+          "src": "https://toodrive.xpbliss.fyi/dl/itxtvmtrgv4g9xuo2sgtklsq/raw",
+          "fileSizeBytes": 1486699667,
+          "durationSeconds": 1420,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 11",
+          "src": "https://toodrive.xpbliss.fyi/dl/anlx6yt713jsic21bjz84uoc/raw",
+          "fileSizeBytes": 1488435831,
+          "durationSeconds": 1420,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 12",
+          "src": "https://toodrive.xpbliss.fyi/dl/khj20h8nigx3h0ke5602j16c/raw",
+          "fileSizeBytes": 1484794212,
+          "durationSeconds": 1420,
+          "dualAudio": true
+        }
+      ],
+      "anilistId": 145260,
+      "rootAnilistId": 145260,
+      "mediaFormat": "TV"
+    }
+  ],
+  "LatestTime": "2026-09-26T11:46:12.975Z",
+  "totalFileSizeBytes": 17857025009,
+  "anilistId": 145260,
+  "rootAnilistId": 145260,
+  "mediaFormat": "TV",
+  "anilistIds": [
+    145260
+  ],
+  "totalDurationSeconds": 17040,
+  "Image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx145260-Yt5W8aQQKqF2.jpg"
+}
