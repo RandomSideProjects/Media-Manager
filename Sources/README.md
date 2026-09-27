@@ -98,6 +98,7 @@ This directory contains all available media sources.
 - [Re: Zero](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FRe_Zero.json)
 - [Reborn as a Vending Machine, I Now Wander the Dungeon](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FReborn_as_a_Vending_Machine_I_Now_Wander_the_Dungeon.json)
 - [REBORN!](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FREBORN.json)
+- [Renkin San-kyuu Magical? Pokaan](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FRenkin_San_kyuu_Magical_Pokaan.json)
 - [Rock is a Lady’s Modesty](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FRock_is_a_Ladys_Modesty.json)
 - [Roshidere (Alya Hides Her Feelings In Russian)](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FRoshidere.json)
 - [Science Fell in Love, So I Tried to Prove it](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FScience_Fell_in_Love%2C_So_I_Tried_to_Prove_it.json)
