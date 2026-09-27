@@ -21,6 +21,7 @@ This directory contains all available media sources.
 - [An Adventurer’s Daily Grind at Age 29](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FAn_Adventurers_Daily_Grind_at_Age_29.json)
 - [And You Thought There Is Never A Girl Online?](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FNeverThoughtGirlOnline.json)
 - [Angel's 3Piece!](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FAngels_3Piece.json)
+- [Anonymous Noise](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FAnonymous_Noise.json)
 - [Apothicary Diaries](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FApothicary_Diaries.json)
 - [Asobi Asobase - workshop of fun -](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FAsobi_Asobase_workshop_of_fun.json)
 - [Backrooms](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FBackrooms.json)
