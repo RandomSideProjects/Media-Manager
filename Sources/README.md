@@ -59,6 +59,7 @@ This directory contains all available media sources.
 - [Hell’s Paradise](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FHells_Paradise.json)
 - [Hokkaido Gals Are Super Adorable!](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FHokkaido!.json)
 - [Horimiya](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FHorimiya.json)
+- [Hunter x Hunter (2011)](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FHunter_x_Hunter_2011.json)
 - [HYPNOSISMIC -Division Rap Battle- Rhyme Anima](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FHYPNOSISMIC_Division_Rap_Battle_Rhyme_Anima.json)
 - [I Made Friends with the Second Prettiest Girl in My Class](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FI_Made_Friends_with_the_Second_Prettiest_Girl_in_My_Class.json)
 - [I Parry Everything](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FI_Parry_Everything.json)
