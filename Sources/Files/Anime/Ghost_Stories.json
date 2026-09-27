@@ -1,7 +1,7 @@
 {
   "title": "Ghost Stories",
   "Image": "./Sources/Posters/Anime/Ghost_Stories.webp",
-  "LatestTime": "2026-09-26T00:30:21.889Z",
+  "LatestTime": "2026-09-27T00:32:36.529Z",
   "categories": [
     {
       "category": "Season 1",
@@ -15,8 +15,8 @@
         },
         {
           "title": "Episode 2",
-          "src": "https://toodrive.xpbliss.fyi/dl/l60ioruxbpg7d1fpksxkoob1/raw",
-          "fileSizeBytes": 272651633,
+          "src": "https://toodrive.xpbliss.fyi/dl/muqsrvs5hx05fv85em2a39iv/raw",
+          "fileSizeBytes": 272651649,
           "durationSeconds": 327,
           "dualAudio": true
         },
@@ -144,7 +144,7 @@
       ]
     }
   ],
-  "totalFileSizeBytes": 7332700457,
+  "totalFileSizeBytes": 7332700473,
   "totalDurationSeconds": 27216,
   "anilistIds": []
 }
