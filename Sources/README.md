@@ -56,6 +56,7 @@ This directory contains all available media sources.
 - [Gintama](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FGintama.json)
 - [given](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2Fgiven.json)
 - [GO! GO! LOSER RANGER!](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FGGLR.json)
+- [HANEBADO!](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FHANEBADO.json)
 - [Hazbin Hotel](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FHazbin_Hotel.json)
 - [Hell’s Paradise](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FHells_Paradise.json)
 - [Hokkaido Gals Are Super Adorable!](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FHokkaido!.json)
