@@ -129,6 +129,7 @@ This directory contains all available media sources.
 - [Welcome to the Outcast's Restaurant!](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FWelcome_to_the_Outcasts_Restaurant.json)
 - [When They Cry](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FWhen_They_Cry.json)
 - [Wise Man's Grandchild](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FWise_Man_S_Grandchild.json)
+- [Wistoria: Wand and Sword](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FWistoria_Wand_and_Sword.json)
 - [YATAGARASU: The Raven Does Not Choose Its Master](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FYATAGARASU_The_Raven_Does_Not_Choose_Its_Master.json)
 - [You And I Are Polar Opposites](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FYou_And_I_Are_Polar_Opposites.json)
 - [You are Ms. Servent (Kimi-wa Meido sama)](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FMeidoSama.json)
