@@ -41,6 +41,7 @@ This directory contains all available media sources.
 - [DARLING in the FRANXX](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FFranxx.json)
 - [Day Break Illusion](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FDay_Break_Illusion.json)
 - [Dealing With Mikadono Sisters Is A Breeze](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FDealing_With_Mikadono_Sisters_Is_A_Breeze.json)
+- [Demon Slayer: Kimetsu no Yaiba](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FDemon_Slayer_Kimetsu_no_Yaiba.json)
 - [Domestic Girlfriend](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FDomestic_Girlfriend.json)
 - [Dr. STONE](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FDr_STONE.json)
 - [Dropkick on My Devil!](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FDropkick_on_My_Devil.json)
