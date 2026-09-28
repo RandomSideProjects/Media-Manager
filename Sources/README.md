@@ -81,6 +81,7 @@ This directory contains all available media sources.
 - [Makine: Too Many Losing Heroines](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FMakine_Too_Many_Losing_Heroines.json)
 - [Maoyu: Archenemy & Hero](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FMaoyu_Archenemy_Hero.json)
 - [MARRIAGETOXIN](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FMARRIAGETOXIN.json)
+- [Mecha Ude: Mechanical Arms](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FMecha_Ude_Mechanical_Arms.json)
 - [Mobile Suit Gundam GQuuuuuuX](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FMobile_Suit_Gundam_GQuuuuuuX.json)
 - [Monster](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FMonster.json)
 - [More Than a Married Couple, But Not Lovers](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FMarriedNotLovers.json)
