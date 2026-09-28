@@ -1,0 +1,114 @@
+{
+  "title": "HANEBADO!",
+  "categories": [
+    {
+      "category": "Season 1",
+      "episodes": [
+        {
+          "title": "Episode 01",
+          "src": "https://toodrive.xpbliss.fyi/dl/q85bn1gct34njizx3oggj1t5/raw",
+          "fileSizeBytes": 419222751,
+          "durationSeconds": 1441,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 02",
+          "src": "https://toodrive.xpbliss.fyi/dl/zl9c941xheqm0pniz9mahxmp/raw",
+          "fileSizeBytes": 411294515,
+          "durationSeconds": 1441,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 03",
+          "src": "https://toodrive.xpbliss.fyi/dl/fd9nq1kr7y84jbix4pq1w49p/raw",
+          "fileSizeBytes": 340815785,
+          "durationSeconds": 1442,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 04",
+          "src": "https://toodrive.xpbliss.fyi/dl/l5ox0q5vje9zy3hv4q25qpu4/raw",
+          "fileSizeBytes": 406854294,
+          "durationSeconds": 1441,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 05",
+          "src": "https://toodrive.xpbliss.fyi/dl/kh2finiix9tbti4p83gx8sb3/raw",
+          "fileSizeBytes": 437460310,
+          "durationSeconds": 1442,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 06",
+          "src": "https://toodrive.xpbliss.fyi/dl/chcu0pkapgqdowjhzxpyuoz4/raw",
+          "fileSizeBytes": 414023069,
+          "durationSeconds": 1441,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 07",
+          "src": "https://toodrive.xpbliss.fyi/dl/hkiff1g78kmy6c8u3oeqdnzo/raw",
+          "fileSizeBytes": 438768923,
+          "durationSeconds": 1442,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 08",
+          "src": "https://toodrive.xpbliss.fyi/dl/jhjay5w3tgov44lw4i0ed6c5/raw",
+          "fileSizeBytes": 375698123,
+          "durationSeconds": 1441,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 09",
+          "src": "https://toodrive.xpbliss.fyi/dl/n2geb7m5fdt9nsot56iam456/raw",
+          "fileSizeBytes": 388910069,
+          "durationSeconds": 1442,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 10",
+          "src": "https://toodrive.xpbliss.fyi/dl/n9px90oyukaccubskcarab73/raw",
+          "fileSizeBytes": 319461591,
+          "durationSeconds": 1441,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 11",
+          "src": "https://toodrive.xpbliss.fyi/dl/sz9rc6y8i9m4f5b2zld3wskq/raw",
+          "fileSizeBytes": 349001237,
+          "durationSeconds": 1442,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 12",
+          "src": "https://toodrive.xpbliss.fyi/dl/og6mdtbpijc9vi5fv9kzyxk2/raw",
+          "fileSizeBytes": 482325882,
+          "durationSeconds": 1441,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 13",
+          "src": "https://toodrive.xpbliss.fyi/dl/exrwiss9bn86ln34ztk8iyu5/raw",
+          "fileSizeBytes": 481144675,
+          "durationSeconds": 1442,
+          "dualAudio": true
+        }
+      ],
+      "anilistId": 101045,
+      "rootAnilistId": 101045,
+      "mediaFormat": "TV"
+    }
+  ],
+  "LatestTime": "2026-09-28T15:34:41.298Z",
+  "totalFileSizeBytes": 5264981224,
+  "anilistId": 101045,
+  "rootAnilistId": 101045,
+  "mediaFormat": "TV",
+  "anilistIds": [
+    101045
+  ],
+  "totalDurationSeconds": 18739,
+  "Image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/nx101045-byKzyG0rZD8b.jpg"
+}
