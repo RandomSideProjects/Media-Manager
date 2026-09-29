@@ -130,6 +130,7 @@ This directory contains all available media sources.
 - [Toradora!](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FToradora.json)
 - [Tower of God](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FTower_of_God.json)
 - [TRIGUN STAMPEDE](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FTRIGUN_STAMPEDE.json)
+- [Tsukigakirei](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FTsukigakirei.json)
 - [Tune In to the Midnight Heart](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FTune_In_To_The_Midnight_Heart.json)
 - [Watari-kun's ****** Is About To Collapse](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FWatari_Kun_S_Is_About_To_Collapse.json)
 - [Welcome to Irabu's Office](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FWelcome_to_Irabus_Office.json)
