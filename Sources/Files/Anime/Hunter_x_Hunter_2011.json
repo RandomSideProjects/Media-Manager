@@ -6,14 +6,14 @@
       "episodes": [
         {
           "title": "Episode 01",
-          "src": "https://toodrive.xpbliss.fyi/dl/xpaqzyk50v7fpt5ppikm3ke0/raw",
+          "src": "https://toodrive.xpbliss.fyi/dl/kmoir6stq5umxymrxwfguhx0/raw",
           "fileSizeBytes": 591043631,
           "durationSeconds": 1415,
           "dualAudio": true
         },
         {
           "title": "Episode 02",
-          "src": "https://toodrive.xpbliss.fyi/dl/gepws2p9rofcufrufutjt3gt/raw",
+          "src": "https://toodrive.xpbliss.fyi/dl/wlhkfhqnfiajhppmoue2lfyz/raw",
           "fileSizeBytes": 474553583,
           "durationSeconds": 1415,
           "dualAudio": true
@@ -27,14 +27,14 @@
         },
         {
           "title": "Episode 04",
-          "src": "https://toodrive.xpbliss.fyi/dl/z2u4z4nl09whfzi0g4kc8c89/raw",
+          "src": "https://toodrive.xpbliss.fyi/dl/ruox69k82yhaj6r0jtowq4bz/raw",
           "fileSizeBytes": 548338183,
           "durationSeconds": 1415,
           "dualAudio": true
         },
         {
           "title": "Episode 05",
-          "src": "https://toodrive.xpbliss.fyi/dl/cibxyc465e6hcmixmd0udsn8/raw",
+          "src": "https://toodrive.xpbliss.fyi/dl/gk7xlnl5pu8gwhu86h58kguj/raw",
           "fileSizeBytes": 608200511,
           "durationSeconds": 1415,
           "dualAudio": true
@@ -48,49 +48,49 @@
         },
         {
           "title": "Episode 07",
-          "src": "https://toodrive.xpbliss.fyi/dl/kfmcpszj6j5v0rz48gk3bal0/raw",
+          "src": "https://toodrive.xpbliss.fyi/dl/hatlnqhv8jq98fbek9ejqjwf/raw",
           "fileSizeBytes": 574492222,
           "durationSeconds": 1415,
           "dualAudio": true
         },
         {
           "title": "Episode 08",
-          "src": "https://toodrive.xpbliss.fyi/dl/hgzy4stqtpy88cquf80n2ejl/raw",
+          "src": "https://toodrive.xpbliss.fyi/dl/hz74g6zayqcsxw8oo7tc2crk/raw",
           "fileSizeBytes": 509317065,
           "durationSeconds": 1415,
           "dualAudio": true
         },
         {
           "title": "Episode 09",
-          "src": "https://toodrive.xpbliss.fyi/dl/vpn6nrutjdedqnc5neknknwv/raw",
+          "src": "https://toodrive.xpbliss.fyi/dl/nev2cxogssyqynaj095a8ft1/raw",
           "fileSizeBytes": 494129882,
           "durationSeconds": 1415,
           "dualAudio": true
         },
         {
           "title": "Episode 10",
-          "src": "https://toodrive.xpbliss.fyi/dl/iii2jx8bmaz23u600glx9ws8/raw",
+          "src": "https://toodrive.xpbliss.fyi/dl/w37d2ahqh6jm7mekjfzxxrf5/raw",
           "fileSizeBytes": 489783114,
           "durationSeconds": 1415,
           "dualAudio": true
         },
         {
           "title": "Episode 11",
-          "src": "https://toodrive.xpbliss.fyi/dl/t4jv7jwoj5qxxehh4x2zpfhr/raw",
+          "src": "https://toodrive.xpbliss.fyi/dl/sfg0wlsxlx1kds5i9blgbv0a/raw",
           "fileSizeBytes": 560439007,
           "durationSeconds": 1415,
           "dualAudio": true
         },
         {
           "title": "Episode 12",
-          "src": "https://toodrive.xpbliss.fyi/dl/hui9n5ak1zfz18320ckmcipu/raw",
+          "src": "https://toodrive.xpbliss.fyi/dl/y4b6fho8so1kzlt2j1auvq97/raw",
           "fileSizeBytes": 487632289,
           "durationSeconds": 1415,
           "dualAudio": true
         },
         {
           "title": "Episode 13",
-          "src": "https://toodrive.xpbliss.fyi/dl/oexqxjtwtpa1y32vr8utse0p/raw",
+          "src": "https://toodrive.xpbliss.fyi/dl/oaf5rfgj768r2pzgcu26vq0n/raw",
           "fileSizeBytes": 459011587,
           "durationSeconds": 1415,
           "dualAudio": true
@@ -125,7 +125,7 @@
         },
         {
           "title": "Episode 18",
-          "src": "https://toodrive.xpbliss.fyi/dl/uwzk7n9aqp4rau415fy4yotd/raw",
+          "src": "https://toodrive.xpbliss.fyi/dl/sn9gqc5pq2bphhtnrnatqcp5/raw",
           "fileSizeBytes": 616337578,
           "durationSeconds": 1415,
           "dualAudio": true
@@ -311,7 +311,7 @@
       "mediaFormat": "TV"
     }
   ],
-  "LatestTime": "2026-09-28T02:11:19.298Z",
+  "LatestTime": "2026-09-29T02:42:45.107Z",
   "totalFileSizeBytes": 22585408744,
   "anilistId": 11061,
   "rootAnilistId": 11061,
@@ -320,5 +320,5 @@
     11061
   ],
   "totalDurationSeconds": 60846,
-  "Image": "./Sources/Posters/Anime/Hunter_x_Hunter_(2011).webp"
+  "Image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx11061-y5gsT1hoHuHw.png"
 }
