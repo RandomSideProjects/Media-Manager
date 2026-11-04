@@ -95,8 +95,8 @@ function probeCandidates(filePath) {
   const candidates = [normalizeToodriveUrl(raw)];
   try {
     const parsed = new URL(candidates[0]);
-    if (parsed.hostname.toLowerCase() === "uhidontkno--toodrive-serve.modal.run") {
-      parsed.hostname = "toodrive.xpbliss.fyi";
+    if (parsed.hostname.toLowerCase() === "toodrive.xpbliss.fyi") {
+      parsed.hostname = "uhidontkno--toodrive-serve.modal.run";
       candidates.push(parsed.toString());
     }
   } catch {}
