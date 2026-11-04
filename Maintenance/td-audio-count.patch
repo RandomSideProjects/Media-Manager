@@ -1,0 +1,69 @@
+--- a/src/cmd-torrent.ts
++++ b/src/cmd-torrent.ts
+@@ -851,6 +851,17 @@
+         },
+       );
+       output.finishProgress("newline");
++      // Report the verified post-hook audio count before deleting the
++      // local file; the maintenance service validates dual-audio output
++      // from this value.
++      let reportedAudioStreamCount: number | undefined;
++      if (result.ok) {
++        try {
++          reportedAudioStreamCount = await countAudioStreams(localPath);
++        } catch {
++          // Non-media files leave the count undefined.
++        }
++      }
+       torrent.setFileWanted(index, false);
+       try {
+         await deps.remove(localPath);
+@@ -859,10 +870,10 @@
+       }
+ 
+       if (result.ok && result.skippedExisting) {
+-        emitFileResult(output, "disk_backed", "skipped_existing", file.path, remotePath, uploadSize);
++        emitFileResult(output, "disk_backed", "skipped_existing", file.path, remotePath, uploadSize, reportedAudioStreamCount);
+         succeeded++;
+       } else if (result.ok) {
+-        emitFileResult(output, "disk_backed", "uploaded", file.path, remotePath, uploadSize);
++        emitFileResult(output, "disk_backed", "uploaded", file.path, remotePath, uploadSize, reportedAudioStreamCount);
+ 
+         if (!(await runAfterCmd(flags.cmdAfterUp, afterBehavior, remotePath, localPath))) {
+           if (result.fileId) { try { await deps.api(session, "POST", `/api/files/${result.fileId}/delete`, {}); } catch { /* best-effort */ } }
+@@ -909,6 +920,19 @@
+   }
+ }
+ 
++async function countAudioStreams(localPath: string): Promise<number> {
++  const proc = new Deno.Command("ffprobe", {
++    args: ["-v", "error", "-select_streams", "a", "-show_entries", "stream=index", "-of", "csv=p=0", localPath],
++    stdout: "piped",
++    stderr: "null",
++  });
++  const { code, stdout } = await proc.output();
++  if (code !== 0) throw new Error(`ffprobe exited with code ${code}`);
++  const text = new TextDecoder().decode(stdout).trim();
++  if (!text) return 0;
++  return text.split("\n").length;
++}
++
+ function emitFileResult(
+   output: CliOutput,
+   mode: TorrentMode,
+@@ -916,6 +940,7 @@
+   localPath: string,
+   remotePath: string,
+   sizeBytes: number,
++  audioStreamCount?: number,
+ ): void {
+   const event: TdOutput = {
+     schemaVersion: SCHEMA_VERSION,
+@@ -926,6 +951,7 @@
+     localPath,
+     remotePath,
+     sizeBytes,
++    audioStreamCount: Number.isInteger(audioStreamCount) && Number(audioStreamCount) >= 0 ? Number(audioStreamCount) : undefined,
+   };
+   if (outcome === "uploaded") {
+     output.emit(event, { stdout: `Uploaded ${localPath} (${formatBytes(sizeBytes)}) → ${remotePath}` });

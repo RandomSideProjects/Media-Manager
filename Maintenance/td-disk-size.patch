@@ -1,6 +1,20 @@
 --- a/src/cmd-torrent.ts
 +++ b/src/cmd-torrent.ts
-@@ -832,7 +832,7 @@
+@@ -797,8 +797,12 @@
+       }
+ 
+       const localPath = dlLocalPath;
++      // The after-dl hook may re-encode the file in place, changing its
++      // size. Upload and report the actual post-hook size, not the torrent
++      // metadata size.
++      let uploadSize = file.sizeBytes;
+       try {
+-        await deps.stat(localPath);
++        uploadSize = (await deps.stat(localPath)).size;
+       } catch (error) {
+         if (!(error instanceof Deno.errors.NotFound)) throw error;
+         const message = `Failed ${relativePath}: downloaded file missing at ${localPath}`;
+@@ -827,7 +831,7 @@
        const result = await deps.uploadStream(
          session,
          remotePath,
@@ -9,7 +23,7 @@
          deps.fileChunkReader(localPath),
          flags.private ?? false,
          (uploaded, total, uploadRate) => {
-@@ -860,10 +860,10 @@
+@@ -855,10 +859,10 @@
        }
  
        if (result.ok && result.skippedExisting) {

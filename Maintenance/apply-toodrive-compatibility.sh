@@ -44,8 +44,15 @@ apply_patch_once() {
   fi
 }
 
-apply_patch_once "cmd-torrent.ts" "td-cmd-torrent.patch" "MP4_TEXT_SUBTITLE_CODECS"
-apply_patch_once "cmd-torrent.ts" "td-disk-size.patch" "let uploadSize = file.sizeBytes"
+# The cmd-torrent patches target current td (post-download hooks via
+# after-cmd.ts). Never apply them to an older checkout: partial application
+# would leave undeclared identifiers behind.
+if grep -Fq "after-cmd.ts" "${source_dir}/cmd-torrent.ts" 2>/dev/null; then
+  apply_patch_once "cmd-torrent.ts" "td-disk-size.patch" "let uploadSize = file.sizeBytes"
+  apply_patch_once "cmd-torrent.ts" "td-audio-count.patch" "countAudioStreams"
+else
+  printf 'td checkout predates the after-cmd refactor; skipping cmd-torrent patches (update td): %s\n' "$td_root" >&2
+fi
 apply_patch_once "schema.ts" "td-schema.patch" "audioStreamCount: Type.Optional"
 apply_patch_once "upload.ts" "td-upload.patch" "const PIPELINE_CONCURRENCY = 1"
 

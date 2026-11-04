@@ -220,8 +220,8 @@ function isHttpUrl(src) {
 // Toodrive links published in older manifests use the legacy public hostname.
 // Keep the old hostname as a browser fallback, but always try the current
 // endpoint first so existing manifests do not need to be rewritten in-place.
-const TOODRIVE_PLAYER_PRIMARY_HOST = 'uhidontkno--toodrive-serve.modal.run';
-const TOODRIVE_PLAYER_BACKUP_HOST = 'toodrive.xpbliss.fyi';
+const TOODRIVE_PLAYER_PRIMARY_HOST = 'toodrive.xpbliss.fyi';
+const TOODRIVE_PLAYER_BACKUP_HOST = 'uhidontkno--toodrive-serve.modal.run';
 const TOODRIVE_PLAYER_RETIRED_HOST = 'td.alexspac.es';
 const TOODRIVE_PLAYER_LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '0.0.0.0', '[::1]']);
 
