@@ -377,6 +377,13 @@
       "category": "Season 1",
       "episodes": [
         {
+          "title": "Episode 05",
+          "src": "https://toodrive.xpbliss.fyi/dl/vax5le1lhr9ov9kjeitm9lyr/raw",
+          "fileSizeBytes": 470153488,
+          "durationSeconds": 1415,
+          "dualAudio": false
+        },
+        {
           "title": "Episode 06",
           "src": "https://toodrive.xpbliss.fyi/dl/ba8rp646j1ukfdaxc48wuara/raw",
           "fileSizeBytes": 592067442,
@@ -424,8 +431,8 @@
       "mediaFormat": "TV"
     }
   ],
-  "LatestTime": "2026-11-07T15:37:39.987Z",
-  "totalFileSizeBytes": 85635782416,
+  "LatestTime": "2026-11-07T15:39:53.895Z",
+  "totalFileSizeBytes": 86105935904,
   "anilistId": 105749,
   "rootAnilistId": 18689,
   "mediaFormat": "TV",
@@ -433,6 +440,6 @@
     105749,
     18689
   ],
-  "totalDurationSeconds": 85201,
-  "Image": "./Sources/Posters/Anime/Ace_of_the_Diamond.webp"
+  "totalDurationSeconds": 86616,
+  "Image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx105749-bbqFNGq0r6mS.jpg"
 }
