@@ -454,6 +454,13 @@
           "dualAudio": false
         },
         {
+          "title": "Episode 14",
+          "src": "https://toodrive.xpbliss.fyi/dl/pexep4wm3k5y94mtbxzuruuc/raw",
+          "fileSizeBytes": 584122885,
+          "durationSeconds": 1415,
+          "dualAudio": false
+        },
+        {
           "title": "Episode 15",
           "src": "https://toodrive.xpbliss.fyi/dl/mblbbem2lzj4tqv2t56nx3ss/raw",
           "fileSizeBytes": 564358708,
@@ -480,8 +487,8 @@
       "mediaFormat": "TV"
     }
   ],
-  "LatestTime": "2026-11-07T15:46:46.658Z",
-  "totalFileSizeBytes": 90278074887,
+  "LatestTime": "2026-11-07T15:47:06.578Z",
+  "totalFileSizeBytes": 90862197772,
   "anilistId": 105749,
   "rootAnilistId": 18689,
   "mediaFormat": "TV",
@@ -489,6 +496,6 @@
     105749,
     18689
   ],
-  "totalDurationSeconds": 96521,
-  "Image": "./Sources/Posters/Anime/Ace_of_the_Diamond.webp"
+  "totalDurationSeconds": 97936,
+  "Image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx105749-bbqFNGq0r6mS.jpg"
 }
