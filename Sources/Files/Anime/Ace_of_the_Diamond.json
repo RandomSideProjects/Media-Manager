@@ -419,6 +419,13 @@
           "dualAudio": false
         },
         {
+          "title": "Episode 07",
+          "src": "https://toodrive.xpbliss.fyi/dl/zb0flsv90szfsfetvrlar8m6/raw",
+          "fileSizeBytes": 655294634,
+          "durationSeconds": 1415,
+          "dualAudio": false
+        },
+        {
           "title": "Episode 08",
           "src": "https://toodrive.xpbliss.fyi/dl/dag51glxuu9z2ew80ptytmr4/raw",
           "fileSizeBytes": 600264457,
@@ -494,8 +501,8 @@
       "mediaFormat": "TV"
     }
   ],
-  "LatestTime": "2026-11-07T15:47:54.790Z",
-  "totalFileSizeBytes": 91479140587,
+  "LatestTime": "2026-11-07T15:47:58.297Z",
+  "totalFileSizeBytes": 92134435221,
   "anilistId": 105749,
   "rootAnilistId": 18689,
   "mediaFormat": "TV",
@@ -503,6 +510,6 @@
     105749,
     18689
   ],
-  "totalDurationSeconds": 99351,
+  "totalDurationSeconds": 100766,
   "Image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx105749-bbqFNGq0r6mS.jpg"
 }
