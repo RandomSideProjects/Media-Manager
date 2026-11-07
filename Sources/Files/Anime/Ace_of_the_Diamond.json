@@ -438,6 +438,13 @@
           "fileSizeBytes": 641585709,
           "durationSeconds": 1415,
           "dualAudio": false
+        },
+        {
+          "title": "Episode 17",
+          "src": "https://toodrive.xpbliss.fyi/dl/m02y5ji3nh7ox5u0ymcpfnn2/raw",
+          "fileSizeBytes": 647100998,
+          "durationSeconds": 1415,
+          "dualAudio": false
         }
       ],
       "anilistId": 18689,
@@ -445,8 +452,8 @@
       "mediaFormat": "TV"
     }
   ],
-  "LatestTime": "2026-11-07T15:43:35.340Z",
-  "totalFileSizeBytes": 87311880321,
+  "LatestTime": "2026-11-07T15:44:00.266Z",
+  "totalFileSizeBytes": 87958981319,
   "anilistId": 105749,
   "rootAnilistId": 18689,
   "mediaFormat": "TV",
@@ -454,6 +461,6 @@
     105749,
     18689
   ],
-  "totalDurationSeconds": 89446,
-  "Image": "./Sources/Posters/Anime/Ace_of_the_Diamond.webp"
+  "totalDurationSeconds": 90861,
+  "Image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx105749-bbqFNGq0r6mS.jpg"
 }
