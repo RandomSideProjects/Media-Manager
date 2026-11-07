@@ -403,6 +403,13 @@
           "fileSizeBytes": 1454666630,
           "durationSeconds": 1419,
           "dualAudio": false
+        },
+        {
+          "title": "Episode 13",
+          "src": "https://toodrive.xpbliss.fyi/dl/z0prcbcwdj8ubtvsdjh1i83n/raw",
+          "fileSizeBytes": 1455802816,
+          "durationSeconds": 1417,
+          "dualAudio": false
         }
       ],
       "anilistId": 18689,
@@ -410,8 +417,8 @@
       "mediaFormat": "TV"
     }
   ],
-  "LatestTime": "2026-11-07T14:53:30.073Z",
-  "totalFileSizeBytes": 83587912158,
+  "LatestTime": "2026-11-07T14:55:11.796Z",
+  "totalFileSizeBytes": 85043714974,
   "anilistId": 105749,
   "rootAnilistId": 18689,
   "mediaFormat": "TV",
@@ -419,6 +426,6 @@
     105749,
     18689
   ],
-  "totalDurationSeconds": 82369,
-  "Image": "./Sources/Posters/Anime/Ace_of_the_Diamond.webp"
+  "totalDurationSeconds": 83786,
+  "Image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx105749-bbqFNGq0r6mS.jpg"
 }
