@@ -83,81 +83,94 @@
       "episodes": [
         {
           "title": "Episode 1",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/DanDaDan/13.mp4",
-          "fileSizeBytes": 132895222,
-          "durationSeconds": 1447
+          "src": "https://toodrive.xpbliss.fyi/dl/ufp6f3yelungieumtadac483/raw",
+          "fileSizeBytes": 720365486,
+          "durationSeconds": 1448,
+          "dualAudio": true
         },
         {
           "title": "Episode 2",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/DanDaDan/14.mp4",
-          "fileSizeBytes": 125635976,
-          "durationSeconds": 1447
+          "src": "https://toodrive.xpbliss.fyi/dl/ds5ee7vrl4p0nccd5en9yr3j/raw",
+          "fileSizeBytes": 825173205,
+          "durationSeconds": 1448,
+          "dualAudio": true
         },
         {
           "title": "Episode 3",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/DanDaDan/15.mp4",
-          "fileSizeBytes": 139226734,
-          "durationSeconds": 1447
+          "src": "https://toodrive.xpbliss.fyi/dl/ylcnu3djeuc0ly8kavqep0hm/raw",
+          "fileSizeBytes": 833151920,
+          "durationSeconds": 1448,
+          "dualAudio": true
         },
         {
           "title": "Episode 4",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/DanDaDan/16.mp4",
-          "fileSizeBytes": 199541509,
-          "durationSeconds": 1447
+          "src": "https://toodrive.xpbliss.fyi/dl/iffmwih60zvpwypunhqtre90/raw",
+          "fileSizeBytes": 699104626,
+          "durationSeconds": 1448,
+          "dualAudio": true
         },
         {
           "title": "Episode 5",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/DanDaDan/17.mp4",
-          "fileSizeBytes": 113687690,
-          "durationSeconds": 1447
+          "src": "https://toodrive.xpbliss.fyi/dl/qrmzgohr92w413jxs1211ba4/raw",
+          "fileSizeBytes": 700256767,
+          "durationSeconds": 1448,
+          "dualAudio": true
         },
         {
           "title": "Episode 6",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/DanDaDan/18.mp4",
-          "fileSizeBytes": 126563320,
-          "durationSeconds": 1447
+          "src": "https://toodrive.xpbliss.fyi/dl/vbmau7r8eomhgph1iuy21gx5/raw",
+          "fileSizeBytes": 751912906,
+          "durationSeconds": 1448,
+          "dualAudio": true
         },
         {
           "title": "Episode 7",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/DanDaDan/19.mp4",
-          "fileSizeBytes": 92825585,
-          "durationSeconds": 1447
+          "src": "https://toodrive.xpbliss.fyi/dl/tonj32h195ge12d6paw86cfp/raw",
+          "fileSizeBytes": 617559649,
+          "durationSeconds": 1448,
+          "dualAudio": true
         },
         {
           "title": "Episode 8",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/4-23-26_Transfer/DanDaDan/20.mp4",
-          "fileSizeBytes": 157304960,
-          "durationSeconds": 1432
+          "src": "https://toodrive.xpbliss.fyi/dl/q53xlgnk9bmh4miufnysok81/raw",
+          "fileSizeBytes": 956141227,
+          "durationSeconds": 1432,
+          "dualAudio": true
         },
         {
           "title": "Episode 9",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/DanDaDan.json/DanDaDan/S02_E09__ABS0021.mp4",
-          "fileSizeBytes": 120120914,
-          "durationSeconds": 1432
+          "src": "https://toodrive.xpbliss.fyi/dl/a0qrdt8pvpyw4tx8qjr2q8u4/raw",
+          "fileSizeBytes": 724351429,
+          "durationSeconds": 1433,
+          "dualAudio": true
         },
         {
           "title": "Episode 10",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/DanDaDan.json/DanDaDan/S02_E10__ABS0022.mp4",
-          "fileSizeBytes": 186265612,
-          "durationSeconds": 1432
+          "src": "https://toodrive.xpbliss.fyi/dl/c99cgrs85xrafl763ypjr8ik/raw",
+          "fileSizeBytes": 659721621,
+          "durationSeconds": 1432,
+          "dualAudio": true
         },
         {
           "title": "Episode 11",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/DanDaDan.json/DanDaDan/S02_E11__ABS0023.mp4",
-          "fileSizeBytes": 159513764,
-          "durationSeconds": 1432
+          "src": "https://toodrive.xpbliss.fyi/dl/o0hyl4oagj9ps1f0mms5rik9/raw",
+          "fileSizeBytes": 935643494,
+          "durationSeconds": 1433,
+          "dualAudio": true
         },
         {
           "title": "Episode 12",
-          "src": "https://cpr.xpbliss.fyi/pub/MM/DanDaDan.json/DanDaDan/S02_E12__ABS0024.mp4",
-          "fileSizeBytes": 150659833,
-          "durationSeconds": 1417
+          "src": "https://toodrive.xpbliss.fyi/dl/a20aqy6pwvumcgci02o924du/raw",
+          "fileSizeBytes": 864066483,
+          "durationSeconds": 1417,
+          "dualAudio": true
         }
       ]
     }
   ],
-  "LatestTime": "2025-09-18T20:18:57.760Z",
-  "totalFileSizeBytes": 3369972016,
-  "totalDurationSeconds": 34428,
-  "Image": "./Sources/Posters/Anime/DanDaDan.webp"
+  "LatestTime": "2026-11-08T21:22:35.305Z",
+  "totalFileSizeBytes": 10953179710,
+  "totalDurationSeconds": 34437,
+  "Image": "./Sources/Posters/Anime/DanDaDan.webp",
+  "anilistIds": []
 }
