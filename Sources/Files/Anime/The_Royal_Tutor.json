@@ -1,0 +1,31 @@
+{
+  "title": "The Royal Tutor",
+  "categories": [
+    {
+      "category": "Movie",
+      "episodes": [
+        {
+          "title": "Movie",
+          "src": "https://toodrive.xpbliss.fyi/dl/sv60q8g6pw27677nywal23nw/raw",
+          "fileSizeBytes": 1372350864,
+          "durationSeconds": 3604,
+          "dualAudio": false
+        }
+      ],
+      "anilistId": 104286,
+      "rootAnilistId": 97932,
+      "mediaFormat": "MOVIE"
+    }
+  ],
+  "LatestTime": "2026-11-09T12:58:36.529Z",
+  "anilistId": 104286,
+  "rootAnilistId": 97932,
+  "mediaFormat": "MOVIE",
+  "anilistIds": [
+    104286,
+    97932
+  ],
+  "totalFileSizeBytes": 1372350864,
+  "totalDurationSeconds": 3604,
+  "Image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/nx104286-1PcHf85lFQYR.jpg"
+}
