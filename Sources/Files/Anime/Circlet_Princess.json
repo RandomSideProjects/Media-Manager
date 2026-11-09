@@ -1,0 +1,121 @@
+{
+  "title": "Circlet Princess",
+  "categories": [
+    {
+      "category": "Season 1",
+      "episodes": [
+        {
+          "title": "Episode 01",
+          "src": "https://toodrive.xpbliss.fyi/dl/n98x1u9emjil1ddjxwnsvvrz/raw",
+          "fileSizeBytes": 632966839,
+          "durationSeconds": 1420,
+          "dualAudio": false
+        },
+        {
+          "title": "Episode 02",
+          "src": "https://toodrive.xpbliss.fyi/dl/q53zoaq8oixp3sq4c3avxl12/raw",
+          "fileSizeBytes": 487953979,
+          "durationSeconds": 1420,
+          "dualAudio": false
+        },
+        {
+          "title": "Episode 03",
+          "src": "https://toodrive.xpbliss.fyi/dl/l3i0rrh9pwug3am4cmyik6we/raw",
+          "fileSizeBytes": 578173227,
+          "durationSeconds": 1420,
+          "dualAudio": false
+        },
+        {
+          "title": "Episode 04",
+          "src": "https://toodrive.xpbliss.fyi/dl/ycg9ue98zi5by9pvsuyizi44/raw",
+          "fileSizeBytes": 494783639,
+          "durationSeconds": 1420,
+          "dualAudio": false
+        },
+        {
+          "title": "Episode 05",
+          "src": "https://toodrive.xpbliss.fyi/dl/qv83zsskzw48pt06xrh9c9ek/raw",
+          "fileSizeBytes": 595135132,
+          "durationSeconds": 1420,
+          "dualAudio": false
+        },
+        {
+          "title": "Episode 06",
+          "src": "https://toodrive.xpbliss.fyi/dl/f3qtuj4ynwny6kii8vvmej7m/raw",
+          "fileSizeBytes": 520334657,
+          "durationSeconds": 1420,
+          "dualAudio": false
+        },
+        {
+          "title": "Episode 07",
+          "src": "https://toodrive.xpbliss.fyi/dl/wko9p4pmvspn3ywd11xm467k/raw",
+          "fileSizeBytes": 558011069,
+          "durationSeconds": 1420,
+          "dualAudio": false
+        },
+        {
+          "title": "Episode 08",
+          "src": "https://toodrive.xpbliss.fyi/dl/p8dcbgt7vjslcr94v92igfq9/raw",
+          "fileSizeBytes": 603961070,
+          "durationSeconds": 1420,
+          "dualAudio": false
+        },
+        {
+          "title": "Episode 09",
+          "src": "https://toodrive.xpbliss.fyi/dl/q180hz12ak8pcwtsrpzwx2kw/raw",
+          "fileSizeBytes": 622330364,
+          "durationSeconds": 1420,
+          "dualAudio": false
+        },
+        {
+          "title": "Episode 10",
+          "src": "https://toodrive.xpbliss.fyi/dl/pn7x4z8mrfrp2yu680sniq11/raw",
+          "fileSizeBytes": 593015091,
+          "durationSeconds": 1420,
+          "dualAudio": false
+        },
+        {
+          "title": "Episode 11",
+          "src": "https://toodrive.xpbliss.fyi/dl/oag8d91h0w0sg1e1a4bbklhw/raw",
+          "fileSizeBytes": 777050699,
+          "durationSeconds": 1420,
+          "dualAudio": false
+        },
+        {
+          "title": "Episode 12",
+          "src": "https://toodrive.xpbliss.fyi/dl/xdsivkfz7mxhzcw4bufppb7l/raw",
+          "fileSizeBytes": 642751116,
+          "durationSeconds": 1420,
+          "dualAudio": false
+        },
+        {
+          "title": "Episode 13",
+          "src": "https://toodrive.xpbliss.fyi/dl/v1131dug0ohclz4co4i7oc12/raw",
+          "fileSizeBytes": 26397469,
+          "durationSeconds": 90,
+          "dualAudio": false
+        },
+        {
+          "title": "Episode 14",
+          "src": "https://toodrive.xpbliss.fyi/dl/ew0vb422x2ap1kaaesa9pr2z/raw",
+          "fileSizeBytes": 61622473,
+          "durationSeconds": 90,
+          "dualAudio": false
+        }
+      ],
+      "anilistId": 104008,
+      "rootAnilistId": 104008,
+      "mediaFormat": "TV"
+    }
+  ],
+  "LatestTime": "2026-11-09T07:35:27.284Z",
+  "anilistId": 104008,
+  "rootAnilistId": 104008,
+  "mediaFormat": "TV",
+  "anilistIds": [
+    104008
+  ],
+  "totalFileSizeBytes": 7194486824,
+  "totalDurationSeconds": 17220,
+  "Image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/nx104008-yl9el0qWH2kx.jpg"
+}
