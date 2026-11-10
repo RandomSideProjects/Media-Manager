@@ -1,6 +1,6 @@
 {
   "title": "Re: Zero",
-  "LatestTime": "2026-08-23T02:22:19.599Z",
+  "LatestTime": "2026-11-10T12:47:53.364Z",
   "categories": [
     {
       "category": "Season 1",
@@ -420,75 +420,63 @@
         {
           "title": "Episode 01",
           "src": "https://toodrive.xpbliss.fyi/dl/kkisxvedwc9ds9gn47w5fsr1/raw",
-          "fileSizeBytes": 1478441885,
-          "durationSeconds": 1420
+          "fileSizeBytes": 1478441885
         },
         {
           "title": "Episode 02",
           "src": "https://toodrive.xpbliss.fyi/dl/w1dfmdwwld3vtiq885dul5zr/raw",
-          "fileSizeBytes": 1489828525,
-          "durationSeconds": 1420
+          "fileSizeBytes": 1489828525
         },
         {
           "title": "Episode 03",
           "src": "https://toodrive.xpbliss.fyi/dl/pljv49j6hnbzjjbnen8y6wml/raw",
-          "fileSizeBytes": 1486365807,
-          "durationSeconds": 1420
+          "fileSizeBytes": 1486365807
         },
         {
           "title": "Episode 04",
           "src": "https://toodrive.xpbliss.fyi/dl/i64i4r2msjghxicy2vi77bj8/raw",
-          "fileSizeBytes": 1485105469,
-          "durationSeconds": 1420
+          "fileSizeBytes": 1485105469
         },
         {
           "title": "Episode 05",
           "src": "https://toodrive.xpbliss.fyi/dl/p7moravsxoyzd26azgp3do4p/raw",
-          "fileSizeBytes": 1481892496,
-          "durationSeconds": 1420
+          "fileSizeBytes": 1481892496
         },
         {
           "title": "Episode 06",
           "src": "https://toodrive.xpbliss.fyi/dl/pan3g4mxc5lchb5cp7m4ueqb/raw",
-          "fileSizeBytes": 1488711506,
-          "durationSeconds": 1421
+          "fileSizeBytes": 1488711506
         },
         {
           "title": "Episode 07",
           "src": "https://toodrive.xpbliss.fyi/dl/ausyf3tu6uvw1eosf4ziop2a/raw",
-          "fileSizeBytes": 1476131033,
-          "durationSeconds": 1420
+          "fileSizeBytes": 1476131033
         },
         {
           "title": "Episode 08",
           "src": "https://toodrive.xpbliss.fyi/dl/j2nu64862ieefke4muplj80y/raw",
-          "fileSizeBytes": 1508022143,
-          "durationSeconds": 1440
+          "fileSizeBytes": 1508022143
         },
         {
           "title": "Episode 09",
           "src": "https://toodrive.xpbliss.fyi/dl/rz7ts0eyr8806t9au9dvo5pj/raw",
-          "fileSizeBytes": 1484989204,
-          "durationSeconds": 1420
+          "fileSizeBytes": 1484989204
         },
         {
           "title": "Episode 10",
           "src": "https://toodrive.xpbliss.fyi/dl/c1fvav3nizg8cp51z76le6nl/raw",
-          "fileSizeBytes": 1481737195,
-          "durationSeconds": 1420
+          "fileSizeBytes": 1481737195
         },
         {
           "title": "Episode 11",
           "src": "https://toodrive.xpbliss.fyi/dl/calbhaxpofil05eiix3r5vn7/raw",
-          "fileSizeBytes": 1535003169,
-          "durationSeconds": 1470
+          "fileSizeBytes": 1535003169
         },
         {
           "title": "Episode 12",
           "src": "https://toodrive.xpbliss.fyi/dl/w27gyydj7dvaofbs1vwwx3w4/raw",
           "fileSizeBytes": 504630327,
-          "dualAudio": false,
-          "durationSeconds": 1420
+          "dualAudio": false
         },
         {
           "title": "Episode 13",
@@ -496,12 +484,53 @@
           "fileSizeBytes": 834170242,
           "durationSeconds": 1740,
           "dualAudio": false
+        },
+        {
+          "title": "Episode 14",
+          "src": "https://toodrive.xpbliss.fyi/dl/jzndx8pm1nu4i4tjnzhqqczo/raw",
+          "fileSizeBytes": 510161816,
+          "durationSeconds": 1420,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 15",
+          "src": "https://toodrive.xpbliss.fyi/dl/tyax1iwv7oust7l9jr2p6r98/raw",
+          "fileSizeBytes": 487490120,
+          "durationSeconds": 1420,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 16",
+          "src": "https://toodrive.xpbliss.fyi/dl/fkwfjgyv8fgdaxdmawt01e8i/raw",
+          "fileSizeBytes": 610302687,
+          "durationSeconds": 1601,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 17",
+          "src": "https://toodrive.xpbliss.fyi/dl/p7jxcdy4corfwq710tgyay1p/raw",
+          "fileSizeBytes": 604252890,
+          "durationSeconds": 1470,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 18",
+          "src": "https://toodrive.xpbliss.fyi/dl/byslzutptr8r32r5g7e3mv0a/raw",
+          "fileSizeBytes": 520541539,
+          "durationSeconds": 1420,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 19",
+          "src": "https://toodrive.xpbliss.fyi/dl/xv4bb6quftizigqcaff7ou6v/raw",
+          "fileSizeBytes": 898410316,
+          "durationSeconds": 2470,
+          "dualAudio": true
         }
       ]
     }
   ],
-  "totalFileSizeBytes": 27307822037,
+  "totalFileSizeBytes": 30938981405,
   "Image": "./Sources/Posters/Anime/Re_Zero.webp",
-  "anilistIds": [],
-  "totalDurationSeconds": 127501
+  "anilistIds": []
 }
