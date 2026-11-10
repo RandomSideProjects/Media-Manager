@@ -129,6 +129,7 @@ This directory contains all available media sources.
 - [The Dreaming Boy is a Realist](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FThe_Dreaming_Boy_is_a_Realist.json)
 - [The Ice Guy and His Cool Female Colleague](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FIceGuy.json)
 - [The Idaten Deities Know Only Peace](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FThe_Idaten_Deities_Know_Only_Peace.json)
+- [The Irregular at Magic High School: Reminiscence Arc](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FThe_Irregular_at_Magic_High_School_Reminiscence_Arc.json)
 - [The Royal Tutor](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FThe_Royal_Tutor.json)
 - [The Shiunji Family Children](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FShiunji_Children.json)
 - [The Warrior Princess and the Barbaric King](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FThe_Warrior_Princess_and_the_Barbaric_King.json)
