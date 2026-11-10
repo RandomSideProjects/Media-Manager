@@ -44,6 +44,7 @@ This directory contains all available media sources.
 - [Day Break Illusion](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FDay_Break_Illusion.json)
 - [Dealing With Mikadono Sisters Is A Breeze](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FDealing_With_Mikadono_Sisters_Is_A_Breeze.json)
 - [Demon Slayer: Kimetsu no Yaiba](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FDemon_Slayer_Kimetsu_no_Yaiba.json)
+- [Didn't I Say to Make My Abilities Average in the Next Life?!](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FDidnt_I_Say_to_Make_My_Abilities_Average_in_the_Next_Life.json)
 - [Domestic Girlfriend](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FDomestic_Girlfriend.json)
 - [Dr. STONE](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FDr_STONE.json)
 - [Dropkick on My Devil!](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FDropkick_on_My_Devil.json)
