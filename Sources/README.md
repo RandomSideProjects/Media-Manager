@@ -63,6 +63,7 @@ This directory contains all available media sources.
 - [given](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2Fgiven.json)
 - [GO! GO! LOSER RANGER!](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FGGLR.json)
 - [Grandpa and Grandma Turn Young Again](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FGrandpa_and_Grandma_Turn_Young_Again.json)
+- [Gunslinger Girl](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FGunslinger_Girl.json)
 - [HANEBADO!](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FHANEBADO.json)
 - [Hazbin Hotel](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FHazbin_Hotel.json)
 - [Hell’s Paradise](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FHells_Paradise.json)
