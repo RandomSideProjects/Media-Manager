@@ -85,6 +85,7 @@ This directory contains all available media sources.
 - [Love, Chunibyo & Other Delusions](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FLove_Chunibyo_Other_Delusions.json)
 - [Lucky Star](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FLucky_Star.json)
 - [Makine: Too Many Losing Heroines](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FMakine_Too_Many_Losing_Heroines.json)
+- [Management of a Novice Alchemist](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FManagement_of_a_Novice_Alchemist.json)
 - [Maoyu: Archenemy & Hero](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FMaoyu_Archenemy_Hero.json)
 - [MARRIAGETOXIN](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FMARRIAGETOXIN.json)
 - [Mecha Ude: Mechanical Arms](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FMecha_Ude_Mechanical_Arms.json)
