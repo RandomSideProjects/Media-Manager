@@ -125,6 +125,7 @@ This directory contains all available media sources.
 - [Solo Leveling](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FSolo_Leveling.json)
 - [Star Blazers: The Quest for Iscandar](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FStar_Blazers_The_Quest_for_Iscandar.json)
 - [Strike the Blood](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FStrike_the_Blood.json)
+- [Sword of the Demon Hunter: Kijin Gentosho](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FSword_of_the_Demon_Hunter_Kijin_Gentosho.json)
 - [takt op.Destiny](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2Ftakt_opDestiny.json)
 - [Tanaka-kun is Always Listless](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FTanaka_kun_is_Always_Listless.json)
 - [The 100 Girlfriends Who Really, Really, Really, Really, Really Love You](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FThe_100_Girlfriends_Who_Really_Really_Really_Really_Really_Love_You.json)
