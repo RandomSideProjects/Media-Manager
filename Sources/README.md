@@ -89,6 +89,7 @@ This directory contains all available media sources.
 - [Management of a Novice Alchemist](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FManagement_of_a_Novice_Alchemist.json)
 - [Maoyu: Archenemy & Hero](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FMaoyu_Archenemy_Hero.json)
 - [MARRIAGETOXIN](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FMARRIAGETOXIN.json)
+- [Mazinger Z](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FMazinger_Z.json)
 - [Mecha Ude: Mechanical Arms](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FMecha_Ude_Mechanical_Arms.json)
 - [Miss Kobayashi's Dragon Maid](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FMiss_Kobayashis_Dragon_Maid.json)
 - [Mobile Suit Gundam GQuuuuuuX](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FMobile_Suit_Gundam_GQuuuuuuX.json)
