@@ -1,0 +1,31 @@
+{
+  "title": "Mazinger Z",
+  "categories": [
+    {
+      "category": "Movie",
+      "episodes": [
+        {
+          "title": "Movie",
+          "src": "https://toodrive.xpbliss.fyi/dl/kl0zhdr6ztsf9sjicgfylsgp/raw",
+          "fileSizeBytes": 3597485094,
+          "durationSeconds": 5692,
+          "dualAudio": true
+        }
+      ],
+      "anilistId": 98516,
+      "rootAnilistId": 2253,
+      "mediaFormat": "MOVIE"
+    }
+  ],
+  "LatestTime": "2026-11-13T20:31:12.749Z",
+  "anilistId": 98516,
+  "rootAnilistId": 2253,
+  "mediaFormat": "MOVIE",
+  "anilistIds": [
+    98516,
+    2253
+  ],
+  "totalFileSizeBytes": 3597485094,
+  "totalDurationSeconds": 5692,
+  "Image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/nx98516-VvOfjUvuoV39.jpg"
+}
