@@ -126,6 +126,7 @@ This directory contains all available media sources.
 - [So I'm a Spider, So What?](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FSo_I_M_A_Spider_So_What.json)
 - [Solo Leveling](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FSolo_Leveling.json)
 - [Star Blazers: The Quest for Iscandar](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FStar_Blazers_The_Quest_for_Iscandar.json)
+- [Steamboy](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FSteamboy.json)
 - [Strike the Blood](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FStrike_the_Blood.json)
 - [Sword of the Demon Hunter: Kijin Gentosho](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FSword_of_the_Demon_Hunter_Kijin_Gentosho.json)
 - [takt op.Destiny](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2Ftakt_opDestiny.json)
