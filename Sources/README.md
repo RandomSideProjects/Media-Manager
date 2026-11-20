@@ -23,6 +23,7 @@ This directory contains all available media sources.
 - [Angel's 3Piece!](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FAngels_3Piece.json)
 - [Anonymous Noise](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FAnonymous_Noise.json)
 - [Apothicary Diaries](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FApothicary_Diaries.json)
+- [Armored Trooper Votoms: Pailsen Files](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FArmored_Trooper_Votoms_Pailsen_Files.json)
 - [Asobi Asobase - workshop of fun -](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FAsobi_Asobase_workshop_of_fun.json)
 - [Backrooms](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FBackrooms.json)
 - [Beast Tamer](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FBeast_Tamer.json)
