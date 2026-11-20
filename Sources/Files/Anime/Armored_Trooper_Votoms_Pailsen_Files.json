@@ -1,0 +1,30 @@
+{
+  "title": "Armored Trooper Votoms: Pailsen Files",
+  "categories": [
+    {
+      "category": "Movie",
+      "episodes": [
+        {
+          "title": "Movie",
+          "src": "https://toodrive.xpbliss.fyi/dl/ja69dbrcp8q6sduyatq7zav6/raw",
+          "fileSizeBytes": 3902169011,
+          "durationSeconds": 7083,
+          "dualAudio": false
+        }
+      ],
+      "anilistId": 7536,
+      "rootAnilistId": 7536,
+      "mediaFormat": "MOVIE"
+    }
+  ],
+  "LatestTime": "2026-11-20T05:19:34.183Z",
+  "anilistId": 7536,
+  "rootAnilistId": 7536,
+  "mediaFormat": "MOVIE",
+  "anilistIds": [
+    7536
+  ],
+  "totalFileSizeBytes": 3902169011,
+  "totalDurationSeconds": 7083,
+  "Image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/7536.jpg"
+}
