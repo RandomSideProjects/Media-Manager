@@ -150,6 +150,7 @@ This directory contains all available media sources.
 - [Tower of God](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FTower_of_God.json)
 - [TRIGUN STAMPEDE](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FTRIGUN_STAMPEDE.json)
 - [Tsukigakirei](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FTsukigakirei.json)
+- [TsumaSho](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FTsumaSho.json)
 - [Tune In to the Midnight Heart](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FTune_In_To_The_Midnight_Heart.json)
 - [Unlimited Fafnir](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FUnlimited_Fafnir.json)
 - [Watari-kun's ****** Is About To Collapse](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FWatari_Kun_S_Is_About_To_Collapse.json)
