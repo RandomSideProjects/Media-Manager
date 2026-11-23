@@ -88,6 +88,7 @@ This directory contains all available media sources.
 - [Love Flops](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FLove_Flops.json)
 - [Love, Chunibyo & Other Delusions](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FLove_Chunibyo_Other_Delusions.json)
 - [Lucky Star](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FLucky_Star.json)
+- [Majestic Prince](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FMajestic_Prince.json)
 - [Makine: Too Many Losing Heroines](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FMakine_Too_Many_Losing_Heroines.json)
 - [Management of a Novice Alchemist](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FManagement_of_a_Novice_Alchemist.json)
 - [Maoyu: Archenemy & Hero](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FMaoyu_Archenemy_Hero.json)
