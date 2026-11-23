@@ -1,0 +1,31 @@
+{
+  "title": "Mobile Suit Gundam: The Origin",
+  "categories": [
+    {
+      "category": "Movie",
+      "episodes": [
+        {
+          "title": "Movie",
+          "src": "https://toodrive.xpbliss.fyi/dl/axss80baoorpcr00khwbbasz/raw",
+          "fileSizeBytes": 2317924911,
+          "durationSeconds": 5719,
+          "dualAudio": true
+        }
+      ],
+      "anilistId": 105595,
+      "rootAnilistId": 10937,
+      "mediaFormat": "MOVIE"
+    }
+  ],
+  "LatestTime": "2026-11-23T22:40:46.170Z",
+  "anilistId": 105595,
+  "rootAnilistId": 10937,
+  "mediaFormat": "MOVIE",
+  "anilistIds": [
+    105595,
+    10937
+  ],
+  "totalFileSizeBytes": 2317924911,
+  "totalDurationSeconds": 5719,
+  "Image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx105595-40ugr6S9NfOb.jpg"
+}
