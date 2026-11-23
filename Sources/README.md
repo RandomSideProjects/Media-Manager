@@ -97,6 +97,7 @@ This directory contains all available media sources.
 - [Mecha Ude: Mechanical Arms](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FMecha_Ude_Mechanical_Arms.json)
 - [Miss Kobayashi's Dragon Maid](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FMiss_Kobayashis_Dragon_Maid.json)
 - [Mobile Suit Gundam GQuuuuuuX](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FMobile_Suit_Gundam_GQuuuuuuX.json)
+- [Mobile Suit Gundam: The Origin](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FMobile_Suit_Gundam_The_Origin.json)
 - [Monster](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FMonster.json)
 - [More Than a Married Couple, But Not Lovers](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FMarriedNotLovers.json)
 - [My Deer Friend Nokotan](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FMy_Deer_Friend_Nokotan.json)
