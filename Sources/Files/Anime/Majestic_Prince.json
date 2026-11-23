@@ -1,0 +1,31 @@
+{
+  "title": "Majestic Prince",
+  "categories": [
+    {
+      "category": "Movie",
+      "episodes": [
+        {
+          "title": "Movie",
+          "src": "https://toodrive.xpbliss.fyi/dl/v7xx82e9s64wo32upyz2ky7g/raw",
+          "fileSizeBytes": 2565675750,
+          "durationSeconds": 4675,
+          "dualAudio": true
+        }
+      ],
+      "anilistId": 21750,
+      "rootAnilistId": 15863,
+      "mediaFormat": "MOVIE"
+    }
+  ],
+  "LatestTime": "2026-11-23T21:33:03.190Z",
+  "anilistId": 21750,
+  "rootAnilistId": 15863,
+  "mediaFormat": "MOVIE",
+  "anilistIds": [
+    21750,
+    15863
+  ],
+  "totalFileSizeBytes": 2565675750,
+  "totalDurationSeconds": 4675,
+  "Image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx21750-7mzYKil5CSom.jpg"
+}
