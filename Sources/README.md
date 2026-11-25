@@ -145,6 +145,7 @@ This directory contains all available media sources.
 - [The Banished Court Magician Aims to Become the Strongest](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FThe_Banished_Court_Magician_Aims_to_Become_the_Strongest.json)
 - [The Café Terrace and Its Goddesses](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FThe_Cafe_Terrace_and_Its_Goddesses.json)
 - [The Dreaming Boy is a Realist](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FThe_Dreaming_Boy_is_a_Realist.json)
+- [The Fruit of Evolution: Before I Knew It, My Life Had It Made](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FThe_Fruit_of_Evolution_Before_I_Knew_It_My_Life_Had_It_Made.json)
 - [The Ice Guy and His Cool Female Colleague](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FIceGuy.json)
 - [The Idaten Deities Know Only Peace](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FThe_Idaten_Deities_Know_Only_Peace.json)
 - [The Irregular at Magic High School: Reminiscence Arc](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FThe_Irregular_at_Magic_High_School_Reminiscence_Arc.json)
