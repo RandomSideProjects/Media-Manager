@@ -30,6 +30,7 @@ This directory contains all available media sources.
 - [Beast Tamer](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FBeast_Tamer.json)
 - [BLACK ROCK SHOOTER DAWN FALL](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FBLACK_ROCK_SHOOTER_DAWN_FALL.json)
 - [Black Summoner](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FBlack_Summoner.json)
+- [Blade of the Immortal](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FBlade_of_the_Immortal.json)
 - [Bloom Into You](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FBloom_Into_You.json)
 - [BOCCHI THE ROCK!](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FBOCCHI_THE_ROCK.json)
 - [Butareba -The Story of a Man Turned into a Pig-](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FButareba_The_Story_of_a_Man_Turned_into_a_Pig.json)
