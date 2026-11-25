@@ -10,6 +10,7 @@ This directory contains all available media sources.
 
 ## Normal Sources
 
+- [365 Days to the Wedding](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2F365_Days_to_the_Wedding.json)
 - [A Condition Called Love](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FConditionLove.json)
 - [A Couple Of Cuckoos](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FCuckoos.json)
 - [A Misanthrope Teaches a Class for Demi-Humans](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FA_Misanthrope_Teaches_a_Class_for_Demi_Humans.json)
