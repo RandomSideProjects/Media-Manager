@@ -17,6 +17,7 @@ This directory contains all available media sources.
 - [Aharen Is Indecipherable](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FAharen.json)
 - [Akagi](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FAkagi.json)
 - [Akiba Maid War](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FAkiba_Maid_War.json)
+- [alice gear aegis Expansion](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2Falice_gear_aegis_Expansion.json)
 - [Alma-chan Wants to Be a Family!](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FAlma_chan_Wants_to_Be_a_Family.json)
 - [An Adventurer’s Daily Grind at Age 29](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FAn_Adventurers_Daily_Grind_at_Age_29.json)
 - [And You Thought There Is Never A Girl Online?](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FNeverThoughtGirlOnline.json)
