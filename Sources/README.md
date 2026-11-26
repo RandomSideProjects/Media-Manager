@@ -119,6 +119,7 @@ This directory contains all available media sources.
 - [Otoboku: Maidens are Falling for Me](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FOtoboku_Maidens_are_Falling_for_Me.json)
 - [Pastel Memories](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FPastel_Memories.json)
 - [Possibly the Greatest Alchemist of All Time](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FPossibly_the_Greatest_Alchemist_of_All_Time.json)
+- [Prétear: The New Legend of Snow White](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FPretear_The_New_Legend_of_Snow_White.json)
 - [Quality Assurance in Another World](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FQuality_Assurance_in_Another_World.json)
 - [Quintessential Quintuplets](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FQuintuplets.json)
 - [Ranma ½ (2024)](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FRanma_1_2_2024.json)
