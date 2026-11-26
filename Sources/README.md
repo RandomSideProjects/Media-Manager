@@ -44,6 +44,7 @@ This directory contains all available media sources.
 - [Classic★Stars](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FClassicStars.json)
 - [Classroom of the Elite](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FClassroom_of_the_Elite.json)
 - [D-Frag!](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FD_Frag.json)
+- [Dancouga: Super Beast Machine God](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FDancouga_Super_Beast_Machine_God.json)
 - [DanDaDan](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FDanDaDan.json)
 - [DARLING in the FRANXX](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FFranxx.json)
 - [Day Break Illusion](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FDay_Break_Illusion.json)
