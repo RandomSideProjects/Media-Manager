@@ -17,6 +17,7 @@ This directory contains all available media sources.
 - [Ace of the Diamond](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FAce_of_the_Diamond.json)
 - [Aharen Is Indecipherable](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FAharen.json)
 - [Akagi](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FAkagi.json)
+- [Akahori Gedou Hour Rabuge](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FAkahori_Gedou_Hour_Rabuge.json)
 - [Akiba Maid War](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FAkiba_Maid_War.json)
 - [alice gear aegis Expansion](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2Falice_gear_aegis_Expansion.json)
 - [Alma-chan Wants to Be a Family!](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FAlma_chan_Wants_to_Be_a_Family.json)
