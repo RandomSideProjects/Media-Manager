@@ -149,6 +149,7 @@ This directory contains all available media sources.
 - [The Aristocrat’s Otherworldly Adventure: Serving Gods Who Go Too Far](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FThe_Aristocrats_Otherworldly_Adventure_Serving_Gods_Who_Go_Too_Far.json)
 - [The Banished Court Magician Aims to Become the Strongest](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FThe_Banished_Court_Magician_Aims_to_Become_the_Strongest.json)
 - [The Café Terrace and Its Goddesses](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FThe_Cafe_Terrace_and_Its_Goddesses.json)
+- [The Demon Girl Next Door](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FThe_Demon_Girl_Next_Door.json)
 - [The Dreaming Boy is a Realist](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FThe_Dreaming_Boy_is_a_Realist.json)
 - [The Fruit of Evolution: Before I Knew It, My Life Had It Made](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FThe_Fruit_of_Evolution_Before_I_Knew_It_My_Life_Had_It_Made.json)
 - [The Ice Guy and His Cool Female Colleague](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FIceGuy.json)
