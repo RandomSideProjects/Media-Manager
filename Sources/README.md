@@ -30,6 +30,7 @@ This directory contains all available media sources.
 - [Asobi Asobase - workshop of fun -](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FAsobi_Asobase_workshop_of_fun.json)
 - [Backrooms](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FBackrooms.json)
 - [Beast Tamer](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FBeast_Tamer.json)
+- [Black Rock Shooter](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FBlack_Rock_Shooter.json)
 - [BLACK ROCK SHOOTER DAWN FALL](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FBLACK_ROCK_SHOOTER_DAWN_FALL.json)
 - [Black Summoner](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FBlack_Summoner.json)
 - [Blade of the Immortal](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FBlade_of_the_Immortal.json)
