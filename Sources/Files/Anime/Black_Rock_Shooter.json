@@ -1,0 +1,79 @@
+{
+  "title": "Black Rock Shooter",
+  "categories": [
+    {
+      "category": "Season 1",
+      "episodes": [
+        {
+          "title": "Episode 01",
+          "src": "https://toodrive.xpbliss.fyi/dl/p91ua8m1q1jq4cdeeqy6028k/raw",
+          "fileSizeBytes": 867153305,
+          "durationSeconds": 1395,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 02",
+          "src": "https://toodrive.xpbliss.fyi/dl/fvqxizf37evegspdqu0l17xy/raw",
+          "fileSizeBytes": 937229905,
+          "durationSeconds": 1396,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 03",
+          "src": "https://toodrive.xpbliss.fyi/dl/q61t7lar4d4kan61o1x5uf43/raw",
+          "fileSizeBytes": 685668080,
+          "durationSeconds": 1389,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 04",
+          "src": "https://toodrive.xpbliss.fyi/dl/o69wjkgr444sqvnn7acapezl/raw",
+          "fileSizeBytes": 766948983,
+          "durationSeconds": 1396,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 05",
+          "src": "https://toodrive.xpbliss.fyi/dl/ckdqz5vux34olxn5a47msvwo/raw",
+          "fileSizeBytes": 841316598,
+          "durationSeconds": 1389,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 06",
+          "src": "https://toodrive.xpbliss.fyi/dl/jl1pktoup2caxau7ui043r9q/raw",
+          "fileSizeBytes": 838948416,
+          "durationSeconds": 1396,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 07",
+          "src": "https://toodrive.xpbliss.fyi/dl/teu6orj0th2m5i95v9u1k6hy/raw",
+          "fileSizeBytes": 1002127115,
+          "durationSeconds": 1389,
+          "dualAudio": true
+        },
+        {
+          "title": "Episode 08",
+          "src": "https://toodrive.xpbliss.fyi/dl/ccrkcvzazv858cer7kab8m59/raw",
+          "fileSizeBytes": 977680880,
+          "durationSeconds": 1381,
+          "dualAudio": true
+        }
+      ],
+      "anilistId": 11285,
+      "rootAnilistId": 11285,
+      "mediaFormat": "TV"
+    }
+  ],
+  "LatestTime": "2026-11-27T12:25:12.212Z",
+  "anilistId": 11285,
+  "rootAnilistId": 11285,
+  "mediaFormat": "TV",
+  "anilistIds": [
+    11285
+  ],
+  "totalFileSizeBytes": 6917073282,
+  "totalDurationSeconds": 11131,
+  "Image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx11285-uO6GgQUjikbf.jpg"
+}
