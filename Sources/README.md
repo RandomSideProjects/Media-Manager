@@ -135,6 +135,7 @@ This directory contains all available media sources.
 - [Sagrada Reset](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FSagrada_Reset.json)
 - [Science Fell in Love, So I Tried to Prove it](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FScience_Fell_in_Love%2C_So_I_Tried_to_Prove_it.json)
 - [Scum of the Brave](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FScum_of_the_Brave.json)
+- [Selection Project](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FSelection_Project.json)
 - [Shikimori's Not Just a Cutie](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FShikimori.json)
 - [So I'm a Spider, So What?](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FSo_I_M_A_Spider_So_What.json)
 - [Solo Leveling](https://randomsideprojects.github.io/Media-Manager/index.html?source=Sources%2FFiles%2FAnime%2FSolo_Leveling.json)
